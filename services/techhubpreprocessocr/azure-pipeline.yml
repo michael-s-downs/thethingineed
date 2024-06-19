@@ -1,34 +1,27 @@
 ### This code is property of the GGAO ###
 
 
-resources:
-  repositories:
-  - repository: self
-    type: git
-    name: Workplace/services-core
-    trigger:
-      batch: true
-      branches:
-        include:
-        - develop
-        - release/v*
-        - main/*
-      paths:
-        include:
-        - preprocess-ocr
-  - repository: helmtemplates
-    type: git
-    name: Workplace/helmtemplates
-    ref: develop
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - release/v*
+    - main/*
+  paths:
+    include:
+    - 'services/techhubpreprocessocr'
+    - 'helm/'
 
 variables:
 - group: Variables para CI
 - group: Images base params
+- group: RegistryVariables
 
 - name: serviceName
-  value: 'preprocess-ocr'
+  value: 'techhubpreprocessocr'
 - name:  projectName
-  value: 'services-core'
+  value: 'TechHubGlobalToolkit'
 - name:  vmImageName
   value: 'ubuntu-20.04'
 - name:  pythonVersion
@@ -44,11 +37,11 @@ variables:
 - name: templateType
   value: 'microservicesgenai'
 - name: helmRepoLocation
-  value: '$(Agent.BuildDirectory)/s/helmtemplates'
+  value: '$(Agent.BuildDirectory)/s/helm'
 - name: helmVersion
   value: '$(helmVer)'
 - name: projectLocation
-  value: '$(Agent.BuildDirectory)/s/$(projectName)'
+  value: '$(Agent.BuildDirectory)/s/services'
 - name: description
   value: 'Microservice to preprocess. Divide document en chunks and extract text with OCR'
 - name: feedGenai

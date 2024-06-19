@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/'
+    - 'services/techhubllmapi'
     - 'helm/'
 
 variables:
@@ -21,7 +21,7 @@ variables:
 - name: serviceName
   value: 'techhubllmapi'
 - name:  projectName
-  value: 'TechHubLLMAPI'
+  value: 'TechHubGlobalToolkit'
 - name:  vmImageName
   value: 'ubuntu-20.04'
 - name:  pythonVersion
