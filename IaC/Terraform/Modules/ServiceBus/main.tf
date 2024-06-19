@@ -8,7 +8,7 @@ resource "azurerm_servicebus_namespace" "techhub_sb" {
 }
 
 resource "azurerm_servicebus_namespace_authorization_rule" "azure_service_bus_namespace_authorization_rule" {
-  name         = "RootManageSharedAccessKey"
+  name         = "${var.rg}-sb-auth"
   namespace_id = azurerm_servicebus_namespace.techhub_sb.id
 
   listen = true
