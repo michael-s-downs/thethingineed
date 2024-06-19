@@ -1,12 +1,12 @@
 RG_NAME = "kisco"
 RG_LOCATION = "westeurope"
 
-SA_NAME             = "sakisco01"
+SA_NAME             = "kisco"
 SA_TIER             = "Standard"
 SA_REPLICATION_TYPE = "LRS"
 SA_CONTAINER_NAMES  = ["backend", "data"]
 
-SB_NAME = "sbkisco01"
+SB_NAME = "kisco01"
 SB_TIER = "Basic"
 SB_CAPACITY = 0
 SB_QUEUES = [
