@@ -20,7 +20,7 @@ variables:
 stages:
   - stage: TerraformValidate
     jobs:
-      - job: validate
+      - job: Validate
         continueOnError: false
         steps:
         - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
