@@ -16,6 +16,7 @@ trigger:
 variables:
 - group: Variables para CI
 - group: Images base params
+- group: RegistryVariables
 
 - name: serviceName
   value: 'techhubpreprocessextract'
