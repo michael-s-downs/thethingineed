@@ -1,0 +1,58 @@
+{{ $loadSecrets := .Values.loadSecrets }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "shortname" . }}
+  namespace: {{ .Values.namespace }}
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+    spec:   
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.ports.type }}
+              containerPort: {{ .Values.ports.port }}
+              protocol: {{ .Values.ports.protocol }}
+          envFrom:
+            - configMapRef :
+                name : {{ template "shortname" . }} 
+          resources:
+            requests:
+              cpu: {{ .Values.requests.cpu }}
+              memory: {{ .Values.requests.memory }}
+            limits:
+              cpu: {{ .Values.limits.cpu }}
+              memory: {{ .Values.limits.memory }}
+          volumeMounts:
+{{- range $secret := $loadSecrets }}
+            - name: {{ $secret }}-credentials
+              mountPath: /secrets/{{ $secret }}
+              readOnly: true
+{{- end }}
+      volumes:         
+{{- range $secret := $loadSecrets }}
+        - name: {{ $secret }}-credentials
+          secret:
+            secretName: {{ $secret }}-credentials
+            defaultMode: 420
+{{- end }}
+{{- if and (ne (.Values.nodePool | toString) "none") (ne (.Values.provider | toString) "azure") }}
+      nodeSelector:
+        agentpool: {{ .Values.nodePool }}   
+{{- else }}
+      nodeSelector:
+        nodepool: {{ .Values.nodePool }}    
+{{- end }}
+      imagePullSecrets:
+        - name: {{ .Values.image.nameImagePullSecret }}

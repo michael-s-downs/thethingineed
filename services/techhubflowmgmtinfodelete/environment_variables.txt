@@ -1,0 +1,20 @@
+### This code is property of the GGAO ###
+
+
+TENANT=develop
+PROVIDER=azure/aws
+LOG_LEVEL=INFO/DEBUG
+DEBUG_TENANTS=test,develop
+AZ_CONN_STR_QUEUE=KEEPASS OR VAR ENV IN POD
+AZ_CONN_STR_STORAGE=KEEPASS OR VAR ENV IN POD
+REDIS_HOST=KEEPASS
+REDIS_DB_STATUS=0
+REDIS_PASSWORD=KEEPASS OR VAR ENV IN POD
+REDIS_PORT=6379
+STORAGE_BACKEND=uhis-cdac-develop-backend
+STORAGE_DATA=uhis-cdac-develop-data
+Q_FLOWMGMT_INFODELETE=uhis-cdac-develop--q-flowmgmt-infodelete
+Q_PREPROCESS_END=uhis-cdac-develop--q-preprocess-end
+QUEUE_DELETE_ON_READ=True
+#TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
+#TRACKING_OUTPUT_URL=uhis-cdac-develop--q-all-tracking

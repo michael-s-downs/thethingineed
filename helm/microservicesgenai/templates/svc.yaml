@@ -1,0 +1,17 @@
+{{- if .Values.isService }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "shortname" . }}
+  namespace: {{ .Values.namespace }}
+  labels: {{- include "labels" . | nindent 4 }}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: {{ .Values.service.externalPort }}
+    targetPort: {{ .Values.service.internalPort }}
+  selector:
+    app: {{ template "shortname" . }}
+  type: {{ .Values.service.type }}
+{{- end }}

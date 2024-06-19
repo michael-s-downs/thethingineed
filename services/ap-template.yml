@@ -1,0 +1,213 @@
+### This code is property of the GGAO ###
+
+
+# This templating with multiple pipelines and their triggering is needed until we can know what resource initiates/triggers the pipeline
+# https://github.com/MicrosoftDocs/azure-devops-docs/issues/3398#issuecomment-596299643
+parameters:
+- name: serviceName
+  default: ''
+  type: string
+- name: registryServerName
+  default: ''
+  type: string
+- name: acrRegistryLogin
+  default: ''
+  type: string
+- name: acrRegistryPassword
+  default: ''
+  type: string
+- name: defaultWorkingDirectory
+  default: ''
+  type: string
+- name: sourcesDirectory
+  default: ''
+  type: string
+- name: tag
+  default: ''
+  type: string
+- name: pythonVersion
+  default: '3.8'
+  type: string
+- name: baseImage
+  default: 'default-base-38'
+  type: string
+- name: baseTag
+  default: 'latest'
+  type: string
+- name: projectLocation
+  default: ''
+  type: string
+- name: helmRepoLocation
+  default: ''
+  type: string
+- name: helmVersion
+  default: ''
+  type: string
+- name: templateType
+  default: ''
+  type: string
+- name: description
+  default: ''
+  type: string
+- name: libraryFeed
+  default: ''
+  type: string
+
+steps:
+
+# Copy repos
+- checkout: self
+
+# Add versioning of git
+- task: gitversion/setup@0
+  inputs:
+    versionSpec: '5.3.x'
+  displayName: Install GitTools
+
+# Clean space in agent
+- script: df -h
+  displayName: Disk space before
+- script: docker rmi -f $(docker images -aq)
+  displayName: Clean disk space
+- script: df -h
+  displayName: Disk space after
+
+# Create helm project
+- task: CmdLine@2
+  inputs:
+    script: mkdir helm
+    workingDirectory: '${{ parameters.projectLocation }}'
+  displayName: Creating helm folder into project
+
+# Copy helm repo into project
+- task: CmdLine@2
+  inputs:
+    script: mkdir ${{ parameters.serviceName }}
+    workingDirectory: '${{ parameters.projectLocation }}/helm'
+  displayName: Creating repo folder into helm folder
+
+# Copy helm templates into helm project folder
+- task: CmdLine@2
+  inputs:
+    script: cp -r ${{ parameters.helmRepoLocation }}/${{ parameters.templateType }}/* ${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}
+  displayName: Copying helm templates into helm project folder
+
+# Create chart of helm
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Set-Content -Path ${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}/Chart.yaml -Value 'apiVersion: v1'
+      Add-Content -Path ${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}/Chart.yaml -Value 'version: 1.0.2'
+      Add-Content -Path ${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}/Chart.yaml -Value 'name: ${{ parameters.serviceName }}'
+      Add-Content -Path ${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}/Chart.yaml -Value 'description: ${{ parameters.description }}'
+    workingDirectory: '${{ parameters.projectLocation }}/helm/${{ parameters.serviceName }}'
+  displayName: Creating Chart.yaml
+
+# Authenticate feed
+- task: PipAuthenticate@1
+  inputs:
+    artifactFeeds: '${{ parameters.libraryFeed }}'
+    onlyAddExtraIndex: true
+  displayName: Authenticate feed
+
+# Use python to compile
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '${{ parameters.pythonVersion }}'
+  displayName: Use Python ${{ parameters.pythonVersion }}
+
+# Update pip
+- script: pip install --upgrade pip
+  displayName: Upgrade PIP
+
+# Create variable to tag services by branch
+- script: |
+    echo "##vso[task.setvariable variable=baseTag]$(echo 'dev' | tr -d '.')"
+  displayName: Set baseTag to dev
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+
+# Create variable to tag services by branch
+- script: echo "##vso[task.setvariable variable=baseTag]$(echo '${{parameters.baseTag}}' | tr -d '.')"
+  displayName: Set baseTag to ${{ parameters.baseTag }}
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/develop'))
+
+# Create folder to move files of services
+- script: mkdir ${{ parameters.defaultWorkingDirectory }}/uhis_docker
+  displayName: Create folder
+  condition: succeeded()
+
+# Copy files of services
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '${{ parameters.sourcesDirectory }}'
+    contents: '**/*'
+    targetFolder: '${{ parameters.defaultWorkingDirectory }}/uhis_docker'
+  displayName: Copy files of services
+  condition: succeeded()
+
+# Copy files of common
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '${{ parameters.sourcesDirectory }}/..'
+    contents: 'common/**/*.py'
+    targetFolder: '${{ parameters.defaultWorkingDirectory }}/uhis_docker'
+  displayName: Copy files from common
+  condition: succeeded()
+
+# Login with ACR
+- bash: docker login '${{ parameters.registryServerName }}' -u '${{ parameters.acrRegistryLogin }}' -p '${{ parameters.acrRegistryPassword }}'
+  displayName: Login with ACR
+
+# Create image docker
+- bash: docker build -f '${{ parameters.defaultWorkingDirectory }}/uhis_docker/Dockerfile' --build-arg 'BASE_IMAGE=${{ parameters.registryServerName }}/${{ parameters.baseImage }}:$(baseTag)' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
+  displayName: Build image
+
+# Push image docker with tag numeric
+- bash: docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}'
+  displayName: Push image (${{ parameters.tag }})
+
+# Tag and push image docker with tag dev
+- bash: |
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:dev'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:dev'
+  displayName: Tag and Push image (dev)
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+
+# Tag and push image docker with tag test
+- bash: |
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:test'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:test'
+  displayName: Tag and Push image (test)
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/v'))
+
+# Tag and push image docker with tag of branch
+- bash: |
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ variables['Build.SourceBranchName'] }}'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ variables['Build.SourceBranchName'] }}'
+  displayName: Tag and Push image (${{ variables['Build.SourceBranchName'] }})
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/main/'))
+
+# Prepare artifacts of services
+- task: CmdLine@2
+  inputs:
+    script: 'mkdir $(Build.ArtifactStagingDirectory)/helm'
+  displayName: Helm - Prepare output folder
+
+# Install helm
+- task: HelmInstaller@1
+  inputs:
+    helmVersionToInstall: '${{ parameters.helmVersion }}'
+  displayName: Install Helm
+
+# Package helm version
+- bash: helm package --version '${{ parameters.tag }}' --destination $(build.artifactStagingDirectory) '${{ parameters.projectlocation }}/helm/${{ parameters.serviceName }}'
+  displayName: Package helm version
+
+# Publish artifact
+- task: PublishBuildArtifacts@1
+  name: 'PublishArtifacts'
+  inputs:
+    pathtoPublish: $(Build.ArtifactStagingDirectory)
+    artifactName: helm
+  displayName: Publish Helm artifacts

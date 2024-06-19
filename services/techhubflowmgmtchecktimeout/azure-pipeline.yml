@@ -1,0 +1,81 @@
+### This code is property of the GGAO ###
+
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    name: Workplace/services-core
+    trigger:
+      batch: true
+      branches:
+        include:
+        - develop
+        - release/v*
+        - main/*
+      paths:
+        include:
+        - flowmgmt-checktimeout
+  - repository: helmtemplates
+    type: git
+    name: Workplace/helmtemplates
+    ref: develop
+
+variables:
+- group: Variables para CI
+- group: Images base params
+
+- name: serviceName
+  value: 'flowmgmt-checktimeout'
+- name:  projectName
+  value: 'services-core'
+- name:  vmImageName
+  value: 'ubuntu-20.04'
+- name:  pythonVersion
+  value: '3.8'
+- name:  baseImage
+  value: '$(default_base)'
+- name:  registryServerName
+  value: '$(registryName).azurecr.io'
+- name: acrRegistryLogin
+  value: '$(registryLogin)'
+- name: acrRegistryPassword
+  value: '$(registryPassword)'
+- name: templateType
+  value: 'microservicesgenai'
+- name: helmRepoLocation
+  value: '$(Agent.BuildDirectory)/s/helmtemplates'
+- name: helmVersion
+  value: '$(helmVer)'
+- name: projectLocation
+  value: '$(Agent.BuildDirectory)/s/$(projectName)'
+- name: description
+  value: 'Microservice to flow management. Check timeout in Redis and reports it'
+- name: feedGenai
+  value: '$(feed_genai)'
+
+stages:
+- stage: Building
+  displayName: Build image
+  jobs:
+  - job:
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - template: ../ap-template.yml
+      parameters:
+        serviceName: '$(serviceName)'
+        registryServerName: '$(registryServerName)'
+        acrRegistryLogin:  '$(acrRegistryLogin)'
+        acrRegistryPassword:  '$(acrRegistryPassword)'
+        defaultWorkingDirectory: '$(system.defaultWorkingDirectory)'
+        sourcesDirectory: '$(projectLocation)/$(serviceName)'
+        tag: '$(Build.BuildNumber)'
+        pythonVersion: '$(pythonVersion)'
+        baseImage: '$(baseImage)'
+        projectLocation: '$(projectLocation)'
+        helmRepoLocation: '$(helmRepoLocation)'
+        helmVersion: '$(helmVersion)'
+        templateType: '$(templateType)'
+        description: '$(description)'
+        libraryFeed: '$(feedGenai)'

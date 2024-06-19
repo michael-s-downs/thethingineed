@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "shortname" . }}
+  namespace: {{ .Values.namespace }}
+data:
+{{- include "common" . | indent 2 }}
+{{- include "queues" . | indent 2 }}
+{{- include "redis" . | indent 2 }}
+{{- include "integration" . | indent 2 }}
+{{- include "ocr" . | indent 2 }}
+{{- include "sender" . | indent 2 }}
+{{- include "compose" . | indent 2 }}
+{{- include "indexing" . | indent 2 }}
+{{- include "checktimeout" . | indent 2 }}
+{{- include "apigw" . | indent 2 }}

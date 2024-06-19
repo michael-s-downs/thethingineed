@@ -1,0 +1,82 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - release/v*
+    - main/*
+  paths:
+    include:
+    - 'IaC/*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- group: TerraformBackend
+- name: 'projectlocation'
+  value: '$(Agent.BuildDirectory)/s'
+
+stages:
+  - stage: TerraformValidate
+    jobs:
+      - job: validate
+        continueOnError: false
+        steps:
+        - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+          displayName: TFInstall
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV3@3
+          displayName: TFInit
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            backendServiceArm: '$(TF_VAR_CONN_STR)'
+            backendAzureRmResourceGroupName: '$(TF_VAR_STATUS_RG)'
+            backendAzureRmStorageAccountName: '$(TF_VAR_STATUS_CONTAINER_SA)'
+            backendAzureRmContainerName: '$(TF_VAR_STATUS_STORAGE)'
+            backendAzureRmKey: '$(TF_VAR_STATUS_KEY_SA)'
+        - task: TerraformTaskV3@3
+          displayName: TFValidate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+  - stage: AzureStorageArtifact
+    condition: succeeded('TerraformValidate')
+    dependsOn: TerraformValidate
+    jobs:
+      - job: CopyFilesIaCAndPublish
+        steps:
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/StorageAccount'
+            Contents: '**'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/StorageAccount'
+            CleanTargetFolder: true
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/StorageAccount'
+            ArtifactName: 'storageaccount'
+            publishLocation: 'Container'
+  - stage: ScriptsArtifact
+    condition: succeeded('AzureStorageArtifact')
+    dependsOn: 
+      - AzureStorageArtifact
+    jobs:
+    - job: CopyFilesScriptsAndPublish
+      steps:
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Scripts'
+          Contents: '**'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Scripts'
+          CleanTargetFolder: true
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Scripts'
+          ArtifactName: 'Scripts'
+          publishLocation: 'Container'
+
+        
+        

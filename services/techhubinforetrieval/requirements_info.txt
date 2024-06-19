@@ -1,0 +1,16 @@
+### This code is property of the GGAO ###
+
+
+genai-sdk-services==0.2.1.0
+Werkzeug==0.16.1
+flask==1.1.2
+itsdangerous==2.0.1
+requests==2.22.0
+flask-restx==0.1.1
+Jinja2<3.1.0
+tiktoken==0.4.0
+farm-haystack==1.15.1
+pydantic==1.10.8
+python-magic-bin==0.4.14
+langdetect==1.0.9
+elasticsearch==7.17.9

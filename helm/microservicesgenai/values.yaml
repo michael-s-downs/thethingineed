@@ -1,0 +1,92 @@
+# Chart
+chart:
+  name:
+  version:
+  apiversion:
+  description:
+# Control
+isService:
+# Configmap
+common:
+  debug_tenants:
+  log_level:
+  provider:
+  tenant:
+  storage_data:
+  storage_backend:
+  queue_delete_on_read:
+  queue_mode:
+ocr:
+  bytes_mode:
+integration:
+  storage_config_folder:
+  sotrage_persist_folder:
+  integration_queue_url:
+  vector_storage:
+  integration_name:
+  local_common_path:
+sender:
+  storage_persist_request:
+  storage_delete_request:
+  dolffia_queue_process_url:
+  dolffia_queue_delete_url:
+  request_flow_timeout:
+  request_internal_timeout:
+compose:
+  url_llm:
+  url_retrieve:
+  redis_session_expiration_time:
+  cron_time:
+  gunicorn_workers:
+  uri_prefix_knowler:
+  url_allowed_documents_knowler:
+indexing:
+  aws_region_name:
+checktimeout:
+  cron_time:
+apigw:
+  sqldb:
+  Namespace:
+  PrefixNamespace:
+# Deployment
+loadSecrets: {}
+replicaCount:
+requests:
+  cpu:
+  memory:
+limits:
+  cpu:
+  memory:
+redis:
+  status:
+  timeout:
+  session:
+queues: {}
+image:
+  name:
+  useImagePullSecrets:
+  pullPolicy: Always
+  tag:
+  repository:
+  username:
+  password:
+  nameImagePullSecret:
+provider:
+namespace:
+nodePool:
+ports:
+  type: http
+  port: 8888
+  protocol: TCP
+# Service
+service:
+  internalPort: http
+  externalPort: 80
+  type:
+# Secrets
+azure-value:
+azure-ocr-value:
+aws-value:
+redis-value:
+models-value:
+vector-storage-value:
