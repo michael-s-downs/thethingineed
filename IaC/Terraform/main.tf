@@ -5,7 +5,7 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "3.36.0"
     }
-    
+
   }
   backend "azurerm" {
     resource_group_name  = var.status_rg
@@ -41,4 +41,16 @@ module "techhub_sa" {
   replication_type = var.SA_REPLICATION_TYPE
   container_names  = var.SA_CONTAINER_NAMES
   tags             = local.common_tags
+}
+
+module "techhub_sb" {
+  source             = "./Modules/ServiceBus"
+  rg                 = var.RG_NAME
+  location           = var.RG_LOCATION
+  name               = var.SB_NAME
+  tier               = var.SB_TIER
+  capacity           = var.SB_CAPACITY
+  service_bus_queues = var.SB_QUEUES
+  tags               = local.common_tags
+
 }

@@ -27,3 +27,28 @@ variable "SA_CONTAINER_NAMES" {
   type        = list(string)
   description = "The name of the container to create in the storage account."
 }
+
+variable "SB_NAME" {
+  type        = string
+  description = "The name of the TechHub service bus namespace."
+}
+
+variable "SB_TIER" {
+  type        = string
+  description = "Defines the Tier to use for this service bus namespace. Valid options are Basic, Standard or Premium."
+}
+
+variable "SB_CAPACITY" {
+  type        = number
+  description = "Service bus capacity. If sku is Premium can be 1,2,3,4,8 or 16 when sku is Basic or Standard the value is 0."
+}
+
+variable "SB_QUEUES" {
+  type = list(object({
+    name                  = string
+    max_size_in_megabytes = number
+    enable_partitioning   = bool
+    requires_session      = bool
+  }))
+  description = "Service bus list of queues"
+}

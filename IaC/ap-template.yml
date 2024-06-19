@@ -50,14 +50,14 @@ stages:
         steps:
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/StorageAccount'
+            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Terraform'
             Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/StorageAccount'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Terraform'
             CleanTargetFolder: true
         - task: PublishBuildArtifacts@1
           inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/StorageAccount'
-            ArtifactName: 'storageaccount'
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Terraform'
+            ArtifactName: 'GlobalToolkit'
             publishLocation: 'Container'
   - stage: ScriptsArtifact
     condition: succeeded('AzureStorageArtifact')
