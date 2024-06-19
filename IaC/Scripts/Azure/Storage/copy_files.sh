@@ -5,6 +5,7 @@ storageNameOrigin=$TF_VAR_SA_NAME_ORIGIN
 storageNameOriginKey=$TF_VAR_SA_ORIGIN_KEY
 promptsLLM=$TF_VAR_LLM_PROMPTS
 modelsConfig=$TF_VAR_MODELS_CONFIG
+templatesCompose=$TF_VAR_COMPOSE_TEMPLATES
 blobNameDestiny=$TF_VAR_BLOB_DESTINY
 blobNameOrigin=$TF_VAR_CONFIG_ORIGIN
 
@@ -17,6 +18,10 @@ sasOrigin=$(az storage account generate-sas --account-key $storageNameOriginKey 
 echo "Declaring files to copy"
 declare -a filesToCopy=($promptsLLM $modelsConfig)
 
+# Add templates compose
+IFS=', ' read -r -a templatesComposeArray <<< "${templatesCompose//[\[\]\"]}"
+filesToCopy+=("${templatesComposeArray[@]}")
+
 echo "Copying files from $storageNameOrigin to $storageNameDestiny"
 # Copy files
 for file in "${filesToCopy[@]}"
@@ -26,3 +31,4 @@ do
     echo "Copying file $file from $origin to $destination"
     azcopy copy "$origin" "$destination" --overwrite=true
 done
+
