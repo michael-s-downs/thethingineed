@@ -41,6 +41,7 @@ module "techhub_sa" {
   replication_type = var.SA_REPLICATION_TYPE
   container_names  = var.SA_CONTAINER_NAMES
   tags             = local.common_tags
+  depends_on       = [azurerm_resource_group.rg]
 }
 
 module "techhub_sb" {
@@ -52,5 +53,5 @@ module "techhub_sb" {
   capacity           = var.SB_CAPACITY
   service_bus_queues = var.SB_QUEUES
   tags               = local.common_tags
-
+  depends_on         = [azurerm_resource_group.rg]
 }
