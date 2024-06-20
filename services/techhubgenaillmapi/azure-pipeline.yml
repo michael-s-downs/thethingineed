@@ -19,7 +19,7 @@ variables:
 - group: RegistryVariables
 
 - name: serviceName
-  value: 'techhublgenailmapi'
+  value: 'techhublgenaillmapi'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
 - name:  vmImageName
