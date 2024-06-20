@@ -16,7 +16,11 @@ sasOrigin=$(az storage account generate-sas --account-key $storageNameOriginKey 
 
 # Declare files to copy
 echo "Declaring files to copy"
-declare -a filesToCopy=($promptsLLM $modelsConfig)
+declare -a filesToCopy=($modelsConfig)
+
+# Add prompts LLM
+IFS=', ' read -r -a promptsLLMArray <<< "${promptsLLM//[\[\]\"]}"
+filesToCopy+=("${promptsLLMArray[@]}")
 
 # Add templates compose
 IFS=', ' read -r -a templatesComposeArray <<< "${templatesCompose//[\[\]\"]}"
