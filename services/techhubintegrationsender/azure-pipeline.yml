@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubintegrationsender'
+    - 'services/techhubintegrationsender/*'
     - 'helm/'
 variables:
 - group: Variables para CI

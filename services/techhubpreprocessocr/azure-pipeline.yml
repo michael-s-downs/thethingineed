@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubpreprocessocr'
+    - 'services/techhubpreprocessocr/*'
     - 'helm/'
 
 variables:

@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubflowmgmtinfodelete'
+    - 'services/techhubflowmgmtinfodelete/*'
     - 'helm/'
 
 variables:

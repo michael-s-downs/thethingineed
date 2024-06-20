@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubgenaiinfoindexing'
+    - 'services/techhubgenaiinfoindexing/*'
     - 'helm/'
 
 variables:
