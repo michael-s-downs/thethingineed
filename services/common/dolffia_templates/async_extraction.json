@@ -1,0 +1,30 @@
+{
+    "process_type": "extraction", 
+    "project_type": "text",
+    "force_ocr": true,
+    "classification_type": "extraction_specific",
+    "extract_type": "",
+    "languages": ["*"],
+    "origins": {},
+    "dataset_conf": {
+        "dataset_path": "",
+        "dataset_csv_path": "",
+        "path_col": "Url",
+        "label_col": "CategoryId"
+    },
+    "preprocess_conf": {
+        "num_pag_ini": 0,
+        "page_limit": 20,
+        "page_limit_preimage": 3,
+        "parameters_preimage": [],
+        "parameters_pretext": {
+            "test_size": 0.2,
+            "stratify": true,
+            "lowercase": true,
+            "remove_numbers": true,
+            "simbols": true,
+            "word_length": true,
+            "escape_sequences": true
+        }
+    }
+}

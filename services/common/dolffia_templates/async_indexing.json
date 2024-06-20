@@ -1,0 +1,41 @@
+{
+    "process_type": "ir_index",
+    "project_type": "text",
+    "languages": ["*"],
+    "force_ocr": false,
+    "extract_tables": false,
+    "origins": {
+        "ocr":  ""
+    },
+    "dataset_conf": {
+        "dataset_path": "",
+        "dataset_csv_path": "",
+        "path_col": "Url",
+        "label_col": "CategoryId"
+    },
+    "preprocess_conf": {
+        "num_pag_ini": 0,
+        "page_limit": 1000,
+        "layout_conf": {
+            "do_lines_text": false,
+            "do_lines_ocr": false,
+            "lines_conf": {
+                "do_lines_result": false,
+                "model": "checkpoint-41806"
+            },
+            "do_titles": false,
+            "do_tables": false,
+            "tables_conf": {
+                "sep": ";"
+            }
+        }
+    },
+    "index_conf": {
+		"index": "",
+		"windows_overlap": 10,
+		"windows_length": 300,
+		"modify_index_docs": {},
+		"models":[],
+		"vector_storage": ""
+	}
+}

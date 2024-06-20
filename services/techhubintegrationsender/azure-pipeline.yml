@@ -10,16 +10,15 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubllmapi'
+    - 'services/techhubintegrationsender'
     - 'helm/'
-
 variables:
 - group: Variables para CI
 - group: Images base params
 - group: RegistryVariables
 
 - name: serviceName
-  value: 'techhubllmapi'
+  value: 'techhubintegrationsender'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
 - name:  vmImageName
@@ -27,7 +26,7 @@ variables:
 - name:  pythonVersion
   value: '3.8'
 - name:  baseImage
-  value: '$(default_base)'
+  value: '$(integration_base)'
 - name:  registryServerName
   value: '$(registryName).azurecr.io'
 - name: acrRegistryLogin
@@ -43,7 +42,7 @@ variables:
 - name: projectLocation
   value: '$(Agent.BuildDirectory)/s/services'
 - name: description
-  value: 'Microservice to genai. API based in languages models'
+  value: 'Microservice to integration async. Orchestrates the process of sending messages to the queue and processing them in the core service'
 - name: feedGenai
   value: '$(feed_genai)'
 

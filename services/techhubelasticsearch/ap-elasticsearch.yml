@@ -1,0 +1,34 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - release/v*
+    - main/*
+  paths:
+    include:
+    - 'services/techhubelasticsearch/'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- name: 'projectlocation'
+  value: '$(Agent.BuildDirectory)/s'
+
+stages:
+  - stage: Elasticsearch
+    jobs:
+      - job: CopyFilesIaCAndPublish
+        steps:
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(System.DefaultWorkingDirectory)/services/techhubelasticsearch/'
+            Contents: '**'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            CleanTargetFolder: true
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            ArtifactName: 'ElasticSearch'
+            publishLocation: 'Container'       

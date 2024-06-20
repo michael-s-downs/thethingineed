@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubcompose'
+    - 'services/techhubgenaillmapi'
     - 'helm/'
 
 variables:
@@ -19,7 +19,7 @@ variables:
 - group: RegistryVariables
 
 - name: serviceName
-  value: 'techhubcompose'
+  value: 'techhublgenailmapi'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
 - name:  vmImageName
@@ -43,7 +43,7 @@ variables:
 - name: projectLocation
   value: '$(Agent.BuildDirectory)/s/services'
 - name: description
-  value: 'Microservice to genai. API that orchestrates steeps in process'
+  value: 'Microservice to genai. API based in languages models'
 - name: feedGenai
   value: '$(feed_genai)'
 

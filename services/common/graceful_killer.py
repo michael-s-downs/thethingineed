@@ -4,6 +4,9 @@
 # Native imports
 import signal
 
+# Custom imports
+from logging_handler import logger
+
 
 class GracefulKiller:
     kill_now = False
@@ -12,6 +15,7 @@ class GracefulKiller:
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
-    def exit_gracefully(self, signum, frame):
+    def exit_gracefully(self, *args):
         """ When receive a SIGINT or SIGTERM signal. Wait until the current process ends to die. """
+        logger.debug("Signal captured")
         self.kill_now = True

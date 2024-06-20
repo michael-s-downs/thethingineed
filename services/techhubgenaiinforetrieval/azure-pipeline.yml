@@ -10,7 +10,7 @@ trigger:
     - main/*
   paths:
     include:
-    - 'services/techhubinforetrieval'
+    - 'services/techhubgenaiinforetrieval'
     - 'helm/'
 
 variables:
@@ -19,7 +19,7 @@ variables:
 - group: RegistryVariables
 
 - name: serviceName
-  value: 'techhubinforetrieval'
+  value: 'techhubgenaiinforetrieval'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
 - name:  vmImageName

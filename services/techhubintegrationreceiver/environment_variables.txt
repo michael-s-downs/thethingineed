@@ -1,0 +1,22 @@
+### This code is property of the GGAO ###
+
+
+INTEGRATION_NAME=search
+TENANT=develop
+LOG_LEVEL=INFO
+DEBUG_TENANTS=test, develop
+PROVIDER=azure
+AWS_ACCESS_KEY=
+AWS_SECRET_KEY=
+AZ_CONN_STR_QUEUE=
+AZ_CONN_STR_STORAGE=
+STORAGE_DATA=uhis-cdac-develop--data
+STORAGE_BACKEND=uhis-cdac-develop--backend
+STORAGE_CONFIG_FOLDER=src/integration/{integration_name}/
+STORAGE_RESULTS_FOLDER=results/{integration_name}/
+STORAGE_PERSIST_FOLDER=current_requests/{integration_name}/
+STORAGE_PERSIST_REQUEST=False
+STORAGE_DELETE_REQUEST=True
+LOCAL_COMMON_PATH=../common
+INTEGRATION_QUEUE_URL=uhis-cdac-develop--q-integration-sender
+VECTOR_STORAGE=elastic-develop

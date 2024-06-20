@@ -1,0 +1,16 @@
+{
+  "default_ocr": "aws-ocr",
+  "custom_functions":
+  {
+    "validate_input": "input_validations.validate_input_knowler_queue",
+    "adapt_input": "io_adaptations.adapt_input_knowler_queue",
+    "adapt_output": "io_adaptations.adapt_output_knowler_queue",
+    "indexing": "dolffia_calls.indexing",
+    "infodelete": "custom_operations.infodelete_sync",
+    "response_async": "response_calls.response_queue_default",
+    "init_logic": "custom_operations.send_tracking_input",
+    "finally_logic": "custom_operations.send_tracking_output",
+    "error_logic": "custom_operations.no_timeout_response"
+  },
+  "pipeline": []
+}

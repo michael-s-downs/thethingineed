@@ -1,0 +1,59 @@
+{
+    "process_type": "predict",
+    "project_type": "text",
+    "classification_type": "predict_multilabel",
+    "languages": ["*"],
+    "origins": {},
+    "dataset_conf": {
+        "dataset_path": "",
+        "dataset_csv_path": "",
+        "path_col": "Url",
+        "label_col": "CategoryId",
+        "margin_balanced": 35,
+        "multilabel_conf": {
+            "hierarchical_category_tree": "",
+            "symbol": null,
+            "mode": "tree",
+            "model_queries": {
+                "model_pass": {
+                    "positive": [
+                        "symbol",
+                        "+",
+                        "offspring"
+                    ],
+                    "negative": [
+                        "parents",
+                        "+",
+                        "brothers",
+                        "-",
+                        "symbol",
+                        "-",
+                        "offspring"
+                    ]
+                },
+                "model_belong": {
+                    "positive": [
+                        "symbol"
+                    ],
+                    "negative": [
+                        "offspring",
+                        "-",
+                        "symbol",
+                        "+",
+                        "brothers",
+                        "+",
+                        "parents"
+                    ]
+                }
+            }
+        }
+    },
+    "predict_conf": {
+        "threshold_pass": 0.9,
+        "top_classes": 10,
+        "tree_conf": {
+            "tree_id": "",
+            "tree_path": ""
+        }
+    }
+}

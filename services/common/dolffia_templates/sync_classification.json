@@ -1,0 +1,10 @@
+{
+    "project_type": "text",
+    "language": "*",
+    "model": "",
+    "batch_length": 500,
+    "top_classes": 1,
+    "threshold": 0.7,
+    "preprocess": false,
+    "force_ocr": true
+}

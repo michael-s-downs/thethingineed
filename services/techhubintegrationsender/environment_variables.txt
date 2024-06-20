@@ -1,0 +1,35 @@
+### This code is property of the GGAO ###
+
+
+INTEGRATION_NAME=search
+TENANT=develop
+LOG_LEVEL=INFO
+DEBUG_TENANTS=test, develop
+PROVIDER=azure
+AWS_ACCESS_KEY=
+AWS_SECRET_KEY=
+AZ_CONN_STR_QUEUE=
+AZ_CONN_STR_STORAGE=
+STORAGE_DATA=uhis-cdac-develop--data
+STORAGE_BACKEND=uhis-cdac-develop--backend
+STORAGE_CONFIG_FOLDER=src/integration/{integration_name}/
+STORAGE_RESULTS_FOLDER=results/{integration_name}/
+STORAGE_PERSIST_FOLDER=current_requests/{integration_name}/
+STORAGE_PERSIST_REQUEST=False
+STORAGE_DELETE_REQUEST=True
+LOCAL_COMMON_PATH=../common
+INTEGRATION_QUEUE_URL=uhis-cdac-develop--q-integration-sender
+DOLFFIA_QUEUE_PROCESS_URL=uhis-cdac-develop--q-preprocess-start
+DOLFFIA_QUEUE_DELETE_URL=uhis-cdac-develop--q-flowmgmt-infodelete
+DOLFFIA_ASYNC_PROCESS_URL=http://localhost:8880/uhis_proxy
+DOLFFIA_ASYNC_STATUS_URL=http://localhost:8880/status
+DOLFFIA_ASYNC_RESULT_URL=http://localhost:8880/info
+DOLFFIA_ASYNC_DELETE_URL=http://localhost:8880/delete
+REQUEST_FLOW_TIMEOUT=60
+REQUEST_INTERNAL_TIMEOUT=1440
+VECTOR_STORAGE=elastic-develop
+QUEUE_DELETE_ON_READ=True
+#DEFAULT_PROFILE=knowler_queue
+#DATA_MOUNT_PATH=mnt/
+#TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
+#TRACKING_OUTPUT_URL=uhis-cdac-develop--q-all-tracking

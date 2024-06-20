@@ -1,0 +1,22 @@
+{
+    "process_type": "predict", 
+    "project_type": "text",
+    "force_ocr": true,
+    "classification_type": "predict_multiclass",
+    "languages": ["*"],
+    "origins": {},
+    "dataset_conf": {
+        "dataset_path": "",
+        "dataset_csv_path": "",
+        "path_col": "Url",
+        "label_col": "CategoryId"
+    },
+    "predict_conf": {
+        "batch_length": 500,
+        "models": {
+            "text": ""
+        },
+        "top_classes": 1,
+        "threshold": 0.7 
+    }
+}
