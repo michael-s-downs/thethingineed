@@ -1,3 +1,3 @@
 output "sb_primary_connection_string" {
-  value = azurerm_servicebus_namespace_authorization_rule.azure_service_bus_namespace_authorization_rule.primary_connection_string
+  value = data.azurerm_servicebus_namespace_authorization_rule.default.primary_connection_string
 }
