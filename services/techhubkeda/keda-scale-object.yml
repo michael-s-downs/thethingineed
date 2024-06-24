@@ -13,7 +13,7 @@ spec:
   triggers:
     - type: #{KEDA_TYPE}#
       metadata:
-        queueName: #{NAMESPACE}#--q-#{NAME}#
+        queueName: #{NAMESPACE}#--q-#{NAME_QUEUE}#
         messageCount: #{MSG_COUNT}#
       authenticationRef:
         name: #{KEDA_AUTH_NAME}#
