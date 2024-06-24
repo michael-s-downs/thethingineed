@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: #{NAME}#--keda
+  namespace: #{NAMESPACE}#
+spec:
+  scaleTargetRef:
+    name: #{NAME}#
+  minReplicaCount: #{MIN_REPLICAS}#
+  maxReplicaCount: #{MAX_REPLICAS}#
+  pollingInterval: 10
+  cooldownPeriod: 30
+  triggers:
+    - type: #{KEDA_TYPE}#
+      metadata:
+        queueName: #{NAMESPACE}#--q-#{NAME}#
+        messageCount: '50'
+      authenticationRef:
+        name: #{KEDA_AUTH_NAME}#
