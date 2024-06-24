@@ -1,5 +1,5 @@
 {
-  "default_ocr": "aws-ocr",
+  "default_ocr": "azure-ocr",
   "custom_functions":
   {
     "validate_input": "input_validations.validate_input_knowler_queue",
