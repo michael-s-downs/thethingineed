@@ -90,3 +90,12 @@ aws-value:
 redis-value:
 models-value:
 vector-storage-value:
+# Evaluation
+evaluation:
+  secrets_path:
+  evaluation_queue_url:
+# Evaluation orchestrator
+orchestrator:
+  default_engine:
+  langufe_host:
+  storage_config_folder:

@@ -14,3 +14,5 @@ data:
 {{- include "indexing" . | indent 2 }}
 {{- include "checktimeout" . | indent 2 }}
 {{- include "apigw" . | indent 2 }}
+{{- include "evaluation" . | indent 2 }}
+{{- include "orchestrator" . | indent 2 }}

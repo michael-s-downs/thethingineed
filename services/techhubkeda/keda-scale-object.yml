@@ -14,6 +14,6 @@ spec:
     - type: #{KEDA_TYPE}#
       metadata:
         queueName: #{NAMESPACE}#--q-#{NAME}#
-        messageCount: '50'
+        messageCount: #{MSG_COUNT}#
       authenticationRef:
         name: #{KEDA_AUTH_NAME}#

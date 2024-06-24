@@ -140,6 +140,26 @@ heritage: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
+{{/*Create variables for evaluation.*/}}
+{{- define "evaluation" -}}
+{{- $evaluation := .Values.evalutaion | default dict -}}
+{{- range $key,$value := $evaluation }}
+{{- if $value }}
+{{ $key | upper }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*Create variables for evaluation.*/}}
+{{- define "orchestrator" -}}
+{{- $orchestrator := .Values.orchestrator | default dict -}}
+{{- range $key,$value := $orchestrator }}
+{{- if $value }}
+{{ $key | upper }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{/*Generate the imagePullSecret for a private Container Registry.*/}}
 {{- define "imagePullSecret" }}
 {{- with .Values.image }}
