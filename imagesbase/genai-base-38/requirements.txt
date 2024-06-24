@@ -1,0 +1,26 @@
+### This code is property of the GGAO ###
+
+
+MarkupSafe>=1.1.1
+itsdangerous==2.0.1 # Flask version problem
+google-api-core[grpc]<2.0.0dev,>=1.6.0
+googleapis-common-protos==1.52.0
+google-auth==1.26.0
+flask==1.1.2
+Jinja2<3.1.0
+requests==2.26.0
+rapidfuzz==2.0.15
+jsonschema==3.0.2
+flask-restx==0.1.1
+Werkzeug==0.16.1
+importlib_metadata<2.0.0,>=1.7.0
+spaczz==0.6.0
+textdistance==4.2.1
+python-magic==0.4.27
+natsort==8.4.0
+langdetect==1.0.7
+elasticsearch==7.17.9
+pydantic==1.10.8
+numpy==1.19.5
+tiktoken==0.4.0
+farm-haystack==1.15.1

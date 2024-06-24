@@ -1,0 +1,9 @@
+### This code is property of the GGAO ###
+
+
+mode: Mainline
+next-version: X.X.X 
+branches:
+  master:
+    regex: ^master
+    tag: ''

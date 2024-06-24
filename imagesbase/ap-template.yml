@@ -1,0 +1,101 @@
+### This code is property of the GGAO ###
+
+
+# This templating with multiple pipelines and their triggering is needed until we can know what resource initiates/triggers the pipeline
+# https://github.com/MicrosoftDocs/azure-devops-docs/issues/3398#issuecomment-596299643
+parameters:
+- name: imageName
+  default: ''
+  type: string
+- name: defaultWorkingDirectory
+  default: ''
+  type: string
+- name: sourcesDirectory
+  default: ''
+  type: string
+- name: tag
+  default: ''
+  type: string
+- name: pythonVersion
+  default: '3.8'
+  type: string
+- name: libraryFeed
+  default: ''
+  type: string
+- name: libraryVersion
+  default: ''
+  type: string
+- name: registryServerName
+  default: ''
+  type: string
+- name: acrRegistryLogin
+  default: ''
+  type: string
+- name: acrRegistryPassword
+  default: ''
+  type: string
+
+
+steps:
+
+# Add versioning of git
+- task: gitversion/setup@0
+  inputs:
+    versionSpec: '5.3.x'
+  displayName: Install GitTools
+
+# Clean disk space
+- script: df -h
+  displayName: Disk space before
+- script: docker rmi -f $(docker images -aq)
+  displayName: Clean disk space
+- script: df -h
+  displayName: Disk space after
+
+# Authenticate with feed
+- task: PipAuthenticate@1
+  inputs:
+    artifactFeeds: '${{ parameters.libraryFeed }}'
+    onlyAddExtraIndex: true
+  displayName: Authenticate with feed
+
+# Use python to compile
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '${{ parameters.pythonVersion }}'
+  displayName: Use Python ${{ parameters.pythonVersion }}
+
+# Update pip
+- script: pip install --upgrade pip
+  displayName: Upgrade PIP
+
+# Install requirements
+- script: pip download genai-sdk-services==${{ parameters.libraryVersion }} -d ${{ parameters.defaultWorkingDirectory }}/pypackages
+  displayName: Install requirements
+  condition: succeeded()
+
+# Login with ACR
+- bash: docker login '${{ parameters.registryServerName }}' -u '${{ parameters.acrRegistryLogin }}' -p '${{ parameters.acrRegistryPassword }}'
+  displayName: Login with ACR
+
+# Create image docker
+- bash: docker build -f '${{ parameters.sourcesDirectory }}/Dockerfile' --build-arg 'python_version=${{ parameters.pythonVersion }}' -t '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
+  displayName: Build image
+
+# Push image docker with tag numeric
+- bash: docker push '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}'
+  displayName: Push image (${{ parameters.tag }})
+
+# Tag and push image docker with tag dev
+- bash: |
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.imageName }}:dev'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.imageName }}:dev'
+  displayName: Tag and Push image (dev)
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+
+# Tag and push image docker with tag latest
+- bash: |
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.imageName }}:latest'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.imageName }}:latest'
+  displayName: Tag and Push image (latest)
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
