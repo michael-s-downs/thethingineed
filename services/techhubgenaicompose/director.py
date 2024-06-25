@@ -1,10 +1,9 @@
 ### This code is property of the GGAO ###
 
-
-from copy import deepcopy
+import os
+import glob
 import json
 import re
-from string import Template
 from basemanager import AbstractManager
 from compose.streambatch import StreamBatch
 from pcutils.persist import PersistDict
@@ -27,8 +26,21 @@ class Director(AbstractManager):
         self.actions_manager : ActionsManager = None
         self.output_manager : OutputManager = None
         self.PD = PersistDict()
+        self.load_secrets()
         self.logger.debug("Director created")
 
+    def load_secrets(self) -> None:
+        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
+
+        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
+            try:
+                self.logger.debug(f"Loading secret '{secret_path}'")
+                secret = json.loads(open(secret_path, "r").read())
+
+                for envvar in secret:
+                    os.environ[envvar] = secret[envvar]
+            except:
+                self.logger.warning(f"Unable to load secret '{secret_path}'")
 
     def get_output(self):
         """Gets the output from the API call
@@ -40,10 +52,12 @@ class Director(AbstractManager):
             'streambatch': self.sb.to_list_serializable(),
         }
         self.output_manager.get_answer(output, self.sb)
+        self.conf_manager.langfuse_m.update_output(output.get('answer', ''))
         self.output_manager.get_scores(output, self.sb)
         self.output_manager.get_lang(output, self.conf_manager.lang)
         self.output_manager.get_n_conversation(output, self.PD.get_conversation(self.conf_manager.session_id))
         self.output_manager.get_n_retrieval(output, self.sb)
+        self.conf_manager.langfuse_m.flush()
         return output
 
 
@@ -61,10 +75,12 @@ class Director(AbstractManager):
         self.actions_manager.parse_input(self.conf_manager.clear_quotes)
         self.run_actions()
         self.filter_result()
+        self.output_manager = OutputManager(self.compose_conf)
+        output = self.get_output()
         if self.conf_manager.persist_m:
             self.PD.save_to_redis(self.conf_manager.session_id, self.conf_manager.headers['x-tenant'])
-        self.output_manager = OutputManager(self.compose_conf)
-        return self.get_output()
+
+        return output
 
     
     def filter_result(self):
@@ -105,7 +121,7 @@ class Director(AbstractManager):
             action_function = function_map.get(action)
 
             if not action_function:
-                raise self.raise_Dolffiaerror(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
+                raise self.raise_PrintableDolffiaerror(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
             ap = action_params.get('params', {})
 
             if action_function == self.sb.llm_action:
@@ -114,8 +130,67 @@ class Director(AbstractManager):
                 ap["query_type"] = self.conf_manager.template_m.query_type
                 ap["llm_action"] = self.conf_manager.template_m.llm_action
 
+            langfuse_sg = self.add_start_to_trace(action, ap)
             action_function(action_params['type'], ap if ap else {})
+            self.add_end_to_trace(action, langfuse_sg)
             self.logger.info(f"Action: {action} executed")
+
+
+    def add_start_to_trace(self, action_name, action_params):
+        """
+        Adds a start action to the trace.
+
+        Args:
+            action_name (str): The name of the action.
+            action_params (dict): The parameters of the action.
+
+        Returns:
+            dict: The generated trace action.
+
+        Raises:
+            KeyError: If the action_name is not supported.
+
+        """
+        action_params = action_params.copy()
+        if action_name in ["llm_action", "retrieve"]:
+            action_params.pop("headers_config")
+            return self.conf_manager.langfuse_m.add_generation(
+                name=action_name,
+                metadata=action_params,
+                input=self.conf_manager.template_m.query,
+                model="",
+                model_params={}
+            )
+        else:
+            return self.conf_manager.langfuse_m.add_span(
+                name=action_name,
+                metadata=action_params,
+                input=self.sb.to_list_serializable()
+            )
+        
+    
+    def add_end_to_trace(self, action_name, langfuse_sg):
+        """
+        Adds the end of a trace to the trace manager.
+
+        Args:
+            action_name (str): The name of the action.
+            langfuse_sg: The langfuse_sg object.
+
+        Returns:
+            None
+        """
+        if action_name == "llm_action":
+            self.conf_manager.langfuse_m.add_generation_output(
+                generation=langfuse_sg,
+                output=self.sb.to_list_serializable()
+            )
+        else:
+            self.conf_manager.langfuse_m.add_span_output(
+                span=langfuse_sg,
+                output=self.sb.to_list_serializable()
+            )
+    
 
     def run_conf_manager_actions(self):
         """Runs the configurations process, depending if they´ve been passed by API call
@@ -123,7 +198,7 @@ class Director(AbstractManager):
         if "compose_flow" in self.compose_conf or "template" in self.compose_conf:
             template = self.get_compose_flow()
         else:
-            raise self.raise_Dolffiaerror(404, "Compose config must have whether compose_conf or template arguments")
+            raise self.raise_PrintableDolffiaerror(404, "Compose config must have whether compose_conf or template arguments")
 
         # Set lang
         self.logger.debug(f"Setting lang: {self.conf_manager.lang} in the template")
@@ -179,19 +254,43 @@ class Director(AbstractManager):
             template = json.loads(template)
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_Dolffiaerror(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableDolffiaerror(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
-            raise self.raise_Dolffiaerror(500, ex)
+            raise self.raise_PrintableDolffiaerror(500, ex)
+        
+        self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
         filtered = False
         reformulated = False
         if self.conf_manager.filter_m and self.conf_manager.filter_m.queryfilters:
+            generation = self.conf_manager.langfuse_m.add_generation(
+                name="filter",
+                metadata={},
+                input=self.conf_manager.template_m.query,
+                model="",
+                model_params={}
+            )
             self.conf_manager.template_m.query, filtered = self.conf_manager.filter_m.run(self.conf_manager.template_m.query, self.conf_manager.headers )
             if ("search_topic" in template_params) and (len(template_params['search_topic'])==0):
                 template_params['search_topic'] = self.conf_manager.template_m.query
-        
+            self.conf_manager.langfuse_m.add_generation_output(
+                generation=generation,
+                output=self.conf_manager.template_m.query
+            )
+
         if not filtered and self.conf_manager.reformulate_m:
+            generation = self.conf_manager.langfuse_m.add_generation(
+                name="reformulate",
+                metadata={},
+                input=self.conf_manager.template_m.query,
+                model="",
+                model_params={}
+            )
             self.conf_manager.template_m.query, reformulated = self.conf_manager.reformulate_m.run(self.conf_manager.template_m.query, self.conf_manager.session_id, self.conf_manager.headers, self.PD, self.conf_manager.lang)
+            self.conf_manager.langfuse_m.add_generation_output(
+                generation=generation,
+                output=self.conf_manager.template_m.query
+            )
         
         template_params = self.conf_manager.template_m.set_params(template_params)
 
@@ -203,6 +302,6 @@ class Director(AbstractManager):
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_Dolffiaerror(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableDolffiaerror(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
-            raise self.raise_Dolffiaerror(500, ex)
+            raise self.raise_PrintableDolffiaerror(500, ex)

@@ -269,6 +269,7 @@ class BaseDeployment(ABC):
             else:
                 status_code = 200
         except PrintableDolffiaError as ex:
+            self.logger.error(ex.message)
             self.logger.error(f"[Process {dataset_status_key}] Error while processing.", exc_info=get_exc_info())
             error_message = str(ex)
             status_code = PrintableDolffiaError(ex.status_code, ex.message).status_code

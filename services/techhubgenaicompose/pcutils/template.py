@@ -2,11 +2,9 @@
 
 
 import random
-import os
 
 from common.genai_sdk_controllers import load_file, storage_containers
 from basemanager import AbstractManager
-from common.errors.dolffiaerrors import PrintableDolffiaError, DolffiaError
 
 S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
 S3_TEMPLATEPATH = "src/compose/templates"
@@ -66,7 +64,7 @@ class TemplateManager(AbstractManager):
         """
         conf = self.get_param(compose_config, "template", dict)
         if not conf:
-            self.raise_Dolffiaerror(404, "Template conf not found, trying compose_flow")
+            self.raise_PrintableDolffiaerror(404, "Template conf not found, trying compose_flow")
 
         self.name = conf.get("name")
         if not self.name:
@@ -84,8 +82,7 @@ class TemplateManager(AbstractManager):
 
         if self.query == "":
             self.query = None
-        #if not self.query:
-        #    self.raise_PrintableDolffiaerror(404, "Mandatory param <query> not found in template params")
+
         return self
     
 
@@ -181,11 +178,11 @@ class TemplateManager(AbstractManager):
                 name = random.choices(name, weights=self.probs)[0]
                 self.logger.info(f"[Process ] Chosen template: {name}")
             except Exception:
-                self.raise_Dolffiaerror(500, "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
+                self.raise_PrintableDolffiaerror(500, "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
         self.logger.debug("Template name is not string so, uploading as string...")
         try:
             self.template = load_file(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/{name}.json").decode()
             if not self.template:
-                self.raise_Dolffiaerror(404, "Compose template not found")
+                self.raise_PrintableDolffiaerror(404, "Compose template not found")
         except ValueError:
-            self.raise_Dolffiaerror(404, f"S3 config file doesn't exists for name {name}")
+            self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {name}")

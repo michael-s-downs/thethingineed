@@ -25,7 +25,7 @@ class DeletionAPI:
         self.ir_models = {}
 
     def load_secrets(self):
-        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage", "vector_storage_config.json")
+        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector_storage", "vector_storage_config.json")
 
         # Load vector storages credentials
         if os.path.exists(vector_storages_path):

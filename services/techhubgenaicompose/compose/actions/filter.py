@@ -10,7 +10,7 @@ from copy import deepcopy
 from typing import List, Dict
 from abc import abstractmethod, ABC
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 from ..utils.defaults import FILTER_TEMPLATE
 from dateutil.parser import parse
 
@@ -131,7 +131,7 @@ class PermissionFilter(FilterMethod):
                 else:
                     # If the request was not successful, raise an exception
                     response_text = await response.text()
-                    raise DolffiaError(status_code=response.status, message=response_text)
+                    raise PrintableDolffiaError(status_code=response.status, message=response_text)
 
     def update_params(self, params):
         """Updates the template and the headers in order to make the call
@@ -285,7 +285,7 @@ class MetadataFilter(FilterMethod):
         """
         for key, value in sub_filter.items():
             if value[0] not in metadata:
-                raise DolffiaError(status_code=404, message=f"Metadata key {value[0]} does not exist")
+                raise PrintableDolffiaError(status_code=404, message=f"Metadata key {value[0]} does not exist")
 
             if key == "eq":
                 if metadata.get(value[0]) == value[1]:
@@ -323,7 +323,7 @@ class MetadataFilter(FilterMethod):
                 if metadata_date < received_date:
                     return True
             else:
-                raise DolffiaError(status_code=500, message=f"Dictionary must have only eq, gt, lt, in, metaintext or textinmeta in keys. See example {self._get_example()}")
+                raise PrintableDolffiaError(status_code=500, message=f"Dictionary must have only eq, gt, lt, in, metaintext or textinmeta in keys. See example {self._get_example()}")
             return False
 
     def metadata_to_datetime(self, value):
@@ -341,7 +341,7 @@ class MetadataFilter(FilterMethod):
         try:
             return parse(value)
         except Exception as ex:
-            raise DolffiaError(status_code=500, message=f" Error: {ex}.\n Date format not valid.")
+            raise PrintableDolffiaError(status_code=500, message=f" Error: {ex}.\n Date format not valid.")
 
     def operator(self, a, b, operator):
         """Apply the operator to the two boolean values.
@@ -362,7 +362,7 @@ class MetadataFilter(FilterMethod):
         elif operator == "or":
             return a or b
         else:
-            raise DolffiaError(status_code=500, message=f"Operator must be 'and' or 'or'. See example {self._get_example()}")
+            raise PrintableDolffiaError(status_code=500, message=f"Operator must be 'and' or 'or'. See example {self._get_example()}")
 
     def apply_filter(self, metadata, filter_dict, operator):
         """Apply the filter to the metadata.
@@ -391,7 +391,7 @@ class MetadataFilter(FilterMethod):
             or_subfilter = any(self.apply_subfilter(metadata, sub_filter) for sub_filter in filter_dict["or"])
             boolean = or_subfilter
         else:
-            raise DolffiaError(status_code=500, message=f"Only 'and' or 'or' keys must be defined. See example {self._get_example()}")
+            raise PrintableDolffiaError(status_code=500, message=f"Only 'and' or 'or' keys must be defined. See example {self._get_example()}")
         return boolean
 
     def filter_data(self, filter_dict, operator):
@@ -467,7 +467,7 @@ class FilterFactory:
                 break
 
         if self.filtermethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
 
     def process(self, streamlist: list, params: dict):
         """Process the streamlist with the given method

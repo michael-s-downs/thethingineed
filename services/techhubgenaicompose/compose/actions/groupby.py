@@ -7,7 +7,7 @@ from statistics import mean
 from collections import defaultdict
 from abc import abstractmethod, ABC
 from typing import List, Dict
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 
 
 class GroupByMethod(ABC):
@@ -111,7 +111,7 @@ class GroupByDoc(GroupByMethod):
         elif method == "mean":
             method = mean
         else:
-            raise DolffiaError(404, "Groupby sorting method not found, try max or mean")
+            raise PrintableDolffiaError(404, "Groupby sorting method not found, try max or mean")
 
         grouped_dict = defaultdict(list)
         group_score = {}
@@ -212,7 +212,7 @@ class GroupByFactory:
                 break
 
         if self.groupbymethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}")
 
     def process(self, streamlist: list, params):
         """Process the streamlist with the given params

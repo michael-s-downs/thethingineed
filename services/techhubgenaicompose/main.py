@@ -12,7 +12,7 @@ from flask import Flask, request
 from common.deployment_utils import BaseDeployment
 from common.genai_sdk_controllers import storage_containers, db_dbs, set_storage, set_db
 from common.dolffia_json_parser import *
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 from common.services import GENAI_COMPOSE_SERVICE
 from common.dolffia_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.dolffia_status_control import update_status
@@ -45,7 +45,7 @@ class ComposeDeployment(BaseDeployment):
 
         :param : Json input of Dolffia processes
         """
-        self.logger.info(f"Request received")
+        self.logger.info("Request received")
         try:
             generic = get_generic(json_input)
             dataset_status_key = get_dataset_status_key(json_input)
@@ -60,7 +60,7 @@ class ComposeDeployment(BaseDeployment):
             }
 
         except KeyError as ex:
-            raise DolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
+            raise PrintableDolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
         except Exception as ex:
             raise ex
 
@@ -76,7 +76,7 @@ class ComposeDeployment(BaseDeployment):
 
         :param : Json input of Dolffia processes
         """
-        self.logger.info(f"REDIS Request received")
+        self.logger.info("REDIS Request received")
         try:
             project_conf = json_input.get('project_conf')
             apigw_params = {
@@ -88,7 +88,7 @@ class ComposeDeployment(BaseDeployment):
             }
 
         except KeyError as ex:
-            raise DolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
+            raise PrintableDolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
         except Exception as ex:
             raise ex
 

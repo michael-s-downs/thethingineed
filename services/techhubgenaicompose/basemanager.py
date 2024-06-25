@@ -24,7 +24,7 @@ class AbstractManager(ABC):
         """
         param_value = defaults_dict.get(param_name, "param_not_found_123")
         if param_value is "param_not_found_123":
-            self.raise_Dolffiaerror(404, f"Default param not found. Key: <{param_name}>")
+            self.raise_PrintableDolffiaerror(404, f"Default param not found. Key: <{param_name}>")
 
         self.logger.debug(f"Param <{param_name}> set to default value: <{param_value}>")
         return param_value

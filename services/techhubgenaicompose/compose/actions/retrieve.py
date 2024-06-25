@@ -7,7 +7,7 @@ import requests
 from copy import deepcopy
 from abc import abstractmethod, ABC
 from typing import List, Dict, Union
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 
 
 class RetrieveMethod(ABC):
@@ -133,21 +133,28 @@ class DolffiaRetriever(RetrieveMethod):
 
         try:
             if template['generic']['index_conf']['query'] == "":
-                raise DolffiaError(status_code=400, message="Query is empty, cannot retrieve")
+                raise PrintableDolffiaError(status_code=400, message="Query is empty, cannot retrieve")
         except KeyError:
-                raise DolffiaError(status_code=400, message="Query not found in the template, cannot retrieve")
+                raise PrintableDolffiaError(status_code=400, message="Query not found in the template, cannot retrieve")
 
         response = requests.post(self.URL, json=template, headers=headers, verify=False)
         if response.status_code != 200:
-            raise DolffiaError(status_code=response.status_code, message=str(response.content))
+            raise PrintableDolffiaError(status_code=response.status_code, message=f"Error from genai-inforetrieval: {response.content}")
 
         docs = response.json()['result']['docs']
-        return [{
+        response_docs =  [{
             "content": doc['content'],
             "meta": {key: value for key, value in doc['meta'].items() if not (key.startswith("_") or key.endswith("--score"))},
             "scores": {key: doc['meta'][key] for key in doc['meta'] if key.endswith("--score")},
             "answer": doc.get("answer")
         } for doc in docs]
+
+        if response_docs == []:
+            raise PrintableDolffiaError(status_code=404, message="Error after calling retrieval. NO documents found")
+        else:
+            return response_docs
+        
+    
 
     def _get_example(self) -> Dict:
         """
@@ -187,15 +194,22 @@ class DocumentsRetriever(RetrieveMethod):
 
         response = requests.post(self.URL, json=self.params, headers=headers, verify=False)
         if response.status_code != 200:
-            raise DolffiaError(status_code=response.status_code, message=str(response.content))
+            raise PrintableDolffiaError(status_code=response.status_code, message=f"Error from Retrieval: {response.content}")
 
         docs = response.json()['result']['docs']
-        return [{
+        sls = [{
             "content": doc['content'],
             "meta": {key: value for key, value in doc['meta'].items() if not (key.startswith("_") or key.endswith("--score"))},
             "scores": {key: doc['meta'][key] for key in doc['meta'] if key.endswith("--score")},
             "answer": doc.get("answer")
         } for doc in docs]
+
+        chunks_content = []
+        for chunk in sls:
+            chunks_content.append(chunk.get('content'))
+            chunks_content.append("\n \n")
+        merged_sl = [{'content': " ".join(chunks_content), 'meta': {}, 'scores': {}, 'answer':""}]
+        return merged_sl
 
     def _get_example(self) -> Dict:
         """
@@ -234,7 +248,7 @@ class RetrieverFactory:
                 break
 
         if self.retrievermethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided retriever type does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided retriever type does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
 
     def process(self, params: dict):
         """

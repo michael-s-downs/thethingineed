@@ -18,10 +18,6 @@ class MergeBatchMethod:
         Args:
             streambatch (list): StreamBatch
         """
-        for streamlist in streambatch:
-            if len(streamlist) > 1:
-                raise DolffiaError(status_code=500, message=f"All the streamlists must be of length one. Try a filter or merge method first")
-
         self.streambatch = streambatch
 
     def process(self) -> List:
@@ -34,13 +30,17 @@ class AddMergeBatch(MergeBatchMethod):
     TYPE = "add"
 
     def process(self, SEQ:str = "\n"):
-        """Process the streambatch given the method
+        """Process the streambatch transforming it into one streamlist with no-repeated chunks
         """
-        es = deepcopy(EMPTY_STREAM)
-        es.update({
-             "content": SEQ.join([StreamList.streamlist[0].content for StreamList in self.streambatch])
-        })
-        return StreamList().retrieve("streamlist",  {"streamlist": [es]})
+        sl_add = StreamList()
+        chunks_id = []
+        for sl in self.streambatch:
+            for chunk in sl.streamlist:
+                if chunk.meta.get('snippet_id') in chunks_id:
+                    continue
+                sl_add.append(chunk)
+                chunks_id.append(chunk.meta.get('snippet_id'))
+        return sl_add
 
 
 class MergeBatchFactory:

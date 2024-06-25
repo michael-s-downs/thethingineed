@@ -5,7 +5,7 @@ import json
 from dateutil.parser import parse
 from abc import abstractmethod, ABC
 from typing import List, Dict
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 
 
 class SortMethod(ABC):
@@ -313,7 +313,7 @@ class SortFactory:
                 break
 
         if self.sortmethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided sorting method does not match any of the possible ones: {', '.join(f.TYPE for f in self.SORTS)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided sorting method does not match any of the possible ones: {', '.join(f.TYPE for f in self.SORTS)}")
 
     def process(self, streamlist: list, params):
         """

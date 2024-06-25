@@ -501,8 +501,10 @@ def healthcheck() -> Dict:
 def get_available_models() -> Tuple[str, int]:
     dat = request.get_json(force=True)
 
-    model_type_filter = dat.get('model_type')
-    model_pool_filter = dat.get('model_pool')
+    model_type_filter = dat.get('model_type', [])
+    model_pool_filter = dat.get('model_pool', [])
+    if isinstance(model_type_filter, str): model_type_filter = [model_type_filter]
+    if isinstance(model_pool_filter, str): model_pool_filter = [model_pool_filter]
 
     temp_models = {}
     models = {}
@@ -512,22 +514,21 @@ def get_available_models() -> Tuple[str, int]:
     for platform in available_models:
         temp_models[platform] = []
         for model_info in available_models[platform]:
-            if (not model_type_filter or model_info["model_type"] == model_type_filter) and \
-                    (not model_pool_filter or model_pool_filter in model_info.get("model_pool", [])):
-                model_name = model_info["model"]
+            common_pool = [pool for pool in model_info.get("model_pool", []) if pool in model_pool_filter]
+            model_name = model_info["model"]
+            if (platform in model_type_filter) or (model_type_filter == ['']) or (model_pool_filter == ['']):
                 temp_models[platform].append(model_name)
-                if model_info.get("model_pool"):
-                    for pool_name in model_info["model_pool"]:
-                        if not model_pool_filter or pool_name == model_pool_filter:
-                            if pool_name not in pools:
-                                pools[pool_name] = []
-                            pools[pool_name].append(model_name)
+            if len(common_pool) != 0:
+                for pool_name in common_pool:
+                    if not pools.get(pool_name, None):
+                        pools[pool_name] = [model_name]
+                    else:
+                        pools[pool_name].append(model_name)
         if temp_models[platform]:
             models[platform] = temp_models[platform]
 
-    if not model_pool_filter:
-        result = json.dumps({"models": models, "pools": pools}), 200
-
+    if (not model_pool_filter) or (model_pool_filter == ['']):
+        result = json.dumps({"models": models}), 200
     else:
         result = json.dumps({"pools": pools}), 200
 

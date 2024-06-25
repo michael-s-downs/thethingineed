@@ -7,7 +7,7 @@ from datetime import datetime
 
 # Custom imports
 from basemanager import AbstractManager
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 from common.dolffia_status_control import get_value, update_status
 from common.genai_sdk_controllers import db_dbs
 
@@ -127,7 +127,7 @@ class PersistDict():
         try:
             redis_session = get_value(self.REDIS_ORIGIN,f"session:{tenant}:{session_id}", format_json=False)[0]['values']
         except Exception as ex:
-            raise DolffiaError(status_code=500, message=f"{ex}. \nError getting session from redis.")
+            raise PrintableDolffiaError(status_code=500, message=f"{ex}. \nError getting session from redis.")
     
         if redis_session:
             redis_session = json.loads(redis_session.decode())
@@ -140,7 +140,8 @@ class PersistDict():
             if not conv.is_response(): 
                 return
 
-            update_status(self.REDIS_ORIGIN,f"session:{tenant}:{session_id}",
+            update_status(
+                self.REDIS_ORIGIN,f"session:{tenant}:{session_id}",
                  json.dumps(
                     {"conv": self.get_conversation(session_id), 
                     "max_persistence": self.PD[session_id].max_persistence, 
@@ -149,12 +150,13 @@ class PersistDict():
                     }
                  )
             )
+            self.PD.clear()
         except Exception as ex:
-            raise DolffiaError(status_code=500, message=f"{ex}. \nError saving session to redis.")
+            raise PrintableDolffiaError(status_code=500, message=f"{ex}. \nError saving session to redis.")
             
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise DolffiaError(status_code=500, message="Session id must be a string")
+            raise PrintableDolffiaError(status_code=500, message="Session id must be a string")
         return self.PD.__getitem__(key)
 
     def get_conversation(self, session_id:str):
@@ -226,7 +228,7 @@ class Conversation(list):
             persistence (dict): Persistence data to be added.
         """
         if not isinstance(persistence, dict):
-            raise DolffiaError(status_code=500, message="Persistence must be a dict")
+            raise PrintableDolffiaError(status_code=500, message="Persistence must be a dict")
         self.append(persistence)
 
         if self.max_persistence is not None and len(self) > self.max_persistence:
@@ -240,7 +242,7 @@ class Conversation(list):
             persistence (dict): New persistence data to replace the old one.
         """
         if not isinstance(persistence, dict):
-            raise DolffiaError(status_code=500, message="Persistence must be a dict")
+            raise PrintableDolffiaError(status_code=500, message="Persistence must be a dict")
         self[-1] = persistence
 
     def remove_last(self):

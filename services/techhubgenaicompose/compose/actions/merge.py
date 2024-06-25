@@ -10,7 +10,7 @@ from abc import abstractmethod, ABC
 
 from compose.utils.defaults import EMPTY_STREAM
 from common.genai_sdk_controllers import load_file, storage_containers
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 from ..streamchunk import StreamChunk
 
 S3_PATH = "src/compose/templates"
@@ -140,9 +140,9 @@ class MetaMerge(MergeMethod):
             try:
                 template = load_file(storage_containers['workspace'], f"{S3_PATH}/{template}.json").decode()
                 if not template:
-                    raise DolffiaError(400, "Template empty")
+                    raise PrintableDolffiaError(400, "Template empty")
             except ValueError:
-                raise DolffiaError(
+                raise PrintableDolffiaError(
                     404, f"S3 config file doesn't exist for name {template}"
                 )
 
@@ -152,31 +152,53 @@ class MetaMerge(MergeMethod):
 
         #Group new contents by the grouping key from each chunk so the result is N groups of chunks with its content merged
         if grouping_key:
-            group_keys = set([sc.get(grouping_key) for sc in self.streamlist])
+            group_keys = list(dict.fromkeys([sc.get(grouping_key) for sc in self.streamlist]))
             content_groups = []
+            common_metadata = []
             for group_k in group_keys:
                 group = []
+                metadata_group = []
                 for sc in self.streamlist:
                     if sc.get(grouping_key) == group_k:
                         fields_dict = {field: sc.get(field) for field in fields}
+                        grouping_value = fields_dict.pop(grouping_key, None)
+                        if grouping_value and grouping_key in template:
+                            group.insert(0, f"{grouping_key}: {grouping_value}")
+                            template = template.replace(f"${grouping_key}", "")
                         group.append(Template(template=template).substitute(fields_dict))
-                content_groups.append(group)
+                        metadata_group.append(sc.meta)
 
+                common_pairs = metadata_group[0].copy()
+                for d in metadata_group[1:]:
+                    common_pairs = {k: v for k, v in common_pairs.items() if k in d and d[k] == v}
+                
+                content_groups.append(group)
+                common_metadata.append(common_pairs)
+            
             return [
                 StreamChunk(
-                    {"content": sep.join(group), "meta": {}, "scores": {}, "answer": ""}
+                    {"content": sep.join(group), "meta": meta_group, "scores": {}, "answer": ""}
                 )
-                for group in content_groups
+                for group, meta_group in zip(content_groups, common_metadata)
             ]
 
-            
+        metadata_group = []
         for sc in self.streamlist:
             fields_dict = {field: sc.get(field) for field in fields}
+            grouping_value = fields_dict.pop(grouping_key, None)
+            if grouping_value:
+                new_contents.insert(0, f"{grouping_key}: {grouping_value}")
+
             new_contents.append(Template(template=template).substitute(fields_dict))
+            metadata_group.append(sc.meta)
+
+        common_pairs = metadata_group[0].copy()
+        for d in metadata_group[1:]:
+            common_pairs = {k: v for k, v in common_pairs.items() if k in d and d[k] == v}
 
         return [
             StreamChunk(
-                {"content": sep.join(new_contents), "meta": {}, "scores": {}, "answer": ""}
+                {"content": sep.join(new_contents), "meta": common_pairs, "scores": {}, "answer": ""}
             )
         ]
 
@@ -215,7 +237,7 @@ class MergeFactory:
                 break
 
         if self.mergemethod is None:
-            raise DolffiaError(
+            raise PrintableDolffiaError(
                 status_code=404,
                 message=f"Provided merge does not match any of the possible ones: {', '.join(f.TYPE for f in self.MERGES)}",
             )

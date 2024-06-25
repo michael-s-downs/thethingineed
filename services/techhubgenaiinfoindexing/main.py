@@ -12,8 +12,8 @@ import os
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
 from common.genai_sdk_controllers import upload_object
+from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
 from common.services import GENAI_INFO_INDEXING_SERVICE, FLOWMGMT_CHECKEND_SERVICE
 from common.ir import INDEX_S3
 from common.dolffia_json_parser import get_exc_info, get_specific, get_dataset_status_key
@@ -67,7 +67,7 @@ class InfoIndexationDeployment(BaseDeployment):
 
     def load_secrets(self):
         models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage", "vector_storage_config.json")
+        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector_storage", "vector_storage_config.json")
 
         # Load models credentials
         if os.path.exists(models_keys_path):
@@ -123,6 +123,7 @@ class InfoIndexationDeployment(BaseDeployment):
 
     def process(self, json_input: dict):
         self.logger.info("Starting process")
+        self.logger.debug(f"Data entry: {json_input}")
         try:
             input_object = ManagerParser().get_parsed_object({'type': "infoindexing", 'json_input': json_input,
                                                              'available_pools': self.available_pools,

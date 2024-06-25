@@ -3,8 +3,6 @@
 
 import random
 import string
-from flask import session
-import langdetect
 from datetime import datetime
 from copy import deepcopy
 
@@ -13,6 +11,7 @@ from pcutils.filters import FilterManager
 from pcutils.reformulate import ReformulateManager
 from pcutils.persist import PersistManager
 from pcutils.template import TemplateManager
+from langfusemanager import LangFuseManager
 from common.preprocess.preprocess_utils import get_language
 
 
@@ -38,6 +37,7 @@ class ConfManager(AbstractManager):
         self.filter_m = None
         self.lang = None
         self.reformulate_m = None
+        self.langfuse_m = None
         self.parse_conf_actions(compose_config)
 
 
@@ -56,6 +56,8 @@ class ConfManager(AbstractManager):
         self.persist_m = PersistManager().parse(compose_config)
         if self.template_m.query is not None:
             self.lang = self.parse_lang(compose_config, self.template_m.query)
+        self.langfuse_m = LangFuseManager().parse(compose_config, self.session_id)
+        self.langfuse_m.update_metadata(compose_config)
         self.logger.debug("Compose_conf parse END")
 
 

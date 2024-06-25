@@ -9,13 +9,12 @@ import aiohttp
 import requests
 from pathlib import Path
 from copy import deepcopy
-from typing import List, Dict
 from abc import abstractmethod, ABC
 
 from ..utils.defaults import SUM_TEMPLATE
 from ..streamchunk import StreamChunk
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 
 LLMP = LLMParser()
 logger = logging.getLogger("Summarize")
@@ -93,9 +92,13 @@ class LLMMethod(ABC):
         Returns:
             dict: The LLM response.
         """
-        r = requests.post(self.URL, json=template, headers=headers, verify=False)
+        try:
+            r = requests.post(self.URL, json=template, headers=headers, verify=False)
+        except Exception as ex:
+            raise PrintableDolffiaError(status_code=500, message=f"Error calling GENAI-LLMAPI: {ex}")
+
         if r.status_code != 200:
-            raise DolffiaError(status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}")
+            raise PrintableDolffiaError(status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}")
 
         return LLMP.parse_response(r)
 
@@ -241,7 +244,9 @@ class LLMSummarize(LLMMethod):
 
             if session_id:
                 persistence = {"user": template['query_metadata']['query']}
-                if result['answer']:
+                if "answer" in result:
+                    if not result["answer"]:
+                        result["answer"] = "Answer not found"
                     persistence.update({"assistant": result['answer']})
                     if isinstance(result['query_tokens'], list):
                         for i, q in enumerate(persistence['user']):
@@ -387,7 +392,7 @@ class LLMFactory:
                 break
 
         if self.llm_method is None:
-            raise DolffiaError(status_code=404, message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}")
 
     def process(self, streamlist: list, params):
         """Process the streamlist with the given method

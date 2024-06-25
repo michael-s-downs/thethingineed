@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 
 from compose.utils.defaults import FILTER_TEMPLATE
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 from common.genai_sdk_controllers import load_file, storage_containers
 from basemanager import AbstractManager
 
@@ -92,9 +92,9 @@ class FilterManager(AbstractManager):
             self.logger.info("Queryfilter template loaded")
             self.logger.info(f"Template {template}")
             if not template:
-                raise self.raise_Dolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
+                raise self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
-            raise self.raise_Dolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
+            raise self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
         return json.loads(template)
 
     def run(self, query, headers, output=False) -> dict:
@@ -130,7 +130,7 @@ class FilterManager(AbstractManager):
             elif ft == FilterGPT.TYPE: # GPT filter
                 query, aux_bool = FilterGPT(query, substitutions, substitutions_template, headers).process()
             else:
-                raise self.raise_Dolffiaerror(404, f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
+                raise self.raise_PrintableDolffiaerror(404, f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
             filtered = filtered or aux_bool
 
         query = query.strip().lower()
@@ -194,7 +194,7 @@ class FilterExactMatch(FilterQuery):
         """
         for substitution in self.substitutions:
             if not "from" in substitution or not "to" in substitution:
-                raise DolffiaError(status_code=400, message=f"Substitutions must have a from and to key. Keys: {substitution.keys()}")
+                raise PrintableDolffiaError(status_code=400, message=f"Substitutions must have a from and to key. Keys: {substitution.keys()}")
         for substitution in self.substitutions:
             if isinstance(substitution['from'], list):
                 for f in substitution['from']:
@@ -223,11 +223,11 @@ class FilterGPT(FilterQuery):
         """
         template = self.TEMPLATE
         if self.query == "" or self.query is None:
-            raise DolffiaError(status_code=400, message="Query is empty, cannot filter")
+            raise PrintableDolffiaError(status_code=400, message="Query is empty, cannot filter")
         template['query_metadata']['query'] = self.substitutions_template + "\n" + self.query
         r = requests.post(self.URL, json=template, headers=self.headers, verify=False)
         if r.status_code != 200:
-            raise DolffiaError(status_code=r.status_code, message=r.text)
+            raise PrintableDolffiaError(status_code=r.status_code, message=r.text)
 
         result  = LLMP.parse_response(r)
         answer = result['answer']

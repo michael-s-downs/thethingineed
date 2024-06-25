@@ -1,9 +1,9 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.2.1.0
 elasticsearch==7.17.9
 farm-haystack==1.15.1
+genai-sdk-services==0.2.3.2
 langdetect==1.0.9
 numpy==1.19.5
 python-magic-bin==0.4.14

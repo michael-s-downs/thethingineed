@@ -54,7 +54,24 @@ class ActionsManager(AbstractManager):
         
         self.logger.debug(f"Actions parsed: {self.actions_confs}")
         if sum(1 for a in self.actions_confs if a.get('action') == 'retrieve') < 1:
-            raise self.raise_Dolffiaerror(400, "There must be at least one \"retrieve\" conf")
+            default_retrieve_action = {
+                "action": "retrieve",
+                "action_params": {
+                    "type": "streamlist",
+                    "params": {
+                        "streamlist": [
+                            {
+                                "content": "",
+                                "meta": {
+                                    "field1": ""
+                                }
+                            }
+                        ],
+                        "headers_config": {}
+                    }
+                }
+            }
+            self.actions_confs.insert(0, default_retrieve_action)
 
         self.logger.debug("Actions parse END")
         
@@ -113,12 +130,12 @@ class ActionsManager(AbstractManager):
                             try:
                                 template_dict = eval(template)
                             except SyntaxError:
-                                self.raise_Dolffiaerror(500, "Template is not well formed, must be a dict {} structure")
+                                self.raise_PrintableDolffiaerror(500, "Template is not well formed, must be a dict {} structure")
 
                             if "$query" not in template_dict.get("user"):
-                                self.raise_Dolffiaerror(500, "Template must contain $query to be replaced")
+                                self.raise_PrintableDolffiaerror(500, "Template must contain $query to be replaced")
                         else:
-                            self.raise_Dolffiaerror(500, "Template is not in api call")
+                            self.raise_PrintableDolffiaerror(500, "Template is not in api call")
 
 
     def safe_substitute(self, template, template_params, clear_quotes):
@@ -178,7 +195,7 @@ class ActionsManager(AbstractManager):
                     break
                 error_param.append(template_substituted[i])
             error_param = "".join(error_param)
-            raise self.raise_Dolffiaerror(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template_substituted}")
+            raise self.raise_PrintableDolffiaerror(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template_substituted}")
 
         return template_dict
 
@@ -199,7 +216,7 @@ class ActionsManager(AbstractManager):
             params = {k: json.dumps(v)[1:-1] if isinstance(v, (str)) else v for k, v in params.items()} # Assert final json is json serializable
             params = {k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in params.items()}
         except Exception as _:
-            raise self.raise_Dolffiaerror(500, f"Params field must be a dictionary with json serializable values. Please check params field. Params: {params}")
+            raise self.raise_PrintableDolffiaerror(500, f"Params field must be a dictionary with json serializable values. Please check params field. Params: {params}")
 
         return params
     

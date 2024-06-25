@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 from typing import List, Dict
 from abc import abstractmethod, ABC
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.dolffiaerrors import PrintableDolffiaError
 
 class RescoreMethod(ABC):
     """
@@ -136,7 +136,7 @@ class DolffiaRescorer(RescoreMethod):
         """
         for sl in self.streamlist:
             if "snippet_id" not in sl.meta:
-                raise DolffiaError(status_code=404, message="Streamlist must have a 'snippet_id' key that identifies the passage on an index.")
+                raise PrintableDolffiaError(status_code=404, message="Streamlist must have a 'snippet_id' key that identifies the passage on an index.")
             yield sl.meta['snippet_id']
 
     def process(self, params: dict = None):
@@ -159,7 +159,7 @@ class DolffiaRescorer(RescoreMethod):
 
         response = requests.post(self.URL, json=template, headers=headers, verify=False)
         if response.status_code != 200:
-            raise DolffiaError(status_code=response.status_code, message=str(response.content))
+            raise PrintableDolffiaError(status_code=response.status_code, message=str(response.content))
 
         docs = response.json()['result']['docs']
         return [{
@@ -203,7 +203,7 @@ class RescoreFactory:
                 break
 
         if self.rescoremethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided rescore does not match any of the possible ones: {', '.join(f.TYPE for f in self.RESCORERS)}")
+            raise PrintableDolffiaError(status_code=404, message=f"Provided rescore does not match any of the possible ones: {', '.join(f.TYPE for f in self.RESCORERS)}")
 
     def process(self, streamlist: list, params: dict):
         """

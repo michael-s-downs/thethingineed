@@ -105,25 +105,7 @@ class StreamBatch:
         """
         sls = StreamList()
         sls.retrieve(retrieve_type, retrieve_params)
-        if self.streambatch == []:
-            self.streambatch.append(sls)
-        else:
-            self.streambatch.append(sls)
-            sl1, sl2 = self.streambatch
-            chunks_content = []
-            for chunk in sl1.streamlist:
-                chunks_content.append(chunk.content)
-
-            chunks_content.append("\n \n")
-            
-            for chunk in sl2.streamlist:
-                chunks_content.append(chunk.content)
-                
-            merged_sl = StreamList()
-            merged_sc = StreamChunk({'content': " ".join(chunks_content), 'meta': {}, 'scores': {}, 'answer':""})
-            merged_sl.append(merged_sc)
-                
-            self.streambatch = StreamBatch(merged_sl)
+        self.streambatch.append(sls)
             
     def filter(self, filter_type, filter_params) -> None:
         """Filter the StreamList objects in the StreamBatch.

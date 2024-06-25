@@ -18,8 +18,8 @@ from haystack import Document, Answer
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, set_storage
 from common.genai_sdk_controllers import list_files
+from common.genai_sdk_controllers import storage_containers, set_storage
 from common.dolffia_json_parser import *
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir import IR_INDICES, INDEX_S3
@@ -88,7 +88,7 @@ class InfoRetrievalDeployment(BaseDeployment):
 
     def load_secrets(self):
         models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage", "vector_storage_config.json")
+        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector_storage", "vector_storage_config.json")
 
         # Load models credentials
         if os.path.exists(models_keys_path):
