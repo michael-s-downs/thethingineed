@@ -59,10 +59,10 @@ steps:
 - checkout: self
 
 # Add versioning of git
-- task: gitversion/setup@0
-  inputs:
-    versionSpec: '5.3.x'
-  displayName: Install GitTools
+#- task: gitversion/setup@0
+#  inputs:
+#    versionSpec: '5.3.x'
+#  displayName: Install GitTools
 
 # Clean space in agent
 - script: df -h
