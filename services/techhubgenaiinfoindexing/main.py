@@ -67,7 +67,7 @@ class InfoIndexationDeployment(BaseDeployment):
 
     def load_secrets(self):
         models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector_storage", "vector_storage_config.json")
+        vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage", "vector_storage_config.json")
 
         # Load models credentials
         if os.path.exists(models_keys_path):

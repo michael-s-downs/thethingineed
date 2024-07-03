@@ -41,6 +41,8 @@ class LoggerHandler:
             logging.getLogger('werkzeug').disabled = True
             logging.getLogger('haystack').disabled = True
             logging.getLogger('elastisearch').disabled = True
+            logging.getLogger('azure').disabled = True
+            logging.getLogger('pdfminer').disabled = True
             os.environ['WERKZEUG_RUN_MAIN'] = 'true'
             logging.getLogger('PIL').setLevel(logging.CRITICAL)
             logging.getLogger('boto').setLevel(logging.CRITICAL)
@@ -51,30 +53,16 @@ class LoggerHandler:
             logging.getLogger('genai_sdk_services').setLevel(logging.CRITICAL)
             logging.getLogger('haystack').setLevel(logging.CRITICAL)
             logging.getLogger('elasticsearch').setLevel(logging.CRITICAL)
+            logging.getLogger('azure').setLevel(logging.CRITICAL)
+            logging.getLogger('pdfminer').setLevel(logging.CRITICAL)
 
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(level)
 
 # Global vars
-logger = logging.getLogger(os.getenv('INTEGRATION_NAME', ""))
-
+logger = LoggerHandler(os.getenv('INTEGRATION_NAME', ""), level=os.environ.get('LOG_LEVEL', "INFO")).logger
 
 # Force debug mode in development tenants
 if os.getenv('TENANT', "") in os.getenv('DEBUG_TENANTS', "test, develop, devcore").replace(",", " ").split():
     os.environ['LOG_LEVEL'] = "DEBUG"
     os.environ['STORAGE_DELETE_REQUEST'] = "False"
-
-# Configure logger
-logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", level=os.getenv('LOG_LEVEL', "INFO"))
-
-# Disable some loggers
-logging.getLogger('werkzeug').disabled = True
-os.environ['WERKZEUG_RUN_MAIN'] = 'true'
-logging.getLogger('PIL').setLevel(logging.CRITICAL)
-logging.getLogger('boto').setLevel(logging.CRITICAL)
-logging.getLogger('boto3').setLevel(logging.CRITICAL)
-logging.getLogger('botocore').setLevel(logging.CRITICAL)
-logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
-logging.getLogger('urllib3').setLevel(logging.CRITICAL)
-logging.getLogger('azure').setLevel(logging.CRITICAL)
-logging.getLogger('dolffia_sdk_services').setLevel(logging.CRITICAL)

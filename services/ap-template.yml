@@ -150,7 +150,7 @@ steps:
 - task: CopyFiles@2
   inputs:
     sourceFolder: '${{ parameters.sourcesDirectory }}/..'
-    contents: 'common/**/*.py'
+    contents: 'common/**/*'
     targetFolder: '${{ parameters.defaultWorkingDirectory }}/uhis_docker'
   displayName: Copy files from common
   condition: succeeded()
