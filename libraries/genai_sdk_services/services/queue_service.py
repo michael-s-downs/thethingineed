@@ -277,9 +277,6 @@ class AzureServiceBusService(BaseQueueService):
         :param origin: (str) with the type of the queue and the name of the queue
         :return: Client of the service
         """
-        if origin and origin in self.clients:
-            return self.clients[origin]
-
         self.logger.debug("Connection created")
 
         queue_client = ServiceBusClient.from_connection_string(conn_str=self.credentials[origin]['conn_str'], logging_enable=True)
@@ -329,6 +326,8 @@ class AzureServiceBusService(BaseQueueService):
         if len(data) == 0:
             data = None
 
+        queue_client.close()
+
         return data, resp
 
     def write(self, origin: str, data: str, group_id: str = "grp1") -> bool:
@@ -346,6 +345,8 @@ class AzureServiceBusService(BaseQueueService):
         try:
             message = ServiceBusMessage(json.dumps(data))
             sender.send_messages(message)
+            sender.close()
+            queue_client.close()
         except Exception as ex:
             raise ex
         else:

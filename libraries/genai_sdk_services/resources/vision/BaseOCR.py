@@ -682,7 +682,7 @@ class FormRecognizer(BaseOCR):
                 else:
                     raise Exception("Credentials not found")
 
-        self.credentials = credentials
+            self.credentials = credentials
 
     @staticmethod
     def parse_dict(d: dict, n_pag: int, origin: tuple, destiny: tuple) -> dict:

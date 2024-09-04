@@ -3,6 +3,7 @@
 
 boto3==1.26.94
 flask==1.1.2
+gunicorn==22.0.0
 itsdangerous==1.1.0 # Flask version problem
 Jinja2==2.11.2 # Flask version problem
 markupsafe==1.1.1 # Flask version problem

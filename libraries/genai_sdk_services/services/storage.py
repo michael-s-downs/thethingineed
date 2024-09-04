@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import json
+from io import BytesIO
 from typing import Tuple, Union
 from abc import ABCMeta, abstractmethod
 
@@ -512,9 +513,6 @@ class BlobService(BaseStorageService):
         param origin: (str) Name of the container to get the client.
         return: ContainerClient
         """
-        if origin and origin in self.buckets:
-            return self.buckets[origin]
-
         bucket_credentials = self.credentials[origin]
         bucket = ContainerClient.from_connection_string(bucket_credentials['conn_str'], origin)
         self.buckets[origin] = bucket
@@ -527,15 +525,12 @@ class BlobService(BaseStorageService):
         param file: (str) The blob with which to interact.
         return: ContainerClient
         """
-        if file and file in self.clients:
-            return self.clients[file]
-
         bucket = self.get_bucket(origin)
         client = bucket.get_blob_client(file)
 
         self.clients[origin] = client
 
-        return client
+        return client, bucket
 
     def set_credentials(self, origin: str, credentials: dict):
         """ Set the credentials for the service
@@ -564,7 +559,7 @@ class BlobService(BaseStorageService):
         :param local_file: (str) Name of the local file
         :return: (bool) True if file has been downloaded successfully
         """
-        file = self.get_client(origin, remote_file)
+        file, container = self.get_client(origin, remote_file)
 
         if local_file is None:
             self.logger.debug("local_file not specified, file will be saved as %s" % remote_file)
@@ -583,6 +578,10 @@ class BlobService(BaseStorageService):
         with open(local_file, "wb") as file_handle:
             data = file.download_blob()
             data.readinto(file_handle)
+
+        file.close()
+        container.close()
+
         return os.path.exists(local_file)
 
     def download_directory(self, origin: str, remote_directory: str, local_directory: str = None, suffix: str = None) -> bool:
@@ -621,6 +620,8 @@ class BlobService(BaseStorageService):
                     os.makedirs(local_subdirectory, exist_ok=True)
                 ok = ok and self.download_file(origin, remote_object, local_key)
 
+        bucket.close()
+
         return ok
 
     def upload_object(self, origin: str, object_: bytes, remote_file: str) -> bool:
@@ -632,8 +633,14 @@ class BlobService(BaseStorageService):
         :return: (bool) True if object has been uploaded successfully
         """
         try:
-            file = self.get_client(origin, remote_file)
-            file.upload_blob(object_, overwrite=True)
+            if type(object_) == str:
+                object_ = bytes(object_, "utf-8")
+
+            with BytesIO(object_) as stream:
+                file, container = self.get_client(origin, remote_file)
+                file.upload_blob(stream, overwrite=True)
+                file.close()
+                container.close()
         except Exception as ex:
             raise ex
         else:
@@ -652,10 +659,12 @@ class BlobService(BaseStorageService):
             self.logger.debug("s3_file not specified, file will be uploaded to %s" % remote_file)
             remote_file = local_file
         try:
-            file = self.get_client(origin, remote_file)
+            file, container = self.get_client(origin, remote_file)
             self.logger.debug("Uploading %s..." % local_file)
             with open(local_file, "rb") as source:
                 file.upload_blob(source, overwrite=True)
+            file.close()
+            container.close()
         except Exception as ex:
             raise ex
         else:
@@ -668,11 +677,13 @@ class BlobService(BaseStorageService):
         :param remote_file: (str) File to load
         :return: (bytes) Content of file
         """
-        file = self.get_client(origin, remote_file)
+        file, container = self.get_client(origin, remote_file)
 
         self.logger.debug("Loading %s..." % remote_file)
 
         file_contents = file.download_blob().readall()
+        file.close()
+        container.close()
         return file_contents
 
     def delete_files(self, origin: str, files: list) -> bool:
@@ -684,8 +695,10 @@ class BlobService(BaseStorageService):
         """
         try:
             for key in files:
-                file = self.get_client(origin, key)
+                file, container = self.get_client(origin, key)
                 file.delete_blob()
+                file.close()
+                container.close()
         except Exception as ex:
             raise ex
         else:
@@ -704,10 +717,13 @@ class BlobService(BaseStorageService):
 
         if dst_bucket is None:
             dst_bucket = origin
-        copy_client = self.get_client(dst_bucket, dst)
+        copy_client, container = self.get_client(dst_bucket, dst)
+
         try:
             self.logger.debug(f"Copying {origin}/{src} to {dst}")
             copy_client.upload_blob(arch_to_copy)
+            copy_client.close()
+            container.close()
         except Exception as ex:
             raise ex
         else:
@@ -738,10 +754,13 @@ class BlobService(BaseStorageService):
         :param file: (str) File to check if exists
         :return: (bool) True if the file exists
         """
-        file_client = self.get_client(origin, file)
+        file_client, container = self.get_client(origin, file)
+
         try:
             self.logger.debug("Checking %s..." % file)
             file_client.get_blob_properties()
+            file_client.close()
+            container.close()
             return True
         except Exception:
             return False
@@ -766,10 +785,14 @@ class BlobService(BaseStorageService):
         :param file: (str) File to get the size
         :return: (int) Size of the file in bytes
         """
-        file_client = self.get_client(origin, file)
+        file_client, container = self.get_client(origin, file)
+
         try:
             self.logger.debug("Getting the size of %s..." % file)
-            return file_client.get_blob_properties()['size']
+            size = file_client.get_blob_properties()['size']
+            file_client.close()
+            container.close()
+            return size
         except Exception:
             return False
 
@@ -808,6 +831,8 @@ class BlobService(BaseStorageService):
             for obj in resp:
                 keys.append(obj)
 
+        bucket.close()
+
         return keys
 
     def count_files(self, origin: str, prefix: str = "") -> int:
@@ -822,6 +847,8 @@ class BlobService(BaseStorageService):
         file_list = bucket.list_blob_names(name_starts_with=prefix)
         self.logger.debug("Counting files...")
         file_count = len([i for i in file_list])
+        bucket.close()
+
         return file_count
 
 
