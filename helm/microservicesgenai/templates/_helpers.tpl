@@ -126,35 +126,33 @@ heritage: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
-{{/*Create variables for apigw.*/}}
-{{- define "apigw" -}}
-{{- $apigw := .Values.apigw | default dict -}}
-{{- range $key,$value := $apigw }}
-{{- if $value }}
-{{- if eq $key "sqldb" }}
-{{ (printf "ConnectionStrings__%s" $key) }}: {{ $value | quote }}
-{{- else }}
-{{ (printf "Uhis__%s" $key) }}: {{ $value | quote }}
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
-
-{{/*Create variables for evaluation.*/}}
-{{- define "evaluation" -}}
-{{- $evaluation := .Values.evalutaion | default dict -}}
-{{- range $key,$value := $evaluation }}
+{{/*Create variables for retrieve.*/}}
+{{- define "retrieve" -}}
+{{- $retrieve := .Values.retrieve | default dict -}}
+{{- range $key,$value := $retrieve }}
 {{- if $value }}
 {{ $key | upper }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
 {{- end }}
 
-{{/*Create variables for evaluation.*/}}
-{{- define "orchestrator" -}}
-{{- $orchestrator := .Values.orchestrator | default dict -}}
-{{- range $key,$value := $orchestrator }}
-{{- if $value }}
+{{/*Create variables for gunicorn.*/}}
+{{- define "gunicorn" -}}
+{{- $gunicorn := .Values.gunicorn | default dict -}}
+{{- $service :=  .Values.isService }}
+{{- range $key,$value := $gunicorn }}
+{{- if and ($value) ($service) }}
+{{ $key | upper }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*Create variables for langfuse.*/}}
+{{- define "langfuse" -}}
+{{- $langfuse := .Values.langfuse | default dict -}}
+{{- $addlangfuse :=  .Values.add_langfuse }}
+{{- range $key,$value := $langfuse }}
+{{- if and ($value) ($addlangfuse) }}
 {{ $key | upper }}: {{ $value | quote }}
 {{- end }}
 {{- end }}

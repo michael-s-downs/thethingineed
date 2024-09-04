@@ -13,6 +13,6 @@ data:
 {{- include "compose" . | indent 2 }}
 {{- include "indexing" . | indent 2 }}
 {{- include "checktimeout" . | indent 2 }}
-{{- include "apigw" . | indent 2 }}
-{{- include "evaluation" . | indent 2 }}
-{{- include "orchestrator" . | indent 2 }}
+{{- include "retrieve" . | indent 2 }}
+{{- include "gunicorn" . | indent 2 }}
+{{- include "langfuse" . | indent 2 }}

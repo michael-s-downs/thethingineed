@@ -28,22 +28,25 @@ integration:
 sender:
   storage_persist_request:
   storage_delete_request:
-  dolffia_queue_process_url:
-  dolffia_queue_delete_url:
+  api_queue_process_url:
+  api_queue_delete_url:
   request_flow_timeout:
   request_internal_timeout:
+  api_sync_infodelete_url:
 compose:
   url_llm:
   url_retrieve:
   redis_session_expiration_time:
   cron_time:
-  gunicorn_workers:
   uri_prefix_knowler:
   url_allowed_documents_knowler:
 indexing:
   aws_region_name:
+  vector_storage:
 checktimeout:
   cron_time:
+retrieve:
+  vector_storage:
 apigw:
   sqldb:
   Namespace:
@@ -90,12 +93,10 @@ aws-value:
 redis-value:
 models-value:
 vector-storage-value:
-# Evaluation
-evaluation:
-  secrets_path:
-  evaluation_queue_url:
-# Evaluation orchestrator
-orchestrator:
-  default_engine:
-  langufe_host:
-  storage_config_folder:
+# Langfuse
+add_langfuse: false
+langfuse:
+  langfuse:
+  langfuse_host:
+  langfuse_public_key:
+  langfuse_secret_key:

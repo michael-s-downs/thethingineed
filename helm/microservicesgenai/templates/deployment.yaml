@@ -1,4 +1,5 @@
 {{ $loadSecrets := .Values.loadSecrets }}
+{{ $loadStorageSecrets := .Values.loadStorageSecrets }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -40,12 +41,27 @@ spec:
               mountPath: /secrets/{{ $secret }}
               readOnly: true
 {{- end }}
+{{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
+  {{- range $sa := $loadStorageSecrets }}
+            - name: {{$sa.shareName}}
+              mountPath: {{$sa.mountPath}}
+              readOnly: {{$sa.readonly}}
+  {{- end }}
+{{- end }}
       volumes:         
 {{- range $secret := $loadSecrets }}
         - name: {{ $secret }}-credentials
           secret:
             secretName: {{ $secret }}-credentials
             defaultMode: 420
+{{- end }}
+{{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
+  {{- range $sa := $loadStorageSecrets }}
+        - name: {{ $sa.shareName }}
+          azureFile:
+            secretName: {{ $sa.shareSecretName }}
+            shareName: {{ $sa.shareName }}
+  {{- end }}
 {{- end }}
 {{- if and (ne (.Values.nodePool | toString) "none") (ne (.Values.provider | toString) "azure") }}
       nodeSelector:
