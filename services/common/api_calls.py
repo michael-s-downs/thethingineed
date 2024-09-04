@@ -18,7 +18,7 @@ import pandas as pd
 # Custom imports
 import conf_utils
 import docs_utils
-import dolffia_api
+import core_api
 from logging_handler import logger
 
 
@@ -73,38 +73,38 @@ def classification_sync(request_json: dict) -> dict:
             file_name = docs_utils.parse_file_name(file_path, folder)
             file_metadata = metadata.get(file_name, {})
 
-            dolffia_response = dolffia_api.sync_classification_multiclass_request(apigw_params, request_params, file_path)
-            logger_response = {'process_id': dolffia_response['process_id'], 'status': dolffia_response['status']}
+            api_response = core_api.sync_classification_multiclass_request(apigw_params, request_params, file_path)
+            logger_response = {'process_id': api_response['process_id'], 'status': api_response['status']}
             logger.info(f"- Calling 1 SYNC CLASSIFICATION MULTICLASS for request '{request_json['integration_id']}' {logger_response}")
 
-            if dolffia_response['status'] == "finish":
-                file_metadata['document_type'] = dolffia_response['result'][0]['category']
-                file_metadata['document_type_confidence'] = dolffia_response['result'][0]['confidence']
-                file_metadata['categories'] = dolffia_response['result']
-                file_metadata['process_id'] = dolffia_response['process_id']
+            if api_response['status'] == "finish":
+                file_metadata['document_type'] = api_response['result'][0]['category']
+                file_metadata['document_type_confidence'] = api_response['result'][0]['confidence']
+                file_metadata['categories'] = api_response['result']
+                file_metadata['process_id'] = api_response['process_id']
                 file_metadata['ocr_used'] = request_params['ocr']
                 file_metadata['async'] = False
-                process_ids[dolffia_response['process_id']] = dolffia_response['status']
+                process_ids[api_response['process_id']] = api_response['status']
     else:
         # Async call can process in bulk
-        dolffia_response = dolffia_api.async_classification_multilabel_request(apigw_params, request_params, files_need_classification)
-        logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTILABEL for request '{request_json['integration_id']}' {dolffia_response}")
+        api_response = core_api.async_classification_multilabel_request(apigw_params, request_params, files_need_classification)
+        logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTILABEL for request '{request_json['integration_id']}' {api_response}")
 
-        status = dolffia_response['status']
+        status = api_response['status']
         if status != "error":
             try:
                 while status == "waiting":
                     # Initialize time since start request
                     ts_now = datetime.now().timestamp()
-                    status = dolffia_api.async_status_request(apigw_params, dolffia_response['process_id'])['status']
+                    status = core_api.async_status_request(apigw_params, api_response['process_id'])['status']
 
                     # Check if time request is greater than timeout
                     if ts_now - ts_init >= request_polling_timeout:
-                        msg_error = "Timeout expired calling the Dolffia service getting status"
+                        msg_error = "Timeout expired calling the API service getting status"
                         logger.error(msg_error, exc_info=True)
                         status = "error"
-                        dolffia_response['status'] = "error"
-                        dolffia_response['error'] = "timeout"
+                        api_response['status'] = "error"
+                        api_response['error'] = "timeout"
                         break
 
                     # Sleep time in seconds by global var
@@ -112,32 +112,32 @@ def classification_sync(request_json: dict) -> dict:
             except:
                 msg_error = f"Error getting status for request {request_json['integration_id']}"
                 logger.error(msg_error, exc_info=True)
-                dolffia_response['status'] = "error"
+                api_response['status'] = "error"
 
             try:
                 if status == "ready":
-                    dolffia_response = dolffia_api.async_result_request(apigw_params, dolffia_response['process_id'])
+                    api_response = core_api.async_result_request(apigw_params, api_response['process_id'])
             except:
                 msg_error = f"Error getting results for request {request_json['integration_id']}"
                 logger.error(msg_error, exc_info=True)
-                dolffia_response['status'] = "error"
+                api_response['status'] = "error"
 
         # Add information for document
         for file_path in files_need_classification:
             file_name = docs_utils.parse_file_name(file_path, folder)
             file_metadata = metadata.get(file_name, {})
 
-            file_metadata['process_id'] = dolffia_response['process_id']
+            file_metadata['process_id'] = api_response['process_id']
             file_metadata['ocr_used'] = request_params['ocr']
             file_metadata['async'] = True
 
-            for result in dolffia_response.get('results', {}):
+            for result in api_response.get('results', {}):
                 if result['filename'] == file_name:
                     file_metadata['categories'] = result['categories']
-            if dolffia_response.get('error', ""):
-                file_metadata['error'] = dolffia_response['error']
+            if api_response.get('error', ""):
+                file_metadata['error'] = api_response['error']
 
-        process_ids[dolffia_response['process_id']] = dolffia_response['status']
+        process_ids[api_response['process_id']] = api_response['status']
 
     return request_json
 
@@ -216,18 +216,18 @@ def extraction_sync(request_json: dict) -> dict:
                 request_params['fields_to_extract'] = [field for field in type_conf.keys() if not field.startswith("_")]
 
                 # Call extraction for current type
-                dolffia_response = dolffia_api.sync_extraction_request(apigw_params, request_params, file_path)
+                api_response = core_api.sync_extraction_request(apigw_params, request_params, file_path)
 
-                logger_response = {'process_id': dolffia_response['process_id'], 'status': dolffia_response['status']}
+                logger_response = {'process_id': api_response['process_id'], 'status': api_response['status']}
                 logger.info(f"- Calling {len(files_need_extraction)} SYNC EXTRACTION {doc_type.upper()} for request '{request_json['integration_id']}' reusing dataset '{process_id}' {logger_response}")
 
-                if dolffia_response['status'] == "finish":
-                    file_metadata['document_fields'] = dolffia_response['result']
-                    file_metadata['process_id'] = dolffia_response['process_id']
+                if api_response['status'] == "finish":
+                    file_metadata['document_fields'] = api_response['result']
+                    file_metadata['process_id'] = api_response['process_id']
 
                 file_metadata['ocr_used'] = request_params['ocr']
                 file_metadata['async'] = False
-                process_ids[dolffia_response['process_id']] = dolffia_response['status']
+                process_ids[api_response['process_id']] = api_response['status']
         else:
             # Group files by document_type and process_id
             files_need_extraction_pd = pd.DataFrame(files_need_extraction_meta, columns=['file_path', 'document_type', 'process_id'])
@@ -250,18 +250,18 @@ def extraction_sync(request_json: dict) -> dict:
                 request_params['fields_to_extract'] = [field for field in type_conf.keys() if not field.startswith("_")]
 
                 # Call extraction for current group type
-                dolffia_response = dolffia_api.async_extraction_request(apigw_params, request_params, files_group)
-                logger.info(f"- Calling {len(files_group)} ASYNC EXTRACTION {doc_type.upper()} for request '{request_json['integration_id']}' reusing dataset '{process_id}' {dolffia_response}")
+                api_response = core_api.async_extraction_request(apigw_params, request_params, files_group)
+                logger.info(f"- Calling {len(files_group)} ASYNC EXTRACTION {doc_type.upper()} for request '{request_json['integration_id']}' reusing dataset '{process_id}' {api_response}")
 
                 # Update request with status and process_id
-                process_id = dolffia_response.get('process_id', "")
-                process_ids[process_id] = dolffia_response['status']
+                process_id = api_response.get('process_id', "")
+                process_ids[process_id] = api_response['status']
 
                 # Update files with status and process_id
                 for file_path in files_group:
                     file_name = docs_utils.parse_file_name(file_path, folder)
                     file_metadata = metadata.setdefault(file_name, {})
-                    file_metadata.update(dolffia_response)
+                    file_metadata.update(api_response)
 
                     # Save for traceability
                     file_metadata['ocr_used'] = request_params['ocr']
@@ -274,11 +274,11 @@ def extraction_sync(request_json: dict) -> dict:
                     while status == "waiting":
                         # Initialize time since start request
                         ts_now = datetime.now().timestamp()
-                        status = dolffia_api.async_status_request(apigw_params, process_id)['status']
+                        status = core_api.async_status_request(apigw_params, process_id)['status']
 
                         # Check if time request is greater than timeout
                         if ts_now - ts_init >= request_polling_timeout:
-                            msg_error = "Timeout expired calling the Dolffia service getting status"
+                            msg_error = "Timeout expired calling the API service getting status"
                             logger.error(msg_error, exc_info=True)
                             status = "error"
                             for file_metadata in metadata.values():
@@ -300,7 +300,7 @@ def extraction_sync(request_json: dict) -> dict:
                 try:
                     if status != "error":
                         # Get result of each doc processed with this process_id
-                        results = dolffia_api.async_result_request(apigw_params, process_id)['results']
+                        results = core_api.async_result_request(apigw_params, process_id)['results']
                         logger.info(f"- Getting {len(results)} ASYNC EXTRACTION results for request '{request_json['integration_id']}'")
 
                         for result in results:
@@ -370,18 +370,18 @@ def preprocess_async(request_json: dict) -> dict:
             'tracking': request_json.get('tracking', {})
         }
 
-        dolffia_response = dolffia_api.async_preprocess_request(apigw_params, request_params, files_need_preprocess)
-        logger.info(f"- Calling {len(files_need_preprocess)} ASYNC PREPROCESS for request '{request_json['integration_id']}' {dolffia_response}")
+        api_response = core_api.async_preprocess_request(apigw_params, request_params, files_need_preprocess)
+        logger.info(f"- Calling {len(files_need_preprocess)} ASYNC PREPROCESS for request '{request_json['integration_id']}' {api_response}")
 
-        process_id = dolffia_response.get('process_id', "")
+        process_id = api_response.get('process_id', "")
         process_ids = request_json.setdefault('process_ids', {})
-        process_ids[process_id] = dolffia_response['status']
+        process_ids[process_id] = api_response['status']
 
         # Update files with status and process_id
         for file_path in files:
             file_name = docs_utils.parse_file_name(file_path, folder)
             file_metadata = metadata.setdefault(file_name, {})
-            file_metadata.update(dolffia_response)
+            file_metadata.update(api_response)
             file_metadata['ocr_used'] = request_params['ocr']
             file_metadata['async'] = True
 
@@ -449,22 +449,22 @@ def classification_async(request_json: dict) -> dict:
 
         # Call corresponding classification
         if model_conf.get('multilabel', False):
-            dolffia_response = dolffia_api.async_classification_multilabel_request(apigw_params, request_params, files_need_classification)
-            logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTILABEL for request '{request_json['integration_id']}' {dolffia_response}")
+            api_response = core_api.async_classification_multilabel_request(apigw_params, request_params, files_need_classification)
+            logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTILABEL for request '{request_json['integration_id']}' {api_response}")
         else:
-            dolffia_response = dolffia_api.async_classification_multiclass_request(apigw_params, request_params, files_need_classification)
-            logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTICLASS for request '{request_json['integration_id']}' {dolffia_response}")
+            api_response = core_api.async_classification_multiclass_request(apigw_params, request_params, files_need_classification)
+            logger.info(f"- Calling {len(files_need_classification)} ASYNC CLASSIFICATION MULTICLASS for request '{request_json['integration_id']}' {api_response}")
 
         # Update request with status and process_id
-        process_id = dolffia_response.get('process_id', "")
+        process_id = api_response.get('process_id', "")
         process_ids = request_json.setdefault('process_ids', {})
-        process_ids[process_id] = dolffia_response['status']
+        process_ids[process_id] = api_response['status']
 
         # Update files with status and process_id
         for file_path in files_need_classification:
             file_name = docs_utils.parse_file_name(file_path, folder)
             file_metadata = metadata.setdefault(file_name, {})
-            file_metadata.update(dolffia_response)
+            file_metadata.update(api_response)
 
             # Save for traceability and compare in extraction
             file_metadata['ocr_used'] = request_params['ocr']
@@ -474,7 +474,7 @@ def classification_async(request_json: dict) -> dict:
     for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status == "ready"]:
         try:
             # Get result of each doc processed with this process_id
-            results = dolffia_api.async_result_request(apigw_params, process_id)['results']
+            results = core_api.async_result_request(apigw_params, process_id)['results']
             logger.info(f"- Getting {len(results)} ASYNC CLASSIFICATION results for request '{request_json['integration_id']}'")
             for result in results:
                 file_name = docs_utils.parse_file_name(result['filename'], folder)
@@ -582,19 +582,19 @@ def extraction_async(request_json: dict) -> dict:
             request_params['tracking'] = request_json.get('tracking', {})
 
             # Call extraction for current group type
-            dolffia_response = dolffia_api.async_extraction_request(apigw_params, request_params, files_group)
-            logger.info(f"- Calling {len(files_group)} ASYNC EXTRACTION {doc_type.upper()} for request '{request_json['integration_id']}' reusing dataset '{process_id}' {dolffia_response}")
+            api_response = core_api.async_extraction_request(apigw_params, request_params, files_group)
+            logger.info(f"- Calling {len(files_group)} ASYNC EXTRACTION {doc_type.upper()} for request '{request_json['integration_id']}' reusing dataset '{process_id}' {api_response}")
 
             # Update request with status and process_id
-            process_id = dolffia_response.get('process_id', "")
+            process_id = api_response.get('process_id', "")
             process_ids = request_json.setdefault('process_ids', {})
-            process_ids[process_id] = dolffia_response['status']
+            process_ids[process_id] = api_response['status']
 
             # Update files with status and process_id
             for file_path in files_group:
                 file_name = docs_utils.parse_file_name(file_path, folder)
                 file_metadata = metadata.setdefault(file_name, {})
-                file_metadata.update(dolffia_response)
+                file_metadata.update(api_response)
 
                 # Save for traceability
                 file_metadata['ocr_used'] = request_params['ocr']
@@ -604,7 +604,7 @@ def extraction_async(request_json: dict) -> dict:
     for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status == "ready"]:
         try:
             # Get result of each doc processed with this process_id
-            results = dolffia_api.async_result_request(apigw_params, process_id)['results']
+            results = core_api.async_result_request(apigw_params, process_id)['results']
             logger.info(f"- Getting {len(results)} ASYNC EXTRACTION results for request '{request_json['integration_id']}'")
             for result in results:
                 file_name = docs_utils.parse_file_name(result['filename'], folder)
@@ -690,24 +690,24 @@ def indexing(request_json: dict) -> dict:
                 'tracking': request_json.get('tracking', {})
             }
 
-            if os.getenv('DOLFFIA_QUEUE_PROCESS_URL', ""):
-                dolffia_response = dolffia_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {dolffia_response}")
+            if os.getenv('API_QUEUE_PROCESS_URL', ""):
+                api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
+                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {api_response}")
             else:
-                dolffia_response = dolffia_api.async_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {dolffia_response}")
+                api_response = core_api.async_indexing_request(apigw_params, request_params, files_need_indexing)
+                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {api_response}")
 
-            process_id = dolffia_response.get('process_id', "")
+            process_id = api_response.get('process_id', "")
             process_ids = request_json.setdefault('process_ids', {})
-            process_ids[process_id] = dolffia_response['status']
+            process_ids[process_id] = api_response['status']
 
             # Update files with status and process_id
             for file_path in files:
                 file_name = docs_utils.parse_file_name(file_path, folder)
                 file_metadata = metadata.setdefault(file_name, {})
-                file_metadata.update(dolffia_response)
+                file_metadata.update(api_response)
                 file_metadata['ocr_used'] = request_params['ocr']
-                file_metadata['async'] = "queue" if os.getenv('DOLFFIA_QUEUE_PROCESS_URL', "") else True
+                file_metadata['async'] = "queue" if os.getenv('API_QUEUE_PROCESS_URL', "") else True
 
         for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status in ["ready", "error"]]:
             for file_metadata in metadata:
@@ -741,12 +741,12 @@ def delete(request_json: dict) -> dict:
 
             if is_async == "queue":
                 logger.debug(f"Deleting queue results from {process_id}")
-                dolffia_api.queue_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
+                core_api.queue_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
             elif is_async or is_async == "unknown":
                 logger.debug(f"Deleting async results from {process_id}")
-                dolffia_api.async_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
+                core_api.async_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
             elif not is_async or is_async == "unknown":
                 logger.debug(f"Deleting sync results from {process_id}")
-                dolffia_api.sync_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
+                core_api.sync_delete_request(request_json['apigw_params'], process_id, request_json['tracking'])
 
     return request_json

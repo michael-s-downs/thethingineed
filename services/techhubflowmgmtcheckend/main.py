@@ -3,9 +3,9 @@
 
 # Custom import
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import db_dbs, set_queue, set_db
-from common.dolffia_status_control import update_full_status, get_status_code, get_value, delete_status
-from common.dolffia_json_parser import *
+from common.genai_controllers import db_dbs, set_queue, set_db
+from common.genai_status_control import update_full_status, get_status_code, get_value, delete_status
+from common.genai_json_parser import *
 from common.services import FLOWMGMT_CHECKEND_SERVICE
 from common.status_codes import *
 from common.error_messages import *
@@ -147,8 +147,7 @@ class FlowMgmtCheckEndDeployment(BaseDeployment):
             status_code = ERROR
             self.logger.error(ex, exc_info=get_exc_info())
             self.report_end(url, self.compose_message(dataset_status_key, integration_message, str(ex), filename, status_code, tracking_message))
-        finally:
-            return self.must_continue, message, self.service_name
+        return self.must_continue, message, self.service_name
 
 
 if __name__ == "__main__":

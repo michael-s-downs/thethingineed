@@ -1,9 +1,10 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.2.3.2
+genai-sdk-services==0.2.1.0
 Werkzeug==0.16.1
 flask==1.1.2
+gunicorn==22.0.0
 itsdangerous==2.0.1
 requests==2.22.0
 flask-restx==0.1.1
@@ -11,5 +12,4 @@ Jinja2<3.1.0
 python-magic-bin==0.4.14
 tiktoken==0.4.0
 langdetect==1.0.9
-elasticsearch==7.17.9
 transformers==4.40.1

@@ -18,5 +18,9 @@ RUN apt-get -y remove build-essential && \
     apt -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
+# EXPOSE PORT
 EXPOSE 8888
-CMD ["python", "main.py"]
+
+# ADD PERMISSION TO SCRIPT AND RUN
+RUN chmod 755 docker_run.sh
+CMD ["sh", "-c", "./docker_run.sh"]

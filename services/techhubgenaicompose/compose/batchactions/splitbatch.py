@@ -8,7 +8,7 @@ from itertools import repeat
 from ..utils.defaults import EMPTY_STREAM
 from ..utils.split_sentences import split_by_word_respecting_sent_boundary as split_phrase
 from ..streamlist import StreamList
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.genaierrors import GenaiError
 
 class SplitBatchMethod:
     TYPE: str = None
@@ -21,7 +21,7 @@ class SplitBatchMethod:
         """
         for streamlist in streambatch:
             if len(streamlist) > 1:
-                raise DolffiaError(status_code=500, message=f"All the streamlists must be of length one. Try a filter or Split method first")
+                raise GenaiError(status_code=500, message=f"All the streamlists must be of length one. Try a filter or Split method first")
 
         self.streambatch = streambatch
 
@@ -64,7 +64,7 @@ class SplitBatchFactory:
                 break
 
         if self.splitbatchmethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided Splitbatch does not match any of the possible ones: {', '.join(f.type for f in self.SPLITBATCHES)}")
+            raise GenaiError(status_code=404, message=f"Provided Splitbatch does not match any of the possible ones: {', '.join(f.type for f in self.SPLITBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

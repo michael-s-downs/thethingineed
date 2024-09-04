@@ -11,8 +11,8 @@ from typing import List, Union
 from pdfminer.pdfparser import PDFSyntaxError
 
 # Custom imports
-from common.genai_sdk_controllers import upload_files, get_mimetype, get_number_pages, get_texts_from_file, get_images_from_file
-from common.dolffia_json_parser import get_exc_info
+from common.genai_controllers import upload_files, get_mimetype, get_number_pages, get_texts_from_file, get_images_from_file
+from common.genai_json_parser import get_exc_info
 from common.logging_handler import LoggerHandler
 from common.preprocess.preprocess_utils import *
 from common.services import *
@@ -86,8 +86,8 @@ def extract_text(file: str, num_pags: int, generic: dict, specific: dict, do_cel
 
     :param file: Filename of the document to extract text from
     :param num_pags: Number of pages of the document
-    :param generic: Generic configuration of Dolffia processes
-    :param specific: Specific configuration of Dolffia processes
+    :param generic: Generic configuration of genai processes
+    :param specific: Specific configuration of genai processes
     :param do_cells_text: True or False if need extract boxes
     :param do_lines_text: True or False if need extract lines
     :param return_dict: Dictionary to return the result
@@ -164,7 +164,7 @@ def extract_images(filename: str, generic: dict) -> List[dict]:
     """ Extract images of the document
 
     :param filename: Filename of the document to extract images from
-    :param generic: Generic configuration of Dolffia processes
+    :param generic: Generic configuration of genai processes
     :return:
     """
     try:
@@ -193,8 +193,8 @@ def clean_text(text: str) -> str:
 def extract_images_conditional(generic: dict, specific: dict, workspace: Union[str, List[str]], filename: str, folder_file: str) -> list:
     """ Extract and upload images
 
-    :param generic: Generic configuration of Dolffia processes
-    :param specific: Specific configuration of Dolffia processes
+    :param generic: Generic configuration of genai processes
+    :param specific: Specific configuration of genai processes
     :param workspace: Tuple with the workspace and the project
     :param filename: Filename of the document to extract images from
     :param folder_file: Folder of the file

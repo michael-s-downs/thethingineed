@@ -3,10 +3,8 @@
 
 from copy import deepcopy
 from typing import List, Tuple
-import nltk
 import re
 
-nltk.download('punkt', quiet=True)
 
 # This is copied and simplify from haystack version 1.11.0 - Consider updating the code in the future
 
@@ -17,6 +15,9 @@ def _split_sentences(text: str, language_name="english") -> List[str]:
     :param text: str, text to tokenize
     :return: list[str], list of sentences
     """
+    import nltk
+
+    nltk.download('punkt', quiet=True)
 
     sentence_tokenizer = nltk.data.load(f'tokenizers/punkt/{language_name}.pickle')
 

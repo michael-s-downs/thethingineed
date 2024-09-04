@@ -1,9 +1,6 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.2.1.0
-tiktoken==0.4.0
-pydantic==1.10.8
 elasticsearch==8.13.2
 
 llama-index-embeddings-azure-openai==0.1.9
@@ -11,8 +8,3 @@ llama-index-embeddings-bedrock==0.2.0
 llama-index-vector-stores-elasticsearch==0.2.0
 llama-index==0.10.41
 llama-index-embeddings-huggingface==0.2.1
-
-Flask==1.1.2
-Jinja2==3.0.3
-itsdangerous==2.0.1
-Werkzeug==0.16.1

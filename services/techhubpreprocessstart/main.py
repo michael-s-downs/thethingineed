@@ -15,10 +15,10 @@ import pandas as pd
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.genai_sdk_controllers import list_files, provider, load_file, write_to_queue, get_dataset
-from common.dolffia_status_control import create_status, update_status
-from common.dolffia_json_parser import get_exc_info, get_dataset_status_key, get_project_config, get_dataset_config, generate_dataset_status_key
+from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
+from common.genai_controllers import list_files, provider, load_file, write_to_queue, get_dataset
+from common.genai_status_control import create_status, update_status
+from common.genai_json_parser import get_exc_info, get_dataset_status_key, get_project_config, get_dataset_config, generate_dataset_status_key
 from common.services import PREPROCESS_START_SERVICE, PREPROCESS_EXTRACT_SERVICE, PREPROCESS_END_SERVICE
 from common.status_codes import ERROR, BEGIN_LIST, END_LIST, BEGIN_DOCUMENT
 from common.error_messages import *
@@ -250,8 +250,8 @@ class PreprocessStartDeployment(BaseDeployment):
         """
         try:
             prefix = dataset_conf['dataset_path']
-            list_s3 = [file for file in list_files(storage_containers['origin'], prefix=prefix) if not file.endswith('.csv')]
-            self.logger.debug(f"Numbers of documents to process: {len(list_s3)}")
+            list_IRStorage = [file for file in list_files(storage_containers['origin'], prefix=prefix) if not file.endswith('.csv')]
+            self.logger.debug(f"Numbers of documents to process: {len(list_IRStorage)}")
 
             path_col = dataset_conf.get('path_col', "Url")
             label_col = dataset_conf.get('label_col', "CategoryId")
@@ -260,7 +260,7 @@ class PreprocessStartDeployment(BaseDeployment):
             metadata = {meta_col: row[meta_col] for meta_col in row.index if meta_col not in [path_col, label_col]}
             self.logger.info(f"Processing document '{document}' with metadata '{', '.join(list(metadata.keys()))}'")
             # Check if file exists in the origin
-            if document in list_s3:
+            if document in list_IRStorage:
                 try:
                     # Create an entry to store status of the document
                     msg = json.dumps({'status': BEGIN_DOCUMENT, 'msg': "Document sent to extract text and images"})
@@ -360,9 +360,9 @@ class PreprocessStartDeployment(BaseDeployment):
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess start.", exc_info=get_exc_info())
             must_continue = True
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
-        finally:
-            update_status(redis_status, dataset_status_key, msg)
-            return must_continue, message, next_service
+
+        update_status(redis_status, dataset_status_key, msg)
+        return must_continue, message, next_service
 
 
 if __name__ == "__main__":

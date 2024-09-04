@@ -18,5 +18,8 @@ RUN apt-get -y remove build-essential && \
     apt -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
+# EXPOSE PORT
 EXPOSE 8888
+
+# RUN SCRIPT
 CMD ["python", "main.py"]

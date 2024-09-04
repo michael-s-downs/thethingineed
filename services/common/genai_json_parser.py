@@ -2,7 +2,7 @@
 
 
 """
-Functions to parse Dolffia configuration JSON
+Functions to parse Genai configuration JSON
 """
 # Native imports
 import os
@@ -22,8 +22,8 @@ OriginsConfig = Dict[str, Union[str, List[str], Dict[str, List[str]]]]
 PredictConfig = Dict[str, Union[int, float, Dict[str, str]]]
 AtomModelConfig = Dict[str, Union[str, Dict[str, Union[str, int, float, List[Union[str, int, float]]]]]]
 HyperparamsConfig = Dict[str, Union[int, Dict[str, Union[int, float, str]], List[AtomModelConfig]]]
-DolffiaModelConfig = Dict[str, Union[str, HyperparamsConfig]]
-TrainConfig = Dict[str, List[DolffiaModelConfig]]
+GenaiModelConfig = Dict[str, Union[str, HyperparamsConfig]]
+TrainConfig = Dict[str, List[GenaiModelConfig]]
 GenericConfig = Dict[str, Union[ProjectConfig, DatasetGenericConfig, PreprocessConfig,
                                 OcrConfig, TranslationConfig, OriginsConfig,
                                 Optional[PredictConfig], Optional[TrainConfig]]]
@@ -35,41 +35,41 @@ SpecificConfig = Dict[str, Union[Dict, str, DatasetSpecificConfig, DocumentSpeci
 
 CredentialsConfig = Dict[str, Dict[str, Union[Dict[str, str], Dict[str, Dict[str, str]]]]]
 
-DolffiaInput = Dict[str, Union[GenericConfig, SpecificConfig, CredentialsConfig]]
+GenaiInput = Dict[str, Union[GenericConfig, SpecificConfig, CredentialsConfig]]
 
 
-def get_credentials(json_input: DolffiaInput) -> CredentialsConfig:
+def get_credentials(json_input: GenaiInput) -> CredentialsConfig:
     """ Get the credentials config from the json input
 
-    :param json_input: Json input of Dolffia processes
+    :param json_input: Json input of Genai processes
     :return: (dict) Credentials config
     """
     return json_input.get('credentials', {})
 
 
-def get_generic(json_input: DolffiaInput) -> GenericConfig:
+def get_generic(json_input: GenaiInput) -> GenericConfig:
     """ Get the generic config from the json input
 
-    :param json_input: Json input of Dolffia processes
+    :param json_input: Json input of genai processes
     :return: (dict) Generic config
     """
     return json_input['generic']
 
 
-def get_specific(json_input: DolffiaInput) -> SpecificConfig:
+def get_specific(json_input: GenaiInput) -> SpecificConfig:
     """ Get the specific config from the json input
 
-    :param json_input: Json input of Dolffia processes
+    :param json_input: Json input of genai processes
     :return: (dict) Specific config
     """
     return json_input.get('specific', {})
 
 
-def get_department(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> str:
+def get_department(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> str:
     """ Get department
 
-    :param json_input: Json_input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json_input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: (dict) Department
     """
     assert json_input or generic
@@ -77,11 +77,11 @@ def get_department(json_input: Optional[DolffiaInput] = None, generic: Optional[
     return project_conf['department']
 
 
-def get_document(json_input: Optional[DolffiaInput] = None, specific: Optional[SpecificConfig] = None) -> DocumentSpecificConfig:
+def get_document(json_input: Optional[GenaiInput] = None, specific: Optional[SpecificConfig] = None) -> DocumentSpecificConfig:
     """ Get the dataset keys
 
-    :param json_input: Json_input of Dolffia processes
-    :param specific: (optional) If defined, specific configuration of Dolffia processes
+    :param json_input: Json_input of genai processes
+    :param specific: (optional) If defined, specific configuration of genai processes
     :return: (dict) Document config
     """
     assert json_input or specific
@@ -90,11 +90,11 @@ def get_document(json_input: Optional[DolffiaInput] = None, specific: Optional[S
     return specific.get('document', {})
 
 
-def get_dataset_keys(json_input: Optional[DolffiaInput] = None, specific: Optional[SpecificConfig] = None) -> DatasetSpecificConfig:
+def get_dataset_keys(json_input: Optional[GenaiInput] = None, specific: Optional[SpecificConfig] = None) -> DatasetSpecificConfig:
     """ Get the dataset keys
 
-    :param json_input: Json_input of Dolffia processes
-    :param specific: (optional) If defined, specific configuration of Dolffia processes
+    :param json_input: Json_input of genai processes
+    :param specific: (optional) If defined, specific configuration of genai processes
     :return: (dict) Dataset status keys
     """
     assert json_input or specific
@@ -114,11 +114,11 @@ def get_exc_info(cutoff=10) -> bool:
     return numeric_level <= cutoff
 
 
-def get_dataset_status_key(json_input: Optional[DolffiaInput] = None, specific: Optional[SpecificConfig] = None) -> str:
+def get_dataset_status_key(json_input: Optional[GenaiInput] = None, specific: Optional[SpecificConfig] = None) -> str:
     """ Get the dataset status key
 
-    :param json_input: Json_input of Dolffia processes
-    :param specific: (optional) If defined, specific configuration of Dolffia processes
+    :param json_input: Json_input of genai processes
+    :param specific: (optional) If defined, specific configuration of genai processes
     :return: (str) Dataset status key
     """
     assert json_input or specific
@@ -142,10 +142,10 @@ def get_dataset_status_key(json_input: Optional[DolffiaInput] = None, specific: 
     return dataset_status_key
 
 
-def generate_dataset_status_key(json_input: Optional[DolffiaInput] = None) -> str:
+def generate_dataset_status_key(json_input: Optional[GenaiInput] = None) -> str:
     """ Generate the dataset status key
 
-    :param json_input: Json_input of Dolffia processes
+    :param json_input: Json_input of genai processes
     :return: (str) Dataset status key
     """
     assert json_input
@@ -162,21 +162,21 @@ def generate_dataset_status_key(json_input: Optional[DolffiaInput] = None) -> st
     return dataset_status_key
 
 
-def get_headers(json_input: Optional[DolffiaInput] = None) -> Dict[str, str]:
+def get_headers(json_input: Optional[GenaiInput] = None) -> Dict[str, str]:
     """ Get the headers
 
-    :param json_input: Json_input of Dolffia processes
+    :param json_input: Json_input of genai processes
     :return: (dict) Headers
     """
     assert json_input
     return json_input.get('headers', {})
 
 
-def get_dataset_counter_key(json_input: Optional[DolffiaInput] = None, specific: Optional[SpecificConfig] = None) -> str:
+def get_dataset_counter_key(json_input: Optional[GenaiInput] = None, specific: Optional[SpecificConfig] = None) -> str:
     """ Get the dataset status key
 
-    :param json_input: Json_input of Dolffia processes
-    :param specific: (optional) If defined, specific configuration of Dolffia processes
+    :param json_input: Json_input of genai processes
+    :param specific: (optional) If defined, specific configuration of genai processes
     :return: (str) Dataset counter key
     """
     assert json_input or specific
@@ -184,11 +184,11 @@ def get_dataset_counter_key(json_input: Optional[DolffiaInput] = None, specific:
     return dataset['dataset_counter_key']
 
 
-def get_origins(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> OriginsConfig:
+def get_origins(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> OriginsConfig:
     """ Get origins for uhis controllers
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: (dict) Origins conf
     """
     assert json_input or generic
@@ -199,11 +199,11 @@ def get_origins(json_input: Optional[DolffiaInput] = None, generic: Optional[Gen
     return generic['origins']
 
 
-def get_project_config(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> ProjectConfig:
+def get_project_config(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> ProjectConfig:
     """ Get config of project
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Config of project.
     """
     assert json_input or generic
@@ -214,11 +214,11 @@ def get_project_config(json_input: Optional[DolffiaInput] = None, generic: Optio
     return generic['project_conf']
 
 
-def get_dataset_config(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> DatasetGenericConfig:
+def get_dataset_config(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> DatasetGenericConfig:
     """ Get config of dataset
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Config of dataset.
     """
     assert json_input or generic
@@ -229,11 +229,11 @@ def get_dataset_config(json_input: Optional[DolffiaInput] = None, generic: Optio
     return generic['dataset_conf']
 
 
-def get_dataset_id(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> OriginsConfig:
+def get_dataset_id(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> OriginsConfig:
     """ Get dataset_id for uhis controllers
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: (dict) Origins conf
     """
     assert json_input or generic
@@ -244,11 +244,11 @@ def get_dataset_id(json_input: Optional[DolffiaInput] = None, generic: Optional[
     return get_dataset_config(generic)['dataset_id']
 
 
-def get_ocr_config(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> OcrConfig:
+def get_ocr_config(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> OcrConfig:
     """ Get config of ocr
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Config of dataset.
     """
     assert json_input or generic
@@ -259,11 +259,11 @@ def get_ocr_config(json_input: Optional[DolffiaInput] = None, generic: Optional[
     return generic['ocr_conf']
 
 
-def get_project_type(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> str:
+def get_project_type(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> str:
     """ Get type of project
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Type of project. One of: text, hybrid, vision.
     """
     assert json_input or generic
@@ -274,11 +274,11 @@ def get_project_type(json_input: Optional[DolffiaInput] = None, generic: Optiona
     return generic['project_conf']['project_type']
 
 
-def get_force_ocr(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> str:
+def get_force_ocr(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> str:
     """ Get force_ocr
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: bool - True if the OCR must be forced.
     """
     assert json_input or generic
@@ -289,11 +289,11 @@ def get_force_ocr(json_input: Optional[DolffiaInput] = None, generic: Optional[G
     return generic['project_conf'].get('force_ocr', False)
 
 
-def get_languages(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> List[str]:
+def get_languages(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> List[str]:
     """ Get languages of the process
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: List[str] - List of languages allowed.
     """
     assert json_input or generic
@@ -304,12 +304,12 @@ def get_languages(json_input: Optional[DolffiaInput] = None, generic: Optional[G
     return generic['project_conf'].get('languages', ["*"])
 
 
-def get_train_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> TrainConfig:
+def get_train_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> TrainConfig:
     """ Get Training config
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
-    :return: (TrainConfig) Training config of Dolffia
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
+    :return: (TrainConfig) Training config of genai
     """
     assert json_input or generic
 
@@ -319,13 +319,13 @@ def get_train_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[
     return generic['train_conf']
 
 
-def get_models_config(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None, train_conf: Optional[TrainConfig] = None) -> List[DolffiaModelConfig]:
+def get_models_config(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None, train_conf: Optional[TrainConfig] = None) -> List[GenaiModelConfig]:
     """ Get Models config
 
-    :param json_input: (optional) Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
-    :param train_conf: (optional) Training configuration of Dolffia process
-    :return: (List[DolffiaModelConfig]) List of models to train
+    :param json_input: (optional) Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
+    :param train_conf: (optional) Training configuration of genai process
+    :return: (List[GenaiModelConfig]) List of models to train
     """
 
     assert json_input or generic or train_conf
@@ -338,7 +338,7 @@ def get_models_config(json_input: Optional[DolffiaInput] = None, generic: Option
     return train_conf['models']
 
 
-def select_model(json_input: DolffiaInput) -> Tuple[DolffiaModelConfig, str]:
+def select_model(json_input: GenaiInput) -> Tuple[GenaiModelConfig, str]:
     """ Get model params to train
 
     :param json_input: Json input of queue config
@@ -357,7 +357,7 @@ def select_model(json_input: DolffiaInput) -> Tuple[DolffiaModelConfig, str]:
     raise ValueError(f"{model_id} is not in config.")
 
 
-def get_model_parameters(json_input: DolffiaInput):
+def get_model_parameters(json_input: GenaiInput):
     """ Get model params from queue config
 
     :param json_input: Json input of queue config
@@ -376,11 +376,11 @@ def get_model_parameters(json_input: DolffiaInput):
     return model_type, model_language, model_params
 
 
-def get_index_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_index_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get index config
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Index Config
     """
     assert json_input or generic
@@ -391,10 +391,10 @@ def get_index_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[
     return generic['index_conf']
 
 
-def get_metadata_conf(json_input: Optional[DolffiaInput] = None) -> dict:
+def get_metadata_conf(json_input: Optional[GenaiInput] = None) -> dict:
     """ Get metadata indexing
 
-    :param json_input: Json input of Dolffia processes
+    :param json_input: Json input of genai processes
     :return: Metadata values
     """
     assert json_input
@@ -402,11 +402,11 @@ def get_metadata_conf(json_input: Optional[DolffiaInput] = None) -> dict:
     return get_document(json_input).get('metadata', {f"metadata_{i}": "" for i in range(get_index_conf(json_input).get('n_metadata', 0))})
 
 
-def get_compose_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_compose_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get compose config
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Index Config
     """
     assert json_input or generic
@@ -417,11 +417,11 @@ def get_compose_conf(json_input: Optional[DolffiaInput] = None, generic: Optiona
     return generic['compose_conf']
 
 
-def get_elastic_params(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_elastic_params(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get elastic_params
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: elastic_params
     """
     assert json_input or generic
@@ -432,11 +432,11 @@ def get_elastic_params(json_input: Optional[DolffiaInput] = None, generic: Optio
     return generic['elastic_params']
 
 
-def get_layout_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_layout_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get layout configuration for preprocess
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: dict
     """
     assert json_input or generic
@@ -447,11 +447,11 @@ def get_layout_conf(json_input: Optional[DolffiaInput] = None, generic: Optional
     return generic['preprocess_conf'].get('layout_conf', {})
 
 
-def get_do_cells_text(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_cells_text(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to extract boxes in text
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -462,11 +462,11 @@ def get_do_cells_text(json_input: Optional[DolffiaInput] = None, generic: Option
     return generic['preprocess_conf'].get('do_cells_text', True)
 
 
-def get_do_lines_text(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_lines_text(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to extract boxes in text
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -476,11 +476,11 @@ def get_do_lines_text(json_input: Optional[DolffiaInput] = None, generic: Option
     return layout_conf.get('do_lines_text', False)
 
 
-def get_do_cells_ocr(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_cells_ocr(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to extract boxes in images
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -491,11 +491,11 @@ def get_do_cells_ocr(json_input: Optional[DolffiaInput] = None, generic: Optiona
     return generic['preprocess_conf'].get('do_cells_ocr', True)
 
 
-def get_do_lines_ocr(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_lines_ocr(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to extract boxes in images
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -505,11 +505,11 @@ def get_do_lines_ocr(json_input: Optional[DolffiaInput] = None, generic: Optiona
     return layout_conf.get('do_lines_ocr', False)
 
 
-def get_do_tables(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_tables(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to process tables of document
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -519,11 +519,11 @@ def get_do_tables(json_input: Optional[DolffiaInput] = None, generic: Optional[G
     return layout_conf.get('do_tables', False)
 
 
-def get_do_titles(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_titles(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to detect section titles of document
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -533,11 +533,11 @@ def get_do_titles(json_input: Optional[DolffiaInput] = None, generic: Optional[G
     return layout_conf.get('do_titles', False)
 
 
-def get_prediction_multilabel(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_prediction_multilabel(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get params to prediction multilabel
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Params of prediction multilabel
     """
     assert json_input or generic
@@ -548,11 +548,11 @@ def get_prediction_multilabel(json_input: Optional[DolffiaInput] = None, generic
     return generic['predict_conf']
 
 
-def get_do_lines_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_do_lines_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get param to extract lines of process
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Configuration of lines
     """
     assert json_input or generic
@@ -562,11 +562,11 @@ def get_do_lines_conf(json_input: Optional[DolffiaInput] = None, generic: Option
     return layout_conf.get('lines_conf', {})
 
 
-def get_tables_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_tables_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get configuration for tables processing
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Configuration of tables
     """
     assert json_input or generic
@@ -576,11 +576,11 @@ def get_tables_conf(json_input: Optional[DolffiaInput] = None, generic: Optional
     return layout_conf.get('tables_conf', {})
 
 
-def get_segmentation_conf(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> dict:
+def get_segmentation_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get config for document segmentation
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: Dict with configuration for documents segmentation
     """
     assert json_input or generic
@@ -591,11 +591,11 @@ def get_segmentation_conf(json_input: Optional[DolffiaInput] = None, generic: Op
     return generic['preprocess_conf'].get('segmentation_conf', {})
 
 
-def get_do_segments(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> bool:
+def get_do_segments(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> bool:
     """ Get param to segment documents
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: True or False
     """
     assert json_input or generic
@@ -605,11 +605,11 @@ def get_do_segments(json_input: Optional[DolffiaInput] = None, generic: Optional
     return segmentation_conf.get('do_segments', False)
 
 
-def get_segmenters(json_input: Optional[DolffiaInput] = None, generic: Optional[GenericConfig] = None) -> list:
+def get_segmenters(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> list:
     """ Get param to select document segmenter
 
-    :param json_input: Json input of Dolffia processes
-    :param generic: (optional) If defined, generic configuration of Dolffia processes
+    :param json_input: Json input of genai processes
+    :param generic: (optional) If defined, generic configuration of genai processes
     :return: list of desired segmenters
     """
     assert json_input or generic

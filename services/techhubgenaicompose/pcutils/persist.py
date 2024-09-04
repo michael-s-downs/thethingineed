@@ -7,9 +7,9 @@ from datetime import datetime
 
 # Custom imports
 from basemanager import AbstractManager
-from common.errors.dolffiaerrors import PrintableDolffiaError
-from common.dolffia_status_control import get_value, update_status
-from common.genai_sdk_controllers import db_dbs
+from common.errors.genaierrors import PrintableGenaiError
+from common.genai_status_control import get_value, update_status
+from common.genai_controllers import db_dbs
 
 
 class PersistManager(AbstractManager):
@@ -127,7 +127,7 @@ class PersistDict():
         try:
             redis_session = get_value(self.REDIS_ORIGIN,f"session:{tenant}:{session_id}", format_json=False)[0]['values']
         except Exception as ex:
-            raise PrintableDolffiaError(status_code=500, message=f"{ex}. \nError getting session from redis.")
+            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError getting session from redis.")
     
         if redis_session:
             redis_session = json.loads(redis_session.decode())
@@ -143,20 +143,20 @@ class PersistDict():
             update_status(
                 self.REDIS_ORIGIN,f"session:{tenant}:{session_id}",
                  json.dumps(
-                    {"conv": self.get_conversation(session_id), 
+                    {"conv": conv, 
                     "max_persistence": self.PD[session_id].max_persistence, 
                     "context": self.PD[session_id].context,
                     "last_update": datetime.today().strftime('%Y-%m-%d %H:%M:%S')
                     }
                  )
             )
-            self.PD.clear()
+            del self.PD[session_id]
         except Exception as ex:
-            raise PrintableDolffiaError(status_code=500, message=f"{ex}. \nError saving session to redis.")
+            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving session to redis.")
             
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise PrintableDolffiaError(status_code=500, message="Session id must be a string")
+            raise PrintableGenaiError(status_code=500, message="Session id must be a string")
         return self.PD.__getitem__(key)
 
     def get_conversation(self, session_id:str):
@@ -168,7 +168,7 @@ class PersistDict():
         Returns:
             Conversation data for the specified session.
         """
-        return self.PD.get(session_id)
+        return self.PD.get(session_id, [])
 
     def update_last(self, persistence:dict, session_id:str):
         """Updates the most recent persistence data for a given session.
@@ -177,7 +177,8 @@ class PersistDict():
             session_id (string): Unique identifier for the session.
             persistence: New persistence data to replace the old one.
         """
-        self.PD[session_id].update_last(persistence)
+        if session_id in self.PD:
+            self.PD[session_id].update_last(persistence)
 
     def remove_last(self, session_id:str):
         """Removes the most recent persistence data for a given session.
@@ -200,7 +201,8 @@ class PersistDict():
             session_id (string): Unique identifier for the session.
             context (str): Context used in the last llm call.
         """
-        self.PD[session_id].update_context(context)
+        if session_id in self.PD:
+           self.PD[session_id].update_context(context)
 
 
 class Conversation(list):
@@ -228,7 +230,7 @@ class Conversation(list):
             persistence (dict): Persistence data to be added.
         """
         if not isinstance(persistence, dict):
-            raise PrintableDolffiaError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
         self.append(persistence)
 
         if self.max_persistence is not None and len(self) > self.max_persistence:
@@ -242,7 +244,7 @@ class Conversation(list):
             persistence (dict): New persistence data to replace the old one.
         """
         if not isinstance(persistence, dict):
-            raise PrintableDolffiaError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
         self[-1] = persistence
 
     def remove_last(self):

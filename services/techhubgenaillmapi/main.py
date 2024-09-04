@@ -4,20 +4,22 @@
 # Native imports
 import os
 import json
-import logging
+import time
 from typing import Dict, Tuple
 
 # Installed imports
 from flask import Flask, request
 
 # Local imports
-from common.genai_sdk_controllers import storage_containers, set_storage, set_queue, provider
-from common.dolffia_json_parser import get_exc_info, get_project_config
+from common.genai_controllers import storage_containers, set_storage, set_queue, provider, upload_object, delete_file
+from common.genai_json_parser import get_exc_info, get_project_config
 from common.deployment_utils import BaseDeployment
+from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_LLM_SERVICE
+from common.utils import load_secrets
 from endpoints import ManagerPlatform, Platform
-from generatives import ManagerModel, GenerativeModel, DalleModel
-from common.genai_sdk_controllers import load_file, list_files
+from generatives import ManagerModel, GenerativeModel
+from common.genai_controllers import load_file, list_files
 
 
 QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
@@ -34,49 +36,41 @@ class LLMDeployment(BaseDeployment):
         set_storage(storage_containers)
 
         self.workspace = storage_containers.get('workspace')
-        self.available_models = json.loads(load_file(self.workspace, "src/compose/conf/models_config.json").decode()).get('LLMs', {})
+        models_config_path = "src/LLM/conf/models_config.json"
+        if not self.load_file(self.workspace, models_config_path):
+            models_config_path = "src/compose/conf/models_config.json"
+        self.available_models = json.loads(load_file(self.workspace, models_config_path).decode()).get('LLMs', {})
         self.load_templates()
-        self.load_secrets()
+        self.models_credentials, self.aws_credentials = load_secrets(False)
         self.logger.info(f"llmapi initialized")
 
-    def load_secrets(self):
-        """ Load secrets from files or environment variables """
-        aws_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "aws", "aws.json")
-        aws_env_vars = ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
-        models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-
-        # Load AWS credentials
-        if os.path.exists(aws_keys_path):
-            with open(aws_keys_path, "r") as file:
-                self.aws_credentials = json.load(file)
-        elif os.getenv(aws_env_vars[0], ""):
-            self.aws_credentials = {
-                'access_key': os.getenv(aws_env_vars[0]),
-                'secret_key': os.getenv(aws_env_vars[1])
-            }
-        else:
-            self.logger.info(f"AWS credentials not found in {aws_keys_path} or in environment variables {aws_env_vars}.")
-
-        # Load models credentials
-        if os.path.exists(models_keys_path):
-            with open(models_keys_path, "r") as file:
-                self.models_credentials = json.load(file)
-        else:
-            raise FileNotFoundError(f"Credentials file not found {models_keys_path}.")
+    def load_file(self, origin, file):
+        try:
+            loaded_file = load_file(origin, file)
+        except Exception as ex:
+            return None
+        return loaded_file if len(loaded_file) > 0 else None
 
     def load_templates(self):
-        """ Load templates from storage or s3 """
-        s3_files = list_files(self.workspace, "src/LLM/prompts")
+        """ Load templates from IRStorage """
+        IRStorage_files = list_files(self.workspace, "src/LLM/prompts")
         self.TEMPLATES = {}
-        for file in s3_files:
+        for file in IRStorage_files:
             if file.endswith(".json"):
-                aux_dict = json.loads(load_file(self.workspace, file))
-                for key in self.TEMPLATES:
-                    if key in ".json":
-                        raise KeyError(f"Two create query jsons cannot have the same key {key}.")
-
-                self.TEMPLATES.update(aux_dict)
+                try:
+                    aux_dict = json.loads(load_file(self.workspace, file))
+                    for key in self.TEMPLATES:
+                        if key in ".json":
+                            raise KeyError(f"Two create query jsons cannot have the same key {key}.")
+                    self.TEMPLATES.update(aux_dict)
+                except:
+                    self.logger.warning(f"Malformed json file not loaded: {file}")
         self.TEMPLATES_NAMES = list(self.TEMPLATES.keys())
+
+        model_types = ManagerModel.MODEL_TYPES
+        default_templates = list({model(models_credentials={}).default_template_name for model in model_types})
+        if not all(template in self.TEMPLATES_NAMES for template in default_templates):
+            raise ValueError(f"Default templates not found: {default_templates}")
 
     @property
     def must_continue(self) -> bool:
@@ -253,7 +247,8 @@ class LLMDeployment(BaseDeployment):
 
         if template_name not in self.TEMPLATES_NAMES:
             if base_template_name not in self.TEMPLATES_NAMES:
-                raise KeyError(
+                raise PrintableGenaiError(
+                    404,
                     f"Query must be one of the possible ones {self.TEMPLATES_NAMES}. "
                     f"Remember to add new queries to the query metadata json.")
             else:
@@ -391,6 +386,24 @@ class LLMDeployment(BaseDeployment):
         report_url = project_conf['x-reporting']
 
         return query_metadata, llm_metatadata, platform_metadata, report_url
+    
+
+    def endpoint_response(self, status_code, result_message, error_message):
+        response = {
+            'status': "finished" if status_code == 200 else "error",
+            'result': result_message,
+            'status_code': status_code
+        }
+        if error_message:
+            response = {
+                'status': "finished" if status_code == 200 else "error",
+                'error_message': error_message,
+                'status_code': status_code
+            }
+            return json.dumps(response), status_code
+
+        return json.dumps(response)
+
 
     def process(self, json_input: dict) -> Tuple[bool, dict, str]:
         """ Entry point to the service
@@ -459,6 +472,77 @@ class LLMDeployment(BaseDeployment):
         except Exception as ex:
             self.logger.error(f"[Process] Error parsing JSON. Query error: {ex}.", exc_info=exc_info)
             raise ex
+    
+
+    def upload_prompt_template(self, json_input):
+        self.logger.info("Upload prompt template request received")
+        name = ""
+        content = {}
+        try:
+            name = json_input['name']
+            content = json_input['content']
+
+        except KeyError as ex:
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        status_code = 200
+        error_message = ""
+        try:
+            path = "src/LLM/prompts/"
+            upload_object(storage_containers['workspace'], content, path + name + ".json")
+            time.sleep(0.5)
+            self.load_templates()
+
+        except Exception as ex:
+            error_message = f"Error uploading prompt file. {ex}"
+            status_code = 500
+            self.logger.error(ex)
+            return self.endpoint_response(status_code, "", error_message)
+
+        return self.endpoint_response(status_code, "Request finished", error_message)
+
+
+    def delete_prompt_template(self, json_input):
+        self.logger.info("Delete prompt template request received")
+        name = ""
+        status_code = 200
+        response = {
+            'status': "finished" if status_code == 200 else "error",
+            'result': f"File <{name}> uploaded",
+            'status_code': status_code
+        }
+        try:
+            name = json_input['name']
+
+        except KeyError as ex:
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        error_message = ""
+        try:
+            path = "src/LLM/prompts/"
+            delete_file(storage_containers['workspace'], path + name + ".json")
+            time.sleep(0.5)
+            self.load_templates()
+
+        except Exception as ex:
+            error_message = f"Error deleting prompt file. {ex}"
+            status_code = 500
+            self.logger.error(ex)
+            return self.endpoint_response(status_code, "", error_message)
+
+        return self.endpoint_response(status_code, "Request finished", error_message)
 
 
 app = Flask(__name__)
@@ -533,6 +617,18 @@ def get_available_models() -> Tuple[str, int]:
         result = json.dumps({"pools": pools}), 200
 
     return result
+
+
+@app.route('/upload_prompt_template', methods=['POST'])
+def upload_prompt_template() -> Tuple[str, int]:
+    dat = request.get_json(force=True)
+    return deploy.upload_prompt_template(dat)
+
+
+@app.route('/delete_prompt_template', methods=['POST'])
+def delete_prompt_template() -> Tuple[str, int]:
+    dat = request.get_json(force=True)
+    return deploy.delete_prompt_template(dat)
 
 
 if __name__ == "__main__":

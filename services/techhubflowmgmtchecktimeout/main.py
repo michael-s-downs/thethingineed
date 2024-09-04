@@ -9,10 +9,10 @@ from typing import Tuple
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import db_dbs, set_queue, set_db
-from common.genai_sdk_controllers import provider, write_to_queue
-from common.dolffia_status_control import update_status, get_redis_pattern, delete_status
-from common.dolffia_json_parser import get_dataset_status_key, get_exc_info
+from common.genai_controllers import db_dbs, set_queue, set_db
+from common.genai_controllers import provider, write_to_queue
+from common.genai_status_control import update_status, get_redis_pattern, delete_status
+from common.genai_json_parser import get_dataset_status_key, get_exc_info
 from common.services import FLOWMGMT_CHECKTIMEOUT_SERVICE, FLOWMGMT_CHECKEND_SERVICE
 from common.status_codes import ERROR
 from common.utils import convert_service_to_queue

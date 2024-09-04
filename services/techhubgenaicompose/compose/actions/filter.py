@@ -10,7 +10,7 @@ from copy import deepcopy
 from typing import List, Dict
 from abc import abstractmethod, ABC
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.errors.genaierrors import PrintableGenaiError
 from ..utils.defaults import FILTER_TEMPLATE
 from dateutil.parser import parse
 
@@ -69,11 +69,12 @@ class TopKFilter(FilterMethod):
             }
         }
 
+
 class PermissionFilter(FilterMethod):
     TYPE = "permission"
     TEMPLATE = FILTER_TEMPLATE
     URL = os.environ['URL_ALLOWED_DOCUMENTS_KNOWLER']
-    URI_PREFIX = os.environ['URI_PREFIX_KNOWLER']
+    # URI_PREFIX = os.environ['URI_PREFIX_KNOWLER']  # TODO delete if not needed
     HEADERS = {'Content-type': 'application/json'}
     BODY = {}
 
@@ -81,37 +82,33 @@ class PermissionFilter(FilterMethod):
         """Process the streamlist and filter unauthorized chunks. 
         """
         headers, template = self.update_params(params)
-        # Get input documents URIs
-        # TODO: Ask if service can work with IDs instead of URIs
-        document_uris = []
+        # Get input documents IDs
+        document_ids = []
         for sc in self.streamlist:
             knowler_id = sc.meta["knowler_id"]
-            knowler_uri = f"{self.URI_PREFIX}-{knowler_id}"
-            document_uris.append(knowler_uri)
+            document_ids.append(knowler_id)
 
-        self.BODY["uris"] = list(set(document_uris)) # URIs must be unique
+        self.BODY["internalIds"] = list(set(document_ids))  # IDs must be unique
         self.HEADERS["Authorization"] = headers.get("user-token", "")
         # Check permissions for documents
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(self.send_post_request(self.URL, self.BODY, self.HEADERS))
         loop.close()
-        
-        #TODO: Add logs
+        # TODO: Add logs
         # Get list of permitted ids
-        permitted_docs = [k for k,v in result["allowed"].items() if v]
+        permitted_docs = [k for k, v in result["allowed"].items() if v]
 
-        # Filter streamchunks
+        # Filter non permitted streamchunks
         output_sl = []
         for sc in self.streamlist:
             knowler_id = sc.meta["knowler_id"]
-            knowler_uri = f"{self.URI_PREFIX}-{knowler_id}"
-            if knowler_uri in permitted_docs:
+            if knowler_id in permitted_docs:
                 output_sl.append(sc)
 
         return output_sl
 
-    async def send_post_request(self, url:str, body:Dict, headers:Dict) -> Dict:
+    async def send_post_request(self, url: str, body: Dict, headers: Dict) -> Dict:
         """Async function that makes calls to a given URL
 
         Args:
@@ -131,7 +128,7 @@ class PermissionFilter(FilterMethod):
                 else:
                     # If the request was not successful, raise an exception
                     response_text = await response.text()
-                    raise PrintableDolffiaError(status_code=response.status, message=response_text)
+                    raise PrintableGenaiError(status_code=response.status, message=response_text)
 
     def update_params(self, params):
         """Updates the template and the headers in order to make the call
@@ -145,7 +142,7 @@ class PermissionFilter(FilterMethod):
         headers.update(params.pop("headers_config", {}))
         template.update(params)
         return headers, template
-    
+
     def get_example(self):
         return json.dumps(self._get_example())
 
@@ -252,7 +249,6 @@ class RelatedToFilter(FilterMethod):
         }
 
 
-
 class MetadataFilter(FilterMethod):
     """Filter the streamlist by different metadata conditions.
 
@@ -260,9 +256,9 @@ class MetadataFilter(FilterMethod):
         FilterMethod (type): The base class for filter methods.
 
     Raises:
-        DolffiaError: If the metadata key does not exist.
-        DolffiaError: If the dictionary has an invalid key.
-        DolffiaError: If the date format is not valid.
+        GenaiError: If the metadata key does not exist.
+        GenaiError: If the dictionary has an invalid key.
+        GenaiError: If the date format is not valid.
 
     Returns:
         bool: True if the metadata passes the filter conditions, False otherwise.
@@ -277,15 +273,15 @@ class MetadataFilter(FilterMethod):
             sub_filter (dict): The subfilter dictionary.
 
         Raises:
-            DolffiaError: If the metadata key does not exist.
-            DolffiaError: If the dictionary has an invalid key.
+            GenaiError: If the metadata key does not exist.
+            GenaiError: If the dictionary has an invalid key.
 
         Returns:
             bool: True if the metadata passes the subfilter conditions, False otherwise.
         """
         for key, value in sub_filter.items():
             if value[0] not in metadata:
-                raise PrintableDolffiaError(status_code=404, message=f"Metadata key {value[0]} does not exist")
+                raise PrintableGenaiError(status_code=404, message=f"Metadata key {value[0]} does not exist")
 
             if key == "eq":
                 if metadata.get(value[0]) == value[1]:
@@ -323,7 +319,8 @@ class MetadataFilter(FilterMethod):
                 if metadata_date < received_date:
                     return True
             else:
-                raise PrintableDolffiaError(status_code=500, message=f"Dictionary must have only eq, gt, lt, in, metaintext or textinmeta in keys. See example {self._get_example()}")
+                raise PrintableGenaiError(status_code=500,
+                                          message=f"Dictionary must have only eq, gt, lt, in, metaintext or textinmeta in keys. See example {self._get_example()}")
             return False
 
     def metadata_to_datetime(self, value):
@@ -333,7 +330,7 @@ class MetadataFilter(FilterMethod):
             value (str): The metadata value.
 
         Raises:
-            DolffiaError: If the date format is not valid.
+            GenaiError: If the date format is not valid.
 
         Returns:
             datetime.datetime: The datetime object.
@@ -341,7 +338,7 @@ class MetadataFilter(FilterMethod):
         try:
             return parse(value)
         except Exception as ex:
-            raise PrintableDolffiaError(status_code=500, message=f" Error: {ex}.\n Date format not valid.")
+            raise PrintableGenaiError(status_code=500, message=f" Error: {ex}.\n Date format not valid.")
 
     def operator(self, a, b, operator):
         """Apply the operator to the two boolean values.
@@ -352,7 +349,7 @@ class MetadataFilter(FilterMethod):
             operator (str): The operator to apply.
 
         Raises:
-            DolffiaError: If the operator is invalid.
+            GenaiError: If the operator is invalid.
 
         Returns:
             bool: The result of applying the operator to the two boolean values.
@@ -362,7 +359,8 @@ class MetadataFilter(FilterMethod):
         elif operator == "or":
             return a or b
         else:
-            raise PrintableDolffiaError(status_code=500, message=f"Operator must be 'and' or 'or'. See example {self._get_example()}")
+            raise PrintableGenaiError(status_code=500,
+                                      message=f"Operator must be 'and' or 'or'. See example {self._get_example()}")
 
     def apply_filter(self, metadata, filter_dict, operator):
         """Apply the filter to the metadata.
@@ -373,7 +371,7 @@ class MetadataFilter(FilterMethod):
             operator (str): The operator to combine the filters.
 
         Raises:
-            DolffiaError: If the dictionary has an invalid key.
+            GenaiError: If the dictionary has an invalid key.
 
         Returns:
             bool: True if the metadata passes the filter conditions, False otherwise.
@@ -391,7 +389,8 @@ class MetadataFilter(FilterMethod):
             or_subfilter = any(self.apply_subfilter(metadata, sub_filter) for sub_filter in filter_dict["or"])
             boolean = or_subfilter
         else:
-            raise PrintableDolffiaError(status_code=500, message=f"Only 'and' or 'or' keys must be defined. See example {self._get_example()}")
+            raise PrintableGenaiError(status_code=500,
+                                      message=f"Only 'and' or 'or' keys must be defined. See example {self._get_example()}")
         return boolean
 
     def filter_data(self, filter_dict, operator):
@@ -433,12 +432,13 @@ class MetadataFilter(FilterMethod):
         return {
             "type": "top_k",
             "params": {
-                "filter_conditions":  {
+                "filter_conditions": {
                     "or": [
                         {"eq": ("city", "New York")},  # Checks if a metadata is equal to a value.
                         {"in": ("city", ["New York", "London"])},  # Checks if a metadata is in a list of values.
                         {"textinmeta": ("city", "New Yor")},  # Checks if a string is contained in the metadata.
-                        {"metaintext": ("city", "The city of New York is known as the big apple.")}  # Checks if a metadata is contained in a string.
+                        {"metaintext": ("city", "The city of New York is known as the big apple.")}
+                        # Checks if a metadata is contained in a string.
                     ],
                     "and": [
                         {"gt": ("age", 30)},  # Checks if a metadata is greater than a value.
@@ -467,7 +467,8 @@ class FilterFactory:
                 break
 
         if self.filtermethod is None:
-            raise PrintableDolffiaError(status_code=404, message=f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
+            raise PrintableGenaiError(status_code=404,
+                                      message=f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
 
     def process(self, streamlist: list, params: dict):
         """Process the streamlist with the given method

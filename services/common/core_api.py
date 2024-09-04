@@ -15,7 +15,7 @@ from logging_handler import logger
 
 
 # Glovar vars
-templates_path = f"{os.path.dirname(__file__)}/dolffia_templates/"
+templates_path = f"{os.path.dirname(__file__)}/api_templates/"
 
 
 def _generate_dataset(files: list, folder: str, metadata: dict = {}) -> str:
@@ -323,22 +323,22 @@ def _sync_preprocess_request(apigw_params: dict, request_params: dict, request_f
     :return: Results of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_SYNC_PREPROCESS_URL')
+    url = os.getenv('API_SYNC_PREPROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia sync preprocess service")
+        logger.debug("Calling API sync preprocess service")
         request = _sync_preprocessing_request_generate(request_params, request_file)
         response = requests.post(url, headers=apigw_params, json=request)
 
         if response.status_code != 200:
-            raise Exception(f"Bad response (status={response.status_code}) from the Dolffia service '{url}'")
+            raise Exception(f"Bad response (status={response.status_code}) from the API service '{url}'")
 
         result['process_id'] = response.json()['id_p']
         result['status'] = "ok"
     except:
         result['status'] = "error"
-        logger.error("Error calling Dolffia sync preprocess service", exc_info=True)
+        logger.error("Error calling API sync preprocess service", exc_info=True)
 
     return result
 
@@ -351,7 +351,7 @@ def sync_classification_multiclass_request(apigw_params: dict, request_params: d
     :return: Results of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_SYNC_CLASSIFY_URL')
+    url = os.getenv('API_SYNC_CLASSIFY_URL')
     url = f"http://{url}" if "http" not in url else url
     
     try:
@@ -361,20 +361,20 @@ def sync_classification_multiclass_request(apigw_params: dict, request_params: d
         if preprocess['status'] == "error":
             raise Exception("Preprocessing error")
 
-        logger.debug("Calling Dolffia sync classification service")
+        logger.debug("Calling API sync classification service")
         request = _sync_classification_multiclass_request_generate(request_params, request_file)
         response = requests.post(url, headers=apigw_params, json=request)
         result['process_id'] = response.json()['id_p']
 
         if response.status_code != 200:
-            raise Exception(f"Bad response (status={response.status_code}) from the Dolffia service '{url}'")
+            raise Exception(f"Bad response (status={response.status_code}) from the API service '{url}'")
 
         result['status'] = "finish"
         result['result'] = response.json()['result']
     except:
         result['process_id'] = request_params.get('process_id', "")
         result['status'] = "error"
-        logger.error("Error calling Dolffia sync classification service", exc_info=True)
+        logger.error("Error calling API sync classification service", exc_info=True)
 
     return result
 
@@ -387,7 +387,7 @@ def sync_extraction_request(apigw_params: dict, request_params: dict, request_fi
     :return: Results of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_SYNC_EXTRACT_URL')
+    url = os.getenv('API_SYNC_EXTRACT_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -399,19 +399,19 @@ def sync_extraction_request(apigw_params: dict, request_params: dict, request_fi
             if preprocess['status'] == "error":
                 raise Exception("Preprocessing error")
 
-        logger.debug("Calling Dolffia sync extraction service")
+        logger.debug("Calling API sync extraction service")
         request = _sync_extraction_request_generate(request_params, request_file)
         response = requests.post(url, headers=apigw_params, json=request)
         result['process_id'] = request_params['process_id']
 
         if response.status_code != 200:
-            raise Exception(f"Bad response (status={response.status_code}) from the Dolffia service '{url}'")
+            raise Exception(f"Bad response (status={response.status_code}) from the API service '{url}'")
 
         result['status'] = "finish"
         result['result'] = response.json()['result']
     except:
         result['status'] = "error"
-        logger.error("Error calling Dolffia sync extraction service", exc_info=True)
+        logger.error("Error calling API sync extraction service", exc_info=True)
 
     return result
 
@@ -424,23 +424,23 @@ def async_preprocess_request(apigw_params: dict, request_params: dict, request_f
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_PROCESS_URL')
+    url = os.getenv('API_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async preprocess service")
+        logger.debug("Calling API async preprocess service")
         request = _async_preprocess_request_generate(request_params, request_files)
         response = requests.post(url, headers=apigw_params, json=request)
         response_json = response.json()
 
         if type(response_json) != dict or 'dataset_status_key' not in response_json or response_json['dataset_status_key'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "waiting"
         result['process_id'] = response_json['dataset_status_key']
     except:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async preprocess service", exc_info=True)
+        logger.error("Error calling API async preprocess service", exc_info=True)
 
     return result
 
@@ -453,23 +453,23 @@ def async_classification_multiclass_request(apigw_params: dict, request_params: 
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_PROCESS_URL')
+    url = os.getenv('API_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async classification service")
+        logger.debug("Calling API async classification service")
         request = _async_classification_multiclass_request_generate(request_params, request_files)
         response = requests.post(url, headers=apigw_params, json=request)
         response_json = response.json()
 
         if type(response_json) != dict or 'dataset_status_key' not in response_json or response_json['dataset_status_key'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "waiting"
         result['process_id'] = response_json['dataset_status_key']
     except:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async classification service", exc_info=True)
+        logger.error("Error calling API async classification service", exc_info=True)
 
     return result
 
@@ -482,23 +482,23 @@ def async_classification_multilabel_request(apigw_params: dict, request_params: 
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_PROCESS_URL')
+    url = os.getenv('API_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async classification service")
+        logger.debug("Calling API async classification service")
         request = _async_classification_multilabel_request_generate(request_params, request_files)
         response = requests.post(url, headers=apigw_params, json=request)
         response_json = response.json()
 
         if type(response_json) != dict or 'dataset_status_key' not in response_json or response_json['dataset_status_key'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "waiting"
         result['process_id'] = response_json['dataset_status_key']
     except Exception as ex:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async classification service", exc_info=True)
+        logger.error("Error calling API async classification service", exc_info=True)
 
     return result
 
@@ -511,23 +511,23 @@ def async_extraction_request(apigw_params: dict, request_params: dict, request_f
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_PROCESS_URL')
+    url = os.getenv('API_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async extraction service")
+        logger.debug("Calling API async extraction service")
         request = _async_extraction_request_generate(request_params, request_files)
         response = requests.post(url, headers=apigw_params, json=request)
         response_json = response.json()
 
         if type(response_json) != dict or 'dataset_status_key' not in response_json or response_json['dataset_status_key'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "waiting"
         result['process_id'] = response_json['dataset_status_key']
     except Exception as ex:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async extraction service", exc_info=True)
+        logger.error("Error calling API async extraction service", exc_info=True)
 
     return result
 
@@ -540,23 +540,23 @@ def async_indexing_request(apigw_params: dict, request_params: dict, request_fil
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_PROCESS_URL')
+    url = os.getenv('API_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async indexing service")
+        logger.debug("Calling API async indexing service")
         request = _async_indexing_request_generate(request_params, request_files)
         response = requests.post(url, headers=apigw_params, json=request)
         response_json = response.json()
 
         if type(response_json) != dict or 'dataset_status_key' not in response_json or response_json['dataset_status_key'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "waiting"
         result['process_id'] = response_json['dataset_status_key']
     except Exception as ex:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async indexing service", exc_info=True)
+        logger.error("Error calling API async indexing service", exc_info=True)
 
     return result
 
@@ -569,10 +569,10 @@ def queue_indexing_request(apigw_params: dict, request_params: dict, request_fil
     :return: Status of process
     """
     result = {}
-    queue = os.getenv('DOLFFIA_QUEUE_PROCESS_URL')
+    queue = os.getenv('API_QUEUE_PROCESS_URL')
 
     try:
-        logger.debug("Calling Dolffia queue indexing service")
+        logger.debug("Calling API queue indexing service")
 
         request = _async_indexing_request_generate(request_params, request_files)
         request['headers'] = apigw_params
@@ -587,7 +587,7 @@ def queue_indexing_request(apigw_params: dict, request_params: dict, request_fil
         result['process_id'] = request['dataset_conf'].get('dataset_id', "")
     except Exception as ex:
         result['status'] = "error"
-        logger.error("Error calling Dolffia queue indexing service", exc_info=True)
+        logger.error("Error calling API queue indexing service", exc_info=True)
 
     return result
 
@@ -599,16 +599,16 @@ def async_status_request(apigw_params: dict, process_id: str) -> dict:
     :return: Status of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_STATUS_URL')
+    url = os.getenv('API_ASYNC_STATUS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async status service")
+        logger.debug("Calling API async status service")
         response = requests.post(url, headers=apigw_params, json={'dataset_status_key': process_id})
         response_json = response.json()
 
         if type(response_json) != dict or 'process_status' not in response_json:
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         if response_json['process_status'] == "processing":
             result['status'] = "waiting"
@@ -620,7 +620,7 @@ def async_status_request(apigw_params: dict, process_id: str) -> dict:
         result['process_id'] = process_id
     except:
         result['status'] = "error"
-        logger.error("Error calling Dolffia async status service", exc_info=True)
+        logger.error("Error calling API async status service", exc_info=True)
 
     return result
 
@@ -632,16 +632,16 @@ def async_result_request(apigw_params: dict, process_id: str) -> dict:
     :return: Results of process
     """
     result = {}
-    url = os.getenv('DOLFFIA_ASYNC_RESULT_URL')
+    url = os.getenv('API_ASYNC_RESULT_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async result service")
+        logger.debug("Calling API async result service")
         response = requests.post(url, headers=apigw_params, json={'dataset_status_key': process_id})
         response_json = response.json()
 
         if type(response_json) != dict or 'info' not in response_json or response_json['info'] == "error":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         result['status'] = "finish"
         result['process_id'] = process_id
@@ -652,8 +652,8 @@ def async_result_request(apigw_params: dict, process_id: str) -> dict:
     except:
         result['status'] = "error"
         result['process_id'] = process_id
-        logger.error("Error calling Dolffia async result service", exc_info=True)
-        raise Exception("Unable to get results from Dolffia")
+        logger.error("Error calling API async result service", exc_info=True)
+        raise Exception("Unable to get results from API")
 
     return result
 
@@ -665,22 +665,22 @@ def async_delete_request(apigw_params: dict, process_id: str, tracking_message: 
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    url = os.getenv('DOLFFIA_ASYNC_DELETE_URL')
+    url = os.getenv('API_ASYNC_DELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia async delete service")
+        logger.debug("Calling API async delete service")
         request = {'dataset_status_key': process_id, 'tracking': tracking_message}
         response = requests.post(url, headers=apigw_params, data=json.dumps(request))
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "ok":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         status = True
     except:
         status = False
-        logger.error("Error calling Dolffia async delete service", exc_info=True)
+        logger.error("Error calling API async delete service", exc_info=True)
 
     return status
 
@@ -692,22 +692,22 @@ def sync_delete_request(apigw_params: dict, process_id: str, tracking_message: d
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    url = os.getenv('DOLFFIA_SYNC_DELETE_URL')
+    url = os.getenv('API_SYNC_DELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia sync delete service")
+        logger.debug("Calling API sync delete service")
         request = {'dataset_status_key': process_id, 'tracking': tracking_message}
         response = requests.post(url, headers=apigw_params, data=json.dumps(request))
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "ok":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         status = True
     except:
         status = False
-        logger.error("Error calling Dolffia sync delete service", exc_info=True)
+        logger.error("Error calling API sync delete service", exc_info=True)
 
     return status
 
@@ -719,10 +719,10 @@ def queue_delete_request(apigw_params: dict, process_id: str, tracking_message: 
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    queue = os.getenv('DOLFFIA_QUEUE_DELETE_URL')
+    queue = os.getenv('API_QUEUE_DELETE_URL')
 
     try:
-        logger.debug("Calling Dolffia queue delete service")
+        logger.debug("Calling API queue delete service")
 
         request = {'dataset_status_key': process_id, 'headers': apigw_params, 'tracking': tracking_message}
 
@@ -735,6 +735,6 @@ def queue_delete_request(apigw_params: dict, process_id: str, tracking_message: 
         status = True
     except:
         status = False
-        logger.error("Error calling Dolffia queue delete service", exc_info=True)
+        logger.error("Error calling API queue delete service", exc_info=True)
 
     return status

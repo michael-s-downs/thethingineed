@@ -9,6 +9,7 @@ AWS_SECRET_KEY=BY USER
 AZ_CONN_STR_STORAGE=KEEPASS OR VAR ENV IN POD
 STORAGE_DATA=uhis-cdac-develop-data
 STORAGE_BACKEND=uhis-cdac-develop-backend
+VECTOR_STORAGE= NAME OF THE ELASTIC THAT WILL BE USED (MUST APPEAR IN VECTOR_STORAGES.JSON FILE)
 #TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
 #TRACKING_OUTPUT_URL=uhis-cdac-develop--q-all-tracking
 #SECRETS_PATH=local path to models.json file

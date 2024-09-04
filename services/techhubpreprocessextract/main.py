@@ -11,10 +11,10 @@ from pdfminer.pdfdocument import PDFEncryptionError
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.genai_sdk_controllers import upload_object, download_file
-from common.dolffia_status_control import update_status
-from common.dolffia_json_parser import *
+from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
+from common.genai_controllers import upload_object, download_file
+from common.genai_status_control import update_status
+from common.genai_json_parser import *
 from common.status_codes import *
 from common.services import *
 from common.preprocess.preprocess_extract import extract_text, get_num_pages, extract_images_conditional, EXTENSIONS
@@ -179,36 +179,36 @@ class PreprocessExtractDeployment(BaseDeployment):
                 self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
 
             # Save text
-            path_s3_txt = ""
+            path_IRStorage_txt = ""
             self.logger.info("Uploading files of text.")
             try:
                 folder_file_txt = folder_file + ".txt"
                 for key in files_extracted['extraction']:
                     if key != "text":
-                        path_s3 = os.path.join(specific['path_text'], "txt", folder_file, "pags", f"{os.path.basename(folder_file)}_{key}.txt")
-                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_s3)
+                        path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, "pags", f"{os.path.basename(folder_file)}_{key}.txt")
+                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
                     else:
-                        path_s3 = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
-                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_s3)
+                        path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
+                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
                 if files_extracted['text']:
-                    path_s3_txt = os.path.join(specific['path_txt'], folder_file_txt)
-                    upload_object(workspace, files_extracted['text'], path_s3_txt)
+                    path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
+                    upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
             except Exception:
                 self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
 
             # Save cells
-            path_s3_cells = ""
+            path_IRStorage_cells = ""
             self.logger.info("Uploading files of cells, boxes and lines.")
             try:
-                path_s3_cells = os.path.join(specific['path_cells'], "txt", folder_file)
+                path_IRStorage_cells = os.path.join(specific['path_cells'], "txt", folder_file)
                 if files_extracted['boxes']:
-                    filename_blocks = os.path.join(path_s3_cells, f"{os.path.basename(folder_file)}_paragraphs.txt")
+                    filename_blocks = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_paragraphs.txt")
                     upload_object(workspace, json.dumps(files_extracted['boxes']), filename_blocks)
                 if files_extracted['cells']:
-                    filename_cells = os.path.join(path_s3_cells, f"{os.path.basename(folder_file)}_words.txt")
+                    filename_cells = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_words.txt")
                     upload_object(workspace, json.dumps(files_extracted['cells']), filename_cells)
                 if files_extracted['lines']:
-                    filename_lines = os.path.join(path_s3_cells, f"{os.path.basename(folder_file)}_lines.txt")
+                    filename_lines = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_lines.txt")
                     upload_object(workspace, json.dumps(files_extracted['lines']), filename_lines)
             except Exception:
                 self.logger.warning(f"[Process {dataset_status_key}] Error uploading cells.", exc_info=get_exc_info())
@@ -242,8 +242,8 @@ class PreprocessExtractDeployment(BaseDeployment):
             message['specific'].update({
                 'paths': {
                     'images': images,
-                    'text': path_s3_txt,
-                    'cells': path_s3_cells
+                    'text': path_IRStorage_txt,
+                    'cells': path_IRStorage_cells
                 }
             })
             message['specific']['document'].update({
@@ -299,9 +299,9 @@ class PreprocessExtractDeployment(BaseDeployment):
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess extract", exc_info=get_exc_info())
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
-        finally:
-            update_status(redis_status, dataset_status_key, msg)
-            return self.must_continue, message, next_service
+
+        update_status(redis_status, dataset_status_key, msg)
+        return self.must_continue, message, next_service
 
 
 if __name__ == "__main__":

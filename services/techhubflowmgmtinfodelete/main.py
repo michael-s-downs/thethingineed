@@ -6,10 +6,10 @@ from typing import Tuple
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.genai_sdk_controllers import delete_folder
-from common.dolffia_status_control import delete_status
-from common.dolffia_json_parser import get_exc_info, get_headers, get_dataset_status_key
+from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
+from common.genai_controllers import delete_folder
+from common.genai_status_control import delete_status
+from common.genai_json_parser import get_exc_info, get_headers, get_dataset_status_key
 from common.services import FLOWMGMT_INFODELETE_SERVICE
 from common.error_messages import *
 
@@ -79,12 +79,10 @@ class FlowMgmtInfoDeleteDeployment(BaseDeployment):
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error while deleting status", exc_info=get_exc_info())
                 raise DELETING_STATUS_REDIS_ERROR
-
         except:
             dataset_status_key = message.get('dataset_status_key', "")
             self.logger.error(f"[Process {dataset_status_key}] Error while deleting data")
-        finally:
-            return self.must_continue, message, self.service_name
+        return self.must_continue, message, self.service_name
 
 
 if __name__ == "__main__":

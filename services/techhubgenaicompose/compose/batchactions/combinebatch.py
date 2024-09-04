@@ -4,12 +4,11 @@
 from typing import List
 from copy import deepcopy
 from string import Template
-from itertools import repeat
 
 from ..utils.defaults import EMPTY_STREAM
 from ..streamlist import StreamList
-from .. streamchunk import StreamChunk
-from common.errors.dolffiaerrors import DolffiaError
+from ..streamchunk import StreamChunk
+from common.errors.genaierrors import GenaiError
 
 
 class CombineBatchMethod:
@@ -28,6 +27,7 @@ class CombineBatchMethod:
         """
         pass
 
+
 class JoinCombine2(CombineBatchMethod):
     TYPE = "joincombine2"
 
@@ -38,17 +38,17 @@ class JoinCombine2(CombineBatchMethod):
             streambatch (list): StreamBatch
         """
         if len(streambatch) != 2:
-            raise DolffiaError(status_code=500, message="CombineTwoSlBatch can only be used with two streamlists")
+            raise GenaiError(status_code=500, message="CombineTwoSlBatch can only be used with two streamlists")
 
         self.streambatch = streambatch
 
-    def process(self, template:str, SEP:str = "\n") -> List:
+    def process(self, template: str, SEP: str = "\n") -> List:
         """Process the streambatch given the method
         """
         sl1, sl2 = self.streambatch
         s1 = SEP.join([sl.content for sl in sl1])
         s2 = SEP.join([sl.content for sl in sl2])
-        content = Template(template).substitute(s1 = s1, s2 = s2)
+        content = Template(template).substitute(s1=s1, s2=s2)
 
         es = deepcopy(EMPTY_STREAM)
         es.update({"content": content})
@@ -65,7 +65,7 @@ class CombineJoin2(CombineBatchMethod):
             streambatch (list): StreamBatch
         """
         if len(streambatch) != 2:
-            raise DolffiaError(status_code=500, message="CombineTwoSlBatch can only be used with two streamlists")
+            raise GenaiError(status_code=500, message="CombineTwoSlBatch can only be used with two streamlists")
 
         self.streambatch = streambatch
 
@@ -79,11 +79,11 @@ class CombineJoin2(CombineBatchMethod):
 
         return sl1, sl2
 
-    def process(self, template, unique_streamlist:bool = False, SEP:str = "\n") -> List:
+    def process(self, template, unique_streamlist: bool = False, SEP: str = "\n") -> List:
         """Process the streambatch given the method
         """
         sl1, sl2 = self.streambatch
-        contents = [Template(template).substitute(s1 = s1.content, s2 = s2.content) for s1, s2 in zip(sl1, sl2)]
+        contents = [Template(template).substitute(s1=s1.content, s2=s2.content) for s1, s2 in zip(sl1, sl2)]
         if unique_streamlist:
             content = SEP.join(contents)
             es = deepcopy(EMPTY_STREAM)
@@ -101,7 +101,6 @@ class CombineJoin2(CombineBatchMethod):
 
 
 class CombineBatchFactory:
-
     MERGEBATCHES = [JoinCombine2, CombineJoin2]
 
     def __init__(self, combinebatch_type: str) -> None:
@@ -118,7 +117,8 @@ class CombineBatchFactory:
                 break
 
         if self.combinebatchmethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided combinebatch does not match any of the possible ones: {', '.join(f.TYPE for f in self.MERGEBATCHES)}")
+            raise GenaiError(status_code=404,
+                             message=f"Provided combinebatch does not match any of the possible ones: {', '.join(f.TYPE for f in self.MERGEBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

@@ -3,11 +3,12 @@
 
 import random
 
-from common.genai_sdk_controllers import load_file, storage_containers
+from common.genai_controllers import load_file, storage_containers
 from basemanager import AbstractManager
 
 S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
 S3_TEMPLATEPATH = "src/compose/templates"
+
 
 class TemplateManager(AbstractManager):
     """
@@ -64,11 +65,11 @@ class TemplateManager(AbstractManager):
         """
         conf = self.get_param(compose_config, "template", dict)
         if not conf:
-            self.raise_PrintableDolffiaerror(404, "Template conf not found, trying compose_flow")
+            self.raise_PrintableGenaiError(404, "Template conf not found, trying compose_flow")
 
         self.name = conf.get("name")
         if not self.name:
-            self.raise_PrintableDolffiaerror(404, "Mandatory param <name> not found in template")
+            self.raise_PrintableGenaiError(404, "Mandatory param <name> not found in template")
         self.params = self.get_param(conf, "params", dict)
         self.default_template_params()
         self.top_k = self.get_param(self.params, "top_k", int)
@@ -76,17 +77,16 @@ class TemplateManager(AbstractManager):
         self.filter_template = self.get_param(compose_config, "queryfilter_template", str)
         self.probs = self.get_param(compose_config, "probs", list)
         self.query = self.get_param(self.params, "query", str)
-        self.logger.info("[Process ] Template parsed")
         self.query_type = self.get_param(self.params, "query_type", str)
         self.llm_action = self.get_param(self.params, "llm_action", list)
+        self.logger.info("[Process ] Template parsed")
 
         if self.query == "":
             self.query = None
 
         return self
-    
 
-    def get_param(self, params:dict, param_name: str, param_type, mandatory=False):
+    def get_param(self, params: dict, param_name: str, param_type, mandatory=False):
         """
         Retrieves a parameter from the template parameters.
 
@@ -101,7 +101,6 @@ class TemplateManager(AbstractManager):
         """
         return super().get_param(params, param_name, param_type, self.defaults_dict, mandatory=mandatory)
 
-
     def default_template_params(self):
         """
         Sets default values for the template parameters.
@@ -114,7 +113,6 @@ class TemplateManager(AbstractManager):
             if default_key not in self.params:
                 self.params[default_key] = default_param
 
-
     def set_params(self, template_params):
         """
         Sets the parameters for the template (query, query_type, top_qa).
@@ -125,7 +123,7 @@ class TemplateManager(AbstractManager):
         Returns:
             dict: The updated template params.
         """
-        template_params['top_qa'] = self.top_qa	
+        template_params['top_qa'] = self.top_qa
         template_params['query_type'] = self.query_type
         template_params['query'] = self.query
         return template_params
@@ -148,7 +146,7 @@ class TemplateManager(AbstractManager):
                     self.logger.debug("[Process ] Search topic appears in template_params")
 
                     step['action_params']['params']['generic']['index_conf']['query'] = template_params['search_topic']
-                    if 'top_k' not in  step['action_params']['params']['generic']['index_conf']:
+                    if 'top_k' not in step['action_params']['params']['generic']['index_conf']:
                         step['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
 
                     self.logger.debug(f"Busqueda para retrieval: {template_params['search_topic']}")
@@ -158,16 +156,17 @@ class TemplateManager(AbstractManager):
                     search_topic = query.split('based on')[1].strip()
                     search_topic = search_topic.replace('"', '').replace("'", "").replace('.', '')
                     step['action_params']['params']['generic']['index_conf']['query'] = search_topic
-                elif 'top_k' not in  step['action_params']['params']['generic']['index_conf']:
+                elif 'top_k' not in step['action_params']['params']['generic']['index_conf']:
                     step['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
 
-                self.logger.info("Busqueda para retrieval: %s", step['action_params']['params']['generic']['index_conf']['query'])
-                self.logger.info("Top_k para retrieval: %s", step['action_params']['params']['generic']['index_conf'].get('top_k', "Not necesary"))
-        
+                self.logger.info("Busqueda para retrieval: %s",
+                                 step['action_params']['params']['generic']['index_conf']['query'])
+                self.logger.info("Top_k para retrieval: %s",
+                                 step['action_params']['params']['generic']['index_conf'].get('top_k', "Not necesary"))
+
         self.logger.info("[Process ] Template ready for retrieval")
         return template_dict
 
-            
     def load_template(self):
         """
         Loads the template stored in S3 that's going to be used.
@@ -178,11 +177,12 @@ class TemplateManager(AbstractManager):
                 name = random.choices(name, weights=self.probs)[0]
                 self.logger.info(f"[Process ] Chosen template: {name}")
             except Exception:
-                self.raise_PrintableDolffiaerror(500, "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
+                self.raise_PrintableGenaiError(500,
+                                                 "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
         self.logger.debug("Template name is not string so, uploading as string...")
         try:
             self.template = load_file(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/{name}.json").decode()
             if not self.template:
-                self.raise_PrintableDolffiaerror(404, "Compose template not found")
+                self.raise_PrintableGenaiError(404, "Compose template not found")
         except ValueError:
-            self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {name}")
+            self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {name}")

@@ -10,12 +10,13 @@ from abc import ABC, abstractmethod
 
 from compose.utils.defaults import FILTER_TEMPLATE
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import PrintableDolffiaError
-from common.genai_sdk_controllers import load_file, storage_containers
+from common.errors.genaierrors import PrintableGenaiError
+from common.genai_controllers import load_file, storage_containers
 from basemanager import AbstractManager
 
 S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
 LLMP = LLMParser()
+
 
 class FilterManager(AbstractManager):
     """Manages and applies query filters based on provided configurations.
@@ -63,7 +64,7 @@ class FilterManager(AbstractManager):
         self.logger.debug("QueryFilters parse END")
         return self
 
-    def get_param(self, params:dict, param_name: str, param_type):
+    def get_param(self, params: dict, param_name: str, param_type):
         """Gets the specified param from the dictionary, checks the type and sets 
         the default value if necessary.
 
@@ -92,9 +93,9 @@ class FilterManager(AbstractManager):
             self.logger.info("Queryfilter template loaded")
             self.logger.info(f"Template {template}")
             if not template:
-                raise self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
+                raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
-            raise self.raise_PrintableDolffiaerror(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
+            raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
         return json.loads(template)
 
     def run(self, query, headers, output=False) -> dict:
@@ -124,13 +125,13 @@ class FilterManager(AbstractManager):
         self.logger.debug(substitutions)
         self.logger.debug(substitutions_template)
 
-        for ft in self.queryfilters['filter_types']:  #Iterate every filter type
-            if ft == FilterExactMatch.TYPE: # Exact match filter
+        for ft in self.queryfilters['filter_types']:  # Iterate every filter type
+            if ft == FilterExactMatch.TYPE:  # Exact match filter
                 query, aux_bool = FilterExactMatch(query, substitutions).process()
-            elif ft == FilterGPT.TYPE: # GPT filter
+            elif ft == FilterGPT.TYPE:  # GPT filter
                 query, aux_bool = FilterGPT(query, substitutions, substitutions_template, headers).process()
             else:
-                raise self.raise_PrintableDolffiaerror(404, f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
+                raise self.raise_PrintableGenaiError(404, f"Provided filter does not match any of the possible ones: {', '.join(f.TYPE for f in self.FILTERS)}")
             filtered = filtered or aux_bool
 
         query = query.strip().lower()
@@ -145,12 +146,13 @@ class FilterManager(AbstractManager):
             URL = os.environ['URL_LLM']
             template = FILTER_TEMPLATE
             template['query_metadata']['query'] = query
-            r = requests.post(URL, json=template, headers=headers, verify=False)
-            result  = LLMP.parse_response(r)
+            r = requests.post(URL, json=template, headers=headers, verify=True)
+            result = LLMP.parse_response(r)
             query = result['answer']
 
         self.logger.info("Queryfilters run END")
         return query, filtered
+
 
 class FilterQuery(ABC):
     """Abstract base class for defining query filters.
@@ -162,7 +164,8 @@ class FilterQuery(ABC):
         headers (dict): HTTP headers for requests, if applicable.
     """
 
-    def __init__(self, query, substitutions: List[Tuple[str, str]], substitutions_template = "", headers: dict = {}) -> None:
+    def __init__(self, query, substitutions: List[Tuple[str, str]], substitutions_template="",
+                 headers: dict = {}) -> None:
         """Initializes the filter with query and substitution details.
 
         Args:
@@ -181,6 +184,7 @@ class FilterQuery(ABC):
         """Process the streamlist given the method
         """
 
+
 class FilterExactMatch(FilterQuery):
     """Implements exact match filtering for queries.
     """
@@ -194,7 +198,8 @@ class FilterExactMatch(FilterQuery):
         """
         for substitution in self.substitutions:
             if not "from" in substitution or not "to" in substitution:
-                raise PrintableDolffiaError(status_code=400, message=f"Substitutions must have a from and to key. Keys: {substitution.keys()}")
+                raise PrintableGenaiError(status_code=400,
+                                          message=f"Substitutions must have a from and to key. Keys: {substitution.keys()}")
         for substitution in self.substitutions:
             if isinstance(substitution['from'], list):
                 for f in substitution['from']:
@@ -205,6 +210,7 @@ class FilterExactMatch(FilterQuery):
                     return substitution['to'], True
 
         return self.query, False
+
 
 class FilterGPT(FilterQuery):
     """Implements GPT-based filtering for queries.
@@ -223,13 +229,13 @@ class FilterGPT(FilterQuery):
         """
         template = self.TEMPLATE
         if self.query == "" or self.query is None:
-            raise PrintableDolffiaError(status_code=400, message="Query is empty, cannot filter")
+            raise PrintableGenaiError(status_code=400, message="Query is empty, cannot filter")
         template['query_metadata']['query'] = self.substitutions_template + "\n" + self.query
-        r = requests.post(self.URL, json=template, headers=self.headers, verify=False)
+        r = requests.post(self.URL, json=template, headers=self.headers, verify=True)
         if r.status_code != 200:
-            raise PrintableDolffiaError(status_code=r.status_code, message=r.text)
+            raise PrintableGenaiError(status_code=r.status_code, message=r.text)
 
-        result  = LLMP.parse_response(r)
+        result = LLMP.parse_response(r)
         answer = result['answer']
 
         for substitution in self.substitutions:
@@ -240,7 +246,7 @@ class FilterGPT(FilterQuery):
                 if "extra_words" in substitution:
                     extra_words = substitution['extra_words']
                     random.shuffle(extra_words)
-                    to += " " +  ", ".join(extra_words[0: substitution.get("randpick", -1)])
+                    to += " " + ", ".join(extra_words[0: substitution.get("randpick", -1)])
 
                 return to, True
 

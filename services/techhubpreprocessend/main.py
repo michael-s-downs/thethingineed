@@ -7,9 +7,9 @@ from typing import Tuple
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.dolffia_status_control import get_status_code, update_status, get_value
-from common.dolffia_json_parser import get_generic, get_specific, get_exc_info, get_dataset_status_key, get_project_config
+from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
+from common.genai_status_control import get_status_code, update_status, get_value
+from common.genai_json_parser import get_generic, get_specific, get_exc_info, get_dataset_status_key, get_project_config
 from common.services import PREPROCESS_END_SERVICE, GENAI_INFO_INDEXING_SERVICE, FLOWMGMT_CHECKEND_SERVICE
 from common.status_codes import ERROR, START_PROCESS
 from common.error_messages import *
@@ -102,9 +102,9 @@ class PreprocessEndDeployment(BaseDeployment):
             next_service = FLOWMGMT_CHECKEND_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess end.", exc_info=get_exc_info())
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
-        finally:
-            update_status(redis_status, dataset_status_key, msg)
-            return self.must_continue, message, next_service
+
+        update_status(redis_status, dataset_status_key, msg)
+        return self.must_continue, message, next_service
 
 
 if __name__ == "__main__":

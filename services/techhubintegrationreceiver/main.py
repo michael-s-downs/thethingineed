@@ -69,10 +69,14 @@ def reloadconfig() -> str:
     load_custom_files()
     return json.dumps({'status': "ok"})
 
-
-if __name__ == '__main__':
+@app.before_first_request
+def startup():
+    """ Logics to do only the first time
+    """
     logger.info(f"---- Loading custom files ({os.getenv('INTEGRATION_NAME').upper()})")
     load_custom_files()
 
+
+if __name__ == '__main__':
     logger.info(f"---- Launching service ({'NON ' if not requests_manager.storage_delete_request else ''}DELETE MODE)")
     app.run(host="0.0.0.0", debug=False, port=8888)

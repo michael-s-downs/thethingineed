@@ -9,7 +9,7 @@ AWS_SECRET_KEY=BY USER
 AZ_CONN_STR_STORAGE=KEEPASS OR VAR ENV IN POD
 STORAGE_DATA=uhis-cdac-develop-data
 STORAGE_BACKEND=uhis-cdac-develop-backend
-AZURE_DALLE_SWEDEN_URL=https://dolffia-sweden.openai.azure.com/openai/deployments/dolffia-dalle3-sweden/images/generations?api-version=2023-12-01-preview
+AZURE_DALLE_SWEDEN_URL=https://genai-sweden.openai.azure.com/openai/deployments/genai-dalle3-sweden/images/generations?api-version=2023-12-01-preview
 AZURE_GPT_CHAT_URL=https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API
 AZURE_GPT_PROMPT_URL=https://$ZONE.openai.azure.com/openai/deployments/$MODEL/completions?api-version=$API
 #TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
@@ -18,7 +18,7 @@ AZURE_GPT_PROMPT_URL=https://$ZONE.openai.azure.com/openai/deployments/$MODEL/co
 #SECRETS_PATH=local path to models.json file
 #Q_GENAI_LLMQUEUE_INPUT=uhis-cdac-develop--q-genai-llmqueue-input
 #Q_GENAI_LLMQUEUE_OUTPUT=uhis-cdac-develop--q-genai-llmqueue-output
-#JSON_KEY_INPUT=dolffiaRequest
-#JSON_KEY_OUTPUT=dolffiaResponse
+#JSON_KEY_INPUT=genaiRequest
+#JSON_KEY_OUTPUT=genaiResponse
 #DATA_MOUNT_PATH=mnt/
 #DATA_MOUNT_KEY=context

@@ -1,13 +1,6 @@
 ### This code is property of the GGAO ###
 
 
-gunicorn==21.2.0
 aiohttp==3.8.5
 nltk==3.8.1
-langdetect==1.0.9
 langfuse==2.33
-Flask==1.1.2
-Jinja2==3.0.3
-itsdangerous==2.0.1
-Werkzeug==2.0.2
-python-magic==0.4.27

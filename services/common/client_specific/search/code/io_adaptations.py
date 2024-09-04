@@ -17,16 +17,17 @@ def _adapt_input_files(request_json: dict, input_files: list) -> Tuple[dict, lis
     """
     input_json = request_json['input_json']
 
-    for file_name in list(input_json['documents_metadata'].keys()):
-        input_json['documents_metadata'][file_name.replace("_parsed", "")] = input_json['documents_metadata'].pop(file_name)
+    if 'documents_metadata' in input_json:
+        for file_name in list(input_json['documents_metadata'].keys()):
+            input_json['documents_metadata'][file_name.replace("_parsed", "")] = input_json['documents_metadata'].pop(file_name)
 
-    for file_name, doc in input_json['documents_metadata'].items():
-        if 'content_binary' in doc:
-            # Get bytes and replace it with the storage path where will be allocated
-            file_bytes = base64.b64decode(doc['content_binary'])
-            doc['content_binary'] = f"{request_json['documents_folder']}/{file_name}"
+        for file_name, doc in input_json['documents_metadata'].items():
+            if 'content_binary' in doc:
+                # Get bytes and replace it with the storage path where will be allocated
+                file_bytes = base64.b64decode(doc['content_binary'])
+                doc['content_binary'] = f"{request_json['documents_folder']}/{file_name}"
 
-            input_files.append({'file_name': file_name, 'file_bytes': file_bytes})
+                input_files.append({'file_name': file_name, 'file_bytes': file_bytes})
 
     return request_json, input_files
 
@@ -115,7 +116,7 @@ def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[di
     """
     request_json['tracking'] = deepcopy(request_json['input_json'])
 
-    input_json = request_json['input_json'].pop('dolffiaRequest', {})
+    input_json = request_json['input_json'].pop('APIRequest', {})
     request_json['output_json'] = request_json.pop('input_json')
     request_json['input_json'] = input_json
 
@@ -190,7 +191,7 @@ def adapt_output_knowler_queue(request_json: dict) -> Tuple[dict, dict]:
         request_json, result_parsed = adapt_output_default(request_json)
 
     output_json = request_json.pop('output_json', {})
-    output_json['dolffiaResponse'] = result_parsed
+    output_json['APIResponse'] = result_parsed
     result_parsed = output_json
 
     return request_json, result_parsed

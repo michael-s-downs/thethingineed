@@ -7,10 +7,10 @@ from tempfile import TemporaryFile
 
 # Installed imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.genai_sdk_controllers import get_sizes, bytes_mode
-from common.dolffia_status_control import update_status
-from common.dolffia_json_parser import *
+from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
+from common.genai_controllers import get_sizes, bytes_mode
+from common.genai_status_control import update_status
+from common.genai_json_parser import *
 from common.preprocess.preprocess_ocr import *
 from common.preprocess.preprocess_utils import format_indexing_metadata
 from common.preprocess.preprocess_utils import get_language
@@ -249,9 +249,9 @@ class PreprocessOCRDeployment(BaseDeployment):
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess ocr.", exc_info=get_exc_info())
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
-        finally:
-            update_status(redis_status, dataset_status_key, msg)
-            return self.must_continue, message, next_service
+
+        update_status(redis_status, dataset_status_key, msg)
+        return self.must_continue, message, next_service
 
 
 if __name__ == "__main__":

@@ -13,12 +13,12 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 # Custom imports
-from common.genai_sdk_controllers import set_queue, write_to_queue, read_from_queue, delete_from_queue, provider
-from common.dolffia_json_parser import *
+from common.genai_controllers import set_queue, write_to_queue, read_from_queue, delete_from_queue, provider
+from common.genai_json_parser import *
 from common.graceful_killer import GracefulKiller
 from common.logging_handler import LoggerHandler
 from common.utils import convert_service_to_queue
-from common.errors.dolffiaerrors import PrintableDolffiaError, DolffiaError
+from common.errors.genaierrors import PrintableGenaiError, GenaiError
 
 
 warnings.simplefilter('ignore')
@@ -60,7 +60,7 @@ class BaseDeployment(ABC):
         return 1
 
     @abstractmethod
-    def process(self, json_input: DolffiaInput) -> Tuple[bool, dict, str]:
+    def process(self, json_input: GenaiInput) -> Tuple[bool, dict, str]:
         """ Main function """
         raise NotImplementedError(f"Process not implemented yet for {self.service_name}.")
 
@@ -145,7 +145,7 @@ class BaseDeployment(ABC):
         return request_json
 
     def report_api(self, count: int, dataset_status_key: str, url: str, resource: str, process_id: str, reporting_type: str = "PAGS"):
-        """ Report number of pages to Dolffia API Gateway
+        """ Report number of pages to Genai API Gateway
 
         :param count: Number of pages to report
         :param dataset_status_key: Id of process
@@ -246,7 +246,7 @@ class BaseDeployment(ABC):
             except TypeError:
                 self.logger.debug("Waiting messages.", exc_info=get_exc_info())
 
-    def sync_deployment(self, dat: DolffiaInput) -> Tuple[str, Union[int, Any]]:
+    def sync_deployment(self, dat: GenaiInput) -> Tuple[str, Union[int, Any]]:
         """ Deploy service in a sync way. """
         s_time = time.time()
 
@@ -268,15 +268,15 @@ class BaseDeployment(ABC):
                 output = {}
             else:
                 status_code = 200
-        except PrintableDolffiaError as ex:
+        except PrintableGenaiError as ex:
             self.logger.error(ex.message)
             self.logger.error(f"[Process {dataset_status_key}] Error while processing.", exc_info=get_exc_info())
             error_message = str(ex)
-            status_code = PrintableDolffiaError(ex.status_code, ex.message).status_code
-        except DolffiaError as ex:
+            status_code = PrintableGenaiError(ex.status_code, ex.message).status_code
+        except GenaiError as ex:
             self.logger.error(f"[Process {dataset_status_key}] Error while processing.", exc_info=get_exc_info())
             error_message = str(ex)
-            status_code = PrintableDolffiaError(ex.status_code, ex.message).status_code
+            status_code = PrintableGenaiError(ex.status_code, ex.message).status_code
         except KeyError:
             self.logger.error(f"[Process {dataset_status_key}] Error while processing. Error parsing input JSON.", exc_info=get_exc_info())
             error_message = "Error parsing input JSON."

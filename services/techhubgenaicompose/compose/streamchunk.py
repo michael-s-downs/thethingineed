@@ -2,7 +2,7 @@
 
 
 from statistics import mean
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.genaierrors import GenaiError
 
 
 class StreamChunk:
@@ -30,6 +30,8 @@ class StreamChunk:
         self.meta = response_dict.get("meta")
         self.scores = response_dict.get("scores")
         self.answer = response_dict.get("answer")
+        self.tokens = response_dict.get("tokens")
+       
 
     def __str__(self) -> str:
         """
@@ -69,13 +71,13 @@ class StreamChunk:
             Any: The value of the specified metadata parameter.
 
         Raises:
-            DolffiaError: If the specified metadata parameter is not found.
+            GenaiError: If the specified metadata parameter is not found.
         """
         param_name = param_name.lower()
         try:
             return self.meta[param_name]
         except:
-            raise DolffiaError(status_code=404, message=f"Param <{param_name}> not found in metadata")
+            raise GenaiError(status_code=404, message=f"Param <{param_name}> not found in metadata")
 
     def get(self, param_name):
         """
@@ -88,7 +90,7 @@ class StreamChunk:
             Any: The value of the specified parameter.
 
         Raises:
-            DolffiaError: If the specified parameter is not found.
+            GenaiError: If the specified parameter is not found.
         """
         if param_name == "content":
             return self.content

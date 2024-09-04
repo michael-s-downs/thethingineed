@@ -310,7 +310,7 @@ def validate_input_knowler_queue(request_json: dict, input_files: list) -> Tuple
     :return: True or False if input is valid and error messages
     """
 
-    input_node = 'dolffiaRequest'
+    input_node = 'APIRequest'
     input_json = request_json['input_json'].get(input_node, {})
 
     if input_json:

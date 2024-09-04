@@ -4,7 +4,7 @@
 import collections
 from .actions import FilterFactory, RetrieverFactory, RescoreFactory, MergeFactory, LLMFactory, SortFactory, GroupByFactory
 from .streamchunk import StreamChunk
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.genaierrors import GenaiError
 
 
 class StreamList(collections.MutableSequence):
@@ -99,10 +99,10 @@ class StreamList(collections.MutableSequence):
             v: The value to check.
 
         Raises:
-            DolffiaError: If the value is not of the allowed type.
+            GenaiError: If the value is not of the allowed type.
         """
         if not isinstance(v, self.oktypes):
-            raise DolffiaError(500, "Error trying to append non StreamChunk object.")
+            raise GenaiError(500, "Error trying to append non StreamChunk object.")
     
     def append(self, streamchunk):
         """

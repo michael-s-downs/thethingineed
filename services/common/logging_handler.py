@@ -41,8 +41,15 @@ class LoggerHandler:
             logging.getLogger('werkzeug').disabled = True
             logging.getLogger('haystack').disabled = True
             logging.getLogger('elastisearch').disabled = True
-            logging.getLogger('azure').disabled = True
-            logging.getLogger('pdfminer').disabled = True
+            logging.getLogger('elastic_transport.transport').disabled = True
+            logging.getLogger('hypercorn.error').disabled = True
+            logging.getLogger('azure.core').disabled = True
+            logging.getLogger('azure.servicebus').disabled = True
+            logging.getLogger('llama_index').disabled = True
+            logging.getLogger('asyncio').disabled = True
+            logging.getLogger('httpx').disabled = True
+            logging.getLogger('openai').disabled = True
+            logging.getLogger('httpcore').disabled = True
             os.environ['WERKZEUG_RUN_MAIN'] = 'true'
             logging.getLogger('PIL').setLevel(logging.CRITICAL)
             logging.getLogger('boto').setLevel(logging.CRITICAL)
@@ -53,8 +60,16 @@ class LoggerHandler:
             logging.getLogger('genai_sdk_services').setLevel(logging.CRITICAL)
             logging.getLogger('haystack').setLevel(logging.CRITICAL)
             logging.getLogger('elasticsearch').setLevel(logging.CRITICAL)
-            logging.getLogger('azure').setLevel(logging.CRITICAL)
-            logging.getLogger('pdfminer').setLevel(logging.CRITICAL)
+            logging.getLogger('elastic_transport.transport').setLevel(logging.CRITICAL)
+            logging.getLogger('hypercorn.error').setLevel(logging.CRITICAL)
+            logging.getLogger('azure.core').setLevel(logging.CRITICAL)
+            logging.getLogger('azure.servicebus').setLevel(logging.CRITICAL)
+            logging.getLogger('llama_index').setLevel(logging.CRITICAL)
+            logging.getLogger('asyncio').setLevel(logging.CRITICAL)
+            logging.getLogger('httpx').setLevel(logging.CRITICAL)
+            logging.getLogger('openai').setLevel(logging.CRITICAL)
+            logging.getLogger('httpcore').setLevel(logging.CRITICAL)
+
 
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(level)

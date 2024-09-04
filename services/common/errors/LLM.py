@@ -2,7 +2,7 @@
 
 import logging
 
-from .dolffiaerrors import DolffiaError, PrintableDolffiaError
+from .genaierrors import GenaiError, PrintableGenaiError
 
 
 class LLMParser():
@@ -21,29 +21,29 @@ class LLMParser():
             return None
 
         if status_code == 403:
-            raise DolffiaError(status_code, f"Service is non reachable. Please check the url and apigw params. Error 403: {r.text}")
+            raise GenaiError(status_code, f"Service is non reachable. Please check the url and apigw params. Error 403: {r.text}")
 
         try:
             error_message = r.json()['error_message'] if not async_bool else r.text()
         except Exception as e:
-            raise DolffiaError(status_code, f"Error obtaining error json from llmapi. Error {status_code}: {r.text}") from e
+            raise GenaiError(status_code, f"Error obtaining error json from llmapi. Error {status_code}: {r.text}") from e
 
         self.logger.error(f"Error {status_code}: {error_message}")
         if status_code == 400:
-            raise PrintableDolffiaError(status_code, "The content was filtered out due to sensitive content. Please modify your request")
+            raise PrintableGenaiError(status_code, "The content was filtered out due to sensitive content. Please modify your request")
         elif status_code == 401:
-            raise PrintableDolffiaError(status_code, "Credentials failed, please reach out to your administrator")
+            raise PrintableGenaiError(status_code, "Credentials failed, please reach out to your administrator")
         elif status_code == 408:
-            raise PrintableDolffiaError(status_code, "Request timed out, model might be overloaded, please try again")
+            raise PrintableGenaiError(status_code, "Request timed out, model might be overloaded, please try again")
         elif status_code == 503:
-            raise PrintableDolffiaError(status_code, "Model is overloaded with requests. Please try again after a few minutes")
+            raise PrintableGenaiError(status_code, "Model is overloaded with requests. Please try again after a few minutes")
         elif status_code == 404:
-            raise PrintableDolffiaError(status_code, "Deployed model is not available, check if the url is correct, otherwise please reach out to your administrator")
+            raise PrintableGenaiError(status_code, "Deployed model is not available, check if the url is correct, otherwise please reach out to your administrator")
         elif status_code == 500:
-            raise DolffiaError(status_code, error_message)
+            raise GenaiError(status_code, error_message)
         else:
             self.logger.warning(f"Error not implemented for status code {status_code}")
-            raise DolffiaError(status_code, error_message)
+            raise GenaiError(status_code, error_message)
 
     def parse_response(self, r):
         """Parse response from LLM API returning the result if successful, otherwise raise an error
@@ -55,11 +55,11 @@ class LLMParser():
             rjson = r.json()
         except Exception as e:
             self.logger.error(f"Error obtaining json: {e}")
-            raise DolffiaError(status_code, "Error obtaining json from llmapi")
+            raise GenaiError(status_code, "Error obtaining json from llmapi")
 
         try:
             result = rjson['result']
         except Exception as e:
-            raise DolffiaError(status_code, "Error obtaining result from llmapi")
+            raise GenaiError(status_code, "Error obtaining result from llmapi")
 
         return result

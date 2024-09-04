@@ -8,7 +8,8 @@ from copy import deepcopy
 import numpy as np
 from typing import List, Dict
 from abc import abstractmethod, ABC
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.errors.genaierrors import PrintableGenaiError
+
 
 class RescoreMethod(ABC):
     """
@@ -103,12 +104,12 @@ class AverageRescore(RescoreMethod):
         }
 
 
-class DolffiaRescorer(RescoreMethod):
+class GenaiRescorer(RescoreMethod):
     """
-    Rescore method that calls Dolffia with another sparse/dense model.
+    Rescore method that calls with another sparse/dense model.
     """
 
-    TYPE = "dolffia_rescorer"
+    TYPE = "genai_rescorer"
 
     URL = os.environ['URL_RETRIEVE']
     TEMPLATE = {
@@ -136,12 +137,13 @@ class DolffiaRescorer(RescoreMethod):
         """
         for sl in self.streamlist:
             if "snippet_id" not in sl.meta:
-                raise PrintableDolffiaError(status_code=404, message="Streamlist must have a 'snippet_id' key that identifies the passage on an index.")
+                raise PrintableGenaiError(status_code=404,
+                                          message="Streamlist must have a 'snippet_id' key that identifies the passage on an index.")
             yield sl.meta['snippet_id']
 
     def process(self, params: dict = None):
         """
-        Process the streamlist by calling Dolffia with another model.
+        Process the streamlist by calling with another model.
 
         Args:
             params (dict, optional): Additional parameters. Defaults to None.
@@ -157,27 +159,28 @@ class DolffiaRescorer(RescoreMethod):
 
         template['generic']['index_conf'].setdefault('filters', {})['snippet_id'] = list(self.get_document_ids())
 
-        response = requests.post(self.URL, json=template, headers=headers, verify=False)
+        response = requests.post(self.URL, json=template, headers=headers, verify=True)
         if response.status_code != 200:
-            raise PrintableDolffiaError(status_code=response.status_code, message=str(response.content))
+            raise PrintableGenaiError(status_code=response.status_code, message=str(response.content))
 
         docs = response.json()['result']['docs']
         return [{
-                "content": doc['content'],
-                "meta": {key: value for key, value in doc['meta'].items() if not (key.startswith("_") or key.endswith("--score"))},
-                "scores": {key: doc['meta'][key] for key in doc['meta'] if key.endswith("--score")},
-                "answer": doc.get("answer")
-                } for doc in docs]
+            "content": doc['content'],
+            "meta": {key: value for key, value in doc['meta'].items() if
+                     not (key.startswith("_") or key.endswith("--score"))},
+            "scores": {key: doc['meta'][key] for key in doc['meta'] if key.endswith("--score")},
+            "answer": doc.get("answer")
+        } for doc in docs]
 
     def _get_example(self) -> Dict:
         """
-        Get an example of the Dolffia rescore method.
+        Get an example of the Genai rescore method.
 
         Returns:
-            Dict: Example of the Dolffia rescore method.
+            Dict: Example of the Genai rescore method.
         """
         return {
-            "type": "dolffia",
+            "type": "genai",
             "params": self.TEMPLATE
         }
 
@@ -187,7 +190,7 @@ class RescoreFactory:
     Factory class for creating rescore methods.
     """
 
-    RESCORERS = [AverageRescore, DolffiaRescorer]
+    RESCORERS = [AverageRescore, GenaiRescorer]
 
     def __init__(self, rescore_type: str) -> None:
         """
@@ -203,7 +206,8 @@ class RescoreFactory:
                 break
 
         if self.rescoremethod is None:
-            raise PrintableDolffiaError(status_code=404, message=f"Provided rescore does not match any of the possible ones: {', '.join(f.TYPE for f in self.RESCORERS)}")
+            raise PrintableGenaiError(status_code=404,
+                                      message=f"Provided rescore does not match any of the possible ones: {', '.join(f.TYPE for f in self.RESCORERS)}")
 
     def process(self, streamlist: list, params: dict):
         """

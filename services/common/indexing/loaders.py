@@ -11,9 +11,8 @@ import os
 import pandas as pd
 
 # Custom imports
-from common.genai_sdk_controllers import load_file, get_dataset, list_files
+from common.genai_controllers import load_file, get_dataset, list_files
 from common.indexing.parsers import ParserInfoindexing
-from common.ir import INDEX_S3
 
 
 class DocumentLoader(ABC):
@@ -43,12 +42,20 @@ class DocumentLoader(ABC):
         """ Get the embedding pools that can be used  """
         pass
 
-    def get_vector_storages(self):
+    def get_available_connector(self, index: str) -> str:
         """ Get the vector_storages that can be used in infoindexing """
         pass
 
     def get_available_models(self):
         """ Get the models that can be used in infoindexing """
+        pass
+
+    def get_all_embeddings_models(self):
+        """ Get all the embeddings models that can be used"""
+        pass
+
+    def get_embedding_equivalences(self):
+        """ Get the equivalences for the default embeddings models """
         pass
 
     def get_state_dict(self, input_object: ParserInfoindexing):
@@ -63,13 +70,14 @@ class DocumentLoader(ABC):
         return model_type == cls.MODEL_FORMAT
 
 
-class S3Loader(DocumentLoader):
-    MODEL_FORMAT = "s3"
+class IRStorageLoader(DocumentLoader):
+    MODEL_FORMAT = "IRStorage"
 
     def __init__(self, workspace, origin):
         super().__init__(workspace, origin)
-        self.models_file_path = "src/compose/conf/models_config.json"
-        self.vector_storages_config_file_path = "src/ir/conf/vector_storages_config.json"
+        self.models_file_path = "src/ir/conf/models_config.json"
+        if not self.load_file(self.workspace, self.models_file_path):
+            self.models_file_path = "src/compose/conf/models_config.json"
 
     def load_file(self, origin, file):
         try:
@@ -108,12 +116,23 @@ class S3Loader(DocumentLoader):
                             ## Check if the pool is already loaded: Example: "ada-002-pool-europe"
                             if not available_pools[key][embedding_model].get(pool):
                                 available_pools[key][embedding_model][pool] = []
-                            ## Check if the embedding model_name is already loaded: "'ada-002-dolffia-westeurope'
+                            ## Check if the embedding model_name is already loaded: "'ada-002-genai-westeurope'
                             if not embedding_model_name in available_pools[key][embedding_model][pool]:
                                 (available_pools[key][embedding_model][pool].append(embedding_model_name))
             if len(available_pools) == 0:
                 raise ValueError(f"Pools were not loaded, maybe the models_config.json is wrong")
             return available_pools
+
+    def get_all_embeddings_models(self):
+        s3_models_file = self.load_file(self.workspace, self.models_file_path)
+        if s3_models_file is None or len(s3_models_file) <= 0:
+            raise ValueError(f"Pools can't be downloaded because {self.models_file_path} not found in {self.workspace}")
+        else:
+            available_embedding_models = set()
+            for key, value in json.loads(s3_models_file).get("embeddings").items():
+                for model in value:
+                    available_embedding_models.add(model.get("embedding_model"))
+            return available_embedding_models
 
     def get_available_models(self):
         s3_models_file = self.load_file(self.workspace, self.models_file_path)
@@ -125,24 +144,10 @@ class S3Loader(DocumentLoader):
             else:
                 raise ValueError(f"Models can't be loaded, maybe the models_config.json is wrong")
 
-    def get_vector_storages(self):
-        s3_pool_file = self.load_file(self.workspace, self.vector_storages_config_file_path)
-        if s3_pool_file is None or len(s3_pool_file) <= 0:
-            raise ValueError(f"Vector storages config file can't be downloaded because "
-                             f"{self.vector_storages_config_file_path} not found in {self.workspace}")
-        else:
-            if json.loads(s3_pool_file).get("vector_storage_supported"):
-                return json.loads(s3_pool_file).get("vector_storage_supported")
-            else:
-                raise ValueError(f"Vector storages can't be loaded, maybe the vector_storages_config.json is wrong")
 
-    def get_state_dict(self, input_object: ParserInfoindexing):
-        state_dict = self.load_file(self.workspace, INDEX_S3(input_object.index))
-        if state_dict is None:
-            state_dict = "{}".encode()
-        state_dict = json.loads(state_dict.decode())
-        return state_dict
-
+    def get_embedding_equivalences(self):
+        default_embeddings = self.load_file(self.workspace, "src/ir/conf/default_embedding_models.json")
+        return json.loads(default_embeddings)
 
 
 
@@ -170,7 +175,7 @@ class S3Loader(DocumentLoader):
         else:
             # Preprocess is necessary
             txt_data = self.load_file(self.workspace, txt_path)
-            if txt_data is None: raise ValueError(f"File {txt_path} not found in S3")
+            if txt_data is None: raise ValueError(f"File {txt_path} not found in IRStorage")
             txt_data = txt_data.decode().split("\t")
             url, text, lang, n_pags = txt_data[:4]
             text = text.replace("\\\\n", "\n").replace("\\\\t", "\t").replace("\\\\r", "\r")
@@ -178,7 +183,7 @@ class S3Loader(DocumentLoader):
             if do_titles or do_tables:
                 mtext_path = os.path.splitext(txt_path)[0] + "_markdowns.txt"
                 m_text = self.load_file(self.workspace, mtext_path)
-                if m_text is None: raise ValueError(f"File {mtext_path} not found in S3")
+                if m_text is None: raise ValueError(f"File {mtext_path} not found in IRStorage")
                 m_text = m_text.decode().strip()
                 text = m_text if m_text is not None else text
             df = pd.DataFrame({'Url': [url], 'CategoryId': [""], 'text': [text]})
@@ -240,13 +245,13 @@ class S3Loader(DocumentLoader):
 
 
 class ManagerLoader(object):
-    MODEL_TYPES = [S3Loader]
+    MODEL_TYPES = [IRStorageLoader]
 
     @staticmethod
     def get_file_storage(conf: dict) -> DocumentLoader:
-        """ Method to instantiate the document loader class: [S3]
+        """ Method to instantiate the document loader class: [IRStorage]
 
-        :param conf: Loader configuration. Example:  {"type":"s3"}
+        :param conf: Loader configuration. Example:  {"type":"IRStorage"}
         """
         for loader in ManagerLoader.MODEL_TYPES:
             loader_type = conf.get('type')
@@ -258,8 +263,8 @@ class ManagerLoader(object):
 
     @staticmethod
     def get_possible_platforms() -> List:
-        """ Method to list the document loaders: [S3]
+        """ Method to list the document loaders: [IRStorage]
 
-        :param conf: Model configuration. Example:  {"type":"s3"}
+        :param conf: Model configuration. Example:  {"type":"IRStorage"}
         """
         return [store.MODEL_FORMAT for store in ManagerLoader.MODEL_TYPES]

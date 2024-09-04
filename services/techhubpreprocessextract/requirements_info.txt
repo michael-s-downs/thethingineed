@@ -2,6 +2,6 @@
 
 
 python-magic-bin==0.4.14
-genai-sdk-services==0.2.3.2
+genai-sdk-services==0.2.1.0
 Jinja2==3.0.3
 langdetect==1.0.9

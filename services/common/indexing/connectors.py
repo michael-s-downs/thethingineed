@@ -4,9 +4,10 @@
 # Native imports
 from abc import ABC
 from typing import List
+import re
 
 # Installed imports
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, RequestError
 
 
 class Connector(ABC):
@@ -16,7 +17,8 @@ class Connector(ABC):
         self.host = vector_storage.get('vector_storage_host', '')
         self.username = vector_storage.get('vector_storage_username', '')
         self.password = vector_storage.get('vector_storage_password', '')
-        self.scheme = "https"
+        self.scheme = vector_storage.get('vector_storage_scheme', 'https')
+        self.port = vector_storage.get('vector_storage_port', 9200)
         self.connection = None
 
     def connect(self):
@@ -24,6 +26,25 @@ class Connector(ABC):
 
         """
         pass
+
+    def assert_correct_index_metadata(self, index: str, docs: list, vector_storage_keys: list):
+        """Raises an error if you try to change metadata for an already created index
+
+        :param index: Index to check
+        :param docs: Documents to check
+        :param vector_storage_keys: Keys redundant
+        """
+        pass
+
+    def assert_correct_index_conf(self, index: str, available_models: list, models: list):
+        """Raises an error if you try to change the models for an already created index
+
+        :param index: Index to check
+        :param available_models: Models available
+        :param models: Models to check
+        """
+        pass
+
 
     def exist_index(self, index: str):
         """ Method to check if an index exists
@@ -49,11 +70,18 @@ class Connector(ABC):
         """
         pass
 
-    def delete_document(self, index:str, filters: dict):
+    def delete_documents(self, index_name: str, filters: dict):
         """ Method to delete a document from an index
 
-        :param index: Index to delete the document from
+        :param index_name: Index to delete the document from
         :param filters: Dictionary of desired metadata to delete documents
+        """
+        pass
+
+    def create_empty_index(self, index: str):
+        """ Method to create an empty index
+
+        :param index: Name of the index to create
         """
         pass
 
@@ -80,24 +108,91 @@ class ElasticSearchConnector(Connector):
 
         """
         try:
-            host = f"{self.scheme}://{self.host}:9200"
+            host = f"{self.scheme}://{self.host}:{self.port}"
             auth = (self.username, self.password)
-            self.connection = Elasticsearch(hosts=host, http_auth=auth, verify_certs=False)
-        except:
-            raise ValueError(f"[Error] The credentials provided for {self.username}, {self.password}, {self.host}, "
-                             f"{self.scheme} are wrong")
+            self.connection = Elasticsearch(hosts=host, http_auth=auth, verify_certs=False, timeout=30)
 
-    def exist_index(self, index: str):
-        """ Method to check if an index exists
+            result = self.connection.ping()
+        except:
+            raise ValueError(f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
+        if not result:
+            raise ValueError(f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
+
+    def assert_correct_index_metadata(self, index: str, docs: list, vector_storage_keys: list):
+        """Raises an error if you try to change metadata for an already created index
 
         :param index: Index to check
+        :param docs: Documents to check
+        :param vector_storage_keys: Keys redundant
         """
+        extra_metadata = ["snippet_number", "snippet_id","_header_mapping", "_csv_path"] # meatadata added by us
+        new_index = not self.exist_index(index)
+        try:
+            index_mapping = self.get_index_mapping(index)[index]['mappings']['properties']['metadata']['properties'] if not new_index else {}
+        except KeyError:
+            index_mapping = {}
+            new_index = True
+
+        index_meta = [key for key in index_mapping.keys() - extra_metadata if key not in vector_storage_keys]
+
+        collection_meta = docs[0].metadata.keys() - extra_metadata
+        for doc in docs:
+            metadata = doc.metadata.keys() - extra_metadata
+            if not all([key in collection_meta for key in metadata]):
+                raise ValueError(
+                    f"Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
+            if new_index:
+                continue
+            new_meta = [key for key in metadata if key not in index_meta and key not in vector_storage_keys]
+            if new_meta:
+                raise ValueError(
+                    f"Metadata keys {new_meta} do not match those in the existing index {index}. "
+                    f"Check and align metadata keys. Index metadata: {list(index_meta)}")
+
+    def assert_correct_index_conf(self, index: str, available_models: list, models: list):
+        """Raises an error if you try to change the models for an already created index
+
+        :param index: Index to check
+        :param available_models: Models available
+        :param models: Models to check
+        """
+        models_used = []
+        for model in available_models:
+            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_", f"{index}_{model}")
+            if self.exist_index(index_name):
+                models_used.append(model)
+        if len(models_used) == 0:
+            return
+        models_sent = [model.get('embedding_model') for model in models]
+        if not all([model in models_sent for model in models_used]) or len(models_sent) != len(models_used):
+            raise ValueError(f"Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'")
+
+    def exist_index(self, index: str):
+        """ Method to check if an index exists"""
         if self.connection is None:
             raise ValueError(f"Error the connection has not been established")
         return self.connection.indices.exists(index=index)
 
+    def create_empty_index(self, index: str):
+        """ Async method to create an empty index
+
+        :param index: Name of the index to create
+        """
+        if self.connection is None:
+            raise ValueError(f"Error the connection has not been established")
+        return self.connection.indices.create(index=index)
+
+    def delete_index(self, index: str):
+        """ Async method to create an empty index
+
+        :param index: Name of the index to create
+        """
+        if self.connection is None:
+            raise ValueError(f"Error the connection has not been established")
+        return self.connection.indices.delete(index=index)
+
     def get_index_mapping(self, index: str):
-        """ Method to get the index mapping
+        """ Async method to get the index mapping
 
         :param index: Index to get configuration from
         """
@@ -115,21 +210,74 @@ class ElasticSearchConnector(Connector):
         """
         if self.connection is None:
             raise ValueError(f"Error the connection has not been established")
-        filters_elastic = [{"term": {key: value}} for key, value in filters.items()]
+
         chunks = []
         while True:
-            result = self.connection.search(index=index_name,
-                                            query={"bool": {"filter": filters_elastic, "must": [{"match_all": {}}]}},
-                                            size=size, from_=offset)
+            try:
+                result = self.connection.search(index=index_name,
+                                                query={"bool": {"filter": self._generate_filters(filters), "must": {"match_all": {}}}},
+                                                size=size, from_=offset)
+            except RequestError as e:
+                return "error", (f"Error: {e.info['error']['reason']} caused by: "
+                                 f"{e.info['error']['caused_by']['reason']}"), 400
             if len(result.get('hits', {}).get('hits', [])) == 0:
                 break
             chunks.extend([chunk for chunk in result["hits"]["hits"]])
             offset += size
         if len(chunks) == 0:
             return "error", f"Document not found for filters: {filters}", 400
+
+        parsed_chunks = self._parse_response(chunks)[1]
+
+        chunks_per_file = {}
+        for chunk in parsed_chunks:
+            chunks_per_file[chunk.get('meta').get('filename')] = chunks_per_file.get(chunk.get('meta').get('filename'), []) + [chunk]
+
+        for file, chunks in chunks_per_file.items():
+            chunks_per_file[file] = sorted(chunks, key=lambda x: x.get('meta').get('snippet_number'))
+        return "finished", chunks_per_file, 200
+    def get_all_documents(self, index_name: str, offset: int = 0, size: int = 25):
+        """ Method to get all documents from an index
+
+        :param index_name: Index to get the document from
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
+        """
+        chunks = []
+        while True:
+            try:
+                result = self.connection.search(index=index_name,
+                                                query={"bool": {"must": {"match_all":{}}}},
+                                                size=size, from_=offset)
+            except RequestError as e:
+                return "error", (f"Error: {e.info['error']['reason']} caused by: "
+                                 f"{e.info['error']['caused_by']['reason']}"), 400
+            if len(result.get('hits', {}).get('hits', [])) == 0:
+                break
+            chunks.extend([chunk for chunk in result["hits"]["hits"]])
+            offset += size
+        if len(chunks) == 0:
+            return "error", f"Index is empty", 400
         return self._parse_response(chunks)
 
-    def delete_document(self, index_name: str, filters: dict):
+    @staticmethod
+    def _generate_filters(filters: dict):
+        operands = []
+        for key, value in filters.items():
+            if isinstance(value, str):
+                operands.append({"bool": {"should": {"term": {f"metadata.{key}.keyword": value}}}})
+            elif isinstance(value, list) and all([isinstance(val, str) for val in value]):
+                operands_should = []
+                for subfilter in value:
+                    operands_should.append({"term": {f"metadata.{key}.keyword": subfilter}})
+                operands.append({"bool": {"should": operands_should}})
+            else:
+                raise ValueError(f"Error the value '{value}' for the key '{key}' must be a string or a list containing strings.")
+        return {"bool": {"must": operands}}
+
+    def delete_documents(self, index_name: str, filters: dict):
         """ Method to delete a document from an index
 
         :param index_name: Index to delete the document from
@@ -137,22 +285,65 @@ class ElasticSearchConnector(Connector):
         """
         if self.connection is None:
             raise ValueError(f"Error the connection has not been established")
-        result = self.connection.delete_by_query(index=index_name, body={'query': {'terms': filters}})
-        return result
+
+        body = {"query": self._generate_filters(filters)}
+        return self.connection.delete_by_query(index=index_name, body=body)
 
     @staticmethod
     def _parse_response(chunks: list):
         result = []
         for chunk in chunks:
-            new_dict = {'content': chunk.get('_source').get('content'),
-                        'content_type': chunk.get('_source').get('content_type'),
-                        'score': chunk.get('_score'),
-                        'meta': {key: value for key, value in chunk.get('_source').items() if key not in ['content', 'content_type']}}
+            meta = {}
+            for key, value in chunk.get('_source').get('metadata').items():
+                if key not in ['_node_content', '_node_type', 'doc_id', 'ref_doc_id']:
+                    meta[key] = value
+            new_dict = {
+                'id_': chunk.get('_id'),
+                'meta': meta,
+                'content': chunk.get('_source').get('content'),
+                'score': chunk.get('_score')
+            }
+
             result.append(new_dict)
         return "finished", result, 200
 
     def close(self):
-        pass
+        """ Method to close the connection to the vector storage database
+        """
+        if self.connection:
+            self.connection.close()
+
+
+    def get_documents_filenames(self, index_name: str, size: int = 10000):
+        filenames = []
+        try:
+
+            aggregation_body = {
+                "size": 0,
+                "aggs": {
+                    "unique_documents": {
+                        "terms": {
+                            "field": "metadata.filename.keyword",
+                            "size": size
+                        }
+                    }
+                }
+            }
+            result = self.connection.search(index=index_name,
+                                            body=aggregation_body)
+        except RequestError as e:
+            error_message = f"Error: {e.info['error']['reason']}"
+            if 'caused_by' in e.info['error']:
+                error_message += f" caused by: {e.info['error']['caused_by'].get('reason', '')}"
+            return "error", error_message, 400
+
+        buckets = result['aggregations']['unique_documents']['buckets']
+        for bucket in buckets:
+            filename = bucket['key']
+            doc_count=bucket['doc_count']
+            filenames.append({"filename": filename, "chunks": doc_count})
+
+        return "finished", filenames, 200
 
 
 class ManagerConnector(object):

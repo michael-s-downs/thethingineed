@@ -12,8 +12,8 @@ from PIL import Image
 from typing import Union
 
 # Installed import
-from common.genai_sdk_controllers import upload_files, download_files, extract_ocr_files
-from common.dolffia_json_parser import get_exc_info
+from common.genai_controllers import upload_files, download_files, extract_ocr_files
+from common.genai_json_parser import get_exc_info
 from common.logging_handler import LoggerHandler
 from common.services import *
 

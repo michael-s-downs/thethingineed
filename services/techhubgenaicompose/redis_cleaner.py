@@ -9,9 +9,9 @@ from datetime import datetime
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import db_dbs
-from common.dolffia_status_control import get_redis_pattern, delete_status
-from common.dolffia_json_parser import get_exc_info
+from common.genai_controllers import db_dbs
+from common.genai_status_control import get_redis_pattern, delete_status
+from common.genai_json_parser import get_exc_info
 from common.services import FLOWMGMT_CLEANER_SERVICE
 
 
@@ -64,3 +64,7 @@ class RedisCleaner(BaseDeployment):
 def run_redis_cleaner():
     cleaner = RedisCleaner()
     cleaner.cron_deployment(int(os.getenv("CRON_TIME")))
+
+
+if __name__ == "__main__":
+    run_redis_cleaner()

@@ -1,11 +1,15 @@
 ### This code is property of the GGAO ###
 
 
-elasticsearch==7.17.9
-farm-haystack==1.15.1
-genai-sdk-services==0.2.3.2
+genai-sdk-services==0.2.1.0
+elasticsearch==8.13.2
 langdetect==1.0.9
-numpy==1.19.5
 python-magic-bin==0.4.14
 pydantic==1.10.8
 requests==2.22.0
+
+llama-index-embeddings-azure-openai==0.1.9
+llama-index-embeddings-bedrock==0.2.0
+llama-index-vector-stores-elasticsearch==0.2.0
+llama-index==0.10.41
+llama-index-embeddings-huggingface==0.2.1

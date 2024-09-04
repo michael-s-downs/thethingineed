@@ -7,7 +7,7 @@ from statistics import mean
 from collections import defaultdict
 from abc import abstractmethod, ABC
 from typing import List, Dict
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class GroupByMethod(ABC):
@@ -68,7 +68,7 @@ class GroupByMethod(ABC):
 
         """
         return {}
-    
+
 
 class GroupByDoc(GroupByMethod):
     """
@@ -79,7 +79,7 @@ class GroupByDoc(GroupByMethod):
         GroupByMethod (type): The base class for group by methods.
 
     Raises:
-        DolffiaError: This exception is raised when the group by sorting method is not found.
+        GenaiError: This exception is raised when the group by sorting method is not found.
 
     Returns:
         list: A list of chunks sorted by document score.
@@ -105,13 +105,13 @@ class GroupByDoc(GroupByMethod):
         else:
             desc = True
             method = "max"
-        
+
         if method == "max":
             method = max
         elif method == "mean":
             method = mean
         else:
-            raise PrintableDolffiaError(404, "Groupby sorting method not found, try max or mean")
+            raise PrintableGenaiError(404, "Groupby sorting method not found, try max or mean")
 
         grouped_dict = defaultdict(list)
         group_score = {}
@@ -129,8 +129,8 @@ class GroupByDoc(GroupByMethod):
         for doc_key in grouped_dict:
             grouped_dict[doc_key].sort(key=lambda chunk: chunk.get('snippet_number'))
 
-        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk in grouped_dict[doc_key]]
-    
+        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk
+                in grouped_dict[doc_key]]
 
     def _get_example(self) -> Dict:
         """Get an example of the group by method.
@@ -139,7 +139,7 @@ class GroupByDoc(GroupByMethod):
             dict: An example of the group by method.
         """
         return {
-            "type": self.TYPE, 
+            "type": self.TYPE,
             "params": {
                 "desc": True
             }
@@ -177,18 +177,17 @@ class GroupByDate(GroupByMethod):
         for sc in self.streamlist:
             date_id = sc.get('date')
             grouped_dict[date_id].append(sc)
-            group_score[date_id] = parse(date_id) 
+            group_score[date_id] = parse(date_id)
 
         for doc_key in grouped_dict:
             grouped_dict[doc_key].sort(key=lambda chunk: chunk.get('snippet_number'))
 
-        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk in grouped_dict[doc_key]]
-
-
+        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk
+                in grouped_dict[doc_key]]
 
     def _get_example(self) -> Dict:
         return {
-            "type": self.TYPE, 
+            "type": self.TYPE,
             "params": {
                 "desc": True
             }
@@ -196,7 +195,6 @@ class GroupByDate(GroupByMethod):
 
 
 class GroupByFactory:
-
     GROUPBY = [GroupByDoc, GroupByDate]
 
     def __init__(self, groupby_type: str) -> None:
@@ -212,7 +210,8 @@ class GroupByFactory:
                 break
 
         if self.groupbymethod is None:
-            raise PrintableDolffiaError(status_code=404, message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}")
+            raise PrintableGenaiError(status_code=404,
+                                      message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}")
 
     def process(self, streamlist: list, params):
         """Process the streamlist with the given params

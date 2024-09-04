@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from ..utils.defaults import EMPTY_STREAM
 from ..streamlist import StreamList
-from common.errors.dolffiaerrors import DolffiaError
+from common.errors.genaierrors import GenaiError
 
 
 class MergeBatchMethod:
@@ -61,7 +61,7 @@ class MergeBatchFactory:
                 break
 
         if self.mergebatchmethod is None:
-            raise DolffiaError(status_code=404, message=f"Provided mergebatch does not match any of the possible ones: {', '.join(f.type for f in self.MERGEBATCHES)}")
+            raise GenaiError(status_code=404, message=f"Provided mergebatch does not match any of the possible ones: {', '.join(f.type for f in self.MERGEBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

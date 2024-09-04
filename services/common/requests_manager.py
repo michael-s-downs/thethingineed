@@ -149,7 +149,7 @@ def update_request(response_json: dict):
     """ Change request status to continue
     with the corresponding process_id
 
-    :param response_json: Response JSON from Dolffia
+    :param response_json: Response JSON from API
     """
     process_id = response_json.get('pid', "")
     request_json = response_json.get('integration', {})
@@ -171,7 +171,7 @@ def update_request(response_json: dict):
 
                 file_metadata = request_json.get('documents_metadata', {}).setdefault(filename, {})
                 file_metadata['ocr_used'] = request_json.get('client_profile', {}).get('default_ocr', "")
-                file_metadata['async'] = "queue" if os.getenv('DOLFFIA_QUEUE_DELETE_URL', "") else True
+                file_metadata['async'] = "queue" if os.getenv('API_QUEUE_DELETE_URL', "") else True
                 file_metadata['status'] = "waiting"
                 file_metadata['process_id'] = process_id
 
@@ -212,4 +212,4 @@ def update_request(response_json: dict):
         else:
             logger.warning(f"No request corresponding to process_id '{process_id}'")
     else:
-        logger.warning("Bad response from Dolffia without process_id")
+        logger.warning("Bad response from API without process_id")

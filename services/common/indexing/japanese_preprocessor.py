@@ -7,7 +7,8 @@ from copy import deepcopy
 from typing import List, Dict
 
 # Installed imports
-from haystack.schema import Document
+from llama_index.core.schema import TextNode, NodeRelationship, RelatedNodeInfo
+
 
 
 def test_split():
@@ -124,14 +125,26 @@ class JapanesePreProcessor:
 
         return text_splits
 
-    def process_one(self, doc: Dict):
+    def process_one(self, doc: Dict) -> TextNode:
         meta = deepcopy(doc["meta"])
         for slices in self.split(doc["content"]):
-            doc = Document(content=slices, meta=meta)
-            yield doc
+            node = TextNode(text=slices, metadata=meta)
+            yield node
 
     def process(self, docs: List[Dict]):
         documents = []
+        actual_node = None
+        last_node = None
         for doc in docs:
-            documents.extend(self.process_one(doc))
+            actual_node = self.process_one(doc)
+            if last_node:
+                # Relationship between nodes
+                last_node.relationships[NodeRelationship.NEXT] = RelatedNodeInfo(node_id=actual_node.node_id)
+                actual_node.relationships[NodeRelationship.PREVIOUS] = RelatedNodeInfo(node_id=last_node.node_id)
+
+                # Update last node in the list
+                documents.append(last_node)
+            else:
+                documents.append(actual_node)
+            last_node = actual_node
         return documents

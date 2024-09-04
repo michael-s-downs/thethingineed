@@ -1,6 +1,4 @@
 ### This code is property of the GGAO ###
 
-
-tiktoken==0.4.0
-elasticsearch==7.17.9
 transformers==4.40.1
+tiktoken==0.4.0

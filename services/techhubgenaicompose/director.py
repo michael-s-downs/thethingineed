@@ -22,9 +22,9 @@ class Director(AbstractManager):
         self.sb = StreamBatch()
         self.apigw_params = apigw_params
         self.compose_conf = compose_conf
-        self.conf_manager : ConfManager = None
-        self.actions_manager : ActionsManager = None
-        self.output_manager : OutputManager = None
+        self.conf_manager: ConfManager = None
+        self.actions_manager: ActionsManager = None
+        self.output_manager: OutputManager = None
         self.PD = PersistDict()
         self.load_secrets()
         self.logger.debug("Director created")
@@ -60,13 +60,13 @@ class Director(AbstractManager):
         self.conf_manager.langfuse_m.flush()
         return output
 
-
     def run(self):
         """Runs the director process, with all classes 
         Returns:
             dict: output
         """
         self.conf_manager = ConfManager(self.compose_conf, self.apigw_params)
+        self.logger.info(f"Persist dict before{self.PD.PD.keys()}")
         if self.conf_manager.persist_m:
             self.PD.get_from_redis(self.conf_manager.session_id, self.conf_manager.headers['x-tenant'])
         compose_confs = self.run_conf_manager_actions()
@@ -82,7 +82,6 @@ class Director(AbstractManager):
 
         return output
 
-    
     def filter_result(self):
         filtered = False
         if self.conf_manager.filter_m is None:
@@ -92,8 +91,8 @@ class Director(AbstractManager):
                 for sc in sl:
                     if sc.answer:
                         filter_query_response = f"Query:{self.conf_manager.template_m.query}. Response:{sc.answer}. Context:{sl.join_get_content()}"
-                        sc.answer, filtered = self.conf_manager.filter_m.run(filter_query_response, self.conf_manager.headers, output=True)
-
+                        sc.answer, filtered = self.conf_manager.filter_m.run(filter_query_response,
+                                                                             self.conf_manager.headers, output=True)
 
     def run_actions(self):
         """Runs the actions process, depending if they have been passed by API call
@@ -121,10 +120,11 @@ class Director(AbstractManager):
             action_function = function_map.get(action)
 
             if not action_function:
-                raise self.raise_PrintableDolffiaerror(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
+                raise self.raise_PrintableGenaiError(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
             ap = action_params.get('params', {})
 
             if action_function == self.sb.llm_action:
+                self.logger.info(f"Persist dict inside run actions {self.PD.PD.keys()}")
                 ap["PD"] = self.PD
                 ap["top_qa"] = self.conf_manager.template_m.top_qa
                 ap["query_type"] = self.conf_manager.template_m.query_type
@@ -132,9 +132,10 @@ class Director(AbstractManager):
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             action_function(action_params['type'], ap if ap else {})
+            if action_function == self.sb.llm_action:
+                self.logger.info(f"Persist dict after run llm {self.PD.PD.keys()}")
             self.add_end_to_trace(action, langfuse_sg)
             self.logger.info(f"Action: {action} executed")
-
 
     def add_start_to_trace(self, action_name, action_params):
         """
@@ -167,8 +168,7 @@ class Director(AbstractManager):
                 metadata=action_params,
                 input=self.sb.to_list_serializable()
             )
-        
-    
+
     def add_end_to_trace(self, action_name, langfuse_sg):
         """
         Adds the end of a trace to the trace manager.
@@ -190,7 +190,6 @@ class Director(AbstractManager):
                 span=langfuse_sg,
                 output=self.sb.to_list_serializable()
             )
-    
 
     def run_conf_manager_actions(self):
         """Runs the configurations process, depending if they´ve been passed by API call
@@ -198,14 +197,14 @@ class Director(AbstractManager):
         if "compose_flow" in self.compose_conf or "template" in self.compose_conf:
             template = self.get_compose_flow()
         else:
-            raise self.raise_PrintableDolffiaerror(404, "Compose config must have whether compose_conf or template arguments")
+            raise self.raise_PrintableGenaiError(404, "Compose config must have whether compose_conf or template arguments")
 
         # Set lang
         self.logger.debug(f"Setting lang: {self.conf_manager.lang} in the template")
         for t in template:
             if t['action'] == 'summarize' or t['action'] == 'llm_action':
                 t['action_params']['params']['query_metadata']['lang'] = self.conf_manager.lang
-        
+
         # Add headers to the template
         self.logger.debug("Adding headers in the template")
         if self.apigw_params:
@@ -213,11 +212,11 @@ class Director(AbstractManager):
                 if t['action'] in ['retrieve', 'llm_action', 'filter', 'summarize']:
                     t['action_params']['params']['headers_config'] = self.conf_manager.headers
                 elif t['action'] in ['rescore']:
-                    if t['action_params']['type'] in ['dolffia_rescorer']:
+                    if t['action_params']['type'] in ['genai_rescorer']:
                         t['action_params']['params']['headers_config'] = self.conf_manager.headers
 
         return template
-    
+
     def fix_merge(self, s):
         # Replace $ with "$" but avoid affecting the template parameter
         result = ""
@@ -244,7 +243,7 @@ class Director(AbstractManager):
                dict: template 
         """
         template_params = self.conf_manager.template_m.params
-        
+
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
         template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
@@ -254,9 +253,9 @@ class Director(AbstractManager):
             template = json.loads(template)
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableDolffiaerror(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
-            raise self.raise_PrintableDolffiaerror(500, ex)
+            raise self.raise_PrintableGenaiError(500, ex)
         
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
@@ -270,8 +269,9 @@ class Director(AbstractManager):
                 model="",
                 model_params={}
             )
-            self.conf_manager.template_m.query, filtered = self.conf_manager.filter_m.run(self.conf_manager.template_m.query, self.conf_manager.headers )
-            if ("search_topic" in template_params) and (len(template_params['search_topic'])==0):
+            self.conf_manager.template_m.query, filtered = self.conf_manager.filter_m.run(
+                self.conf_manager.template_m.query, self.conf_manager.headers)
+            if ("search_topic" in template_params) and (len(template_params['search_topic']) == 0):
                 template_params['search_topic'] = self.conf_manager.template_m.query
             self.conf_manager.langfuse_m.add_generation_output(
                 generation=generation,
@@ -286,22 +286,25 @@ class Director(AbstractManager):
                 model="",
                 model_params={}
             )
-            self.conf_manager.template_m.query, reformulated = self.conf_manager.reformulate_m.run(self.conf_manager.template_m.query, self.conf_manager.session_id, self.conf_manager.headers, self.PD, self.conf_manager.lang)
+            self.conf_manager.template_m.query, reformulated = self.conf_manager.reformulate_m.run(
+                self.conf_manager.template_m.query, self.conf_manager.session_id, self.conf_manager.headers, self.PD,
+                self.conf_manager.lang)
             self.conf_manager.langfuse_m.add_generation_output(
                 generation=generation,
                 output=self.conf_manager.template_m.query
             )
-        
+
         template_params = self.conf_manager.template_m.set_params(template_params)
 
         try:
             if self.conf_manager.persist_m:
-                template = self.conf_manager.persist_m.run(template, self.conf_manager.session_id, self.PD, reformulated)
+                template = self.conf_manager.persist_m.run(template, self.conf_manager.session_id, self.PD,
+                                                           reformulated)
 
             return template
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableDolffiaerror(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
-            raise self.raise_PrintableDolffiaerror(500, ex)
+            raise self.raise_PrintableGenaiError(500, ex)

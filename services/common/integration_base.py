@@ -13,7 +13,7 @@ from datetime import datetime
 # Custom imports
 import conf_utils
 import docs_utils
-import dolffia_calls
+import api_calls
 import requests_manager
 import provider_resources
 from logging_handler import logger
@@ -200,7 +200,7 @@ def delete_data(request_json: dict):
         provider_resources.storage_remove_files(request_json['integration_id'], os.getenv('STORAGE_DATA'))
 
         logger.debug("Deleting results from container and database")
-        dolffia_calls.delete(request_json)
+        api_calls.delete(request_json)
 
 def receive_request(request: object) -> Tuple[dict, dict]:
     """ Logic to receive request from client,

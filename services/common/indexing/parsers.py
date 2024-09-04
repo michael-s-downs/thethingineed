@@ -4,7 +4,6 @@
 # Native imports
 from abc import ABC
 from typing import List
-import unicodedata
 import random
 import os
 
@@ -12,9 +11,9 @@ import os
 import langdetect
 
 # Custom imports
-from common.dolffia_json_parser import (get_project_config, get_dataset_status_key,
-                                        get_do_titles, get_do_tables, get_specific, get_generic,
-                                        get_index_conf, get_exc_info)
+from common.genai_json_parser import (get_project_config, get_dataset_status_key,
+                                      get_do_titles, get_do_tables, get_specific, get_generic,
+                                      get_index_conf, get_exc_info)
 from common.logging_handler import LoggerHandler
 from common.services import PARSERS_SERVICE
 
@@ -116,7 +115,7 @@ class ParserInfoindexing(Parser):
         self.txt_path = self.specific.get('paths', {}).get('text', "")
 
     def get_dataset_csv_path(self):
-        self.dataset_csv_path = self.generic['dataset_conf']['dataset_csv_path']
+        self.dataset_csv_path = self.generic.get('dataset_conf', {}).get('dataset_csv_path')
 
     def get_project_conf(self):
         self.project_conf = get_project_config(generic=self.generic)
@@ -150,43 +149,48 @@ class ParserInfoindexing(Parser):
 
     def get_models(self, available_pools: dict, available_models: dict, models_credentials:dict):
         self.models = self.index_conf['models']
-        if not self._models_retrocompatibility():
+        if not self._models_retrocompatibility(available_pools, available_models, models_credentials):
             model_selected = {}
             for i, model in enumerate(self.models):
-                retriever = model.get('retriever')
-                embedding_model = model.get('embedding_model')
+                platform = model.get('platform')
                 alias = model.get('alias')
+                embedding_model = model.get('embedding_model')
                 # Test if the alias is a pool
-                if alias in available_pools.get(retriever, {}).get(embedding_model, []):
-                    alias = random.choice(available_pools.get(retriever).get(embedding_model).get(alias).copy())
+                if alias in available_pools.get(platform, {}).get(embedding_model, []):
+                    alias = random.choice(available_pools.get(platform).get(embedding_model).get(alias).copy())
                 # Get the model parameters based on the alias
-
-                for m in available_models.get(retriever, []):
+                for m in available_models.get(platform, []):
                     if alias == m.get('embedding_model_name'):
                         model_selected = m
                         break
                 if not model_selected:
                     raise ValueError(f"Model {model.get('alias')} not found in available models")
-                if not model.get('retriever_model'):
+                if platform == "openai" or platform == "azure":
                     self.models[i] = {
                         "alias": model.get('alias'),
-                        "embedding_model": model.get('embedding_model'),
-                        "column_name": model.get('column_name', "_" + str(hash(model['embedding_model']))),
-                        "retriever": model.get('retriever'),
-                        "api_key": models_credentials[retriever][alias]['api_key'],
+                        "platform": model.get('platform'),
+                        "embedding_model": model_selected.get('embedding_model'),
+                        "api_key": models_credentials[platform][alias]['api_key'],
                         "azure_api_version": model_selected.get("azure_api_version"),
-                        "azure_base_url": models_credentials[retriever][alias]['azure_base_url'],
+                        "azure_base_url": models_credentials[platform][alias]['azure_base_url'],
                         "azure_deployment_name": model_selected.get("azure_deployment_name")
                     }
-                else:
+                elif platform == "bedrock":
                     self.models[i] = {
                         "alias": model.get('alias'),
-                        "embedding_model": model.get('embedding_model'),
-                        "column_name": model.get('column_name', "_" + str(hash(model['embedding_model']))),
-                        "retriever": model.get('retriever'),
-                        "retriever_model": model.get('retriever_model'),
-                        "similarity": model.get('similarity')
+                        "platform": model.get('platform'),
+                        "embedding_model": model_selected.get('embedding_model'),
+                        "region": model_selected.get("region_name")
                     }
+                elif platform == "huggingface" or platform == "similarity":
+                    self.models[i] = {
+                        "alias": model.get('alias'),
+                        "platform": "huggingface", # harcoded for retrocompatibility
+                        "embedding_model": model_selected.get('embedding_model')
+                    }
+                else:
+                    raise ValueError(f"Platform {platform} not supported")
+
 
     def get_vector_storage(self, vector_storages):
         self.vector_storage = self.index_conf.get('vector_storage')
@@ -224,29 +228,39 @@ class ParserInfoindexing(Parser):
     def get_modify_index_docs(self):
         self.modify_index_docs = self.index_conf.get('modify_index_docs', self.OPTIONAL_PARAMS['modify_index_docs'])
 
-    def _models_retrocompatibility(self):
+    def _models_retrocompatibility(self, available_pools, available_models, models_credentials):
         retrocompatibility = False
+        model_selected = {}
         for i, model in enumerate(self.models):
-            if model.get('index_model'):
-                if model.get('api_key'):
+            retriever = model.get('retriever')
+            if retriever:
+                embedding_model = model.get('embedding_model')
+                alias = model.get('alias')
+                # Test if the alias is a pool
+                if alias in available_pools.get(retriever, {}).get(embedding_model, []):
+                    alias = random.choice(available_pools.get(retriever).get(embedding_model).get(alias).copy())
+                # Get the model parameters based on the alias
+                for m in available_models.get(retriever, []):
+                    if alias == m.get('embedding_model_name'):
+                        model_selected = m
+                        break
+                if not model_selected:
+                    raise ValueError(f"Model {model.get('alias')} not found in available models")
+                if not model.get('retriever_model'):
                     self.models[i] = {
-                        "alias": "ada-002-pool-europe",
-                        "embedding_model": model.get('index_model'),
-                        "column_name": model.get('embedd'),
-                        "retriever": model.get('model_format'),
-                        "api_key": model.get('api_key'),
-                        "azure_api_version": model.get('azure_api_version'),
-                        "azure_base_url": model.get('azure_base_url'),
-                        "azure_deployment_name": model.get('azure_deployment_name')
+                        "alias": model.get('alias'),
+                        "platform": "openai",
+                        "embedding_model": model.get('embedding_model'),
+                        "api_key": models_credentials[retriever][alias]['api_key'],
+                        "azure_api_version": model_selected.get("azure_api_version"),
+                        "azure_base_url": models_credentials[retriever][alias]['azure_base_url'],
+                        "azure_deployment_name": model_selected.get("azure_deployment_name")
                     }
                 else:
                     self.models[i] = {
-                        "alias": "dpr-encoder",
-                        "embedding_model": model.get('index_model'),
-                        "column_name": model.get('embedd'),
-                        "retriever": model.get('model_format'),
-                        "retriever_model": model.get('retriever_model'),
-                        "similarity": model.get('similarity')
+                        "alias": model.get('alias'),
+                        "embedding_model": model.get('embedding_model'),
+                        "platform": "huggingface"
                     }
                 retrocompatibility = True
         return retrocompatibility
@@ -276,7 +290,7 @@ class ParserInforetrieval(Parser):
 
         return s.translate(str.maketrans(chars_origin, chars_parsed))
 
-    def __init__(self, json_input: dict):
+    def __init__(self, json_input: dict, available_pools: dict, available_models: dict, models_credentials: dict):
         super().__init__()
         try:
             self.get_generic(json_input)
@@ -289,20 +303,13 @@ class ParserInforetrieval(Parser):
             self.get_index_conf(generic=self.generic)
             self.get_index(self.index_conf)
             self.get_task(self.index_conf)
-            self.get_models(self.index_conf)
             self.get_filters(self.index_conf)
-            self.get_content_based(self.index_conf)
             self.get_top_k(self.index_conf)
-            self.get_top_qa(self.index_conf)
-            self.get_clear_cache(self.index_conf)
             self.get_add_highlights(self.index_conf)
-            self.get_platform(self.index_conf)
             self.get_rescoring_function(self.index_conf)
-            self.get_system(self.index_conf)
-            self.get_temperature(self.index_conf)
+            self.get_models(self.index_conf, available_pools, available_models, models_credentials)
 
-            assert self.platform in {"azure", "openai"}
-            assert self.rescoring_function in {"length", "loglength", "mean", "pos", "posnorm", "norm", "nll"}
+
         except KeyError as ex:
             self.logger.error(f'Error parsing JSON',
                               exc_info=get_exc_info())
@@ -319,7 +326,6 @@ class ParserInforetrieval(Parser):
 
         try:
             self.get_query(self.index_conf)
-            self.get_template_name(self.index_conf)
         except KeyError as ex:
             self.logger.error(f' Error getting query',
                               exc_info=get_exc_info())
@@ -339,40 +345,31 @@ class ParserInforetrieval(Parser):
         if self.task != "retrieve":
             raise ValueError(f"Task {self.task} not supported it must be: \"retrieve\".")
 
-    def get_models(self, index_conf):
-        self.models = index_conf.get("models", [])
+    def get_models(self, index_conf, available_pools, available_models, models_credentials):
+        sent_models = index_conf.get("models", [])
+        if len(sent_models) > 0:
+            self.models = self.get_sent_models(sent_models, available_pools, available_models, models_credentials)
+            unique_embedding_models = []
+            for model in self.models:
+                if model.get('embedding_model') in unique_embedding_models:
+                    raise ValueError(f"Model '{model.get('embedding_model')}' duplicated")
+                unique_embedding_models.append(model.get('embedding_model'))
+        else:
+            self.models = []
+
 
     def get_filters(self, index_conf):
         self.filters = index_conf.get("filters", {})
 
-    def get_content_based(self, index_conf):
-        self.content_based = index_conf.get('content_based', False)
 
     def get_top_k(self, index_conf):
-        top_k = index_conf.get("top_k", 10)
-        self.top_k = top_k * 2 if self.content_based else top_k
-        pass
-
-    def get_top_qa(self, index_conf):
-        self.top_qa = index_conf.get("top_qa", 1)
-
-    def get_clear_cache(self, index_conf):
-        self.clear_cache = index_conf.get("clear_cache", False)
+        self.top_k = index_conf.get("top_k", 10)
 
     def get_add_highlights(self, index_conf):
         self.add_highlights_bool = index_conf.get("add_highlights", False)
 
-    def get_platform(self, index_conf):
-        self.platform = index_conf.get("platform", index_conf.get("call_type", "azure"))
-
     def get_rescoring_function(self, index_conf):
         self.rescoring_function = index_conf.get("rescoring_function", "mean")
-
-    def get_system(self, index_conf):
-        self.system = index_conf.get("system")
-
-    def get_temperature(self, index_conf):
-        self.temperature = index_conf.get("temperature")
 
     def get_project_config(self, generic):
         self.project_config = get_project_config(generic=generic)
@@ -385,9 +382,64 @@ class ParserInforetrieval(Parser):
         if langdetect.detect(self.query) != 'ja':
             self.query = self._strip_accents(self.query)
 
-    def get_template_name(self, index_conf):
-        self.template_name = index_conf.get("template_name", index_conf.get("query_type"))
+    @staticmethod
+    def get_sent_models(sent_models, available_pools, available_models, models_credentials) -> list:
+        """ Method to get the models to use in the retrieval process
 
+        :param sent_models: List of models
+        :param available_pools: Available pools
+        :param available_models: Available models
+        :param models_credentials: Models credentials
+
+        :return: List of models
+        """
+        models = []
+        for model in sent_models:
+            if model == "bm25":
+                models.append({
+                    "alias": "bm25",
+                    "embedding_model": "bm25"
+                })
+                continue
+            model_selected = {}
+            if model in available_pools:
+                alias = random.choice(available_pools[model])
+            else:
+                alias = model
+            for m in available_models:
+                if alias == m.get('embedding_model_name'):
+                    model_selected = m
+                    break
+            if not model_selected:
+                raise ValueError(f"Model {alias} not found in available embedding models")
+            platform = model_selected.get('platform')
+            if platform == "openai" or platform == "azure":
+                models.append({
+                    "alias": alias,
+                    "platform": model_selected.get('platform'),
+                    "embedding_model": model_selected.get('embedding_model'),
+                    "api_key": models_credentials[platform][alias]['api_key'],
+                    "azure_api_version": model_selected.get("azure_api_version"),
+                    "azure_base_url": models_credentials[platform][alias]['azure_base_url'],
+                    "azure_deployment_name": model_selected.get("azure_deployment_name")
+                })
+            elif platform == "bedrock":
+                models.append({
+                    "alias": alias,
+                    "platform": model_selected.get('platform'),
+                    "embedding_model": model_selected.get('embedding_model'),
+                    "region": model_selected.get("region_name")
+                })
+            elif platform == "huggingface" or platform == "similarity":
+                models.append({
+                    "alias": alias,
+                    "platform": "huggingface", # harcoded for retrocompatibility
+                    "embedding_model": model_selected.get('embedding_model'),
+                    "retriever_model": model_selected.get('retriever_model')
+                })
+            else:
+                raise ValueError(f"Platform {model_selected.get('platform')} not supported")
+        return models
 
 class ManagerParser(object):
     MODEL_TYPES = [ParserInfoindexing, ParserInforetrieval]

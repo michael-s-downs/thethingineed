@@ -17,7 +17,7 @@ import boto3
 # Custom imports
 from generatives import GenerativeModel
 from common.logging_handler import LoggerHandler
-from common.genai_sdk_controllers import provider
+from common.genai_controllers import provider
 from common.services import GENAI_LLM_ENDPOINTS
 
 

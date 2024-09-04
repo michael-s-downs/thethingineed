@@ -2,14 +2,14 @@
 
 
 """
-Functions to access and update the Dolffia status codes and counters
+Functions to access and update the Genai status codes and counters
 """
 # Native imports
 import json
 from typing import Union, Dict, Any, Tuple
 
 # Custom imports
-from common.genai_sdk_controllers import dbc
+from common.genai_controllers import dbc
 
 SEP = ":"
 

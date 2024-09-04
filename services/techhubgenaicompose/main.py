@@ -3,20 +3,18 @@
 
 # Native imports
 import json
-from multiprocessing import Process
 
 # Intalled imports
 from flask import Flask, request
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_sdk_controllers import storage_containers, db_dbs, set_storage, set_db
-from common.dolffia_json_parser import *
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file
+from common.genai_json_parser import *
+from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_COMPOSE_SERVICE
-from common.dolffia_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
-from common.dolffia_status_control import update_status
-from redis_cleaner import run_redis_cleaner
+from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
+from common.genai_status_control import update_status
 from director import Director
 
 
@@ -39,11 +37,28 @@ class ComposeDeployment(BaseDeployment):
     @property
     def max_num_queue(self) -> int:
         return 1
+    
+    def endpoint_response(self, status_code, result_message, error_message):
+        response = {
+            'status': "finished" if status_code == 200 else "error",
+            'result': result_message,
+            'status_code': status_code
+        }
+        if error_message:
+            response = {
+                'status': "finished" if status_code == 200 else "error",
+                'error_message': error_message,
+                'status_code': status_code
+            }
+            return json.dumps(response), status_code
+
+        return json.dumps(response)
+
 
     def process(self, json_input: dict):
         """ Retrieve information
 
-        :param : Json input of Dolffia processes
+        :param : Json input of the processes
         """
         self.logger.info("Request received")
         try:
@@ -60,9 +75,10 @@ class ComposeDeployment(BaseDeployment):
             }
 
         except KeyError as ex:
-            raise PrintableDolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            raise PrintableGenaiError(404, error_message)
         except Exception as ex:
-            raise ex
+            raise PrintableGenaiError(500, ex)
 
         output = Director(compose_conf, apigw_params).run()
 
@@ -74,7 +90,7 @@ class ComposeDeployment(BaseDeployment):
     def load_session_redis(self, json_input: dict):
         """Loads conversation to redis
 
-        :param : Json input of Dolffia processes
+        :param : Json input of the processes
         """
         self.logger.info("REDIS Request received")
         try:
@@ -88,9 +104,12 @@ class ComposeDeployment(BaseDeployment):
             }
 
         except KeyError as ex:
-            raise PrintableDolffiaError(404, f"Error parsing JSON, Key: {ex.args[0]} not found")
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
         except Exception as ex:
-            raise ex
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
 
         session_id = json_input.get("session_id")
         status_code = 200
@@ -107,27 +126,100 @@ class ComposeDeployment(BaseDeployment):
         except Exception as ex:
             error_message = "Error saving session to redis"
             status_code = 500
-            self.logger.error(ex)
+            self.logger.error(error_message + ex)
+            return self.endpoint_response(status_code, "", error_message)
 
         resource = "compose/load_session/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, {})
         self.logger.info(f"REDIS session {session_id} saved")
 
-        response = {
-            'status': "finished" if status_code == 200 else "error",
-            'result': f"Session <{session_id}> saved in redis",
-            'status_code': status_code
-        }
-        if error_message:
-            response = {
-                'status': "finished" if status_code == 200 else "error",
-                'error_message': error_message,
-                'status_code': status_code
-            }
-            return json.dumps(response), status_code
+        return self.endpoint_response(status_code, f"Session <{session_id}> saved in redis", error_message)
 
-        response = json.dumps(response)
-        return response
+    
+    def upload_template(self, json_input, template_filter = False):
+        self.logger.info("Upload template request received")
+        name = ""
+        content = {}
+        try:
+            project_conf = json_input.get('project_conf')
+            apigw_params = {
+                'x-reporting': project_conf['x-reporting'],
+                'x-department': project_conf['x-department'],
+                'x-tenant': project_conf['x-tenant'],
+                'x-limits': project_conf.get('x-limits', json.dumps({})),
+                'user-token': request.headers.get('user-token', "")
+            }
+            name = json_input['name']
+            content = json_input['content']
+
+        except KeyError as ex:
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        status_code = 200
+        error_message = ""
+        try:
+            path = "src/compose/templates/"
+            if template_filter:
+                path = "src/compose/queryfilters_templates/"
+            upload_object(storage_containers['workspace'], content, path + name + ".json")
+
+        except Exception as ex:
+            error_message = f"Error uploading template file. {ex}"
+            status_code = 500
+            self.logger.error(ex)
+            return self.endpoint_response(status_code, "", "Error uploading template file.")
+
+        resource = "compose/upload_template/"
+        self.report_api(1, "", apigw_params['x-reporting'], resource, {})
+
+        return self.endpoint_response(status_code, f"File <{name}> uploaded", error_message)
+
+
+    def delete_template(self, json_input, template_filter = False):
+        self.logger.info("Delete template request received")
+        name = ""
+        try:
+            project_conf = json_input.get('project_conf')
+            apigw_params = {
+                'x-reporting': project_conf['x-reporting'],
+                'x-department': project_conf['x-department'],
+                'x-tenant': project_conf['x-tenant'],
+                'x-limits': project_conf.get('x-limits', json.dumps({})),
+                'user-token': request.headers.get('user-token', "")
+            }
+            name = json_input['name']
+
+        except KeyError as ex:
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        status_code = 200
+        error_message = ""
+        try:
+            path = "src/compose/templates/"
+            if template_filter:
+                path = "src/compose/queryfilters_templates/"
+            delete_file(storage_containers['workspace'], path + name + ".json")
+
+        except Exception as ex:
+            error_message = f"Error deleteting template file. {ex}"
+            status_code = 500
+            self.logger.error(ex)
+            return self.endpoint_response(status_code, "", error_message)
+
+        resource = "compose/delete_template/"
+        self.report_api(1, "", apigw_params['x-reporting'], resource, {})
+        return self.endpoint_response(status_code, "Request finished", error_message)
 
 
 app = Flask(__name__)
@@ -169,6 +261,63 @@ def load_session() -> Tuple[Dict, int]:
     return deploy.load_session_redis(dat)
 
 
+@app.route('/upload_template', methods=['POST'])
+def upload_template() -> Tuple[Dict, int]:
+    """ Uploads and checks a template """
+    dat = request.get_json(force=True)
+    apigw_params = {
+        'x-tenant': request.headers['x-tenant'],
+        'x-department': request.headers['x-department'],
+        'x-reporting': request.headers['x-reporting'],
+        'x-limits': request.headers.get('x-limits', json.dumps({}))
+    }
+    dat.update({"project_conf": apigw_params})
+
+    return deploy.upload_template(dat)
+
+
+@app.route('/upload_filter_template', methods=['POST'])
+def upload_filter_template() -> Tuple[Dict, int]:
+    """ Uploads and checks a template """
+    dat = request.get_json(force=True)
+    apigw_params = {
+        'x-tenant': request.headers['x-tenant'],
+        'x-department': request.headers['x-department'],
+        'x-reporting': request.headers['x-reporting'],
+        'x-limits': request.headers.get('x-limits', json.dumps({}))
+    }
+    dat.update({"project_conf": apigw_params})
+
+    return deploy.upload_template(dat, template_filter=True)
+
+@app.route('/delete_filter_template', methods=['POST'])
+def delete_filter_template() -> Tuple[Dict, int]:
+    """ Deletes a template """
+    dat = request.get_json(force=True)
+    apigw_params = {
+        'x-tenant': request.headers['x-tenant'],
+        'x-department': request.headers['x-department'],
+        'x-reporting': request.headers['x-reporting'],
+        'x-limits': request.headers.get('x-limits', json.dumps({}))
+    }
+    dat.update({"project_conf": apigw_params})
+
+    return deploy.delete_template(dat, template_filter=True)
+
+@app.route('/delete_template', methods=['POST'])
+def delete_template() -> Tuple[Dict, int]:
+    """ Deletes a template """
+    dat = request.get_json(force=True)
+    apigw_params = {
+        'x-tenant': request.headers['x-tenant'],
+        'x-department': request.headers['x-department'],
+        'x-reporting': request.headers['x-reporting'],
+        'x-limits': request.headers.get('x-limits', json.dumps({}))
+    }
+    dat.update({"project_conf": apigw_params})
+
+    return deploy.delete_template(dat, template_filter=False)
+
 if __name__ == "__main__":
-    Process(target=run_redis_cleaner).start()
+    #Process(target=run_redis_cleaner).start()
     app.run(host="0.0.0.0", debug=False, port=8888)

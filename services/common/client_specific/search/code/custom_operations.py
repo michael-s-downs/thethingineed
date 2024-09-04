@@ -131,21 +131,21 @@ def sync_infodelete_request(apigw_params: dict, request_params: dict) -> bool:
     :param request_params: Params to fill JSON request
     :return: True or False if delete is successfully
     """
-    url = os.getenv('DOLFFIA_SYNC_INFODELETE_URL')
+    url = os.getenv('API_SYNC_INFODELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
-        logger.debug("Calling Dolffia sync infodelete service")
+        logger.debug("Calling API sync infodelete service")
         response = requests.post(url, headers=apigw_params, data=json.dumps(request_params))
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "finished":
-            raise Exception(f"Bad response from the Dolffia service '{url}'")
+            raise Exception(f"Bad response from the API service '{url}'")
 
         status = True
     except:
         status = False
-        logger.error("Error calling Dolffia sync infodelete service", exc_info=True)
+        logger.error("Error calling API sync infodelete service", exc_info=True)
 
     return status
 
@@ -159,8 +159,8 @@ def infodelete_sync(request_json: dict) -> dict:
     request_params = {'index': request_json['input_json']['index'], 'delete': request_json['input_json']['delete']}
 
     logger.info(f"- Calling SYNC INFODELETE for index '{request_params['index']}'")
-    dolffia_response = sync_infodelete_request(apigw_params, request_params)
+    api_response = sync_infodelete_request(apigw_params, request_params)
 
-    request_json['status'] = "finished" if dolffia_response else "error"
+    request_json['status'] = "finished" if api_response else "error"
 
     return request_json

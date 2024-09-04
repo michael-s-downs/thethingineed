@@ -14,7 +14,7 @@ from abc import abstractmethod, ABC
 from ..utils.defaults import SUM_TEMPLATE
 from ..streamchunk import StreamChunk
 from common.errors.LLM import LLMParser
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.errors.genaierrors import PrintableGenaiError
 
 LLMP = LLMParser()
 logger = logging.getLogger("Summarize")
@@ -34,7 +34,7 @@ class LLMMethod(ABC):
         streamlist (list): The streamlist to process.
 
     Raises:
-        DolffiaError: If there is an error in the LLM method.
+        GenaiError: If there is an error in the LLM method.
 
     Returns:
         list: The processed streamlist.
@@ -93,12 +93,12 @@ class LLMMethod(ABC):
             dict: The LLM response.
         """
         try:
-            r = requests.post(self.URL, json=template, headers=headers, verify=False)
+            r = requests.post(self.URL, json=template, headers=headers, verify=True)
         except Exception as ex:
-            raise PrintableDolffiaError(status_code=500, message=f"Error calling GENAI-LLMAPI: {ex}")
+            raise PrintableGenaiError(status_code=500, message=f"Error calling GENAI-LLMAPI: {ex}")
 
         if r.status_code != 200:
-            raise PrintableDolffiaError(status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}")
+            raise PrintableGenaiError(status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}")
 
         return LLMP.parse_response(r)
 
@@ -262,7 +262,10 @@ class LLMSummarize(LLMMethod):
                 
 
             self.clear_output()
-            self.streamlist.append(StreamChunk({"content":"", "meta": {"title": "Summary"}, "scores":1, "answer": result['answer']}))
+            self.streamlist.append(StreamChunk({"content":"", "meta": {"title": "Summary"}, "scores":1, 
+                                                "answer": result['answer'], 
+                                               "tokens": {"input_tokens": result['input_tokens'], "output_tokens": result['output_tokens']}
+                                               }))
 
         return self.streamlist
 
@@ -370,6 +373,7 @@ class LLMSummarizeSegments(LLMMethod):
         for i, r in enumerate(result):
             if "answer" in r:
                 self.streamlist[i].answer = r['answer']
+                self.streamlist[i].tokens = {"input_tokens": r['input_tokens'], "output_tokens": r['output_tokens']} 
 
         return self.streamlist
 
@@ -392,7 +396,7 @@ class LLMFactory:
                 break
 
         if self.llm_method is None:
-            raise PrintableDolffiaError(status_code=404, message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}")
+            raise PrintableGenaiError(status_code=404, message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}")
 
     def process(self, streamlist: list, params):
         """Process the streamlist with the given method

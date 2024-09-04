@@ -9,11 +9,11 @@ from typing import List, Dict
 from abc import abstractmethod, ABC
 
 from compose.utils.defaults import EMPTY_STREAM
-from common.genai_sdk_controllers import load_file, storage_containers
-from common.errors.dolffiaerrors import PrintableDolffiaError
+from common.genai_controllers import load_file, storage_containers
+from common.errors.genaierrors import PrintableGenaiError
 from ..streamchunk import StreamChunk
 
-S3_PATH = "src/compose/templates"
+IRStorage_PATH = "src/compose/templates"
 
 
 class MergeMethod(ABC):
@@ -138,12 +138,12 @@ class MetaMerge(MergeMethod):
 
         if "$" not in template:
             try:
-                template = load_file(storage_containers['workspace'], f"{S3_PATH}/{template}.json").decode()
+                template = load_file(storage_containers['workspace'], f"{IRStorage_PATH}/{template}.json").decode()
                 if not template:
-                    raise PrintableDolffiaError(400, "Template empty")
+                    raise PrintableGenaiError(400, "Template empty")
             except ValueError:
-                raise PrintableDolffiaError(
-                    404, f"S3 config file doesn't exist for name {template}"
+                raise PrintableGenaiError(
+                    404, f"IRStorage config file doesn't exist for name {template}"
                 )
 
         fields = [word[1:] for word in re.findall(pattern=r"\$\w+", string=template)]
@@ -237,7 +237,7 @@ class MergeFactory:
                 break
 
         if self.mergemethod is None:
-            raise PrintableDolffiaError(
+            raise PrintableGenaiError(
                 status_code=404,
                 message=f"Provided merge does not match any of the possible ones: {', '.join(f.TYPE for f in self.MERGES)}",
             )

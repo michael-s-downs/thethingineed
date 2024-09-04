@@ -131,7 +131,7 @@ def add_highlights(part: list, query: str, text: str):
     # Text cleaning
     text = re.sub("[\\\]+n", "\n", text)
     text = re.sub("[\\\]+t", "\t", text)
-    text = re.sub("^\s+|\s+$", "", text)
+    text = re.sub(r"(^\s+|\s+$)", "", text)
     text = re.sub("\.{2,}" ,"\.", text)
 
     # Delete dirty texts (Single chars or lines of special chars or multiple linebreaks)

@@ -136,7 +136,7 @@ class GPTReformulate:
         template['query_metadata']['template_name'] = self.template_name
         template['query_metadata']['lang'] = self.lang
 
-        r = requests.post(self.URL, json=template, headers=self.headers, verify=False)
+        r = requests.post(self.URL, json=template, headers=self.headers, verify=True)
         result = LLMP.parse_response(r)
         return result['answer'].replace("\n", " ")
 

@@ -1,6 +1,5 @@
 ### This code is property of the GGAO ###
 
-
 # PARAMS TO BUILD
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
@@ -18,5 +17,8 @@ RUN apt-get -y remove build-essential && \
     apt -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
+# EXPOSE PORT
 EXPOSE 8888
-CMD ["python", "main.py"]
+
+# RUN SCRIPT
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8888 --workers $GUNICORN_WORKERS --threads $GUNICORN_THREADS --timeout $GUNICORN_TIMEOUT main:app"]

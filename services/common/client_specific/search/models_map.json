@@ -2,14 +2,11 @@
   "dpr": {
     "alias": "dpr-encoder",
     "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-    "retriever_model": "sentence-transformers/facebook-dpr-question_encoder-single-nq-base",
-    "retriever": "similarity",
-    "column_name": "_dpr_embs"
+    "platform": "similarity"
   },
   "azure_openai_ada": {
-    "alias": "ada-002-pool-techhub-europe",
+    "alias": "ada-002-genai-japaneast",
     "embedding_model": "text-embedding-ada-002",
-    "retriever": "openai",
-    "column_name": "_sim_embs"
+    "platform": "openai"
   }
 }

@@ -3,66 +3,58 @@
 
 # Native imports
 from abc import ABC
-from typing import List, Union, Tuple
+from typing import List
 import logging
 import uuid
 import re
 import json
-import unicodedata, os
+import os
+import time
 
 # Installed imports
-from haystack.nodes import PreProcessor
 import pandas as pd
-from langdetect import detect
 import langdetect
+import mmh3
 import tiktoken
 from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
+from elasticsearch.helpers.errors import BulkIndexError
+from elastic_transport import ConnectionTimeout
+from elasticsearch import AsyncElasticsearch
+from llama_index.vector_stores.elasticsearch import ElasticsearchStore
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core import StorageContext, VectorStoreIndex, Settings, Document
+from httpx import TimeoutException
+from openai import RateLimitError
 
 # Custom imports
-from common.ir import modify_index_documents
-from common.genai_sdk_controllers import load_file, provider
+from common.ir import modify_index_documents, get_embed_model
+from common.genai_controllers import load_file, provider
 from common.logging_handler import LoggerHandler
 from common.indexing.parsers import Parser
 from common.services import VECTOR_DB_SERVICE
-from common.indexing.japanese_preprocessor import JapanesePreProcessor
-from common.indexing.retrievers import ManagerRetriever
-from common.indexing.documentstores import ManagerDocumentStore
 from common.indexing.connectors import Connector
-from common.dolffia_json_parser import get_exc_info
+from common.genai_json_parser import get_exc_info
 
 
 class VectorDB(ABC):
     MODEL_FORMAT = "VectorDB"
 
-    def __init__(self, connector: Connector, workspace, origin):
+    def __init__(self, connector: Connector, workspace, origin, aws_credentials):
         self.connector = connector
-        self.retriever = None
-        self.document_store = None
         log = logging.getLogger('werkzeug')
         log.disabled = True
         self.origin = origin
         self.workspace = workspace
+        self.aws_credentials = aws_credentials
 
         logger_handler = LoggerHandler(VECTOR_DB_SERVICE, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
 
-    def establish_connection(self):
-        if self.connector is None:
-            raise ValueError("The connector is 'None' so the connection can't be established")
-        if self.connector.connection is None:
-            self.connector.connect()
 
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
         pass
 
-    def index_documents(self, docs: List, io: Parser, doc_by_pages: List) -> Tuple[dict, List]:
-        pass
-
-    def set_document_store(self, index: str, config: dict, vector_storage_type: str, embedding_model: str,
-                           similarity_function: str, retriever: str, column_name: str):
-        pass
-
-    def set_retriever(self, retriever: str, embedding_model: str, api_key: str, config: dict):
+    def index_documents(self, docs: List, io: Parser) -> List:
         pass
 
 
@@ -73,88 +65,63 @@ class VectorDB(ABC):
         return model_type == cls.MODEL_FORMAT
 
 
-class UhiStack(VectorDB):
-    MODEL_FORMAT = "UhiStack"
-    ELASTIC_KEYS = {"content", "content_type", "id_hash_keys", "snippet_number", "snippet_id", "name", "embedding"}
+class LlamaIndex(VectorDB):
+    MODEL_FORMAT = "LlamaIndex"
     URI_BASEPATH = {
         'aws': f"https://{os.environ.get('STORAGE_DATA')}.s3.{os.environ.get('AWS_REGION_NAME')}.amazonaws.com/",
         'azure': f"https://d2astorage.blob.core.windows.net/{os.environ.get('STORAGE_DATA')}"
     }
-    EMBEDDING_SPECIFIC_KEYS = ["api_key", "azure_api_version", "azure_base_url", "azure_deployment_name"]
-    BATCH_SIZE = 8
     encoding = tiktoken.get_encoding("cl100k_base")
 
-    def __init__(self, connector: Connector, workspace, origin):
-        super().__init__(connector, workspace, origin)
-        self.retriever_manager = ManagerRetriever()
-        self.document_store_manager = ManagerDocumentStore()
-
-        super().establish_connection()
+    def __init__(self, connector: Connector, workspace, origin, aws_credentials):
+        super().__init__(connector, workspace, origin, aws_credentials)
 
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
-        docs = self._get_df_in_elastic_format(df, markdown_files,
+        docs = self._get_documents_from_dataframe(df, markdown_files,
                                              io.txt_path, io.csv, io.do_titles, io.do_tables)
         try:
-            self._assert_correct_index_metadata(io.index, docs)
+            for model in io.models:
+                index_name = re.sub(r'[\\/,|>?*<\" \\]', "_", f"{io.index}_{model.get('embedding_model')}")
+                self.connector.assert_correct_index_metadata(index_name, docs, ["_node_content", "_node_type",
+                                                                           "doc_id", "ref_doc_id", "document_id"])
         except ElasticConnectionError:
             self.logger.error("Connection to elastic failed. Check if the elastic service is running.",
                               exc_info=get_exc_info())
-            raise ValueError(f"Index {io.index} connection to elastic: {io.vector_storage} is not available.")
+            host = io.vector_storage.get("vector_storage_host")
+            raise ValueError(f"Index {io.index} connection to elastic: {host} is not available.")
         return docs
 
-    def index_documents(self, docs: List, io: Parser, doc_by_pages: List) -> Tuple[dict, List]:
-        self.set_document_store(index=io.index, config=io.vector_storage,
-                                 vector_storage_type=io.vector_storage.get('vector_storage_type'), embedding_model=None,
-                                 similarity_function=None)
-        self.set_retriever(config={})
-        self.logger.debug(f"Document_store and retriver set")
-        aux_state_dict = {}
-        aux_state_dict['vector_storage'] = io.vector_storage.get('vector_storage_name')
-        aux_state_dict['models'] = []
+    def index_documents(self, docs: List, io: Parser) -> List:
+        """Index documents in the document store"""
         list_report_to_api = []
 
-        self.logger.debug("Writing documents")
-        self._write_documents(docs=docs, modify_index_docs=io.modify_index_docs,
-                                       windows_overlap=io.windows_overlap, windows_length=io.windows_length,
-                                       origin=self.workspace, do_tables=io.do_tables,
-                                       do_titles=io.do_titles, doc_by_pages=doc_by_pages)
-
-        aux_state_dict['models'].append({"alias": "bm25", "embedding_model": "bm25", "column_name": "embedding",
-                                         "retriever": "bm25"})
-
+        # This one first to modify_index_docs before next indexation
         for model in io.models:
-            self.logger.debug(f"Updating embeddings for model: {model['embedding_model']} "
-                              f"and deployment name: {model.get('azure_deployment_name', '')}")
-            self.set_document_store(index=io.index, config=io.vector_storage,
-                                     vector_storage_type=io.vector_storage.get('vector_storage_type'),
-                                     embedding_model=model['embedding_model'], retriever=model['retriever'],
-                                     column_name=model.get('column_name'),
-                                     similarity_function=model.get("similarity", None))
-            self.set_retriever(config={key: model.get(key) for key in self.EMBEDDING_SPECIFIC_KEYS},
-                                retriever=model['retriever'], embedding_model=model['embedding_model'])
+            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{io.index}_{model.get('embedding_model')}")
+            if not self.connector.exist_index(index_name):
+                self.connector.create_empty_index(index_name)
+            docs = self._modify_index_docs(docs, io.modify_index_docs, index_name)
 
-            if not model.get('retriever_model'):
-                aux_state_dict['models'].append({
-                    "alias": model['alias'],
-                    "embedding_model": model['embedding_model'],
-                    "column_name": model.get('column_name'),
-                    "retriever": model['retriever']
-                })
-            else:
-                aux_state_dict['models'].append({
-                    "alias": model['alias'],
-                    "embedding_model": model['embedding_model'],
-                    "retriever_model": model['retriever_model'],
-                    "column_name": model.get('column_name'),
-                    "retriever": model['retriever'],
-                    "similarity_function": self.document_store.similarity
-                })
+        n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
 
-            n_tokens = 0
-            for content in docs:
-                text_t = content['content']
-                tokens = self.encoding.encode(text_t)
-                n_tokens += len(tokens)
+        # The last docs is used to get the nodes, because all the documents in the indexes must be indentical
+        nodes_per_doc = self._get_nodes(docs, io.windows_length, io.windows_overlap)
+
+        # Elasticsearch client
+
+
+        # Indexation with the embeddings generation
+        for model in io.models:
+            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{io.index}_{model.get('embedding_model')}")
+            embed_model = get_embed_model(model, self.aws_credentials, is_retrieval=False)
+            Settings.embed_model = embed_model
+            vector_store = ElasticsearchStore(index_name=index_name, es_client=AsyncElasticsearch(hosts=f"{self.connector.scheme}://{self.connector.host}:{self.connector.port}",
+                                           basic_auth=(self.connector.username, self.connector.password),
+                                           verify_certs=False, request_timeout=30))
+
+            retries = self._write_nodes(nodes_per_doc, embed_model, vector_store, io.models, io.index)
+
+            self.logger.info(f"Model {model.get('embedding_model')} has been indexed in {index_name}")
 
             list_report_to_api.append({
                 f"{io.process_type}/{model['embedding_model']}/pages": {
@@ -162,70 +129,12 @@ class UhiStack(VectorDB):
                     "type": "PAGS"
                 },
                 f"{io.process_type}/{model['embedding_model']}/tokens": {
-                    "num":n_tokens,
+                    "num": n_tokens * retries, # embeddings calculation for each retry
                     "type": "TOKENS"
                 }
             })
-
-            try:
-                self._update_documents()
-            except Exception as ex:
-                self.logger.error(f"Error updating embeddings for model: {model['embedding_model']} "
-                                  f"and {model}", exc_info=get_exc_info())
-                raise ex
-
-        return aux_state_dict, list_report_to_api
-
-    def set_document_store(self, index:str, config: dict, vector_storage_type: str, embedding_model: str,
-                            similarity_function: str, retriever: str = "bm25", column_name: str = "embedding"):
-        """Instantiate document store with needed specific variables
-
-        Args:
-            specific (dict, optional): specific configuration of the document store. Defaults to {}.
-
-        Returns:
-            self
-        """
-
-        retriever = self.retriever_manager.get_platform({'type': retriever, 'document_store': None})
-        embedding_dim = retriever.get_embedding_dim(embedding_model)
-        final_similarity_function = retriever.get_similarity_function(embedding_model) if not similarity_function else similarity_function
-        self.document_store = self.document_store_manager.get_platform({'type': vector_storage_type, 'index': index,
-                                                                        'embedding_field': column_name,
-                                                                        'embedding_dim': embedding_dim,
-                                                                        'similarity_function': final_similarity_function})
-
-        self.document_store = self.document_store.set_ds({
-            "host": config.get('vector_storage_host'),
-            "port": config.get('vector_storage_port'),
-            "username": config.get('vector_storage_username'),
-            "password": config.get('vector_storage_password'),
-        })
-
-    def set_retriever(self, retriever: str = "bm25", embedding_model=None, api_key=None, config: dict = {}):
-        """Instantiate retriever with needed specific variables
-
-        Args:
-            api_key (str: optional): Api key to external services. Only needed for openai. Defaults to None
-            specific (dict, optional): specific variables of the retriever. Defaults to {}.
-
-        Raises:
-            ValueError: _description_
-
-        Returns:
-            Union[SimilarityRetriever, OpenAIRetriever, BM25Retriever]: _description_
-        """
-        if isinstance(self.document_store, type):
-            raise ValueError("Funciton set_document_store must be called before set_retriever")
-
-        self.retriever = self.retriever_manager.get_platform({'type': retriever, 'document_store': self.document_store,
-                                                              'embedding_model': embedding_model, 'api_key': api_key})
-        retriever = self.retriever.MODEL_FORMAT
-
-        self.retriever = self.retriever.set_retriever(config)
-        self.retriever.mf = retriever
-        self.retriever.embedding_model = embedding_model
-        return self
+            vector_store.close()# AsyncElasticsearch connection close
+        return list_report_to_api
 
     ############################################################################################################
     #                                                                                                          #
@@ -244,18 +153,16 @@ class UhiStack(VectorDB):
 
     def _initialize_metadata(self, doc: dict, txt_path: str, doc_url: str, csv: bool, do_titles: bool, do_tables: bool):
         meta = doc['meta']
-        meta.setdefault('document_id', str(uuid.uuid4()))
         meta.setdefault('uri', f"{self.URI_BASEPATH[provider]}{doc_url}")
         meta.setdefault('sections_headers', "")
         meta.setdefault('tables', "")
-        #meta.setdefault('num_pag', "")
         meta.setdefault('filename', "" if csv else os.path.basename(doc_url))
 
         folder = os.path.splitext(txt_path)[0]
         meta['_header_mapping'] = f"{folder}_headers_mapping.json" if do_titles and not csv else ""
         meta['_csv_path'] = f"{folder.replace('/txt/', '/csvs/')}/{os.path.basename(folder)}_" if do_tables and not csv else ""
 
-    def _get_df_in_elastic_format(self, df: pd.DataFrame, markdown_txts: List, txt_path: str, csv: bool, do_titles: bool, do_tables: bool):
+    def _get_documents_from_dataframe(self, df: pd.DataFrame, markdown_txts: List, txt_path: str, csv: bool, do_titles: bool, do_tables: bool):
         """ Gets the dataframe in elasticsearch format to index it
 
         :param df: dataframe to modify the format
@@ -273,6 +180,7 @@ class UhiStack(VectorDB):
         ]
 
         # Add metadata
+        final_docs = []
         for i, doc in enumerate(elastic_docs):
             # if language is not japanese, remove accents
             if langdetect.detect(doc['content']) != 'ja':
@@ -280,207 +188,152 @@ class UhiStack(VectorDB):
             do_titles = do_titles and markdown_txts[i] is not None
             do_tables = do_tables and markdown_txts[i] is not None
             self._initialize_metadata(doc, txt_path, doc_url=df['Url'].iloc[i], csv=csv, do_titles=do_titles, do_tables=do_tables)
+            llama_doc = Document(text=doc['content'], metadata=doc['meta'])
+            final_docs.append(llama_doc)
+        return final_docs
 
-        return elastic_docs
-
-    def _assert_correct_index_metadata(self, index: str, docs: list):
-        """Raises an error if you try to change metadata for an already created index
-
-        :param index: index name
-        :param docs: list of documents to create
+    def _modify_index_docs(self, docs: list, modify_index_docs: dict, index: str):
+        """Modify index documents
         """
-        new_index = not self.connector.exist_index(index)
-        index_mapping = self.connector.get_index_mapping(index)[index]['mappings']['properties'] if not new_index else {}
-        index_meta = [key for key in index_mapping.keys() - self.ELASTIC_KEYS if not key.startswith("_")]
-
-        collection_meta = docs[0]['meta'].keys()
-        for doc in docs:
-            metadata = doc['meta'].keys()
-            if not all([key in collection_meta for key in metadata]):
-                raise ValueError(
-                    f"Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
-            if new_index:
-                continue
-            new_meta = [key for key in metadata if key not in index_meta and not key.startswith("_")]
-            if new_meta:
-                raise ValueError(
-                    f"Metadata keys {new_meta} do not match those in the existing index {index}. "
-                    f"Check and align metadata keys. Index metadata: {list(index_meta)}")
-
-    def _add_page(self, docs: list, doc_by_pages: List) -> list:
-        """Add snippet_number and id to the documents
-
-        Args:
-            docs (list): List of documents without snippet_number and id
-
-        Returns:
-            list: List of documents with snippet_number and id
-        """
-        last_id = ""
-        counter = 0
-        for doc in docs:
-            doc_id = doc['meta']['document_id']
-            counter = counter + 1 if doc_id == last_id else 0
-            doc['meta']['snippet_number'] = counter
-            doc['meta']['snippet_id'] = str(uuid.uuid4())
-            #TODO add page as metadata
-            #doc['meta']['num_pag'] = self._get_num_page(doc['content'], doc_by_pages)
-            last_id = doc_id
-        return docs
-
-    @staticmethod
-    def _get_num_page(text: str, doc_by_pages: List) -> str:
-        """ Gets the number of a page based on his content
-        """
-        last_pharagraph = ""
-        for i in text.split("\n\n")[::-1]:
-            if len(i) > 10:
-                last_pharagraph = i
-                break
-        for i, page in enumerate(doc_by_pages):
-            if page.strip("\n").find(last_pharagraph.strip("\n")) != -1:
-                return str(i)
-        return ""
-
-    def _get_chunks(self, docs: list, windows_overlap, windows_length, doc_by_pages:List) -> list:
-        """If defined, it will split the text into chunks of given length and overlap.
-
-        Args:
-            docs (list): List of haystack like documents
-            windows_overlap (_type_): _description_
-            windows_length (_type_): _description_
-
-        Returns:
-            list: _description_
-        """
-        if windows_length:
-            preprocessor = PreProcessor(
-                split_overlap=windows_overlap,
-                split_length=windows_length,
-                split_respect_sentence_boundary=True
-            )
-
-            jappreprocessor = JapanesePreProcessor(
-                split_overlap=windows_overlap,
-                split_length=windows_length
-            )
-
-            for doc in docs:
-                try:
-                    lang = detect(doc['content'])
-                    if lang == "ja":  # If one document is japanese, we asume all documents are japanese
-                        self.logger.warning(
-                            "Japanese detected. Check administrators in case your documents are not japanese.")
-                        docs = jappreprocessor.process(docs)
-                        break
-                except:
-                    self.logger.warning("Language detection failed. Check if snippet is text corrupted.")
-            else:
-                docs = preprocessor.process(docs)
-
-            docs = [d.to_dict() for d in docs]
-
-        docs = self._add_page(docs, doc_by_pages)
-        return docs
-
-    @staticmethod
-    def _preprocess_metadata(docs: list, origin):
-        """ Postprocess chunks with preprocess metadata (section titles, tables or both)
-
-        Args:
-            docs (list): Haystack-like list of documents (chunks)
-            origin (tuple): Name of bucket where preprocess is located
-
-        Returns:
-            list: Haystack-like list of documents (chunks) with titles, tables (or both) processed
-
-        """
-        sections = ""
-        for doc in docs:
-            text = doc['content']
-            meta = doc['meta']
-
-            mapping_path = meta.pop('_header_mapping', "")
-            if mapping_path:
-                headers_mapping = json.loads(load_file(origin, mapping_path))
-                titles = re.findall(r"<(pag_\d+_header_\d+)>", text)
-                if not titles:
-                    meta['sections_headers'] = sections.split("||")[-1]
-                else:
-                    sections = "||".join([headers_mapping[t] for t in titles])
-                    meta['sections_headers'] = sections
-                for t in titles:
-                    text = text.replace(f"<{t}>", "")
-            else:
-                meta['sections_headers'] = ""
-
-            csv_path = meta.pop('_csv_path', "")
-            if csv_path:
-                tables = re.findall(r"<(pag_\d+_table_\d+)>", text)
-                for t in tables:
-                    csv = load_file(origin, csv_path + t + ".csv").decode()
-                    text = text.replace(f"<{t}>", csv)
-                meta['tables'] = True if tables else False
-            else:
-                meta['tables'] = ""
-
-            doc['content'] = text
-
-        return docs
-
-    def _write_documents(self, docs: list, modify_index_docs: dict, windows_overlap: int, windows_length: int,
-                        origin, do_titles: bool, do_tables: bool, doc_by_pages: List):
-        """Write documents in the document store
-
-        Args:
-            docs (list): Haystack like list of documents
-            modify_index_docs (dict): Dictionary with how to update weights. Better explanation found in function
-            windows_overlap (int): How much the windows will overlap
-            windows_length (int): Lenght of the passages to write
-            origin (tuple): Name of bucket where preprocess is located
-            do_titles (bool): True if section_titles are expected as metadata
-            do_tables (bool): True if tables in csv format have to be introduced in chunks
-
-
-        Raises:
-            ex: No documents after filtering, returning error and logging possible causes
-
-        """
-        for doc in docs:
-            doc['meta'].setdefault('document_id', str(uuid.uuid4()))
-
         try:
-            docs = modify_index_documents(self.document_store, modify_index_docs, docs, self.logger)
-            if not docs:
-                return False
+            docs = modify_index_documents(self.connector, modify_index_docs, docs, index, self.logger)
         except IndexError as ex:
             self.logger.error("There was an error while trying to update documents in document store.",
                               exc_info=get_exc_info())
             self.logger.error(modify_index_documents.__doc__.strip(), exc_info=get_exc_info())
             raise ex
+        return docs
 
-        docs = self._get_chunks(docs, windows_overlap, windows_length, doc_by_pages)
-        docs = self._preprocess_metadata(docs, origin)
+    def _get_nodes(self, docs: list, windows_length, windows_overlap) -> list:
+        """Get nodes from documents
 
-        self.docs = docs  # Add it as an attribute to delete in case an error raises
-        docs_len = len(docs)
-        while docs_len > 0:
-            self.document_store.write_documents(docs[0:self.BATCH_SIZE], batch_size=self.BATCH_SIZE)
-            docs = docs[self.BATCH_SIZE:]
-            docs_len = len(docs)
+        :param docs: list of documents
+        :param windows_lenght: windows lenght
+        :param windows_overlap: windows overlap
 
-    def _update_documents(self):
-        """Update embeddings in the given retriever
+        :return: list of nodes
         """
-        self.document_store.update_embeddings(
-            self.retriever,
-            batch_size=self.BATCH_SIZE,
-            update_existing_embeddings=False
-            )
+        nodes_per_doc = []
+        for doc in docs:
+            # If not added, does not appear in inforetrieval (value substituted by llama_index in indexation)
+            doc.metadata.setdefault('document_id', str(uuid.uuid4()))
+            # Exclude when splitting (chunk size dependent on the metadata)
+            doc.excluded_llm_metadata_keys = list(doc.metadata.keys())
+            doc.excluded_embed_metadata_keys = list(doc.metadata.keys())
+            nodes = SentenceSplitter(chunk_size=windows_length, chunk_overlap=windows_overlap,
+                                     tokenizer=self.encoding.encode, paragraph_separator="\\n\\n").get_nodes_from_documents([doc], show_progress=True)
 
+            if eval(os.getenv('TESTING', "False")):
+                final_nodes = self._add_nodes_metadata(nodes, self.origin)
+            else:
+                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
+            nodes_per_doc.append(final_nodes)
+        return nodes_per_doc
+
+    def _write_nodes(self, nodes_per_doc: list, embed_model, vector_store, models, index_name, delta=0, max_retries=3):
+        """Write documents in the document store
+
+        :param nodes_per_doc: list of nodes
+        :param embed_model: embed model
+        :param vector_store: vector store
+        """
+        try:
+            if delta >= max_retries:
+                raise ConnectionError("Max num of retries reached. Nodes have been deleted.")
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+            index = VectorStoreIndex(nodes=[], storage_context=storage_context,
+                                     transformations=[embed_model])
+            for nodes in nodes_per_doc:
+                index.insert_nodes(nodes, show_progress=True)
+            return delta + 1
+        except (BulkIndexError, ConnectionTimeout):
+            docs_filenames = set([node.metadata.get('filename') for nodes in nodes_per_doc for node in nodes])
+            self.logger.warning(f"BulkingIndexError/ConnectionTimeout detected while indexing{list(docs_filenames)}, retrying, try {delta + 1}/{max_retries}")
+            time.sleep(4)
+            return self._write_nodes(nodes_per_doc, embed_model, vector_store, models, index_name, delta=delta + 1)
+        except (TimeoutException, RateLimitError):
+            docs_filenames = set([node.metadata.get('filename') for nodes in nodes_per_doc for node in nodes])
+            self.logger.warning(f"Timeout/RateLimitError detected while indexing{list(docs_filenames)}, retrying, try {delta + 1}/{max_retries}")
+            time.sleep(40)
+            return self._write_nodes(nodes_per_doc, embed_model, vector_store, models, index_name, delta=delta + 1)
+        except Exception as e:
+            docs_filenames = list(set([node.metadata.get('filename') for nodes in nodes_per_doc for node in nodes]))
+            self._manage_indexing_exception(index_name, models, docs_filenames)
+            vector_store.close()
+
+            self.logger.warning(f"Nodes deleted due to: {type(e).__name__}; {e.args}")
+            raise ConnectionError(f"Max num of retries reached while indexing {docs_filenames}")
+
+    def _manage_indexing_exception(self, index_name, models, docs_filenames):
+        self.logger.warning(
+            f"Max retries exceeded while indexing {docs_filenames}, deleting nodes and closing connection")
+        time.sleep(50)
+        for model in models:
+            processed_index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{index_name}_{model.get('embedding_model')}")
+            # Documents deletion
+            result = self.connector.delete_documents(processed_index_name, {"filename": docs_filenames})
+            if len(result.body.get('failures', [])) > 0:
+                result = "Error deleting documents"
+            elif result.body.get('deleted', 0) == 0:
+                result = "Documents not found"
+            else:
+                result = f"{result.body['deleted']} chunks deleted."
+            self.logger.debug(f"Result deleting documents in index {processed_index_name}: {result}")
+
+
+    def _add_nodes_metadata(self, nodes, origin):
+        final_nodes = []
+        counter = 0
+        sections = ""
+        for node in nodes:
+            ids_node, counter = self._add_ids(node, counter)
+            titles_tables_node, sections = self._add_titles_and_tables(ids_node, sections, origin)
+            titles_tables_node.id_ = "{:02x}".format(mmh3.hash128(str(titles_tables_node.text), signed=False))
+            # Exclude when embedding generation
+            titles_tables_node.excluded_embed_metadata_keys = list(titles_tables_node.metadata.keys())
+            titles_tables_node.excluded_llm_metadata_keys = list(titles_tables_node.metadata.keys())
+            final_nodes.append(titles_tables_node)
+            counter += 1
+        return nodes
+
+    @staticmethod
+    def _add_ids(node, counter: int):
+        node.metadata['snippet_number'] = counter
+        node.metadata['snippet_id'] = str(uuid.uuid4())
+        return node, counter
+
+    def _add_titles_and_tables(self, node, sections: str, origin):
+        text = node.text
+        meta = node.metadata
+        mapping_path = meta.pop('_header_mapping', "")
+        if mapping_path:
+            headers_mapping = json.loads(load_file(origin, mapping_path))
+            titles = re.findall(r"<(pag_\d+_header_\d+)>", text)
+            if not titles:
+                meta['sections_headers'] = sections.split("||")[-1]
+            else:
+                sections = "||".join([headers_mapping[t] for t in titles])
+                meta['sections_headers'] = sections
+            for t in titles:
+                text = text.replace(f"<{t}>", "")
+        else:
+            meta['sections_headers'] = ""
+
+        csv_path = meta.pop('_csv_path', "")
+        if csv_path:
+            tables = re.findall(r"<(pag_\d+_table_\d+)>", text)
+            for t in tables:
+                csv = load_file(origin, csv_path + t + ".csv").decode()
+                text = text.replace(f"<{t}>", csv)
+            meta['tables'] = True if tables else False
+        else:
+            meta['tables'] = ""
+
+        node.text = text
+        return node, sections
 
 class ManagerVectorDB(object):
-    MODEL_TYPES = [UhiStack]
+    MODEL_TYPES = [LlamaIndex]
 
     @staticmethod
     def get_vector_database(conf: dict) -> VectorDB:

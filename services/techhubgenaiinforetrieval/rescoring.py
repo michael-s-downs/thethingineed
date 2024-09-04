@@ -20,13 +20,13 @@ def mean(unique_docs:dict , model_formats: dict) -> list:
     docs = []
     for doc_id in unique_docs:
         doc = unique_docs[doc_id]
-        meta = doc.meta
+        metadata = doc.metadata
         norm, score = 0, 0
-        for meta_key in meta:
+        for meta_key in metadata:
             model_format = meta_key.split("--")[0]
             mf_type = model_formats.get(model_format)
             if mf_type is not None:  # Detect if it is an score metadata
-                score += meta[meta_key]
+                score += metadata[meta_key]
                 norm += 1
 
         doc.score = score / (norm + 1e-10)
@@ -54,9 +54,9 @@ def length(unique_docs: dict, query: str, model_formats: dict, log2:bool = False
     docs = []
     for doc_id in unique_docs:
         doc = unique_docs[doc_id]
-        meta = doc.meta
+        metadata = doc.metadata
         norm, score = 0, 0
-        for meta_key, meta_value in meta.items():
+        for meta_key, meta_value in metadata.items():
             model_format = meta_key.split("--")[0]
             mf_type = model_formats.get(model_format)
 
@@ -86,11 +86,11 @@ def position(unique_docs: dict, model_formats: dict, norm: bool = False) -> list
        list: List of haystack like docs
     """
     try:
-        meta = deepcopy(list(unique_docs.values())[0].meta)
+        metadata = deepcopy(list(unique_docs.values())[0].metadata)
     except:
-        meta = {}
+        metadata = {}
 
-    for meta_key in meta:
+    for meta_key in metadata:
         model_format = meta_key.split("--")[0]
         mf_type = model_formats.get(model_format)
 
@@ -99,7 +99,7 @@ def position(unique_docs: dict, model_formats: dict, norm: bool = False) -> list
 
         scores = []
         for doc_id in unique_docs:
-            score = unique_docs[doc_id].meta.setdefault(meta_key, 0)
+            score = unique_docs[doc_id].metadata.setdefault(meta_key, 0)
             scores.append(score)
 
         if scores:
@@ -113,8 +113,8 @@ def position(unique_docs: dict, model_formats: dict, norm: bool = False) -> list
                 factor = 1 / (len(scores_sort) + 1e-10)
 
             for doc_id in unique_docs:
-                score = unique_docs[doc_id].meta[meta_key]
-                unique_docs[doc_id].meta[meta_key] = min_score + scores_sort.index(score) * factor
+                score = unique_docs[doc_id].metadata[meta_key]
+                unique_docs[doc_id].metadata[meta_key] = min_score + scores_sort.index(score) * factor
 
     return mean(unique_docs, model_formats)
 
@@ -131,22 +131,22 @@ def normalize(unique_docs:dict, query: str, model_formats: dict, loglength: bool
     """
 
     try:
-        meta = deepcopy(list(unique_docs.values())[0].meta)
+        metadata = deepcopy(list(unique_docs.values())[0].metadata)
     except:
-        meta = {}
+        metadata = {}
 
-    for meta_key in meta:
+    for meta_key in metadata:
 
         model_format = meta_key.split("--")[0]
         mf_type = model_formats.get(model_format)
         if mf_type is None:  # Detect if it is an score metadata
             continue
 
-        scores = [unique_docs[doc_id].meta.setdefault(meta_key, 0) for doc_id in unique_docs]
+        scores = [unique_docs[doc_id].metadata.setdefault(meta_key, 0) for doc_id in unique_docs]
         score_max, score_min = max(scores), min(scores)
         if score_max != score_min:
             for doc_id in unique_docs:
-                unique_docs[doc_id].meta[meta_key] = (unique_docs[doc_id].meta[meta_key] - score_min) / (score_max - score_min + 1e-10) # Normalize if not all scores are the same
+                unique_docs[doc_id].metadata[meta_key] = (unique_docs[doc_id].metadata[meta_key] - score_min) / (score_max - score_min + 1e-10) # Normalize if not all scores are the same
 
     if loglength:
         docs = length(unique_docs, query, model_formats, log2=True)
