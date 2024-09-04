@@ -3,11 +3,6 @@ variable "rg" {
   description = "Service bus resource group."
 }
 
-variable "name" {
-  type        = string
-  description = "Service bus name."
-}
-
 variable "location" {
   type        = string
   description = "Service bus location."

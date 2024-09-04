@@ -1,5 +1,5 @@
-resource "azurerm_storage_account" "techhub_sa" {
-  name                            = var.name
+resource "azurerm_storage_account" "sa" {
+  name                            = var.rg
   resource_group_name             = var.rg
   location                        = var.location
   account_tier                    = var.tier
@@ -8,9 +8,9 @@ resource "azurerm_storage_account" "techhub_sa" {
   tags                            = var.tags
 }
 
-resource "azurerm_storage_container" "techhub_sa_container" {
+resource "azurerm_storage_container" "sa_container" {
   for_each              = toset(var.container_names)
   name                  = "${var.rg}-${each.value}"
-  storage_account_name  = azurerm_storage_account.techhub_sa.name
+  storage_account_name  = azurerm_storage_account.sa.name
   container_access_type = "private"
 }

@@ -36,7 +36,6 @@ module "techhub_sa" {
   source           = "./Modules/StorageAccount"
   rg               = var.RG_NAME
   location         = var.RG_LOCATION
-  name             = var.SA_NAME
   tier             = var.SA_TIER
   replication_type = var.SA_REPLICATION_TYPE
   container_names  = var.SA_CONTAINER_NAMES
@@ -48,7 +47,6 @@ module "techhub_sb" {
   source             = "./Modules/ServiceBus"
   rg                 = var.RG_NAME
   location           = var.RG_LOCATION
-  name               = var.SB_NAME
   tier               = var.SB_TIER
   capacity           = var.SB_CAPACITY
   service_bus_queues = var.SB_QUEUES

@@ -1,10 +1,12 @@
 # Define variables
-storageNameDestiny=$TF_VAR_SA_NAME
+storageNameDestiny=$TF_VAR_RG_NAME
 storageNameDestinyKey=$(az storage account keys list --account-name $storageNameDestiny --query '[0].value' -o tsv)
 storageNameOrigin=$TF_VAR_SA_NAME_ORIGIN
 storageNameOriginKey=$TF_VAR_SA_ORIGIN_KEY
 promptsLLM=$TF_VAR_LLM_PROMPTS
-modelsConfig=$TF_VAR_MODELS_CONFIG
+modelsConfigLLM=$TF_VAR_MODELS_CONFIG_LLM
+modelsConfigIR=$TF_VAR_MODELS_CONFIG_IR
+embeddingModelDefault=$TF_VAR_EMBEDDING_MODELS
 templatesCompose=$TF_VAR_COMPOSE_TEMPLATES
 queryFiltersTemplates=$TF_VAR_QUERY_FILTERS_TEMPLATES
 layoutConfig=$TF_VAR_LAYOUT_CONFIG
@@ -18,7 +20,7 @@ sasOrigin=$(az storage account generate-sas --account-key $storageNameOriginKey 
 
 # Declare files to copy
 echo "Declaring files to copy"
-declare -a filesToCopy=($modelsConfig $layoutConfig)
+declare -a filesToCopy=($modelsConfigLLM $layoutConfig $modelsConfigIR $embeddingModelDefault)
 
 # Add prompts LLM
 IFS=', ' read -r -a promptsLLMArray <<< "${promptsLLM//[\[\]\"]}"
