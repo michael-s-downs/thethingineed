@@ -50,6 +50,7 @@ class LoggerHandler:
             logging.getLogger('httpx').disabled = True
             logging.getLogger('openai').disabled = True
             logging.getLogger('httpcore').disabled = True
+            logging.getLogger('pdfminer').disabled = True
             os.environ['WERKZEUG_RUN_MAIN'] = 'true'
             logging.getLogger('PIL').setLevel(logging.CRITICAL)
             logging.getLogger('boto').setLevel(logging.CRITICAL)
@@ -69,6 +70,7 @@ class LoggerHandler:
             logging.getLogger('httpx').setLevel(logging.CRITICAL)
             logging.getLogger('openai').setLevel(logging.CRITICAL)
             logging.getLogger('httpcore').setLevel(logging.CRITICAL)
+            logging.getLogger('pdfminer').setLevel(logging.CRITICAL)
 
 
         self.logger = logging.getLogger(service_name)
