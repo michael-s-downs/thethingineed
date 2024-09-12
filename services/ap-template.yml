@@ -186,7 +186,7 @@ steps:
     docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:latest'
     docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:latest'
   displayName: Tag and Push image (latest)
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 # Prepare artifacts of services
 - task: CmdLine@2
