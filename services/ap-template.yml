@@ -128,9 +128,9 @@ steps:
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
 
 # Create variable to tag services by branch
-- script: echo "##vso[task.setvariable variable=baseTag]$(echo '${{parameters.baseTag}}' | tr -d '.')"
-  displayName: Set baseTag to ${{ parameters.baseTag }}
-  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/develop'))
+- script: echo "##vso[task.setvariable variable=baseTag]$(echo 'latest' | tr -d '.')"
+  displayName: Set baseTag to latest
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 # Create folder to move files of services
 - script: mkdir ${{ parameters.defaultWorkingDirectory }}/uhis_docker
@@ -183,10 +183,10 @@ steps:
 
 # Tag and push image docker with tag of branch
 - bash: |
-    docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ variables['Build.SourceBranchName'] }}'
-    docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ variables['Build.SourceBranchName'] }}'
-  displayName: Tag and Push image (${{ variables['Build.SourceBranchName'] }})
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/main/'))
+    docker tag '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:latest'
+    docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:latest'
+  displayName: Tag and Push image (latest)
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 # Prepare artifacts of services
 - task: CmdLine@2

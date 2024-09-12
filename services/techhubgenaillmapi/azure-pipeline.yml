@@ -7,7 +7,7 @@ trigger:
     include:
     - develop
     - release/v*
-    - main/*
+    - master
   paths:
     include:
     - 'services/techhubgenaillmapi/*'
