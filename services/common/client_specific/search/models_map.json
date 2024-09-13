@@ -5,7 +5,7 @@
     "platform": "similarity"
   },
   "azure_openai_ada": {
-    "alias": "ada-002-pool-techhub-japan",
+    "alias": "techhub-pool-world-ada-002",
     "embedding_model": "text-embedding-ada-002",
     "platform": "openai"
   }
