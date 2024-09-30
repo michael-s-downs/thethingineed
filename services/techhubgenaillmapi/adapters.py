@@ -19,6 +19,7 @@ import requests
 # Local imports
 from common.services import GENAI_LLM_ADAPTERS
 from common.logging_handler import LoggerHandler
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class BaseAdapter(ABC):
@@ -132,15 +133,15 @@ class GPT4VAdapter(BaseAdapter):
             try:
                 img = Image.open(io.BytesIO(requests.get(content).content))
             except:
-                raise ValueError("Image must be a valid url format")
+                raise PrintableGenaiError(400, "Image must be a valid url format")
         elif image['type'] == "image_b64":
             content = image['image']['base64']
             try:
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(content, "utf-8"))))
             except:
-                raise ValueError("Image must be a valid base64 format")
+                raise PrintableGenaiError(400, "Image must be a valid base64 format")
         else:
-            raise ValueError("Image must be one in [image_url, image_b64] and match the content with the type")
+            raise PrintableGenaiError(400, "Image must be one in [image_url, image_b64] and match the content with the type")
 
         if image['image'].get('detail') == "low":
             return 85
@@ -151,7 +152,7 @@ class GPT4VAdapter(BaseAdapter):
 
         media_type = img.format
         if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
-            raise ValueError("Image must be in format [jpeg, png, gif, webp]")
+            raise PrintableGenaiError(400, "Image must be in format [jpeg, png, gif, webp]")
 
         # Format change to gpt4v
         if image['type'] == "image_b64":
@@ -240,15 +241,15 @@ class Claude3Adapter(BaseAdapter):
                 base64_str = base64.b64encode(downloaded_img).decode("utf-8")
                 img = Image.open(io.BytesIO(downloaded_img))
             except:
-                raise ValueError("Image must be a valid url format")
+                raise PrintableGenaiError(400, "Image must be a valid url format")
         elif image['type'] == "image_b64":
             base64_str = image['image']['base64']
             try:
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(base64_str, "utf-8"))))
             except:
-                raise ValueError("Image must be a valid base64 format")
+                raise PrintableGenaiError(400, "Image must be a valid base64 format")
         else:
-            raise ValueError("Image type must be one in [image_url, image_b64] and match the content with the type")
+            raise PrintableGenaiError(400, "Image type must be one in [image_url, image_b64] and match the content with the type")
 
         #TODO - Check what are they doing with image tokens calculation (this way appears in the api)
         width, height = self.resize_image(img.width, img.height, 1568, 1568)
@@ -256,7 +257,7 @@ class Claude3Adapter(BaseAdapter):
 
         media_type = img.format
         if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
-            raise ValueError("Image must be in format [jpeg, png, gif, webp]")
+            raise PrintableGenaiError(400, "Image must be in format [jpeg, png, gif, webp]")
 
         # To change format to claude
         image['type'] = "image"
@@ -280,7 +281,7 @@ class ManagerAdapters(object):
             if adapter.is_adapter_type(adapter_type):
                 conf.pop('adapter')
                 return adapter(**conf)
-        raise ValueError(f"Adapter type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Adapter type doesnt exist {conf}. "
                          f"Possible values: {ManagerAdapters.get_possible_platforms()}")
 
     @staticmethod

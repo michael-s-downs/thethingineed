@@ -36,12 +36,10 @@ class InfoIndexationDeployment(BaseDeployment):
             self.redis_status = db_dbs.get('status')
             file_loader = ManagerLoader().get_file_storage(
                 {'type': "IRStorage", 'workspace': self.workspace, 'origin': self.origin})
-            self.available_pools = file_loader.get_available_embeddings_pools()
-            self.available_models = file_loader.get_available_models()
-            self.all_models = file_loader.get_all_embeddings_models()
-            models_credentials, self.vector_storages, self.aws_credentials = load_secrets()
-            # Function load_secret loads full file. Only embeddings key is necessary
-            self.models_credentials = models_credentials.get('embeddings')
+            self.available_pools = file_loader.get_pools_per_embedding_model()
+            self.available_models = file_loader.get_available_embedding_models()
+            self.all_models = file_loader.get_unique_embedding_models()
+            self.models_credentials, self.vector_storages, self.aws_credentials = load_secrets()
             self.logger.info("---- Infoindexing initialized")
         except Exception as ex:
             self.logger.error(f"Error loading {str(ex)}", exc_info=get_exc_info())
@@ -118,7 +116,7 @@ class InfoIndexationDeployment(BaseDeployment):
 
         specific = get_specific(json_input)
         dataset_status_key = get_dataset_status_key(specific=specific)
-        if self.connector:
+        if hasattr(self, "connector") and self.connector:
             self.connector.close()
 
         update_full_status(self.redis_status, dataset_status_key, status_code, message)

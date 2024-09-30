@@ -90,6 +90,8 @@ class PermissionFilter(FilterMethod):
 
         self.BODY["internalIds"] = list(set(document_ids))  # IDs must be unique
         self.HEADERS["Authorization"] = headers.get("user-token", "")
+        url = self.URL
+        self.URL = params.get("url_allowed_documents", url)
         # Check permissions for documents
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -473,4 +475,8 @@ class FilterFactory:
     def process(self, streamlist: list, params: dict):
         """Process the streamlist with the given method
         """
-        return self.filtermethod(streamlist).process(params)
+        filtered_streamlist = self.filtermethod(streamlist).process(params)
+        if not filtered_streamlist:
+            raise PrintableGenaiError(status_code=404, message="Error after filtering. NO documents passed the filters")
+        else:
+            return filtered_streamlist

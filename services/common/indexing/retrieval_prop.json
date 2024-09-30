@@ -10,5 +10,6 @@
     "query_type": "query_and_context",
     "top_k": 10, 
     "top_qa": 1,
-    "filters": {}
+    "filters": {},
+    ""
 }

@@ -14,12 +14,12 @@ from flask import Flask, request
 from common.genai_controllers import storage_containers, set_storage, set_queue, provider, upload_object, delete_file
 from common.genai_json_parser import get_exc_info, get_project_config
 from common.deployment_utils import BaseDeployment
-from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_LLM_SERVICE
 from common.utils import load_secrets
+from common.errors.genaierrors import PrintableGenaiError
 from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
-from common.genai_controllers import load_file, list_files
+from common.indexing.loaders import ManagerLoader
 
 
 QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
@@ -34,43 +34,19 @@ class LLMDeployment(BaseDeployment):
             self.Q_OUT = (provider, os.getenv('Q_GENAI_LLMQUEUE_OUTPUT'))
             set_queue(self.Q_IN)
         set_storage(storage_containers)
-
         self.workspace = storage_containers.get('workspace')
-        models_config_path = "src/LLM/conf/models_config.json"
-        if not self.load_file(self.workspace, models_config_path):
-            models_config_path = "src/compose/conf/models_config.json"
-        self.available_models = json.loads(load_file(self.workspace, models_config_path).decode()).get('LLMs', {})
-        self.load_templates()
-        self.models_credentials, self.aws_credentials = load_secrets(False)
+        self.origin = storage_containers.get('origin')
+        self.loader = ManagerLoader.get_file_storage({"type": "LLMStorage", "workspace": self.workspace, "origin": self.origin})
+        self.available_pools = self.loader.get_available_pools()
+        self.available_models = self.loader.get_available_models()
+        self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
+        self.templates, self.templates_names = self.loader.get_templates()
+
+        # Check if default templates are in the templates
+        default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
+        if not default_templates.issubset(self.templates_names):
+            raise PrintableGenaiError(400, f"Default templates not found: {default_templates}")
         self.logger.info(f"llmapi initialized")
-
-    def load_file(self, origin, file):
-        try:
-            loaded_file = load_file(origin, file)
-        except Exception as ex:
-            return None
-        return loaded_file if len(loaded_file) > 0 else None
-
-    def load_templates(self):
-        """ Load templates from IRStorage """
-        IRStorage_files = list_files(self.workspace, "src/LLM/prompts")
-        self.TEMPLATES = {}
-        for file in IRStorage_files:
-            if file.endswith(".json"):
-                try:
-                    aux_dict = json.loads(load_file(self.workspace, file))
-                    for key in self.TEMPLATES:
-                        if key in ".json":
-                            raise KeyError(f"Two create query jsons cannot have the same key {key}.")
-                    self.TEMPLATES.update(aux_dict)
-                except:
-                    self.logger.warning(f"Malformed json file not loaded: {file}")
-        self.TEMPLATES_NAMES = list(self.TEMPLATES.keys())
-
-        model_types = ManagerModel.MODEL_TYPES
-        default_templates = list({model(models_credentials={}).default_template_name for model in model_types})
-        if not all(template in self.TEMPLATES_NAMES for template in default_templates):
-            raise ValueError(f"Default templates not found: {default_templates}")
 
     @property
     def must_continue(self) -> bool:
@@ -121,20 +97,20 @@ class LLMDeployment(BaseDeployment):
         dict_tokens = json.loads(json_input.get('generic').get('project_conf').get('x-limits'))
         for key, value in dict_tokens.items():
             if not isinstance(value, dict):
-                raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(value)}" +
+                raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(value)}" +
                         f" in {key}, it should be {dict}")
 
             if len(value) > 0:
                 if (value.get('Current') is not None) and (value.get('Limit') is not None):
                     if not isinstance(value.get('Current'), int):
-                        raise ValueError("Internal error, unsupported operand type(s) for -: " +
+                        raise PrintableGenaiError(400, "Internal error, unsupported operand type(s) for -: " +
                             f"{type(value.get('Current'))} in current, it should be {int}")
 
                     if not isinstance(value.get('Limit'), int):
-                        raise ValueError("Internal error, unsupported operand type(s) for -: " +
+                        raise PrintableGenaiError(400, "Internal error, unsupported operand type(s) for -: " +
                             f"{type(value.get('Limit'))} in limit, it should be {int}")
                 else:
-                    raise ValueError(f"Internal error, current and limit are mandatory in x-limits")
+                    raise PrintableGenaiError(400, f"Internal error, current and limit are mandatory in x-limits")
 
     @staticmethod
     def check_params(json_input: dict, correct_params_types: dict, input_key):
@@ -149,18 +125,18 @@ class LLMDeployment(BaseDeployment):
             if value[1] == "optional":
                 if input_param is not None:
                     if not isinstance(input_param, value[0]):
-                        raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
+                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
                                        f"{key}, it should be {str(value[0])}")
 
             elif value[1] == "mandatory":
                 if input_param is None:
-                    raise ValueError(f"Internal error, {key} is mandatory")
+                    raise PrintableGenaiError(400, f"Internal error, {key} is mandatory")
                 else:
                     if not isinstance(input_param, value[0]):
-                        raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
+                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
                                        f"{key}, it should be {str(value[0])}")
             else:
-                raise ValueError(f"Error checking dict: {key}")
+                raise PrintableGenaiError(400, f"Error checking dict: {key}")
 
         if input_key == "llm_metadata":
             functions = json_input.get('llm_metadata').get('functions')
@@ -169,14 +145,14 @@ class LLMDeployment(BaseDeployment):
             if functions:
                 if function_call:
                     if not isinstance(functions, list):
-                        raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(functions)} in "
+                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(functions)} in "
                                          f"functions it should be {list}")
 
                     if not isinstance(function_call, str):
-                        raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(function_call)} in "
+                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(function_call)} in "
                                        f"function_call it should be {str}")
                 else:
-                    raise ValueError(f"Internal error, function_call is mandatory because you put the functions param")
+                    raise PrintableGenaiError(400, f"Internal error, function_call is mandatory because you put the functions param")
 
     def check_input(self, json_input: dict):
         """ Check if the input is correct
@@ -186,10 +162,10 @@ class LLMDeployment(BaseDeployment):
         mandatory_params = ["query_metadata", "llm_metadata", "platform_metadata"]
         for param in mandatory_params:
             if json_input.get(param) is None:
-                raise ValueError(f"Internal error, parameter: {param} is mandatory")
+                raise PrintableGenaiError(400, f"Internal error, parameter: {param} is mandatory")
             else:
                 if not isinstance(json_input.get(param), dict):
-                    raise ValueError(f"Internal error, unsupported operand type(s) for -: {type(json_input.get('param'))}"
+                    raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(json_input.get('param'))}"
                                    f"in {param} it should be {dict}")
 
         # query_metadata
@@ -242,19 +218,19 @@ class LLMDeployment(BaseDeployment):
             template_name = base_template_name
 
         ## Check if template exists
-        if template_name not in self.TEMPLATES_NAMES:
-            self.load_templates()
+        if template_name not in self.templates_names:
+            self.templates, self.templates_names = self.loader.get_templates()
 
-        if template_name not in self.TEMPLATES_NAMES:
-            if base_template_name not in self.TEMPLATES_NAMES:
+        if template_name not in self.templates_names:
+            if base_template_name not in self.templates_names:
                 raise PrintableGenaiError(
                     404,
-                    f"Query must be one of the possible ones {self.TEMPLATES_NAMES}. "
+                    f"Query must be one of the possible ones {self.templates_names}. "
                     f"Remember to add new queries to the query metadata json.")
             else:
                 template_name = base_template_name
 
-        return self.TEMPLATES[template_name]
+        return self.templates[template_name]
 
     def get_template_and_name(self, query_metadata: dict, model: GenerativeModel) -> Tuple[dict, str]:
         """ Get template and template name
@@ -264,8 +240,8 @@ class LLMDeployment(BaseDeployment):
         :return: Tuple with template and template name
         """
         if model.MODEL_MESSAGE in ["chatClaude3", "chatGPT-v"] and isinstance(query_metadata.get('query'), str):
-            model.default_template_name = "system_query"
-        template_name = query_metadata.get("template_name", model.default_template_name)
+            model.DEFAULT_TEMPLATE_NAME = "system_query"
+        template_name = query_metadata.get("template_name", model.DEFAULT_TEMPLATE_NAME)
         lang = query_metadata.get("lang", "")
         template = query_metadata.get("template")
         if not template:
@@ -280,7 +256,7 @@ class LLMDeployment(BaseDeployment):
                 error_type = "In vision models must be a list"
             else:
                 error_type = "In non vision models must be a string"
-            raise ValueError(f"In the template '{template_name}' query does not match model query structure. "
+            raise PrintableGenaiError(400, f"In the template '{template_name}' query does not match model query structure. "
                              f"{error_type}")
         return template, template_name
 
@@ -428,8 +404,8 @@ class LLMDeployment(BaseDeployment):
             platform = ManagerPlatform.get_platform(platform_metadata)
 
             # Instantiate model
-            llm_metatadata['models_credentials'] = self.models_credentials.get('LLMs').get(platform.MODEL_FORMAT, {})
-            model = ManagerModel.get_model(llm_metatadata, platform.MODEL_FORMAT, self.available_models)
+            llm_metatadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT, {})
+            model = ManagerModel.get_model(llm_metatadata, platform.MODEL_FORMAT, self.available_models, self.available_pools)
             platform.set_model(model)
 
             # Get template
@@ -454,14 +430,15 @@ class LLMDeployment(BaseDeployment):
             result = model.get_result(response)
             self.logger.info(f"Result: {result}")
             if result['status_code'] == 200:
-                if model.MODEL_MESSAGE == "dalle":
-                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/images"
-                    self.report_api(result['result']['n'], "", report_url,
-                                    resource, GENAI_LLM_SERVICE, "IMAGES")
-                else:
-                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/tokens"
-                    self.report_api(result['result']['n_tokens'], "", report_url,
-                                    resource, GENAI_LLM_SERVICE, "TOKENS")
+                if not eval(os.getenv('TESTING', "False")):
+                    if model.MODEL_MESSAGE == "dalle":
+                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/images"
+                        self.report_api(result['result']['n'], "", report_url,
+                                        resource, GENAI_LLM_SERVICE, "IMAGES")
+                    else:
+                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/tokens"
+                        self.report_api(result['result']['n_tokens'], "", report_url,
+                                        resource, GENAI_LLM_SERVICE, "TOKENS")
                 return self.adapt_output_queue(result)
             else:
                 return self.adapt_output_queue(self.error_message('error', result['error_message'], result['status_code']))
@@ -494,10 +471,10 @@ class LLMDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = "src/LLM/prompts/"
-            upload_object(storage_containers['workspace'], content, path + name + ".json")
+            path = self.loader.prompts_path
+            upload_object(self.workspace, content, path + name + ".json")
             time.sleep(0.5)
-            self.load_templates()
+            self.templates, self.templates_names = self.loader.get_templates()
 
         except Exception as ex:
             error_message = f"Error uploading prompt file. {ex}"
@@ -512,11 +489,6 @@ class LLMDeployment(BaseDeployment):
         self.logger.info("Delete prompt template request received")
         name = ""
         status_code = 200
-        response = {
-            'status': "finished" if status_code == 200 else "error",
-            'result': f"File <{name}> uploaded",
-            'status_code': status_code
-        }
         try:
             name = json_input['name']
 
@@ -531,10 +503,11 @@ class LLMDeployment(BaseDeployment):
 
         error_message = ""
         try:
-            path = "src/LLM/prompts/"
-            delete_file(storage_containers['workspace'], path + name + ".json")
+            path = self.loader.prompts_path
+            delete_file(self.workspace, path + name + ".json")
             time.sleep(0.5)
-            self.load_templates()
+            self.templates, self.templates_names = self.loader.get_templates()
+
 
         except Exception as ex:
             error_message = f"Error deleting prompt file. {ex}"
@@ -567,7 +540,8 @@ def sync_deployment() -> Tuple[str, int]:
 
 @app.route('/reloadconfig', methods=['GET'])
 def reloadconfig() -> Tuple[str, int]:
-    deploy.load_templates()
+    deploy.logger.info("Reload config request received")
+    deploy.templates, deploy.templates_names = deploy.loader.get_templates()
     result = json.dumps({
         'status': "ok",
         'status_code': 200
@@ -581,42 +555,51 @@ def healthcheck() -> Dict:
     return {"status": "Service available"}
 
 
+@app.route('/list_templates', methods=['GET'])
+def list_available_templates() -> Tuple[str, int]:
+    deploy.logger.info("List templates request received")
+    return json.dumps({"status": "ok", "templates": deploy.templates_names, "status_code": 200}), 200
+
+@app.route('/get_template', methods=['GET'])
+def get_template() -> Tuple[str, int]:
+    deploy.logger.info("Get template request received")
+    template_name = request.args.get('template_name')
+    if not template_name:
+        return json.dumps({"status": "error", "error_message": "You must provide a 'template_name' param", "status_code": 400}), 400
+    if template_name not in deploy.templates_names:
+        return json.dumps({"status": "error", "error_message": f"Template '{template_name}' not found", "status_code": 404}), 404
+    return json.dumps({"status": "ok", "template": deploy.templates[template_name], "status_code": 200}), 200
+
+
+
 @app.route('/get_models', methods=['GET'])
 def get_available_models() -> Tuple[str, int]:
-    dat = request.get_json(force=True)
-
-    model_type_filter = dat.get('model_type', [])
-    model_pool_filter = dat.get('model_pool', [])
-    if isinstance(model_type_filter, str): model_type_filter = [model_type_filter]
-    if isinstance(model_pool_filter, str): model_pool_filter = [model_pool_filter]
-
-    temp_models = {}
-    models = {}
-    pools = {}
-    available_models = deploy.available_models
-
-    for platform in available_models:
-        temp_models[platform] = []
-        for model_info in available_models[platform]:
-            common_pool = [pool for pool in model_info.get("model_pool", []) if pool in model_pool_filter]
-            model_name = model_info["model"]
-            if (platform in model_type_filter) or (model_type_filter == ['']) or (model_pool_filter == ['']):
-                temp_models[platform].append(model_name)
-            if len(common_pool) != 0:
-                for pool_name in common_pool:
-                    if not pools.get(pool_name, None):
-                        pools[pool_name] = [model_name]
-                    else:
-                        pools[pool_name].append(model_name)
-        if temp_models[platform]:
-            models[platform] = temp_models[platform]
-
-    if (not model_pool_filter) or (model_pool_filter == ['']):
-        result = json.dumps({"models": models}), 200
+    dat = request.args
+    if len(dat) > 1:
+        return json.dumps({"status": "error", "error_message":
+            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'model_type' param", "status_code": 400}), 400
+    if dat.get("platform"):
+        models = []
+        pools = []
+        for model in deploy.available_models.get(dat["platform"], []):
+            models.append(model.get("model"))
+            pools.extend(model.get("model_pool", []))
+        return json.dumps({"status": "ok", "result": {"models": models, "pools": list(set(pools))}, "status_code": 200}), 200
+    elif dat.get("pool"):
+        models = [model.get("model") for model in deploy.available_pools.get(dat["pool"], [])]
+        return json.dumps({"status": "ok", "models": models, "status_code": 200}), 200
+    elif dat.get("model_type") or dat.get("zone"):
+        key = "model_type" if dat.get("model_type") else "zone"
+        response_models = []
+        pools = []
+        for platform, models in deploy.available_models.items():
+            for model in models:
+                if model.get(key) == dat[key]:
+                    response_models.append(model.get("model"))
+                    pools.extend(model.get("model_pool", []))
+        return json.dumps({"status": "ok", "result": {"models": response_models, "pools": list(set(pools))}, "status_code": 200}), 200
     else:
-        result = json.dumps({"pools": pools}), 200
-
-    return result
+        return json.dumps({"status": "error", "error_message": "You must provide a 'platform', 'pool', 'zone' or 'model_type' param", "status_code": 400}), 400
 
 
 @app.route('/upload_prompt_template', methods=['POST'])

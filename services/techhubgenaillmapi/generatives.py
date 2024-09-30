@@ -16,12 +16,14 @@ import tiktoken
 # Local imports
 from common.services import GENAI_LLM_GENERATIVES
 from common.logging_handler import LoggerHandler
+from common.errors.genaierrors import PrintableGenaiError
 from messages import ManagerMessages
 from limiters import ManagerQueryLimiter
 
 
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
+    DEFAULT_TEMPLATE_NAME = "system_query"
 
     def __init__(self, models_credentials, zone):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
@@ -32,7 +34,6 @@ class GenerativeModel(ABC):
         """
         logger_handler = LoggerHandler(GENAI_LLM_GENERATIVES, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
-        self.default_template_name = "system_query"
         self.api_key = models_credentials.get(zone, None)
 
     def set_message(self, config: dict):
@@ -72,7 +73,7 @@ class GenerativeModel(ABC):
         :param template: Template to be checked
         """
         if not isinstance(template, dict):
-            raise ValueError("Template is not a dict {} structure")
+            raise PrintableGenaiError(400, "Template is not a dict {} structure")
 
 
 class PromptGPTModel(GenerativeModel):
@@ -184,7 +185,7 @@ class GPTModel(GenerativeModel):
 
     # Not contains default params, because is an encapsulator for GPTModels, so the default are in there
     def __init__(self, model, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                 temperature, n, functions, function_call, stop, models_credentials, top_p, seed):
+                 temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used in
@@ -204,6 +205,7 @@ class GPTModel(GenerativeModel):
         :param top_p: Top p value to use in the model
         :param models_credentials: Credentials to use the model
         :param seed: Seed to use in the model
+        :param response_format: The format in which the generated text is returned.
         """
 
         super().__init__(models_credentials, zone)
@@ -221,6 +223,7 @@ class GPTModel(GenerativeModel):
         self.stop = stop
         self.top_p = top_p
         self.seed = seed
+        self.response_format = response_format
         self.encoding = tiktoken.get_encoding("cl100k_base")
         self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
@@ -242,7 +245,12 @@ class GPTModel(GenerativeModel):
             data['max_tokens'] = self.max_tokens
         if self.seed:
             data['seed'] = self.seed
-
+        if self.response_format:
+            if self.response_format == "json_object":
+                data['response_format'] = {"type": "json_object"}
+            else:
+                raise PrintableGenaiError(400, f"Response format {self.response_format} not supported for model {self.model_name} "
+                                    f"(only 'json_object' supported)")
         return json.dumps(data)
 
     def get_result(self, response: dict) -> dict:
@@ -275,7 +283,7 @@ class GPTModel(GenerativeModel):
         else:
             # check if message is in the response
             if not 'message' in choice:
-                raise ValueError(f"Azure format is not as expected: {choice}.")
+                raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
             # check if content is in the message
             text = choice.get('message', {}).get('content', '')
@@ -313,15 +321,13 @@ class GPTModel(GenerativeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise ValueError("Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise ValueError("Template must contain the user key")
+                raise PrintableGenaiError(400, "Template must contain the user key")
             if len(template_dict.keys()) != 2:
-                raise ValueError("Template can only have user and system key")
-            if "$query" not in template_dict.get("user"):
-                raise ValueError("Template must contain $query to be replaced")
+                raise PrintableGenaiError(400, "Template can only have user and system key")
         else:
-            raise ValueError("Template is empty")
+            raise PrintableGenaiError(400, "Template is empty")
 
     def __repr__(self):
         """Return the model representation."""
@@ -363,9 +369,8 @@ class DalleModel(GPTModel):
         """
         super().__init__(model, model_type, max_input_tokens, max_input_tokens, 0, zone, api_version,
                          0, n, [], "none", ['<|endoftext|>'], models_credentials,
-                         0, None)
+                         0, None, response_format)
         self.quality = quality
-        self.response_format = response_format
         self.size = size
         self.style = style
         self.user = user
@@ -430,14 +435,14 @@ class DalleModel(GPTModel):
             # check if message is in the response
             if self.response_format == 'b64_json':
                 if 'b64_json' not in choice:
-                    raise ValueError(f"Azure format is not as expected: {choice}.")
+                    raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
                 answer = choice.get('b64_json', "b64 not found")
             elif self.response_format == 'url':
                 if 'url' not in choice:
-                    raise ValueError(f"Azure format is not as expected: {choice}.")
+                    raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
                 answer = choice.get('url', "url not found")
             else:
-                raise ValueError(f"Azure format is not as expected: {choice}.")
+                raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
         self.logger.info(f"LLM response: {answer}.")
         text_generated = {
@@ -483,7 +488,8 @@ class ChatGPTModel(GPTModel):
                  stop: List = ['<|endoftext|>'],
                  models_credentials: dict = None,
                  top_p: int = 0,
-                 seed: int = None):
+                 seed: int = None,
+                 response_format: str = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used
@@ -503,15 +509,17 @@ class ChatGPTModel(GPTModel):
         :param models_credentials: Credentials to use the model
         :param top_p: Top p value to use in the model
         :param seed: Seed to use in the model
+        :param response_format: The format in which the generated text is returned.
         """
 
         super().__init__(model, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed)
+                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = False
 
 
 class ChatGPTvModel(GPTModel):
     MODEL_MESSAGE = "chatGPT-v"
+    DEFAULT_TEMPLATE_NAME = "system_query_v"
 
     def __init__(self, model: str = 'genai-gpt4V-sweden',
                  model_type: str = "",
@@ -527,7 +535,8 @@ class ChatGPTvModel(GPTModel):
                  stop: List = ['<|endoftext|>'],
                  models_credentials: dict = None,
                  top_p : int = 0,
-                 seed: int = None):
+                 seed: int = None,
+                 response_format: str = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used in the gpt3_5 endpoint
@@ -547,11 +556,11 @@ class ChatGPTvModel(GPTModel):
         :param models_credentials: Credentials to use the model
         :param top_p: Top p value to use in the model
         :param seed: Seed to use in the model
+        :param response_format: The format in which the generated text is returned.
         """
 
         super().__init__(model, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed)
-        self.default_template_name = "system_query_v"
+                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = True
 
     def template_ok(self, template: dict):
@@ -563,21 +572,19 @@ class ChatGPTvModel(GPTModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise ValueError("Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise ValueError("Template must contain the user key")
+                raise PrintableGenaiError(400, "Template must contain the user key")
             if isinstance(template_dict.get("user"), list):
                 self._check_multimodal(template_dict.get("user"))
             elif isinstance(template_dict.get("user"), str):
                 pass
             else:
-                raise ValueError("The template must be for vision models. (a list for the 'user' key with multimodal format)")
+                raise PrintableGenaiError(400, "The template must be for vision models. (a list for the 'user' key with multimodal format)")
             if len(template_dict.keys()) != 2:
-                raise ValueError("Template can only have user and system key")
-            if "$query" not in template_dict.get("user"):
-                raise ValueError("Template must contain $query to be replaced")
+                raise PrintableGenaiError(400, "Template can only have user and system key")
         else:
-            raise ValueError("Template is empty")
+            raise PrintableGenaiError(400, "Template is empty")
 
     @staticmethod
     def _check_multimodal(content_list: list):
@@ -589,27 +596,27 @@ class ChatGPTvModel(GPTModel):
             if isinstance(el, dict):
                 if el.get('type') == 'text':
                     if not el.get('text') or not isinstance(el.get('text'), str):
-                        raise ValueError("For type 'text' there must be a key 'text' containing a string")
+                        raise PrintableGenaiError(400, "For type 'text' there must be a key 'text' containing a string")
                 elif el.get('type') == 'image_url':
                     image_url = el.get('image_url')
                     if not image_url:
-                        raise ValueError("'image_url' param in type 'image_url' is mandatory")
+                        raise PrintableGenaiError(400, "'image_url' param in type 'image_url' is mandatory")
                     if not isinstance(image_url.get('url'), str):
-                        raise ValueError("Type 'image_url' must contain a 'image_url' key with a string")
+                        raise PrintableGenaiError(400, "Type 'image_url' must contain a 'image_url' key with a string")
                     if image_url.get('detail') and image_url.get('detail') not in ["high", "low", "auto"]:
-                        raise ValueError("Detail parameter must be one in ['high', 'low', 'auto']")
+                        raise PrintableGenaiError(400, "Detail parameter must be one in ['high', 'low', 'auto']")
                 else:
-                    raise ValueError("Key must be 'type' and its value must be one in ['text', 'image_url']")
+                    raise PrintableGenaiError(400, "Key must be 'type' and its value must be one in ['text', 'image_url']")
             elif "$query" in el:
                 continue
             else:
-                raise ValueError("Elements of the content must be dict {} or a string containing \"$query\"")
+                raise PrintableGenaiError(400, "Elements of the content must be dict {} or a string containing \"$query\"")
 
 
 class ClaudeModel(GenerativeModel):
     MODEL_MESSAGE = None
 
-    # Not contains default params, because is an encapsulator for GPTModels, so the default are in there
+    # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                  temperature, stop, models_credentials):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
@@ -759,19 +766,18 @@ class ChatClaudeModel(ClaudeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise ValueError("Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise ValueError("Template must contain the user key")
+                raise PrintableGenaiError(400, "Template must contain the user key")
             if len(template_dict.keys()) != 2:
-                raise ValueError("Template must have user and system key once")
-            if "$query" not in template_dict.get("user"):
-                raise ValueError("Template must contain $query to be replaced")
+                raise PrintableGenaiError(400, "Template must have user and system key once")
         else:
-            raise ValueError("Template is empty")
+            raise PrintableGenaiError(400, "Template is empty")
 
 
 class ChatClaude3Model(ClaudeModel):
     MODEL_MESSAGE = "chatClaude3"
+    DEFAULT_TEMPLATE_NAME = "system_query_v"
 
     def __init__(self, model: str = 'anthropic.claude-3-sonnet-20240229-v1:0',
                  model_id: str = 'anthropic.claude-3-sonnet-20240229-v1:0',
@@ -802,7 +808,6 @@ class ChatClaude3Model(ClaudeModel):
 
         super().__init__(model, model_id, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                          temperature, stop, models_credentials)
-        self.default_template_name = "system_query_v"
         self.is_vision = True
 
     def template_ok(self, template: dict):
@@ -814,21 +819,19 @@ class ChatClaude3Model(ClaudeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise ValueError("Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise ValueError("Template must contain the user key")
+                raise PrintableGenaiError(400, "Template must contain the user key")
             if isinstance(template_dict.get("user"), list):
                 self._check_multimodal(template_dict.get("user"))
             elif isinstance(template_dict.get("user"), str):
                 pass
             else:
-                raise ValueError("Template user must be a list or a string")
+                raise PrintableGenaiError(400, "Template user must be a list or a string")
             if len(template_dict.keys()) != 2:
-                raise ValueError("Template can only have user and system key")
-            if "$query" not in template_dict.get("user"):
-                raise ValueError("Template must contain $query to be replaced")
+                raise PrintableGenaiError(400, "Template can only have user and system key")
         else:
-            raise ValueError("Template is empty")
+            raise PrintableGenaiError(400, "Template is empty")
 
     @staticmethod
     def _check_multimodal(content_list: list):
@@ -836,21 +839,21 @@ class ChatClaude3Model(ClaudeModel):
             if isinstance(el, dict):
                 if el.get('type') == 'text':
                     if not el.get('text') or not isinstance(el.get('text'), str):
-                        raise ValueError("For type 'text' there must be a key 'text' containing a string")
+                        raise PrintableGenaiError(400, "For type 'text' there must be a key 'text' containing a string")
                 elif el.get('type') == 'image_url':
                     image_url = el.get('image_url')
                     if not image_url:
-                        raise ValueError("'image_url' param in type 'image_url' is mandatory")
+                        raise PrintableGenaiError(400, "'image_url' param in type 'image_url' is mandatory")
                     if not isinstance(image_url.get('url'), str):
-                        raise ValueError("Type 'image_url' must contain a 'image_url' key with a string")
+                        raise PrintableGenaiError(400, "Type 'image_url' must contain a 'image_url' key with a string")
                     if image_url.get('detail'):
-                        raise ValueError("'detail' parameter not allowed in claude3 models")
+                        raise PrintableGenaiError(400, "'detail' parameter not allowed in claude3 models")
                 else:
-                    raise ValueError("Key must be 'type' and its value must be one in ['text', 'image_url']")
+                    raise PrintableGenaiError(400, "Key must be 'type' and its value must be one in ['text', 'image_url']")
             elif "$query" in el:
                 continue
             else:
-                raise ValueError("Elements of the content must be dict {} or a string containing \"$query\"")
+                raise PrintableGenaiError(400, "Elements of the content must be dict {} or a string containing \"$query\"")
 
 
 class LlamaModel(GenerativeModel):
@@ -903,15 +906,13 @@ class LlamaModel(GenerativeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise ValueError("Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise ValueError("Template must contain the user key")
+                raise PrintableGenaiError(400, "Template must contain the user key")
             if len(template_dict.keys()) != 2:
-                raise ValueError("Template must have user and system key once")
-            if "$query" not in template_dict.get("user"):
-                raise ValueError("Template must contain $query to be replaced")
+                raise PrintableGenaiError(400, "Template must have user and system key once")
         else:
-            raise ValueError("Template is empty")
+            raise PrintableGenaiError(400, "Template is empty")
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class
@@ -1020,20 +1021,6 @@ class ManagerModel(object):
         return selected_model
 
     @staticmethod
-    def find_pull_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:
-        """ Method to find the model in the available models.
-
-        :param model_in: Model name.
-        :param available_models: List of available models.
-        :return: Model configuration.
-        """
-        selected_model = None
-        available_models = [model for model in available_models if model_in in model['model_pool']]
-        if available_models:
-            selected_model = copy.deepcopy(random.choice(available_models))
-        return selected_model
-
-    @staticmethod
     def delete_not_used_keys(keys: List[str], model_conf: dict) -> dict:
         """ Method to delete keys from the model configuration.
 
@@ -1046,22 +1033,24 @@ class ManagerModel(object):
         return model_conf
 
     @staticmethod
-    def get_model(conf: dict, platform_name: str, available_models: dict) -> GenerativeModel:
+    def get_model(conf: dict, platform_name: str, available_models: dict, available_pools: dict) -> GenerativeModel:
         """ Method to instantiate the model: [gpt3, gpt-3.5-turbo, gpt4]
 
         :param conf: Model configuration. Example:  {"max_tokens": 1000,"model": "gpt-3.5-turbo"}
         :param platform_name: Platform name.
         :param available_models: List of available models.
+        :param available_pools: List of available pools.
         :return: Model object.
         """
         model_in = conf.get('model', 'gpt-3.5-pool-europe')
         ## backward compatibility        model_in = model_in.replace('pull', 'pool')
 
         available_models = available_models.get(platform_name, [])
-        selected_model = ManagerModel.find_model_in_available_models(model_in, available_models)
 
-        if not selected_model and 'pool' in model_in:
-            selected_model = ManagerModel.find_pull_model_in_available_models(model_in, available_models)
+        if model_in in available_pools:
+            selected_model = copy.deepcopy(random.choice(available_pools[model_in]))
+        else:
+            selected_model = ManagerModel.find_model_in_available_models(model_in, available_models)
 
         if selected_model:
             ## check model message: chatGPT, promptGPT,....
@@ -1074,6 +1063,6 @@ class ManagerModel(object):
                     try:
                         return model(**selected_model)
                     except TypeError as e:
-                        raise ValueError(f"Parameter:{str(e).split('argument')[1]} not supported in model: "
+                        raise PrintableGenaiError(400, f"Parameter:{str(e).split('argument')[1]} not supported in model: "
                                          f"'{selected_model.get('model')}'")
-        raise ValueError(f"Model: '{conf.get('model')}' model is not supported in platform {platform_name}.")
+        raise PrintableGenaiError(400, f"Model: '{conf.get('model')}' model is not supported in platform {platform_name}.")

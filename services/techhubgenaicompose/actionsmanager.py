@@ -21,6 +21,8 @@ class ActionsManager(AbstractManager):
         self.compose_confs = compose_confs
         self.params = params
         self.actions_confs = None
+        self.query_actions_confs = []
+        self.QUERY_ACTIONS = ["expansion"]
 
     def parse_input(self, clear_quotes):
         """Parses params in the configuration for each action, spliting retrieve from the other actions.
@@ -177,6 +179,8 @@ class ActionsManager(AbstractManager):
                 template_params[param] = f'"{value}"'
             if value.startswith("{") == False and value.endswith("}") == False and value.isdigit() == False:
                 template_params[param] = f'"{value}"'
+            if value.startswith("[") and value.endswith("]"):
+                template_params[param] = value
 
         template_substituted = t.safe_substitute(**template_params)
         if "'" in template_substituted:
@@ -202,6 +206,7 @@ class ActionsManager(AbstractManager):
 
         return template_dict
 
+
     def assert_json_serializable(self, params, clear_quotes):
         """ Params are substituted into the template and then must be loaded as a json. 
         This function asserts that after substitution the template is json serializable.
@@ -225,3 +230,23 @@ class ActionsManager(AbstractManager):
                                                  f"Params field must be a dictionary with json serializable values. Please check params field. Params: {params}")
 
         return params
+    
+    def get_and_drop_query_actions(self):
+        actions_temp = []
+        for action_conf in self.actions_confs:
+            if action_conf["action"] in self.QUERY_ACTIONS:
+                self.query_actions_confs.append(action_conf)
+            else:
+                actions_temp.append(action_conf)
+        
+        self.actions_confs = actions_temp
+
+        
+
+        
+        
+        
+            
+        
+        
+                

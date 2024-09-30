@@ -34,6 +34,8 @@ from common.indexing.parsers import Parser
 from common.services import VECTOR_DB_SERVICE
 from common.indexing.connectors import Connector
 from common.genai_json_parser import get_exc_info
+from common.utils import ELASTICSEARCH_INDEX
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class VectorDB(ABC):
@@ -81,14 +83,14 @@ class LlamaIndex(VectorDB):
                                              io.txt_path, io.csv, io.do_titles, io.do_tables)
         try:
             for model in io.models:
-                index_name = re.sub(r'[\\/,|>?*<\" \\]', "_", f"{io.index}_{model.get('embedding_model')}")
-                self.connector.assert_correct_index_metadata(index_name, docs, ["_node_content", "_node_type",
-                                                                           "doc_id", "ref_doc_id", "document_id"])
+                self.connector.assert_correct_index_metadata(ELASTICSEARCH_INDEX(io.index, model.get('embedding_model')),
+                                                             docs,
+                                                             ["_node_content", "_node_type","doc_id", "ref_doc_id", "document_id"])
         except ElasticConnectionError:
             self.logger.error("Connection to elastic failed. Check if the elastic service is running.",
                               exc_info=get_exc_info())
             host = io.vector_storage.get("vector_storage_host")
-            raise ValueError(f"Index {io.index} connection to elastic: {host} is not available.")
+            raise PrintableGenaiError(400, f"Index {io.index} connection to elastic: {host} is not available.")
         return docs
 
     def index_documents(self, docs: List, io: Parser) -> List:
@@ -97,7 +99,7 @@ class LlamaIndex(VectorDB):
 
         # This one first to modify_index_docs before next indexation
         for model in io.models:
-            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{io.index}_{model.get('embedding_model')}")
+            index_name = ELASTICSEARCH_INDEX(io.index, model.get('embedding_model'))
             if not self.connector.exist_index(index_name):
                 self.connector.create_empty_index(index_name)
             docs = self._modify_index_docs(docs, io.modify_index_docs, index_name)
@@ -112,7 +114,7 @@ class LlamaIndex(VectorDB):
 
         # Indexation with the embeddings generation
         for model in io.models:
-            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{io.index}_{model.get('embedding_model')}")
+            index_name = ELASTICSEARCH_INDEX(io.index, model.get('embedding_model'))
             embed_model = get_embed_model(model, self.aws_credentials, is_retrieval=False)
             Settings.embed_model = embed_model
             vector_store = ElasticsearchStore(index_name=index_name, es_client=AsyncElasticsearch(hosts=f"{self.connector.scheme}://{self.connector.host}:{self.connector.port}",
@@ -269,7 +271,7 @@ class LlamaIndex(VectorDB):
             f"Max retries exceeded while indexing {docs_filenames}, deleting nodes and closing connection")
         time.sleep(50)
         for model in models:
-            processed_index_name = re.sub(r'[\\/,|>?*<\" \\]', "_",f"{index_name}_{model.get('embedding_model')}")
+            processed_index_name = ELASTICSEARCH_INDEX(index_name, model.get('embedding_model'))
             # Documents deletion
             result = self.connector.delete_documents(processed_index_name, {"filename": docs_filenames})
             if len(result.body.get('failures', [])) > 0:
@@ -346,7 +348,7 @@ class ManagerVectorDB(object):
             if store.is_platform_type(store_type):
                 conf.pop('type')
                 return store(**conf)
-        raise ValueError(f"Platform type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
                          f"Possible values: {ManagerVectorDB.get_possible_platforms()}")
 
     @staticmethod

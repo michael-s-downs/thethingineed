@@ -148,6 +148,7 @@ class ChunksRetriever(RetrieveMethod):
             "meta": {key: value for key, value in doc['meta'].items() if
                      not (key.startswith("_") or key.endswith("--score"))},
             "scores": {key: doc['meta'][key] for key in doc['meta'] if key.endswith("--score")},
+            "score": doc.get("score"),
             "answer": doc.get("answer")
         } for doc in docs]
 

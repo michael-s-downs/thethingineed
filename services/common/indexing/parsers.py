@@ -6,9 +6,11 @@ from abc import ABC
 from typing import List
 import random
 import os
+from string import Template
 
 # Installed imports
 import langdetect
+from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 
 # Custom imports
 from common.genai_json_parser import (get_project_config, get_dataset_status_key,
@@ -16,6 +18,7 @@ from common.genai_json_parser import (get_project_config, get_dataset_status_key
                                       get_index_conf, get_exc_info)
 from common.logging_handler import LoggerHandler
 from common.services import PARSERS_SERVICE
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class Parser(ABC):
@@ -30,6 +33,37 @@ class Parser(ABC):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
+
+    @staticmethod
+    def get_embedding_model_data(platform, alias, models_credentials, model_selected):
+        """Returns the model data in a dictionary format.
+        """
+        if platform == "azure":
+            template = Template(models_credentials.get('URLs').get('AZURE_EMBEDDINGS_URL'))
+            return {
+                "alias": alias,
+                "platform": platform,
+                "embedding_model": model_selected.get('embedding_model'),
+                "api_key": models_credentials['api-keys'][platform][model_selected.get('zone')],
+                "azure_api_version": model_selected.get("azure_api_version"),
+                "azure_base_url": template.safe_substitute(ZONE=model_selected.get('zone').lower()),
+                "azure_deployment_name": model_selected.get("azure_deployment_name")
+            }
+        elif platform == "bedrock":
+            return {
+                "alias": alias,
+                "platform": platform,
+                "embedding_model": model_selected.get('embedding_model'),
+                "region": model_selected.get("zone")
+            }
+        elif platform == "huggingface" or platform == "similarity":
+            return {
+                "alias": alias,
+                "platform": "huggingface",  # harcoded for retrocompatibility
+                "embedding_model": model_selected.get('embedding_model')
+            }
+        else:
+            raise PrintableGenaiError(400, f"Platform {platform} not supported")
 
 
 class ParserInfoindexing(Parser):
@@ -147,77 +181,38 @@ class ParserInfoindexing(Parser):
     def get_index(self):
         self.index = self.index_conf['index']
 
-    def get_models(self, available_pools: dict, available_models: dict, models_credentials:dict):
+    def get_models(self, available_pools: dict, available_models: dict, models_credentials: dict):
         self.models = self.index_conf['models']
-        if not self._models_retrocompatibility(available_pools, available_models, models_credentials):
+        for i, model in enumerate(self.models):
             model_selected = {}
-            for i, model in enumerate(self.models):
-                platform = model.get('platform')
-                alias = model.get('alias')
-                embedding_model = model.get('embedding_model')
-                # Test if the alias is a pool
-                if alias in available_pools.get(platform, {}).get(embedding_model, []):
-                    alias = random.choice(available_pools.get(platform).get(embedding_model).get(alias).copy())
-                # Get the model parameters based on the alias
-                for m in available_models.get(platform, []):
-                    if alias == m.get('embedding_model_name'):
-                        model_selected = m
-                        break
-                if not model_selected:
-                    raise ValueError(f"Model {model.get('alias')} not found in available models")
-                if platform == "openai" or platform == "azure":
-                    self.models[i] = {
-                        "alias": model.get('alias'),
-                        "platform": model.get('platform'),
-                        "embedding_model": model_selected.get('embedding_model'),
-                        "api_key": models_credentials[platform][alias]['api_key'],
-                        "azure_api_version": model_selected.get("azure_api_version"),
-                        "azure_base_url": models_credentials[platform][alias]['azure_base_url'],
-                        "azure_deployment_name": model_selected.get("azure_deployment_name")
-                    }
-                elif platform == "bedrock":
-                    self.models[i] = {
-                        "alias": model.get('alias'),
-                        "platform": model.get('platform'),
-                        "embedding_model": model_selected.get('embedding_model'),
-                        "region": model_selected.get("region_name")
-                    }
-                elif platform == "huggingface" or platform == "similarity":
-                    self.models[i] = {
-                        "alias": model.get('alias'),
-                        "platform": "huggingface", # harcoded for retrocompatibility
-                        "embedding_model": model_selected.get('embedding_model')
-                    }
-                else:
-                    raise ValueError(f"Platform {platform} not supported")
+            platform = model.get('platform')
+            alias = model.get('alias')
+            embedding_model = model.get('embedding_model')
+            # Test if the alias is a pool
+            if alias in available_pools.get(platform, {}).get(embedding_model, []):
+                alias = random.choice(available_pools.get(platform).get(embedding_model).get(alias).copy())
+            # Get the model parameters based on the alias
+            for m in available_models.get(platform, []):
+                if alias == m.get('embedding_model_name'):
+                    model_selected = m
+                    break
+            if not model_selected:
+                raise PrintableGenaiError(400, f"Model {model.get('alias')} not found in available models")
+            self.models[i] = self.get_embedding_model_data(platform, alias, models_credentials, model_selected)
 
+        unique_embedding_models = []
+        for model in self.models:
+            if model.get('embedding_model') in unique_embedding_models:
+                raise PrintableGenaiError(400, f"Model '{model.get('embedding_model')}' duplicated")
+            unique_embedding_models.append(model.get('embedding_model'))
 
     def get_vector_storage(self, vector_storages):
-        self.vector_storage = self.index_conf.get('vector_storage')
-        # Retrocompatibility with older infoindexing calls
-        if self.vector_storage is None:
-            document_store = self.index_conf.get('document_store')
-            if not self._get_storage_name(document_store.get('host'), document_store.get('password'), vector_storages):
-                # The vector storage is not in the vector_storages loaded
-                self.vector_storage = None
-            else:
-                self.vector_storage = {
-                    "vector_storage_name": self._get_storage_name(document_store.get('host'),
-                                                                  document_store.get('password'), vector_storages),
-                    "vector_storage_type": document_store.get('docstore_format'),
-                    "vector_storage_host": document_store.get('host'),
-                    "vector_storage_port": 9200,
-                    "vector_storage_username": document_store.get('username'),
-                    "vector_storage_password": document_store.get('password')
-                }
-        else:
-            found = False
-            for vs in vector_storages:
-                if vs.get("vector_storage_name") == self.vector_storage:
-                    self.vector_storage = vs
-                    found = True
-            if not found:
-                self.vector_storage = None
+        vector_storage = self.index_conf.get('vector_storage')
+        for vs in vector_storages:
+            if vs.get("vector_storage_name") == vector_storage:
+                self.vector_storage = vs
+                return
+        raise PrintableGenaiError(400, f"Vector storage {vector_storage} not available")
 
     def get_windows_overlap(self):
         self.windows_overlap = self.index_conf.get('windows_overlap', self.OPTIONAL_PARAMS['windows_overlap'])
@@ -228,57 +223,11 @@ class ParserInfoindexing(Parser):
     def get_modify_index_docs(self):
         self.modify_index_docs = self.index_conf.get('modify_index_docs', self.OPTIONAL_PARAMS['modify_index_docs'])
 
-    def _models_retrocompatibility(self, available_pools, available_models, models_credentials):
-        retrocompatibility = False
-        model_selected = {}
-        for i, model in enumerate(self.models):
-            retriever = model.get('retriever')
-            if retriever:
-                embedding_model = model.get('embedding_model')
-                alias = model.get('alias')
-                # Test if the alias is a pool
-                if alias in available_pools.get(retriever, {}).get(embedding_model, []):
-                    alias = random.choice(available_pools.get(retriever).get(embedding_model).get(alias).copy())
-                # Get the model parameters based on the alias
-                for m in available_models.get(retriever, []):
-                    if alias == m.get('embedding_model_name'):
-                        model_selected = m
-                        break
-                if not model_selected:
-                    raise ValueError(f"Model {model.get('alias')} not found in available models")
-                if not model.get('retriever_model'):
-                    self.models[i] = {
-                        "alias": model.get('alias'),
-                        "platform": "openai",
-                        "embedding_model": model.get('embedding_model'),
-                        "api_key": models_credentials[retriever][alias]['api_key'],
-                        "azure_api_version": model_selected.get("azure_api_version"),
-                        "azure_base_url": models_credentials[retriever][alias]['azure_base_url'],
-                        "azure_deployment_name": model_selected.get("azure_deployment_name")
-                    }
-                else:
-                    self.models[i] = {
-                        "alias": model.get('alias'),
-                        "embedding_model": model.get('embedding_model'),
-                        "platform": "huggingface"
-                    }
-                retrocompatibility = True
-        return retrocompatibility
-
-    @staticmethod
-    def _get_storage_name(host, password, vector_storages):
-        for vs in vector_storages:
-            if vs.get('vector_storage_password') == password and host in vs.get('vector_storage_host'):
-                return vs.get('vector_storage_name')
-        return None
-
 
 class ParserInforetrieval(Parser):
-    OPTIONAL_PARAMS = {
-        'windows_overlap': 100,
-        'windows_length': 300,
-        'modify_index_docs': {}
-    }
+
+    AVAILABLE_STRATEGIES = ["genai_retrieval", "llamaindex_fusion"]
+    AVAILABLE_RESCORING_FUNCTIONS = ["mean", "length", "loglength", "pos", "posnorm", "norm", "nll", "rrf"]
 
     MODEL_FORMAT = "inforetrieval"
     @staticmethod
@@ -292,58 +241,34 @@ class ParserInforetrieval(Parser):
 
     def __init__(self, json_input: dict, available_pools: dict, available_models: dict, models_credentials: dict):
         super().__init__()
-        try:
-            self.get_generic(json_input)
-        except KeyError as ex:
-            self.logger.error(f'[Process ] Error parsing JSON. No generic and specific configuration',
-                              exc_info=get_exc_info())
-            raise ex
 
         try:
-            self.get_index_conf(generic=self.generic)
+            if json_input.get("generic"):
+                # Retrocompatibility with older infoindexing calls
+                self.index_conf = get_index_conf(generic=json_input.get("generic"))
+            else:
+                self.index_conf = json_input.get("index_conf")
+
             self.get_index(self.index_conf)
-            self.get_task(self.index_conf)
             self.get_filters(self.index_conf)
+            self.get_strategy(self.index_conf)
+            self.get_strategy_mode(self.index_conf)
             self.get_top_k(self.index_conf)
-            self.get_add_highlights(self.index_conf)
             self.get_rescoring_function(self.index_conf)
             self.get_models(self.index_conf, available_pools, available_models, models_credentials)
-
-
-        except KeyError as ex:
-            self.logger.error(f'Error parsing JSON',
-                              exc_info=get_exc_info())
-            raise ex
-
-        try:
-            self.get_project_config(generic=self.generic)
-            self.get_x_reporting(self.project_config)
-        except Exception as ex:
-            self.logger.error(
-                f"[Process] Error parsing JSON. No configuration of project defined. Generic: {self.generic}",
-                get_exc_info())
-            raise ex
-
-        try:
             self.get_query(self.index_conf)
+
+            self.get_x_reporting(json_input['project_conf'])
         except KeyError as ex:
-            self.logger.error(f' Error getting query',
-                              exc_info=get_exc_info())
-            raise ex
+            raise PrintableGenaiError(400, f"Key '{ex.args[0]}' not found parsing input JSON")
 
-    def get_generic(self, json_input):
-        self.generic = get_generic(json_input)
+        except Exception as ex:
+            raise PrintableGenaiError(400, f"Exception '{ex}' while parsing input JSON")
 
-    def get_index_conf(self, generic):
-        self.index_conf = get_index_conf(generic=generic)
 
     def get_index(self, index_conf):
         self.index = index_conf['index']
 
-    def get_task(self, index_conf):
-        self.task = index_conf.get("task")
-        if self.task != "retrieve":
-            raise ValueError(f"Task {self.task} not supported it must be: \"retrieve\".")
 
     def get_models(self, index_conf, available_pools, available_models, models_credentials):
         sent_models = index_conf.get("models", [])
@@ -352,7 +277,7 @@ class ParserInforetrieval(Parser):
             unique_embedding_models = []
             for model in self.models:
                 if model.get('embedding_model') in unique_embedding_models:
-                    raise ValueError(f"Model '{model.get('embedding_model')}' duplicated")
+                    raise PrintableGenaiError(400, f"Model '{model.get('embedding_model')}' duplicated")
                 unique_embedding_models.append(model.get('embedding_model'))
         else:
             self.models = []
@@ -361,18 +286,33 @@ class ParserInforetrieval(Parser):
     def get_filters(self, index_conf):
         self.filters = index_conf.get("filters", {})
 
+    def get_strategy(self, index_conf):
+        self.strategy = index_conf.get("strategy", "genai_retrieval")
+        if self.strategy not in self.AVAILABLE_STRATEGIES:
+            raise PrintableGenaiError(400, f"Strategy '{self.strategy}' not supported, the available ones are {self.AVAILABLE_STRATEGIES}")
+
+    def get_strategy_mode(self, index_conf):
+        if self.strategy == "genai_retrieval" and "strategy_mode" in index_conf:
+            raise PrintableGenaiError(400, "Strategy 'genai_retrieval' does not use 'strategy_mode' parameter, use 'llamaindex_fusion' instead")
+        strategy_mode = index_conf.get("strategy_mode", "reciprocal_rerank")
+        if strategy_mode not in FUSION_MODES._value2member_map_:
+            raise PrintableGenaiError(400, f"Strategy mode '{strategy_mode}' not implemented, try one of {[i.value for i in FUSION_MODES]}")
+        self.strategy_mode = strategy_mode
+
 
     def get_top_k(self, index_conf):
         self.top_k = index_conf.get("top_k", 10)
 
-    def get_add_highlights(self, index_conf):
-        self.add_highlights_bool = index_conf.get("add_highlights", False)
 
     def get_rescoring_function(self, index_conf):
+        if self.strategy == "llamaindex_fusion" and "rescoring_function" in index_conf:
+            raise PrintableGenaiError(400, "Strategy 'llamaindex_fusion' does not use 'rescoring_function' parameter, use 'genai_retrieval' instead")
         self.rescoring_function = index_conf.get("rescoring_function", "mean")
+        if self.rescoring_function not in self.AVAILABLE_RESCORING_FUNCTIONS:
+            raise PrintableGenaiError(400, f"Rescoring function '{self.rescoring_function}' not supported, the available ones are {self.AVAILABLE_RESCORING_FUNCTIONS}")
 
-    def get_project_config(self, generic):
-        self.project_config = get_project_config(generic=generic)
+    def get_project_config(self, json_input):
+        self.project_config = json_input.get("project_conf")
 
     def get_x_reporting(self, project_conf):
         self.x_reporting = project_conf['x-reporting']
@@ -411,34 +351,9 @@ class ParserInforetrieval(Parser):
                     model_selected = m
                     break
             if not model_selected:
-                raise ValueError(f"Model {alias} not found in available embedding models")
+                raise PrintableGenaiError(400, f"Model {alias} not found in available embedding models")
             platform = model_selected.get('platform')
-            if platform == "openai" or platform == "azure":
-                models.append({
-                    "alias": alias,
-                    "platform": model_selected.get('platform'),
-                    "embedding_model": model_selected.get('embedding_model'),
-                    "api_key": models_credentials[platform][alias]['api_key'],
-                    "azure_api_version": model_selected.get("azure_api_version"),
-                    "azure_base_url": models_credentials[platform][alias]['azure_base_url'],
-                    "azure_deployment_name": model_selected.get("azure_deployment_name")
-                })
-            elif platform == "bedrock":
-                models.append({
-                    "alias": alias,
-                    "platform": model_selected.get('platform'),
-                    "embedding_model": model_selected.get('embedding_model'),
-                    "region": model_selected.get("region_name")
-                })
-            elif platform == "huggingface" or platform == "similarity":
-                models.append({
-                    "alias": alias,
-                    "platform": "huggingface", # harcoded for retrocompatibility
-                    "embedding_model": model_selected.get('embedding_model'),
-                    "retriever_model": model_selected.get('retriever_model')
-                })
-            else:
-                raise ValueError(f"Platform {model_selected.get('platform')} not supported")
+            models.append(Parser.get_embedding_model_data(platform, alias, models_credentials, model_selected))
         return models
 
 class ManagerParser(object):
@@ -455,7 +370,7 @@ class ManagerParser(object):
             if parser.is_platform_type(parser_type):
                 conf.pop('type')
                 return parser(**conf)
-        raise ValueError(f"Platform type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
                          f"Possible values: {ManagerParser.get_possible_platforms()}")
 
     @staticmethod

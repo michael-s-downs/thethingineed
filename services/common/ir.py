@@ -16,7 +16,6 @@ from common.indexing.connectors import Connector, ManagerConnector
 IR_INDICES = "src/ir/index/"
 INDEX_S3 = lambda index: IR_INDICES + index + ".json"
 
-
 def modify_index_documents(connector, modify_index_docs: dict, docs: list, index: str, logger) -> list:
     """
     modify_index_docs must be one of two types, Delete and Update:
@@ -136,7 +135,7 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
     :return: BaseEmbedding model to get the embeddings
     """
     platform = model.get('platform')
-    if platform == 'openai':
+    if platform == 'azure':
         return AzureOpenAIEmbedding(
             model=model.get('embedding_model'),
             deployment_name=model.get('azure_deployment_name'),
@@ -150,12 +149,12 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
                 aws_access_key_id=aws_credentials['access_key'],
                 aws_secret_access_key=aws_credentials['secret_key'],
                 region_name=model.get('region'),
-                model=model.get('embedding_model')
+                model_name=model.get('embedding_model')
             )
         else:
             return BedrockEmbedding(
                 region_name=model.get('region'),
-                model=model.get('embedding_model')
+                model_name=model.get('embedding_model')
             )
     elif platform == "huggingface":
         if is_retrieval:

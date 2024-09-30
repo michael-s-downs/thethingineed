@@ -11,6 +11,7 @@ from confmanager import ConfManager
 from actionsmanager import ActionsManager
 from outputmanager import OutputManager
 from common.utils import get_error_word_from_exception
+from compose.query import expansion
 
 
 class Director(AbstractManager):
@@ -73,6 +74,8 @@ class Director(AbstractManager):
 
         self.actions_manager = ActionsManager(compose_confs, self.conf_manager.template_m.params)
         self.actions_manager.parse_input(self.conf_manager.clear_quotes)
+        self.actions_manager.get_and_drop_query_actions()
+        self.run_query_actions()
         self.run_actions()
         self.filter_result()
         self.output_manager = OutputManager(self.compose_conf)
@@ -93,6 +96,31 @@ class Director(AbstractManager):
                         filter_query_response = f"Query:{self.conf_manager.template_m.query}. Response:{sc.answer}. Context:{sl.join_get_content()}"
                         sc.answer, filtered = self.conf_manager.filter_m.run(filter_query_response,
                                                                              self.conf_manager.headers, output=True)
+
+    def run_query_actions(self):
+        if len(self.actions_manager.query_actions_confs) == 0:
+            return
+        
+        for actions_conf in self.actions_manager.query_actions_confs:
+            self.logger.info(f"Query Action: {actions_conf}")
+            action = actions_conf['action']
+            action_params = actions_conf['action_params']
+            function_map = {
+                "expansion": expansion,
+            }
+
+            action_function = function_map.get(action)
+
+            if not action_function:
+                raise self.raise_PrintableGenaiError(404, "Query action not found, choose one between \"expansion\"")
+            ap = action_params.get('params', {})
+
+            langfuse_sg = self.add_start_to_trace(action, ap)
+            ap["headers"]= self.conf_manager.headers
+            output = action_function(action_params['type'], ap if ap else {}, self.conf_manager.template_m.query, self.actions_manager.actions_confs)
+            self.add_end_to_trace(action, langfuse_sg, output=output)
+            self.logger.info(f"Action: {action} executed")
+
 
     def run_actions(self):
         """Runs the actions process, depending if they have been passed by API call
@@ -152,24 +180,29 @@ class Director(AbstractManager):
             KeyError: If the action_name is not supported.
 
         """
-        action_params = action_params.copy()
-        if action_name in ["llm_action", "retrieve"]:
-            action_params.pop("headers_config")
-            return self.conf_manager.langfuse_m.add_generation(
-                name=action_name,
-                metadata=action_params,
-                input=self.conf_manager.template_m.query,
-                model="",
-                model_params={}
-            )
-        else:
-            return self.conf_manager.langfuse_m.add_span(
-                name=action_name,
-                metadata=action_params,
-                input=self.sb.to_list_serializable()
-            )
+        try:
+            action_params = action_params.copy()
+            if action_name in ["llm_action", "retrieve", "expansion"]:
+                if "headers_config" in action_params:
+                    action_params.pop("headers_config")
+                return self.conf_manager.langfuse_m.add_generation(
+                    name=action_name,
+                    metadata=action_params,
+                    input=self.conf_manager.template_m.query,
+                    model="",
+                    model_params={}
+                )
+            else:
+                return self.conf_manager.langfuse_m.add_span(
+                    name=action_name,
+                    metadata=action_params,
+                    input=self.sb.to_list_serializable()
+                )
 
-    def add_end_to_trace(self, action_name, langfuse_sg):
+        except Exception as ex:
+            self.raise_PrintableGenaiError(500, f"Error adding trace to langfuse. {ex}")
+
+    def add_end_to_trace(self, action_name, langfuse_sg, output=None):
         """
         Adds the end of a trace to the trace manager.
 
@@ -180,16 +213,25 @@ class Director(AbstractManager):
         Returns:
             None
         """
-        if action_name == "llm_action":
-            self.conf_manager.langfuse_m.add_generation_output(
-                generation=langfuse_sg,
-                output=self.sb.to_list_serializable()
-            )
-        else:
-            self.conf_manager.langfuse_m.add_span_output(
-                span=langfuse_sg,
-                output=self.sb.to_list_serializable()
-            )
+        try:
+            if action_name == "llm_action":
+                self.conf_manager.langfuse_m.add_generation_output(
+                    generation=langfuse_sg,
+                    output=self.sb.to_list_serializable()
+                )
+            elif action_name == "expansion":
+                self.conf_manager.langfuse_m.add_generation_output(
+                    generation=langfuse_sg,
+                    output=output
+                )
+            else:
+                self.conf_manager.langfuse_m.add_span_output(
+                    span=langfuse_sg,
+                    output=self.sb.to_list_serializable()
+                )
+
+        except Exception as ex:
+            self.raise_PrintableGenaiError(500, f"Error adding end to trace: {ex}")
 
     def run_conf_manager_actions(self):
         """Runs the configurations process, depending if they´ve been passed by API call

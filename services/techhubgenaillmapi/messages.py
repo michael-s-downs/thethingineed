@@ -10,6 +10,7 @@ import os
 # Local imports
 from common.services import GENAI_LLM_MESSAGES
 from common.logging_handler import LoggerHandler
+from common.errors.genaierrors import PrintableGenaiError
 from adapters import ManagerAdapters
 
 
@@ -32,36 +33,36 @@ class Message(ABC):
         if isinstance(query, str):
             return query
         if not isinstance(query, list) and is_vision:
-            raise ValueError("query must be a list")
+            raise PrintableGenaiError(400, "query must be a list")
         if not is_vision:
-            raise ValueError("query and persistence user content must be a string for non vision models")
+            raise PrintableGenaiError(400, "query and persistence user content must be a string for non vision models")
         for el in query:
             if isinstance(el, dict):
                 additional_keys = set(el.keys()) - {'type', 'text', 'image', 'n_tokens'}
                 if additional_keys:
-                    raise ValueError(f"Incorrect keys: {additional_keys}")
+                    raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}")
                 type = el.get('type')
                 if type not in ['text', 'image_url', 'image_b64']:
-                    raise ValueError("Type must be one in ['text', 'image_url', 'image_b64']")
+                    raise PrintableGenaiError(400, "Type must be one in ['text', 'image_url', 'image_b64']")
                 if type == 'text':
                     if not el.get('text') or not isinstance(el.get('text'), str):
-                        raise ValueError("For type 'text' there must be a key 'text' containing a string")
+                        raise PrintableGenaiError(400, "For type 'text' there must be a key 'text' containing a string")
                 elif type in ['image_url', 'image_b64']:
                     image = el.get('image')
                     if not image or not isinstance(image, dict):
-                        raise ValueError("'image' param must be a dict")
+                        raise PrintableGenaiError(400, "'image' param must be a dict")
                     if not isinstance(image.get('url'), str) and not isinstance(image.get('base64'), str):
-                        raise ValueError("Type 'image' must contain a 'url' key with a string or a 'base64' key with "
+                        raise PrintableGenaiError(400, "Type 'image' must contain a 'url' key with a string or a 'base64' key with "
                                          "a string")
                     if image.get('detail') and image.get('detail') not in ["high", "low", "auto"]:
-                        raise ValueError("Detail parameter must be one in ['high', 'low', 'auto']")
+                        raise PrintableGenaiError(400, "Detail parameter must be one in ['high', 'low', 'auto']")
                     additional_keys = set(image.keys()) - {'url', 'detail', 'base64'}
                     if additional_keys:
-                        raise ValueError(f"Incorrect keys: {additional_keys}")
+                        raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}")
                 else:
-                    raise ValueError("Key must be 'type' and its value must be one in ['text', 'image']")
+                    raise PrintableGenaiError(400, "Key must be 'type' and its value must be one in ['text', 'image']")
             else:
-                raise ValueError("Elements of the content must be dict {}")
+                raise PrintableGenaiError(400, "Elements of the content must be dict {}")
         return query
 
     def _is_persistence_ok(self, persistence: list, is_vision: bool = False) -> List:
@@ -73,26 +74,26 @@ class Message(ABC):
         """
         for pair in persistence:
             if not isinstance(pair, list):
-                raise ValueError("Persistence must be a list containing lists")
+                raise PrintableGenaiError(400, "Persistence must be a list containing lists")
             if len(pair) != 2:
-                raise ValueError("Content must contain pairs of ['user', 'assistant']")
+                raise PrintableGenaiError(400, "Content must contain pairs of ['user', 'assistant']")
             additional_keys = [key for el in pair for key in el.keys() if key not in {'role', 'content', 'n_tokens'}]
             if additional_keys:
-                raise ValueError(f"Incorrect keys: {additional_keys}. Accepted keys: {'role', 'content', 'n_tokens'}")
+                raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}. Accepted keys: {'role', 'content', 'n_tokens'}")
             roles = [el.get('role') for el in pair]
             if roles[0] != "user" or roles[1] != "assistant":
-                raise ValueError("In persistence, first role must be 'user' and second role must be 'assistant'")
+                raise PrintableGenaiError(400, "In persistence, first role must be 'user' and second role must be 'assistant'")
             for el in pair:
                 if el.get('role') == "user":
                     if not el.get('content'):
-                        raise ValueError("'User' role must have a content key")
+                        raise PrintableGenaiError(400, "'User' role must have a content key")
                     if not isinstance(el.get('content'), str) and not isinstance(el.get('content'), list):
-                        raise ValueError("'User' role content must be a string for non-vision models or a list for "
+                        raise PrintableGenaiError(400, "'User' role content must be a string for non-vision models or a list for "
                                          "vision models")
                     self._is_query_ok(el.get('content'), is_vision)
                 if el.get('role') == "assistant":
                     if not el.get('content') or not isinstance(el.get('content'), str):
-                        raise ValueError("'assistant' role must have a content key containing a string")
+                        raise PrintableGenaiError(400, "'assistant' role must have a content key containing a string")
         return persistence
 
     @staticmethod
@@ -159,7 +160,7 @@ class PromptGPT3Message(Message):
         """
         super().__init__()
         if isinstance(query, list):
-            raise ValueError("query must be a string for non vision models")
+            raise PrintableGenaiError(400, "query must be a string for non vision models")
         self.query = query
         self.context = context
         self.template_name = template_name
@@ -308,7 +309,7 @@ class ChatGPTvMessage(Message):
         super().__init__()
         self.query = super()._is_query_ok(query)
         if context != "" and isinstance(self.query, list):
-            raise ValueError("Context param not allowed in vision models")
+            raise PrintableGenaiError(400, "Context param not allowed in vision models")
         self.context = context
         if functions is None:
             functions = []
@@ -411,7 +412,7 @@ class Claude3Message(Message):
         super().__init__()
         self.query = self._is_vision_query_ok(query)
         if context != "" and isinstance(self.query, list):
-            raise ValueError("Context param not allowed in vision models")
+            raise PrintableGenaiError(400, "Context param not allowed in vision models")
         self.context = context
         self.template_name = template_name
         self.template = template
@@ -434,7 +435,7 @@ class Claude3Message(Message):
             for el in query:
                 if el.get('type') == 'image':
                     if el.get('detail'):
-                        raise ValueError("Detail parameter not allowed in Claude vision models")
+                        raise PrintableGenaiError(400, "Detail parameter not allowed in Claude vision models")
         return query
 
     def preprocess(self):
@@ -530,7 +531,7 @@ class ManagerMessages(object):
             if message.is_message_type(message_type):
                 conf.pop('message')
                 return message(**conf)
-        raise ValueError(f"Message type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Message type doesnt exist {conf}. "
                          f"Possible values: {ManagerMessages.get_possible_platforms()}")
 
     @staticmethod
