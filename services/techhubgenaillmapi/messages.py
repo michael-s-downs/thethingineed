@@ -13,6 +13,8 @@ from common.logging_handler import LoggerHandler
 from common.errors.genaierrors import PrintableGenaiError
 from adapters import ManagerAdapters
 
+DEFAULT_SYSTEM_MSG = 'You are a helpful assistant'
+
 
 class Message(ABC):
     MODEL_FORMAT = "Message"
@@ -243,7 +245,7 @@ class ChatGPTMessage(Message):
     MODEL_FORMAT = "chatGPT"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -294,7 +296,7 @@ class ChatGPTvMessage(Message):
     MODEL_FORMAT = "chatGPT-v"
 
     def __init__(self, query: list, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -354,7 +356,7 @@ class ClaudeMessage(Message):
     MODEL_FORMAT = "chatClaude"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -469,7 +471,7 @@ class Llama3Message(Message):
     MODEL_FORMAT = "chatLlama3"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.

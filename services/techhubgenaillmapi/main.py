@@ -9,10 +9,11 @@ from typing import Dict, Tuple
 
 # Installed imports
 from flask import Flask, request
+from pydantic import ValidationError
 
 # Local imports
 from common.genai_controllers import storage_containers, set_storage, set_queue, provider, upload_object, delete_file
-from common.genai_json_parser import get_exc_info, get_project_config
+from common.genai_json_parser import get_exc_info
 from common.deployment_utils import BaseDeployment
 from common.services import GENAI_LLM_SERVICE
 from common.utils import load_secrets
@@ -20,6 +21,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
 from common.indexing.loaders import ManagerLoader
+from input_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf
 
 
 QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
@@ -40,13 +42,14 @@ class LLMDeployment(BaseDeployment):
         self.available_pools = self.loader.get_available_pools()
         self.available_models = self.loader.get_available_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
+
         self.templates, self.templates_names = self.loader.get_templates()
 
         # Check if default templates are in the templates
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
         if not default_templates.issubset(self.templates_names):
             raise PrintableGenaiError(400, f"Default templates not found: {default_templates}")
-        self.logger.info(f"llmapi initialized")
+        self.logger.info("llmapi initialized")
 
     @property
     def must_continue(self) -> bool:
@@ -73,8 +76,8 @@ class LLMDeployment(BaseDeployment):
 
         :return: True if the maximum number of tokens has been reached false otherwise
         """
-        project_conf = get_project_config(json_input)
-        dict_tokens = json.loads(project_conf.get('x-limits'))
+        project_conf = json_input['project_conf']
+        dict_tokens = json.loads(project_conf.get('x_limits'))
         if model.MODEL_MESSAGE == "dalle":
             model_key = f'llmapi/{platform.MODEL_FORMAT}/{model.model_type}/images'
         else:
@@ -86,179 +89,6 @@ class LLMDeployment(BaseDeployment):
                 return True
 
         return False
-
-    @staticmethod
-    def check_input_tokens_limit(json_input: dict):
-        """ Check if input tokens limit is ok
-
-        :param json_input: Input data
-        """
-        # Checking max tokens parameters:
-        dict_tokens = json.loads(json_input.get('generic').get('project_conf').get('x-limits'))
-        for key, value in dict_tokens.items():
-            if not isinstance(value, dict):
-                raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(value)}" +
-                        f" in {key}, it should be {dict}")
-
-            if len(value) > 0:
-                if (value.get('Current') is not None) and (value.get('Limit') is not None):
-                    if not isinstance(value.get('Current'), int):
-                        raise PrintableGenaiError(400, "Internal error, unsupported operand type(s) for -: " +
-                            f"{type(value.get('Current'))} in current, it should be {int}")
-
-                    if not isinstance(value.get('Limit'), int):
-                        raise PrintableGenaiError(400, "Internal error, unsupported operand type(s) for -: " +
-                            f"{type(value.get('Limit'))} in limit, it should be {int}")
-                else:
-                    raise PrintableGenaiError(400, f"Internal error, current and limit are mandatory in x-limits")
-
-    @staticmethod
-    def check_params(json_input: dict, correct_params_types: dict, input_key):
-        """ Check if the input parameters are correct
-
-        :param json_input: Input data
-        :param correct_params_types: Correct parameters and types
-        :param input_key: Input key
-        """
-        for key, value in correct_params_types.items():
-            input_param = json_input.get(input_key).get(key, None)
-            if value[1] == "optional":
-                if input_param is not None:
-                    if not isinstance(input_param, value[0]):
-                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
-                                       f"{key}, it should be {str(value[0])}")
-
-            elif value[1] == "mandatory":
-                if input_param is None:
-                    raise PrintableGenaiError(400, f"Internal error, {key} is mandatory")
-                else:
-                    if not isinstance(input_param, value[0]):
-                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(input_param)} in "
-                                       f"{key}, it should be {str(value[0])}")
-            else:
-                raise PrintableGenaiError(400, f"Error checking dict: {key}")
-
-        if input_key == "llm_metadata":
-            functions = json_input.get('llm_metadata').get('functions')
-            function_call = json_input.get('llm_metadata').get('function_call')
-            ## Function and function_call, depend on each other
-            if functions:
-                if function_call:
-                    if not isinstance(functions, list):
-                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(functions)} in "
-                                         f"functions it should be {list}")
-
-                    if not isinstance(function_call, str):
-                        raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(function_call)} in "
-                                       f"function_call it should be {str}")
-                else:
-                    raise PrintableGenaiError(400, f"Internal error, function_call is mandatory because you put the functions param")
-
-    def check_input(self, json_input: dict):
-        """ Check if the input is correct
-
-        :param json_input: Input data
-        """
-        mandatory_params = ["query_metadata", "llm_metadata", "platform_metadata"]
-        for param in mandatory_params:
-            if json_input.get(param) is None:
-                raise PrintableGenaiError(400, f"Internal error, parameter: {param} is mandatory")
-            else:
-                if not isinstance(json_input.get(param), dict):
-                    raise PrintableGenaiError(400, f"Internal error, unsupported operand type(s) for -: {type(json_input.get('param'))}"
-                                   f"in {param} it should be {dict}")
-
-        # query_metadata
-        params_query_metadata = {
-            "query": ((str, list), "mandatory"),
-            "context": (str, "optional"),
-            "system": (str, "optional"),
-            "template_name": (str, "optional"),
-            "template": (str, "optional"),
-            "persistence": (list, "optional"),
-        }
-        self.check_params(json_input, params_query_metadata, "query_metadata")
-
-        # llm_metadata
-        params_llm_metadata = {
-            "model": (str, "optional"),
-            "max_input_tokens": (int, "optional"),
-            "max_tokens": (int, "optional"),
-            "n": (int, "optional"),
-            "temperature": (int, "optional"),
-            "stop": (list, "optional"),
-            "quality": (str, "optional"),
-            "response_format": (str, "optional"),
-            "size": (str, "optional"),
-            "style": (str, "optional"),
-            "user": (str, "optional"),
-            "top_p": (int, "optional"),
-            "seed": (int, "optional")
-        }
-        self.check_params(json_input, params_llm_metadata, "llm_metadata")
-
-        # platform_metadata
-        params_platform_metadata = {
-            "platform": (str, "mandatory"),
-            "timeout": (int, "optional"),
-        }
-        self.check_params(json_input, params_platform_metadata, "platform_metadata")
-
-    def get_template(self, base_template_name: str, lang: str) -> dict:
-        """ Get template given the name
-
-        :param base_template_name: Base template name
-        :param lang: Language to search the template with specific language
-        :return: Template
-        """
-        ### Template selection by language
-        if lang:
-            template_name = f"{base_template_name}_{lang}"
-        else:
-            template_name = base_template_name
-
-        ## Check if template exists
-        if template_name not in self.templates_names:
-            self.templates, self.templates_names = self.loader.get_templates()
-
-        if template_name not in self.templates_names:
-            if base_template_name not in self.templates_names:
-                raise PrintableGenaiError(
-                    404,
-                    f"Query must be one of the possible ones {self.templates_names}. "
-                    f"Remember to add new queries to the query metadata json.")
-            else:
-                template_name = base_template_name
-
-        return self.templates[template_name]
-
-    def get_template_and_name(self, query_metadata: dict, model: GenerativeModel) -> Tuple[dict, str]:
-        """ Get template and template name
-
-        :param query_metadata: Query metadata
-        :param model: Model
-        :return: Tuple with template and template name
-        """
-        if model.MODEL_MESSAGE in ["chatClaude3", "chatGPT-v"] and isinstance(query_metadata.get('query'), str):
-            model.DEFAULT_TEMPLATE_NAME = "system_query"
-        template_name = query_metadata.get("template_name", model.DEFAULT_TEMPLATE_NAME)
-        lang = query_metadata.get("lang", "")
-        template = query_metadata.get("template")
-        if not template:
-            template = self.get_template(template_name, lang)
-        else:
-            template = eval(query_metadata['template'])
-            template_name = ""
-
-        if ((isinstance(query_metadata.get('query'), str) and not isinstance(template.get('user'), str)) or
-                (isinstance(query_metadata.get('query'), list) and not isinstance(template.get('user'), list))):
-            if model.is_vision:
-                error_type = "In vision models must be a list"
-            else:
-                error_type = "In non vision models must be a string"
-            raise PrintableGenaiError(400, f"In the template '{template_name}' query does not match model query structure. "
-                             f"{error_type}")
-        return template, template_name
 
     def error_message(self, status, message, status_code):
         """ Error message
@@ -320,7 +150,7 @@ class LLMDeployment(BaseDeployment):
         """
         if QUEUE_MODE:
             apigw_params = json_input.get('headers', {})
-            json_input.setdefault('generic', {}).update({"project_conf": apigw_params})
+            json_input["project_conf"] = apigw_params
 
         json_input = self.get_data_from_file(json_input)
 
@@ -344,24 +174,64 @@ class LLMDeployment(BaseDeployment):
 
         return must_continue, output, next_service
 
-    def parse_input(self, json_input: dict) -> Tuple[dict, dict, dict, str]:
+    def get_template(self, template_name: str, template: str, lang: str, query: str, model: GenerativeModel):
+        """ Get template
+
+        :param template_name: Template name
+        :param template: Template
+        :return: Template
+        """
+        if template:
+            # When both passed, template has preference
+            return eval(template), ""
+
+        elif template_name:
+            if lang:
+                template_name = f"{template_name}_{lang}"
+            if template_name not in self.templates_names:
+                raise ValueError(f"Invalid template name '{template_name}'. The valid ones are '{self.templates_names}'")
+        else:
+            if model.MODEL_MESSAGE in ["chatClaude3", "chatGPT-v"] and isinstance(query, str):
+                model.DEFAULT_TEMPLATE_NAME = "system_query"
+            template_name = model.DEFAULT_TEMPLATE_NAME
+        return self.templates[template_name], template_name # When anyone passed, default_template_name is used
+
+    def parse_input(self, json_input: dict):
         """ Parse input
 
         :param json_input: Input data
         :return: Tuple with query metadata, llm metadata, platform metadata and report url
         """
-        ### Check input and tokens limit
-        self.check_input(json_input)
-        self.check_input_tokens_limit(json_input)
+        if not all(item in json_input.keys() for item in ['query_metadata', 'llm_metadata', 'platform_metadata']):
+            raise ValueError("Missing mandatory fields ('query_metadata', 'llm_metadata' or 'platform_metadata')")
 
-        ### Parse input
-        query_metadata = json_input['query_metadata']
-        llm_metatadata = json_input['llm_metadata']
-        platform_metadata = json_input['platform_metadata']
-        project_conf = get_project_config(json_input)
-        report_url = project_conf['x-reporting']
+        platform_metadata = json_input.get('platform_metadata', {})
+        parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        parsed_platform_metadata['aws_credentials'] = self.aws_credentials
+        parsed_platform_metadata['models_urls'] = self.models_credentials.get('URLs')
+        platform = ManagerPlatform.get_platform(parsed_platform_metadata)
 
-        return query_metadata, llm_metatadata, platform_metadata, report_url
+        llm_metadata = json_input.get('llm_metadata', {})
+        parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT, {})
+        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT, self.available_models, self.available_pools)
+
+        query_metadata = json_input.get('query_metadata', {})
+        query_metadata['is_vision_model'] = model.is_vision
+        query_metadata['template'], query_metadata['template_name'] = self.get_template(query_metadata.get('template_name'),
+                                                       query_metadata.get('template'), query_metadata.get('lang'),
+                                                       query_metadata.get('query'), model)
+        parsed_query_metadata = QueryMetadata(**query_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        #Parameter passed to do pydantic checks now unused
+        parsed_query_metadata.pop('is_vision_model')
+
+        project_conf = json_input.get('project_conf', {})
+        project_conf['x_limits'] = json.loads(project_conf.get('x_limits', "{}"))
+        project_conf['platform'] = platform.MODEL_FORMAT
+        project_conf['model'] = model
+        parsed_project_conf = ProjectConf(**project_conf).model_dump(exclude_unset=True, exclude_none=True)
+
+        return parsed_query_metadata, model, platform, parsed_project_conf['x_reporting']
     
 
     def endpoint_response(self, status_code, result_message, error_message):
@@ -396,29 +266,16 @@ class LLMDeployment(BaseDeployment):
             json_input = self.adapt_input_queue(json_input)
 
             # Parse and check input
-            query_metadata, llm_metatadata, platform_metadata, report_url = self.parse_input(json_input)
+            query_metadata, model, platform, report_url = self.parse_input(json_input)
 
-            # Instantiate platform
-            platform_metadata['aws_credentials'] = self.aws_credentials
-            platform_metadata['models_credentials'] = self.models_credentials.get('URLs')
-            platform = ManagerPlatform.get_platform(platform_metadata)
-
-            # Instantiate model
-            llm_metatadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT, {})
-            model = ManagerModel.get_model(llm_metatadata, platform.MODEL_FORMAT, self.available_models, self.available_pools)
+            # Set model
             platform.set_model(model)
 
-            # Get template
-            template, template_name = self.get_template_and_name(query_metadata, model)
-            model.template_ok(template)
+            # Check template
+            model.template_ok(query_metadata['template'])
 
-            # Set template
-            query_metadata['template'] = template
-            query_metadata['template_name'] = template_name
-            query_metadata.pop('lang', None)
-
-            if self.is_maximum_tokens_reached(json_input, platform, model):
-                return self.adapt_output_queue(self.error_message('error', f"Maximum tokens exceeded for model: {platform.MODEL_FORMAT}/{model.model_name}", 429))
+            #if self.is_maximum_tokens_reached(json_input, platform, model):
+            #    return self.adapt_output_queue(self.error_message('error', f"Maximum tokens exceeded for model: {platform.MODEL_FORMAT}/{model.model_name}", 429))
 
             # Set message in model
             model.set_message(query_metadata)
@@ -443,6 +300,12 @@ class LLMDeployment(BaseDeployment):
             else:
                 return self.adapt_output_queue(self.error_message('error', result['error_message'], result['status_code']))
 
+        except ValidationError as ex:
+            error = ex.errors()[0]
+            if error.get('type') == 'value_error' and error.get('loc')[0] == 'x_limits':
+                return self.adapt_output_queue(self.error_message('error', error.get("msg"), 429))
+            output_msg = f"Error parsing JSON: '{error.get('msg')}' in parameter '{error.get('loc')[0]}' for value '{error.get('input')}'"
+            return self.adapt_output_queue(self.error_message('error', output_msg, 400))
         except ValueError as ex:
             self.logger.error(f"[Process] Error parsing JSON. Query error: {ex}.", exc_info=exc_info)
             return self.adapt_output_queue(self.error_message('error', str(ex), 400))
@@ -528,12 +391,12 @@ def sync_deployment() -> Tuple[str, int]:
     json_input = request.get_json(force=True)
 
     apigw_params = {
-        'x-tenant': request.headers['x-tenant'],
-        'x-department': request.headers['x-department'],
-        'x-reporting': request.headers['x-reporting'],
-        'x-limits': request.headers.get('x-limits', json.dumps({}))
+        'x_tenant': request.headers['x-tenant'],
+        'x_department': request.headers['x-department'],
+        'x_reporting': request.headers['x-reporting'],
+        'x_limits': request.headers.get('x-limits', "{}")
     }
-    json_input.setdefault('generic', {}).update({"project_conf": apigw_params})
+    json_input["project_conf"] = apigw_params
 
     return deploy.sync_deployment(json_input)
 

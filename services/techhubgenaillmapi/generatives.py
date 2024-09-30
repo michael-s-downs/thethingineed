@@ -20,6 +20,18 @@ from common.errors.genaierrors import PrintableGenaiError
 from messages import ManagerMessages
 from limiters import ManagerQueryLimiter
 
+DEFAULT_STOP_MSG = "<|endoftext|>"
+
+NOT_FOUND_MSG = "Not found"
+
+EMPTY_TEMPLATE_MSG = "Template is empty"
+
+USER_AND_SYSTEM_KEY_ALLOWED_MSG = "Template can only have user and system key"
+
+USER_KEY_MANDATORY_MSG = "Template must contain the user key"
+
+TEMPLATE_IS_NOT_DICT_MSG = "Template is not well formed, must be a dict {} structure"
+
 
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
@@ -84,12 +96,12 @@ class PromptGPTModel(GenerativeModel):
                  max_input_tokens: int = 4096,
                  max_tokens: int = 3096,
                  bag_tokens: int = 500,
-                 zone: str = "genai",
+                 zone: str = "dolffia",
                  api_version: str = "2023-08-01-preview",
                  temperature: float = 0,
                  n: int = 1,
                  logprobs: int = 0,
-                 stop: List = ['<|endoftext|>'],
+                 stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
@@ -145,8 +157,8 @@ class PromptGPTModel(GenerativeModel):
         choice = response["choices"][0]
 
         text = choice['text']
-        if re.search("Not found", text, re.I):
-            answer = "Not found"
+        if re.search(NOT_FOUND_MSG, text, re.I):
+            answer = NOT_FOUND_MSG
             self.logger.info("Answer not found.")
         else:
             answer = text.strip()
@@ -282,15 +294,15 @@ class GPTModel(GenerativeModel):
 
         else:
             # check if message is in the response
-            if not 'message' in choice:
+            if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
             # check if content is in the message
             text = choice.get('message', {}).get('content', '')
 
             # get text
-            if re.search("Not found", text, re.I):
-                answer = "Not found"
+            if re.search(NOT_FOUND_MSG, text, re.I):
+                answer = NOT_FOUND_MSG
                 self.logger.info("Answer not found.")
             else:
                 answer = text.strip()
@@ -321,13 +333,13 @@ class GPTModel(GenerativeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, TEMPLATE_IS_NOT_DICT_MSG)
             if not template_dict.get("user"):
-                raise PrintableGenaiError(400, "Template must contain the user key")
+                raise PrintableGenaiError(400, USER_KEY_MANDATORY_MSG)
             if len(template_dict.keys()) != 2:
                 raise PrintableGenaiError(400, "Template can only have user and system key")
         else:
-            raise PrintableGenaiError(400, "Template is empty")
+            raise PrintableGenaiError(400, EMPTY_TEMPLATE_MSG)
 
     def __repr__(self):
         """Return the model representation."""
@@ -342,7 +354,7 @@ class DalleModel(GPTModel):
 
     def __init__(self,
                  max_input_tokens: int = 4000,
-                 model: str = 'genai-dalle3-sweden',
+                 model: str = 'dolffia-dalle3-sweden',
                  model_type: str = "",
                  n: int = 1,
                  quality: str = "standard",
@@ -368,7 +380,7 @@ class DalleModel(GPTModel):
         :param models_credentials: Credentials to use the model
         """
         super().__init__(model, model_type, max_input_tokens, max_input_tokens, 0, zone, api_version,
-                         0, n, [], "none", ['<|endoftext|>'], models_credentials,
+                         0, n, [], "none", [DEFAULT_STOP_MSG], models_credentials,
                          0, None, response_format)
         self.quality = quality
         self.size = size
@@ -479,13 +491,13 @@ class ChatGPTModel(GPTModel):
                  max_input_tokens: int = 4096,
                  max_tokens: int = -1,
                  bag_tokens: int = 500,
-                 zone: str = "genai",
+                 zone: str = "dolffia",
                  api_version: str = "2023-08-01-preview",
                  temperature: float = 0,
                  n: int = 1,
                  functions: List = [],
                  function_call: str = "none",
-                 stop: List = ['<|endoftext|>'],
+                 stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None,
                  top_p: int = 0,
                  seed: int = None,
@@ -521,18 +533,18 @@ class ChatGPTvModel(GPTModel):
     MODEL_MESSAGE = "chatGPT-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
 
-    def __init__(self, model: str = 'genai-gpt4V-sweden',
+    def __init__(self, model: str = 'dolffia-gpt4V-sweden',
                  model_type: str = "",
                  max_input_tokens: int = 32768,
                  max_tokens: int = 1000,  # -1 does not work in vision models
                  bag_tokens: int = 500,
-                 zone: str = "genai-sweden",
+                 zone: str = "dolffia-sweden",
                  api_version: str = "2024-02-15-preview",
                  temperature: float = 0,
                  n: int = 1,
                  functions: List = [],
                  function_call: str = "none",
-                 stop: List = ['<|endoftext|>'],
+                 stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None,
                  top_p : int = 0,
                  seed: int = None,
@@ -572,9 +584,9 @@ class ChatGPTvModel(GPTModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, TEMPLATE_IS_NOT_DICT_MSG)
             if not template_dict.get("user"):
-                raise PrintableGenaiError(400, "Template must contain the user key")
+                raise PrintableGenaiError(400, USER_KEY_MANDATORY_MSG)
             if isinstance(template_dict.get("user"), list):
                 self._check_multimodal(template_dict.get("user"))
             elif isinstance(template_dict.get("user"), str):
@@ -582,9 +594,9 @@ class ChatGPTvModel(GPTModel):
             else:
                 raise PrintableGenaiError(400, "The template must be for vision models. (a list for the 'user' key with multimodal format)")
             if len(template_dict.keys()) != 2:
-                raise PrintableGenaiError(400, "Template can only have user and system key")
+                raise PrintableGenaiError(400, USER_AND_SYSTEM_KEY_ALLOWED_MSG)
         else:
-            raise PrintableGenaiError(400, "Template is empty")
+            raise PrintableGenaiError(400, EMPTY_TEMPLATE_MSG)
 
     @staticmethod
     def _check_multimodal(content_list: list):
@@ -766,13 +778,13 @@ class ChatClaudeModel(ClaudeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, TEMPLATE_IS_NOT_DICT_MSG)
             if not template_dict.get("user"):
-                raise PrintableGenaiError(400, "Template must contain the user key")
+                raise PrintableGenaiError(400, USER_KEY_MANDATORY_MSG)
             if len(template_dict.keys()) != 2:
                 raise PrintableGenaiError(400, "Template must have user and system key once")
         else:
-            raise PrintableGenaiError(400, "Template is empty")
+            raise PrintableGenaiError(400, EMPTY_TEMPLATE_MSG)
 
 
 class ChatClaude3Model(ClaudeModel):
@@ -819,9 +831,9 @@ class ChatClaude3Model(ClaudeModel):
             try:
                 template_dict = eval(template) if not isinstance(template, dict) else template
             except SyntaxError:
-                raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
+                raise PrintableGenaiError(400, TEMPLATE_IS_NOT_DICT_MSG)
             if not template_dict.get("user"):
-                raise PrintableGenaiError(400, "Template must contain the user key")
+                raise PrintableGenaiError(400, USER_KEY_MANDATORY_MSG)
             if isinstance(template_dict.get("user"), list):
                 self._check_multimodal(template_dict.get("user"))
             elif isinstance(template_dict.get("user"), str):
@@ -829,9 +841,9 @@ class ChatClaude3Model(ClaudeModel):
             else:
                 raise PrintableGenaiError(400, "Template user must be a list or a string")
             if len(template_dict.keys()) != 2:
-                raise PrintableGenaiError(400, "Template can only have user and system key")
+                raise PrintableGenaiError(400, USER_AND_SYSTEM_KEY_ALLOWED_MSG)
         else:
-            raise PrintableGenaiError(400, "Template is empty")
+            raise PrintableGenaiError(400, EMPTY_TEMPLATE_MSG)
 
     @staticmethod
     def _check_multimodal(content_list: list):
@@ -908,11 +920,11 @@ class LlamaModel(GenerativeModel):
             except SyntaxError:
                 raise PrintableGenaiError(400, "Template is not well formed, must be a dict {} structure")
             if not template_dict.get("user"):
-                raise PrintableGenaiError(400, "Template must contain the user key")
+                raise PrintableGenaiError(400, USER_KEY_MANDATORY_MSG)
             if len(template_dict.keys()) != 2:
                 raise PrintableGenaiError(400, "Template must have user and system key once")
         else:
-            raise PrintableGenaiError(400, "Template is empty")
+            raise PrintableGenaiError(400, EMPTY_TEMPLATE_MSG)
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class
