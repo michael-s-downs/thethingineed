@@ -84,7 +84,7 @@ class LLMStorageLoader(DocumentLoader):
 
     def __init__(self, workspace, origin):
         super().__init__(workspace, origin)
-        self.prompts_path = "src/LLM/prompts"
+        self.prompts_path = "src/LLM/prompts/"
         self.models_file_path = "src/LLM/conf/models_config.json"
         if not self.load_file(self.workspace, self.models_file_path):
             self.models_file_path = "src/compose/conf/models_config.json"
