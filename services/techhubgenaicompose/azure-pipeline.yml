@@ -25,7 +25,7 @@ variables:
 - name:  vmImageName
   value: 'ubuntu-20.04'
 - name:  pythonVersion
-  value: '3.8'
+  value: '3.11'
 - name:  baseImage
   value: '$(default_base)'
 - name:  registryServerName
