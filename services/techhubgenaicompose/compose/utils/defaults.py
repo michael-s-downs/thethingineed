@@ -53,3 +53,17 @@ REFORMULATE_TEMPLATE = {
         "timeout": TIMEOUT
     }
 }
+
+TRANSLATE_TEMPLATE = {
+    "query_metadata": {
+        "query": "",
+        "template": "{\"system\": \"You are a profesional translator and only answer with the translated sentence.\",\"user\": \"$query\"}"
+    },
+    "llm_metadata": {
+        "model": "gpt-3.5-16k-pool-europe"
+    },
+    "platform_metadata": {
+        "platform":"azure", 
+        "timeout": TIMEOUT
+    }
+}

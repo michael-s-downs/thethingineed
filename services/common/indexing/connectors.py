@@ -4,11 +4,13 @@
 # Native imports
 from abc import ABC
 from typing import List
-import re
 
 # Installed imports
 from elasticsearch import Elasticsearch, RequestError
 
+# Custom imports+
+from common.utils import ELASTICSEARCH_INDEX
+from common.errors.genaierrors import PrintableGenaiError
 
 class Connector(ABC):
     MODEL_FORMAT = "Connector"
@@ -85,6 +87,21 @@ class Connector(ABC):
         """
         pass
 
+    def get_documents_filenames(self, index_name: str, size: int = 10000):
+        """ Method to get the filenames from an index
+
+        :param index_name: Index to get the filenames from
+        :param size: Size of documents
+        """
+        pass
+
+    def delete_index(self, index: str):
+        """ Async method to create an empty index
+
+        :param index: Name of the index to create
+        """
+        pass
+
     def close(self):
         """ Method to close the connection to the vector storage database
 
@@ -114,9 +131,9 @@ class ElasticSearchConnector(Connector):
 
             result = self.connection.ping()
         except:
-            raise ValueError(f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
+            raise PrintableGenaiError(400, f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
         if not result:
-            raise ValueError(f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
+            raise PrintableGenaiError(400, f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
 
     def assert_correct_index_metadata(self, index: str, docs: list, vector_storage_keys: list):
         """Raises an error if you try to change metadata for an already created index
@@ -139,13 +156,13 @@ class ElasticSearchConnector(Connector):
         for doc in docs:
             metadata = doc.metadata.keys() - extra_metadata
             if not all([key in collection_meta for key in metadata]):
-                raise ValueError(
+                raise PrintableGenaiError(400,
                     f"Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
             if new_index:
                 continue
             new_meta = [key for key in metadata if key not in index_meta and key not in vector_storage_keys]
             if new_meta:
-                raise ValueError(
+                raise PrintableGenaiError(400,
                     f"Metadata keys {new_meta} do not match those in the existing index {index}. "
                     f"Check and align metadata keys. Index metadata: {list(index_meta)}")
 
@@ -158,19 +175,18 @@ class ElasticSearchConnector(Connector):
         """
         models_used = []
         for model in available_models:
-            index_name = re.sub(r'[\\/,|>?*<\" \\]', "_", f"{index}_{model}")
-            if self.exist_index(index_name):
+            if self.exist_index(ELASTICSEARCH_INDEX(index, model)):
                 models_used.append(model)
         if len(models_used) == 0:
             return
         models_sent = [model.get('embedding_model') for model in models]
         if not all([model in models_sent for model in models_used]) or len(models_sent) != len(models_used):
-            raise ValueError(f"Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'")
+            raise PrintableGenaiError(400, f"Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'")
 
     def exist_index(self, index: str):
         """ Method to check if an index exists"""
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.exists(index=index)
 
     def create_empty_index(self, index: str):
@@ -179,7 +195,7 @@ class ElasticSearchConnector(Connector):
         :param index: Name of the index to create
         """
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.create(index=index)
 
     def delete_index(self, index: str):
@@ -188,7 +204,7 @@ class ElasticSearchConnector(Connector):
         :param index: Name of the index to create
         """
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.delete(index=index)
 
     def get_index_mapping(self, index: str):
@@ -197,7 +213,7 @@ class ElasticSearchConnector(Connector):
         :param index: Index to get configuration from
         """
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.get_mapping(index=index)
 
     def get_documents(self, index_name: str, filters: dict, offset: int = 0, size: int = 25):
@@ -209,7 +225,7 @@ class ElasticSearchConnector(Connector):
         :param size: Size of documents
         """
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
 
         chunks = []
         while True:
@@ -236,6 +252,7 @@ class ElasticSearchConnector(Connector):
         for file, chunks in chunks_per_file.items():
             chunks_per_file[file] = sorted(chunks, key=lambda x: x.get('meta').get('snippet_number'))
         return "finished", chunks_per_file, 200
+
     def get_all_documents(self, index_name: str, offset: int = 0, size: int = 25):
         """ Method to get all documents from an index
 
@@ -274,7 +291,7 @@ class ElasticSearchConnector(Connector):
                     operands_should.append({"term": {f"metadata.{key}.keyword": subfilter}})
                 operands.append({"bool": {"should": operands_should}})
             else:
-                raise ValueError(f"Error the value '{value}' for the key '{key}' must be a string or a list containing strings.")
+                raise PrintableGenaiError(400, f"Error the value '{value}' for the key '{key}' must be a string or a list containing strings.")
         return {"bool": {"must": operands}}
 
     def delete_documents(self, index_name: str, filters: dict):
@@ -284,7 +301,7 @@ class ElasticSearchConnector(Connector):
         :param filters: Dictionary of desired metadata to delete documents
         """
         if self.connection is None:
-            raise ValueError(f"Error the connection has not been established")
+            raise PrintableGenaiError(400, f"Error the connection has not been established")
 
         body = {"query": self._generate_filters(filters)}
         return self.connection.delete_by_query(index=index_name, body=body)
@@ -312,7 +329,6 @@ class ElasticSearchConnector(Connector):
         """
         if self.connection:
             self.connection.close()
-
 
     def get_documents_filenames(self, index_name: str, size: int = 10000):
         filenames = []
@@ -345,7 +361,6 @@ class ElasticSearchConnector(Connector):
 
         return "finished", filenames, 200
 
-
 class ManagerConnector(object):
     MODEL_TYPES = [ElasticSearchConnector]
 
@@ -359,7 +374,7 @@ class ManagerConnector(object):
             connection_type = conf.get('vector_storage_type')
             if connector.is_platform_type(connection_type):
                 return connector(conf)
-        raise ValueError(f"Platform type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
                          f"Possible values: {ManagerConnector.get_possible_platforms()}")
 
     @staticmethod

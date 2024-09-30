@@ -19,6 +19,7 @@ from generatives import GenerativeModel
 from common.logging_handler import LoggerHandler
 from common.genai_controllers import provider
 from common.services import GENAI_LLM_ENDPOINTS
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class Platform(ABC):
@@ -173,7 +174,7 @@ class OpenAIPlatform(GPTPlatform):
         elif generativeModel.MODEL_MESSAGE == "promptGPT":
             url = self.models_credentials.get('OPENAI_GPT_PROMPT_URL')
         else:
-            raise ValueError(f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
+            raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 
         self.logger.debug("url: %s", url)
         return url
@@ -244,7 +245,7 @@ class AzurePlatform(GPTPlatform):
         elif generativeModel.MODEL_MESSAGE == "dalle":
             template = Template(self.models_credentials.get('AZURE_DALLE_URL'))
         else:
-            raise ValueError(f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
+            raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 
         url = template.safe_substitute(MODEL=generativeModel.model_name,
                                        ZONE=generativeModel.zone,
@@ -264,7 +265,7 @@ class AzurePlatform(GPTPlatform):
             self.headers = {'api-key': generativeModel.api_key, 'Content-Type': "application/json"}
             self.url = self.build_url(generativeModel)
         else:
-            raise ValueError(f"Model message {generativeModel.MODEL_MESSAGE} not implemented in Azure Platform")
+            raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not implemented in Azure Platform")
 
 
 class BedrockPlatform(Platform):
@@ -344,7 +345,7 @@ class ManagerPlatform(object):
             if platform.is_platform_type(platform_type):
                 conf.pop('platform')
                 return platform(**conf)
-        raise ValueError(f"Platform type doesnt exist: '{conf.get('platform')}'. "
+        raise PrintableGenaiError(400, f"Platform type doesnt exist: '{conf.get('platform')}'. "
                          f"Possible values: {ManagerPlatform.get_possible_platforms()}")
 
     @staticmethod

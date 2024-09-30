@@ -206,4 +206,5 @@ class StreamBatch:
         """
         sbf = BatchSortFactory(sort_type)
         self.streambatch = [sbf.process(self.streambatch, sort_params)]
+    
 

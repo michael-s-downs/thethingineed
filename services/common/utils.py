@@ -5,9 +5,11 @@
 Utils and common functions of Genai services
 """
 # Native imports
-import os
+import os, re
 import json
 from shutil import rmtree
+
+ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}")
 
 
 def convert_service_to_queue(service_name: str, provider: str = "aws") -> str:
@@ -50,7 +52,7 @@ def convert_to_queue_extractor(extractor_name: str) -> str:
     return f"Q_{extractor_name.replace(' ', '').replace('-', '_').upper()}"
 
 
-def load_secrets(vector_storage_needed: bool = True) -> (dict, dict, dict):
+def load_secrets(vector_storage_needed: bool = True, aws_credentials_needed: bool = True) -> (dict, dict, dict):
     """ Load sensitive content from the secrets
     """
     models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
@@ -60,17 +62,18 @@ def load_secrets(vector_storage_needed: bool = True) -> (dict, dict, dict):
     aws_env_vars = ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
 
     # Load AWS credentials
-    if os.path.exists(aws_keys_path):
-        with open(aws_keys_path, "r") as file:
-            aws_credentials = json.load(file)
-    elif os.getenv(aws_env_vars[0], ""):
-        aws_credentials = {
-            'access_key': os.getenv(aws_env_vars[0]),
-            'secret_key': os.getenv(aws_env_vars[1])
-        }
-    else:
-        raise FileNotFoundError(
-            f"AWS credentials not found in {aws_keys_path} or in environment variables {aws_env_vars}.")
+    if aws_credentials_needed:
+        if os.path.exists(aws_keys_path):
+            with open(aws_keys_path, "r") as file:
+                aws_credentials = json.load(file)
+        elif os.getenv(aws_env_vars[0], ""):
+            aws_credentials = {
+                'access_key': os.getenv(aws_env_vars[0]),
+                'secret_key': os.getenv(aws_env_vars[1])
+            }
+        else:
+            raise FileNotFoundError(
+                f"AWS credentials not found in {aws_keys_path} or in environment variables {aws_env_vars}.")
 
     # Load models credentials
     if os.path.exists(models_keys_path):

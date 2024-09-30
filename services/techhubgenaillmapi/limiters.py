@@ -14,6 +14,7 @@ from transformers import GPT2TokenizerFast
 from messages import Message
 from common.services import GENAI_LLM_LIMITERS
 from common.logging_handler import LoggerHandler
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class QueryLimiter(ABC):
@@ -99,7 +100,7 @@ class QueryLimiter(ABC):
         """
         self.logger.info("Proceding without persistence")
         if self._get_num_images(self.message.substituted_query) > self.max_images:
-            raise ValueError("Too many images in request. Max is 10.")
+            raise PrintableGenaiError(400, "Too many images in request. Max is 10.")
         tokens_api_call = self._get_n_tokens(self.message.substituted_query)
         max_tokens_with_bag = self.max_tokens - self.bag_tokens
         if tokens_api_call > max_tokens_with_bag and self.message.context:
@@ -115,7 +116,7 @@ class QueryLimiter(ABC):
         self.logger.debug("Proceding persistence")
         images_query = self._get_num_images(self.message.substituted_query)
         if images_query > self.max_images:
-            raise ValueError(f"Too many images in request. Max is {self.max_images}.")
+            raise PrintableGenaiError(400, f"Too many images in request. Max is {self.max_images}.")
         self.num_images += images_query
 
         tokens_api_call = self._get_n_tokens(self.message.substituted_query)
@@ -210,7 +211,7 @@ class ManagerQueryLimiter(object):
             if querylimiter.is_limiter_type(querylimiter_type):
                 conf.pop('querylimiter')
                 return querylimiter(**conf)
-        raise ValueError(f"Platform type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
                          f"Possible values: {ManagerQueryLimiter.get_possible_querylimiters()}")
 
     @staticmethod
