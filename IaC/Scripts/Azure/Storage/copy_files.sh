@@ -6,6 +6,7 @@ storageNameOriginKey=$TF_VAR_SA_ORIGIN_KEY
 promptsLLM=$TF_VAR_LLM_PROMPTS
 modelsConfigLLM=$TF_VAR_MODELS_CONFIG_LLM
 modelsConfigIR=$TF_VAR_MODELS_CONFIG_IR
+integrationModelMap=$TF_VAR_MODELS_MAP
 embeddingModelDefault=$TF_VAR_EMBEDDING_MODELS
 templatesCompose=$TF_VAR_COMPOSE_TEMPLATES
 queryFiltersTemplates=$TF_VAR_QUERY_FILTERS_TEMPLATES
@@ -20,7 +21,7 @@ sasOrigin=$(az storage account generate-sas --account-key $storageNameOriginKey 
 
 # Declare files to copy
 echo "Declaring files to copy"
-declare -a filesToCopy=($modelsConfigLLM $layoutConfig $modelsConfigIR $embeddingModelDefault)
+declare -a filesToCopy=($modelsConfigLLM $layoutConfig $modelsConfigIR $embeddingModelDefault $integrationModelMap)
 
 # Add prompts LLM
 IFS=', ' read -r -a promptsLLMArray <<< "${promptsLLM//[\[\]\"]}"
