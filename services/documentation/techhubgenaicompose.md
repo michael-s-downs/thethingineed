@@ -2715,7 +2715,7 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 Each compose call have the following flow.
 
-![alt text](imgs/techhubgenaicompose/composeflow.png)
+![alt text](imgs/techhubgenaicompose/genai-compose-decision-flow.png)
 
 If the user wants to use documents, compose calls genai-inforetrieval to obtain the K chunks of the related documents, then executes the actions needed (if there are no chunks no action can be executed except of the llm_action itself) and finally compose calls genai-llmapi using the context created with the document chunks and returns these and the LLM response to the user.
 If the user doesn’t need extra documents, the template will not have the retrieve action so compose just calls genai-llmapi with the query received.

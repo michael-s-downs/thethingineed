@@ -1046,10 +1046,6 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
 |techhubinc-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
 |techhubinc-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|cohere-english-eastus|cohere-english-v3-pool-world|bedrock|
-|cohere-multilingual-eastus|cohere-multilingual-v3-pool-world|bedrock|
-|titan-v1-eastus|titan-v1-pool-world|bedrock|
-|titan-v2-eastus|titan-v2-pool-world|bedrock|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
@@ -1135,14 +1131,6 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v|azure|
 |techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
-|claude-v2:1-NorthVirginiaEast|claude-v2.1-pool-america, claude-v2.1-pool-world|bedrock|
-|claude-v2-NorthVirginiaEast|claude-v2-pool-america, claude-v2-pool-world|bedrock|
-|claude-instant-NorthVirginiaEast|claude-instant-v1-pool-america, claude-instant-v1-pool-world|bedrock|
-|claude-v2:1-FranckfurtCentral|claude-v2.1-pool-europe, claude-v2.1-pool-world|bedrock|
-|claude-v2-FranckfurtCentral|claude-v2-pool-europe, claude-v2-pool-world|bedrock|
-|claude-instant-FranckfurtCentral|claude-instant-v1-pool-europe, claude-instant-v1-pool-world|bedrock|
-|claude-3-haiku-ParisWest|claude-v3-haiku-pool-europe, claude-v3-haiku-pool-world|bedrock|
-|claude-3-sonnet-ParisWest|claude-v3-sonnet-pool-europe, claude-v3-sonnet-pool-world|bedrock|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
@@ -1711,19 +1699,6 @@ This file is the most important one because it stores information about the diff
 ```json
 {
     "LLMs": {
-        "bedrock": [ 
-            {
-                "model": "anthropic.claude-v2",
-                "model_type": "claude-v2",
-                "max_input_tokens": "102.400",
-                "zone": " us-east-1",
-                "message": "chatBedrock",
-                "api_version": "bedrock-2023-05-31",
-                "model_pool":[
-                    "claude-v2-pool-america"
-                ]
-            }
-        ],
         "azure": [ 
             {
                 "model": "genai-text-gpt35turbo",
@@ -1742,8 +1717,7 @@ This file is the most important one because it stores information about the diff
 }
 ```
 Each parameter for a model configuration is:
-- **model**: name of the model. In azure platform will be the deployment name of the model and in bedrock a name decided by the user (used to distinguish between same models in different region).
-- **model_id**: as in bedrock platform there are no deployment names, each model is defined by the model_id (equal in all models from the same type) and the zone where the model has been deployed
+- **model**: name of the model. In azure platform will be the deployment name of the model
 - **model_type**: defined by the user (same models must have the same model_type)
 - **max_input_tokens**: maximum number of tokens accepted by the model as input
 - **zone**: place where the model has been deployed (used to get the api-key in the secrets file)
@@ -1798,12 +1772,7 @@ In this config file, each model (separated by platforms) need different paramete
   - **azure_deployment_name**: deployment name of the embedding model in azure
   - **zone**: place where the model has been deployed (used to get the api-key in the secrets file)
   - **model_pool**: pools the model belongs to
-- **bedrock**:
-  - **embedding_model_name**: same as before
-  - **embedding_model**: same as before
-  - **zone**: place where the model has been deployed
-  - **model_pool**: pools the model belongs to
-- **similarity** (hugging-face). This type of model is not deployed anywhere, so there is no region or pool to specify:
+- **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
   - **embedding_model_name**: same as before
   - **embedding_model**: same as before
   - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different)
@@ -1818,17 +1787,12 @@ This file stores the information about the embedding models needed in the infoin
   "dpr": {
     "alias": "dpr-encoder",
     "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
-    "platform": "similarity"
+    "platform": "huggingface"
   },
   "azure_openai_ada": {
     "alias": "ada-002-pool-europe",
     "embedding_model": "text-embedding-ada-002",
     "platform": "azure"
-  },
-  "bedrock_cohere_english": {
-    "alias": "cohere-english-v3-pool-world",
-    "embedding_model": "cohere.embed-english-v3",
-    "platform": "bedrock"
   }
 }
 ```
@@ -1856,7 +1820,7 @@ This file stores information about the different embedding models that are used 
                 ]
             }
         ],
-        "similarity": [ 
+        "huggingface": [ 
             {
                 "embedding_model_name": "dpr-encoder", 
                 "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
@@ -2226,18 +2190,13 @@ All necessary credentials for the components are stored in secrets for security 
         "api-keys": {
             "azure": {
                 "*zone*": "*api-key*",
-            },
-            "openai": {
-                "openai": "*sk-...*"
-            },
-            "bedrock": 
-                {. . .}
+            }
         }
     }
     ```
     The explanation for every field:
-    - The **URLs** field has all urls of the available models. For LLMApi models the urls must be inside the code in order to replace the "$ZONE", "$MODEL" and "$API" params obtained from "models_config.json" because all the base of the urls from azure is always the same. In bedrock platform, the boto library manages it and for the embedding models, the llamaindex library manages this parameters too
-    - The **api-keys** field is to provide the api-keys of the models. in OpenAI the same api_key is shared for all of the models, in azure depends on its region and finally in bedrock it's not needed (calls are made with AK and SAK)
+    - The **URLs** field has all urls of the available models. For LLMApi models the urls must be inside the code in order to replace the "$ZONE", "$MODEL" and "$API" params obtained from "models_config.json" because all the base of the urls from azure is always the same. 
+    - The **api-keys** field is to provide the api-keys of the models. in OpenAI the same api_key is shared for all of the models, in azure depends on its region
 ## Advanced Examples
 
 To run the following examples, change the payload JSON to the ones indicated below and call the system with that JSON.
@@ -3615,7 +3574,7 @@ When a call is received APIGW authorizes and sends the request to INTEGRATION, I
 
 - INFOINDEXING
 
-    ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-infoindexing-decision-flow.png "Process flow")
+    ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-infoindexing-v4-decision-flow.png "Process flow")
 
 - FLOWMGMT
 
@@ -3633,8 +3592,8 @@ When a call is received APIGW authorizes and sends the request to INTEGRATION, I
 
 - INFORETRIEVAL
 
-  ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-inforetrieval-decision-flow.png "Process flow")
+  ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-inforetrieval-v5-decision-flow.png "Process flow")
 
 - LLMAPI
 
-    ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-llmapi-decision-flow.png "Process flow")
+    ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/TechHubGlobalToolkit/genai-llmapi-v4-decision-flow.png "Process flow")

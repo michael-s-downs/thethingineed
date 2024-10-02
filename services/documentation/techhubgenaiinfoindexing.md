@@ -290,7 +290,7 @@ To configure the component on your own cloud use [this guide](#deploy-guide-link
 
 The files/secrets architecture is:
 
-![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2-config.png)
+![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v4-config.png)
 
 ### Blobs/Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
@@ -560,7 +560,7 @@ This class saves the documents and their associated metadata in the database.
 
 
 ### Flow
-![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2-decision-flow.png)
+![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v4-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 

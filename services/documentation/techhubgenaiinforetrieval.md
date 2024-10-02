@@ -900,7 +900,7 @@ In the following diagram flows, each color will represent the following files:
 
 To conclude, here is an example about how the managing of the scores completion is done with "bm25" and "text-embedding-ada-002" models and a top_k=3. In this case, a same chunk has been extracted with both models and the retrieval is re-done with the rest of them, the two remaining ones from "bm25" and the two remaining ones from "text-embedding-ada-002".
 
-<img src="imgs/techhubgenaiinforetrieval/genai-inforetrieval-v2-behaviour.png">
+<img src="imgs/techhubgenaiinforetrieval/genai-inforetrieval-v4-behaviour.png">
 
 
 ## Troubleshooting
