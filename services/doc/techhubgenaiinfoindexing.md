@@ -1,0 +1,648 @@
+ 6# InfoIndexing Service Documentation
+
+## Index
+
+- [Index](#index)
+- [Overview](#overview)
+  - [Key Features](#key-features)
+- [Getting started](#getting-started)
+- [Concepts and Definitions](#concepts-and-definitions)
+- [Component Reference](#component-reference)
+  - [Using with integration](#using-with-integration)
+  - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
+  - [Redis status](#redis-status)
+  - [Error Handling](#error-handling)
+- [Configuration](#configuration)
+  - [Cloud setup](#cloud-setup)
+  - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+  - [Secrets](#secrets)
+  - [Configuration files](#configuration-files)
+  - [Models](#models)
+  - [Environment variables](#environment-variables)
+- [Code Overview](#code-overview)
+  - [Files and Classes](#files-and-classes)
+  - [Flow](#flow)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [FAQ](#faq)
+- [Version History](#version-history)
+
+## Overview
+
+The GENAI INFOINDEXING service provides a comprehensive solution to streamline the process of indexing and managing document collections, whether you are dealing with a small or an extensive repository. This service enhances data indexing processes, ensuring quick and efficient managing of the data. Users can index with different embedding models such as BM25, OpenAI's ada-002 model or Amazon Bedrock's Cohere model, enriching document representations and improving search accuracy.
+
+### Key Features
+
+- Multi-platform Support: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
+- Customizable Parameters: Control snippet generation for documents adjusting parameters such as window length to meet specific use case requirements.
+- Versatile Model Selection: Access a wide range of embedding models across different geographical regions to support global operations.
+- Multi-Language Support: Index documents in multiple languages, offering multilingual support for global operations and diverse user bases.
+- Custom Metadata Fields: Allow users to define custom metadata fields for their documents, facilitating better organization, categorization, and retrieval.
+- Editable Indexed Documents: Allow users to modify metadata or update the content of already indexed documents, ensuring that information remains accurate and up-to-date.
+
+## Getting started
+
+To use the infoindexing component, you need to have the integration component, designed to receive the API call, adapt the input message and inject it into the corresponding queue, among other functions. In addition to that, a queue messaging service  and a cloud storage service will be needed, either Azure or AWS ones. It is also necessary to have an embedding model deployed or use the Hugginface public ones.
+
+The first step you need to take to use the infoindexing component on your local machine is to set the [environment variables](#environment-variables).
+
+After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+
+```sh
+pip install -r "**path to the requirements.txt file**"
+```
+Once everything above is configured, you need to run the main.py file from the integration-receiver subcomponent, and call the /process API endpoint with body and headers similar to the following example:
+
+```python
+import requests
+import json
+
+url = "http://localhost:8888/process"
+
+payload = {
+  "index": "index_name",
+  "operation": "indexing",
+  "documents_metadata": {
+    "doc1.pdf": {"content_binary": "doc encoded as base64"}
+  },
+  "response_url": "http://"
+}
+
+headers = {
+  "x-api-key": "secret api key"
+}
+
+response = requests.request("POST", url, headers=headers, data=payload)
+```
+
+For a successful configuration, the response must look like this:
+```json
+{
+  "status": "processing",
+  "request_id": "request_20240627_134044_348410"
+}
+```
+
+## Concepts and Definitions
+
+To understand the indexing module, there are a few concepts that we need to define beforehand:
+
+- **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
+- **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
+- **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
+
+## Component Reference
+If infoindexing is working with the whole toolkit, the request will be done by API call to integration and the response will be given by checkend as an async callback (also written in redis database).
+
+If infoindexing is working on his own, will throw an error when writing in the checkend queue (if it not exists) and the response can be seen in the logs or in the redis status.
+
+### Using with integration
+
+Requests structure must be as follows.
+
+```json
+{
+    "request_id": "unique id for the request",
+    "index": "index_name",
+    "operation": "indexing",
+    "models": ["bedrock_cohere_english", "azure_openai_ada"],
+    "documents_metadata": {"doc1.pdf": {"content_binary": "doc encoded as base64"}},
+    "response_url": "http://",
+    "window_length": 300,
+    "metadata": {"meta1": "meta1"}
+}
+```
+If everything goes smoothly, response structure must be as follows (since it is an asynchronous process):
+
+```json
+{
+  "status": "processing",
+  "request_id": "unique id for the request"
+}
+```
+
+If a response_url is provided, enabling a callback response when the process ends, the service will send a POST request with the following structure:
+```json
+{
+  "status": "Finished/Error",
+  "error": "Description of the error, only sent if an error occurs",
+  "request_id": "unique id for the request",
+  "index": "index_name",
+  "docs": "filename of the indexed documents"
+}
+```
+
+For further information, see [rag toolkit documentation](#readme-rag-toolkit-documentation-link)
+### Writing message in queue (Developer functionality)
+If using just infoindexing module for developing purposes as is not needed to pass through the other components to know how infoindexing works (just an already preprocessed document can be used or a simpler one), a txt file located in a route of the *STORAGE_BACKEND* environment variable and separated by *\t* will be necessary.
+
+```text
+file_url\ttext\tlang\tn_pags\tmetadata1\tmetadata2...
+                      or 
+url text  lang  n_pags  metadata1 metadata2...
+```
+
+An example could be:
+```text
+route/to/the/file this is the content of all the file in raw format, just as a simple txt  es  18  creation_date: 12/12/2006 last_modification: 12/12/2007 
+```
+
+With this type of calling, the infoindexing component can be adapted to different modules or just be called if you have the raw content with the txt format explained (no preprocessing is mandatory). 
+
+For a calling with just the infoindexing module, this are the necessary parameters:
+
+- **project_conf**: Configuration of project
+    - **process_id**: Id of process
+    - **process_type**: Type of process
+    - **department**: Department assigned to apikey
+    - **report_url**: Url to report metrics to apigw
+- **index_conf**: Configuration of index process
+    - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
+    - **windows_overlap**: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 100, and it is measured with NLTK tokenizer.
+    - **windows_length**: Length of chunks
+    - **modify_index_docs**: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
+      ```python
+      {
+        "update": {"filename": True},
+        "delete": {"filename": ["doc1.txt"]}
+      }
+      ``` 
+      Where in the update key, the user specifies the metadata used as a filter to find the document.
+
+    - **models**: Indexing model configuration
+        - **alias**: Model or pool of models to index (equivalent to *"embedding_model_name"* in *models_config.json* config file)
+        - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to *"embedding_model"* in *models_config.json* config file)
+        - **platform**: Provider used to store and get the information (major keys in *models_config.json* config file)
+    - **vector_storage**: Key to get the configuration of the database from config file
+- **specific**
+  - **dataset**
+    - **dataset_key**: This key is generated by integration being:
+      ```json
+      {
+        "dataset_key": "ir_index_'datetime'_'timemilis'_'randomchars':ir_index_'date'_'time'_'timemilis'_'randomchars'"
+      }
+      ```
+      An example could be:
+      ```json
+      {
+        "dataset_key": "ir_index_20240628_091121_716609_s79eqe:ir_index_20240628_091121_716609_s79eqe"
+      }
+      ```
+      In the case that infoindexing is not used with integration, can be whatever written by the user.
+  - **paths**
+    - **text**: This is the place where the document explained in [Calling indexing by injecting a message in the queue](#calling-indexing-by-injecting-a-message-in-the-queue) has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
+      ```json
+      {
+        "text": "username/dataset_key/txt/username/request_id/"
+      }
+      ```
+      An example could be:
+      ```json
+      {
+        "text": "albertoperezblasco/ir_index_20240711_081350_742985_d847mh/txt/albertoperezblasco/request_20240711_081349_563044_5c2bac/"
+      }
+      ```
+      Otherwise, it has to be the route where the user uploads this file.
+
+An example of a queue message could be:
+Otherwise, as has been explained in the readme another way of calling infoindexing is available, but it needs more knowlegde of the parameters of the component as in this option you have to write a message in the queue. The necessary ones are:
+```json
+{
+    "generic": {
+        "project_conf": {
+            "process_id": "ir_index_20240125_114829030220AMjg0k1c",
+            "process_type": "ir_index",
+            "department": "main2",
+            "report_url": "http://uhis-cdac-apigw.uhis-cdac/apigw/license/report/24e79c90cfcc46b7b43c36b63012bce9",
+        },
+        "index_conf": {
+            "index": "pruebas_indexing",
+            "windows_overlap": 10,
+            "windows_length": 300,
+            "models": [
+                {
+                    "embedding_model":"text-embedding-ada-002",
+                    "platform":"openai",
+                    "alias": "ada-002-pool-europe"
+                }
+            ],
+            "vector_storage": "elastic-develop-local"
+        }
+    },
+    "specific": {
+        "dataset": {
+            "dataset_key": "ir_index_20240125_114829030220AMjg0k1c:ir_index_20240125_114829030220AMjg0k1c"
+        },
+        "paths": {
+            "text": "test/infoindexing/data/indexes/ir_index_20240125_114829030220AMjg0k1c/txt/prodsimpl/docs/filename.txt",
+        }
+    }
+}
+```
+
+To conclude, the result of using infoindexing in this way can be seen in redis or in the logs. In this example, an error will raise by trying to write in the queue. To know if the document was indexed, the inforetrieval endpoint to see all the documents from an index can be used.
+
+### Redis status
+This service always write the final status of the process in a redis database. The status will be a code, 200 if the indexation was ok or a code error otherwise. For the msg parameter, is a short description of the error cause (see more in [Error handling](#error-handling)) or *"Indexing finished"* if the indexation was ok.
+```json
+{
+  "status": "200",
+  "msg": "Indexing finished"
+}
+```
+
+```json
+{
+  "status": 500,
+  "msg": "Timeout expired"
+}
+```
+
+Finally, the entry in the database will be the value of the field *"dataset_key"* in the input message.
+
+### Error Handling
+
+Some common error messages you may encounter:
+
+| Error message                                                                                                                                | Possible reason                                                                                     |
+|:---------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|
+| Credentials file not found {models\_keys\_path}.                                                                                             | Incorrect path to credentials file.                                                                 |
+| Vector storages file not found {vector\_storages\_path}.                                                                                     | Incorrect path to vector storages file.                                                                 |
+| Max retries reached, OpenAI non reachable.                                                                                                   | Too many requests, the platform is overloaded.                                                      |
+| Error connecting with {vector database}                                                                                                      | Error connecting to the vector database, it could be unreacheable |
+| Connector {connector_name} not found in vector_storages                                                                                      | When a connector name passed (file/environment variable) and is not in the file. |
+| Pools can't be downloaded because {models_file_path} not found in {workspace}                                                                | The embeddings models file not found in the specified route for the workspace |
+| Pools were not loaded, maybe the models_config.json is wrong                                                                                 | Models file is incorrect |
+| Model {alias} not found in available embedding models                                                                                        | Passed an embedding model that does not exists |
+| Error the value '{value}' for the key '{key}' must be a string or a list containing strings.                                                 | Filters passed in wrong format |
+| Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'                              | Different models between indexations |
+| Metadata keys {new_meta} do not match those in the existing index {index}. Check and align metadata keys. Index metadata: {list(index_meta)} | Different metadata provided than the indexed |
+| Detected metadata discrepancies. Verify that all documents have consistent metadata keys.                                                    | Different metadata between the documents |
+| Max num of retries reached. Nodes have been deleted.                                                                                         | Max retries of Timeout or BulkingError reached (3), the documents indexed until the moment the error raised will be deleted. |
+| File {txt_path} not found in IRStorage                                                                                                       | Processed file not found in the path for the workspace/origin (depending TESTING variable) |
+
+
+
+## Configuration
+### Cloud setup
+
+To configure the component on your own cloud use [this guide](#deploy-guide-link).
+
+The files/secrets architecture is:
+
+![secrets and config files diagram](imgs/genai-infoindexing-v2-config.png)
+
+### Blobs/Buckets storage distribution
+This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
+- **Integration**: 
+  - STORAGE_BACKEND: To store the raw document data processed by all the previous components.
+  - STORAGE_DATA: To store the document data that is going to be used by the previous services.
+- **Just infoindexing**: 
+  - STORAGE_BACKEND: Only this bucket is needed to read the raw document explained in [Calling indexing by injecting a message in the queue](#calling-indexing-by-injecting-a-message-in-the-queue) 
+
+### Secrets
+All necessary credentials for the indexing flow are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 5 different secrets:
+
+- **`azure.json`**: This file stores the credentials to connect to the required Azure blobs and queues (only needed if using Azure infrastructure). The custom path for this secret is "azure/", making the full path "secrets/azure/azure.json". The structure of this secret is as follows:
+  ```json
+  {
+    "conn_str_storage": "your connection string for storage blobs",
+    "conn_str_queue": "your connection string for ServiceBus queues",
+  }
+  ```
+- **`aws.json`**: This file contains the credentials to connect to the required AWS buckets and queues (needed if using AWS infraestructure or Bedrock embedding models). The custom folder name for this file is "aws/". This secret has the following structure:
+  ```json
+  {
+    "access_key": "your AWS access key",
+    "secret_key": "your AWS secret key",
+    "region_name": "AWS region of your infrastructure"
+  }
+  ```
+- **`redis.json`**: This file stores Redis credentials for process status control purposes. The predefined path for this file is: "redis/". The format of this secret is as follows:
+  ```json
+  {
+    "host": "your redis host",
+    "password": "redis password",
+    "port": "redis port"
+  }
+  ```
+- **`models.json`**: file where urls and api-keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The secret looks like:
+    ```json
+    {
+        "URLs": {
+          "AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
+        },
+        "api-keys": {
+            "azure": {
+                "*zone*": "*api-key*",
+            },
+            "openai": {
+                "openai": "*sk-...*"
+            },
+            "bedrock": 
+                {. . .}
+        }
+    }
+    ```
+    The explanation for every field:
+    - The URLs field has all urls of the available models.
+    - The api-keys field is to provide the api-keys of the models. in OpenAI the same api_key is shared for all of the models, in azure depends on its region and finally in bedrock it's not needed (calls are made with AK and SAK)
+
+
+- **`vector_storage_config.json`**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/". The format of the secret is as follows:
+  ```json
+  {
+    "vector_storage_supported": [
+      {
+        "vector_storage_name": "vector-storage-name",
+        "vector_storage_type": "elastic",
+        "vector_storage_host": "host",
+        "vector_storage_schema": "https",
+        "vector_storage_port": 9200,
+        "vector_storage_username": "username",
+        "vector_storage_password": "password"
+      },
+      {
+        ...
+      },
+      ...
+    ]
+  }
+  ```
+  Below is an explanation of the different parameters (for ElasticSearch vector database):
+  - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+  - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
+  - **vector_storage_host**: Host of the vector storage.
+  - **vector_storage_schema**: Schema of the vector storage.
+  - **vector_storage_port**: Port where the vector storage is located.
+  - **vector_storage_username**: Username to access to the vector storage.
+  - **vector_storage_password**: Password to access to the vector storage.
+
+### Configuration files
+Apart from the five secrets explained above, the system needs another configuration file, that must be stored in the backend storage defined, under the path "src/ir/conf":
+- **`models_config.json`**: This file contains all the available embedding models with the following structure:
+  ```json
+  {
+    "embeddings": {
+      "azure": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "azure_api_version": "",
+          "azure_deployment_name": "",
+          "model_pool": []
+        },
+        {
+          ...
+        },
+        ...
+      ],
+      "bedrock": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "zone": "",
+          "model_pool": []
+        },
+        ...
+      ],
+      "huggingface": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "retriever_model": ""
+        },
+        ...
+      ]
+    }
+  }
+  ```
+  In this config file, the models from different platforms need different parameters:
+    - Azure models:
+        - embedding_model_name: name of the model, decided by the user and used to distinguish between models.
+        - embedding_model: type of embedding model that uses the model
+        - zone: place where the model has been deployed (used to get the api-keys)
+        - azure_api_version: version of the api (embedding model) that is being used
+        - azure_deployment_name: deployment name of the embedding model in azure
+        - model_pool: pools the model belongs to
+    - Bedrock models:
+        - embedding_model_name: same as before
+        - embedding_model: same as before
+        - zone: place where the model has been deployed
+        - model_pool: pools the model belongs to
+    - HuggingFace models (huggingface): This type of model is not deployed anywhere, so there is no region or pool to specify.
+        - embedding_model_name: same as before
+        - embedding_model: same as before
+        - retriever_model: model used when retrieving information (in hugging-face models normally are different)
+
+An example where the rest of the data is extracted from the message:
+![Configuration files diagram](imgs/genai-infoindexing-v5-config-files-uses.png)
+
+### Models
+
+The system uses various embedding models across different platforms (OpenAI's ADA model and Amazon Bedrock's Cohere model or Huggingface) deployed in various geographical regions, as well as different pools* of models to allow a more balanced deployment of models. It is important to know that a compatible model must be used in the retrieval process for the system to work correctly; this means that if, for instance, the documents are indexed using only the ADA model, said model must also be used during the retrieval process. The list of available models, along with a pool example that they belong to, is as follows:
+
+| Model                         | Pools       | Platform |
+|-------------------------------|-------------|----------|
+| text-embedding-ada-002        |  ada-002-pool-techhub-world | azure|
+| text-embedding-3-large        | ada-003-large-pool-world | azure| 
+| text-embedding-3-small        | ada-003-small-pool-world | azure| 
+| cohere.embed-english-v3       | cohere-english-v3-pool-world | bedrock|
+| cohere.embed-multilingual-v3  | cohere-multilingual-v3-pool-world | bedrock|
+| amazon.titan-embed-text-v1    | titan-v1-pool-world | bedrock|
+|  amazon.titan-embed-text-v2:0 | titan-v2-pool-world| bedrock|
+| dpr-encoder                   | No pools (huggingface models are downloaded)|  huggingface|  
+
+In addition to the models selected by the user for document indexing, the system also indexes using the BM25 model by default (as is the one used in Elasticsearch for indexation). This ensures that the documents are enriched with multiple representations, enhancing the effectiveness of the retrieval process.
+
+---
+**A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
+
+### Environment variables
+- AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
+- AWS_SECRET_KEY: AWS Secret access key to the project.(if not in secrets)
+- AZ_CONN_STR_STORAGE: Azure connection string. (if not in secrets)
+- PROVIDER: Cloud service to use to load the configuration files (aws or azure).
+- STORAGE_DATA: Name of bucket/blob to store datasets.
+- STORAGE_BACKEND: Name of bucket/blob to store configuration files and all the process related files.
+- SECRETS_PATH: Path to the secrets folder.
+- Q_INFO_INDEXING: Name of the queue for the infoindexing service
+- TESTING: Optional environment variable to use when testing the module. With this variable, the processed files are located in STORAGE_DATA blob/bucket and the report to the api is not done. This variable is for running the test purposes or when debugging in local in order to use concrete files just in the infoindexing component.
+- Q_FLOWMGMT_CHECKEND: Queue to write the message after finishing the process. The checkend mainly reports tye indexation result to the url given in the integration process.
+
+## Code Overview
+
+### Files and Classes
+
+**main.py (`InfoIndexationDeployment`)**
+
+This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
+
+![infoindexing deployment](imgs/infoindexationDeployment.png)
+
+**parsers.py (`ManagerParser`,`InfoindexingParser`)**
+
+This class parses the input json request received from the queue, getting all the necessary parameters.
+
+Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Parameters explanation](#parameters-explanation)), while others are internal parameters introduced by the integration service.
+
+- Project conf: Configuration of project
+    - force_ocr: True or False to force the process to go through ocr engine in preprocess
+    - laparams: Parameter to extract more information in PDFMiner text extraction in preprocess
+    - process_id: Id of process
+    - timeout_id: Id used to control process timeout
+    - process_type: Type of process
+    - department: Department assigned to apikey
+    - project_type: Text/Image type of document
+    - report_url: Url to report metrics to apigw
+    - timeout_sender: Process time for timeout to occur
+    - extract_tables: True or False to generate file with tables extract of OCR in preprocess
+    - csv: True or False, Indicate if the text is in the csv file
+    - url_sender: Name or URl to respond
+- OCR conf: Configuration to batch file in OCR
+    - batch_lenght: Size max of pages to batch
+    - files_size: Size max of byte size to batch
+    - calls_per_minute: Number max of call to send OCR
+- Dataset conf: Configuration of dataset
+    - dataset_path: Path of the dataset folder in storage
+    - dataset_csv_path: Path of the dataset csv in storage
+    - path_col: Column of dataset that indicates Url
+    - label_col: Column of dataset that indicates CategoryId
+    - dataset_id: Id of the dataset
+- Preprocess conf: Configuration of preprocess.
+    - num_pag_ini: Number of page of document to initialize extraction
+    - page_limit: Total numbers of pages to extract
+    - layout_conf: Configuration to do layout
+        - do_lines_text: True or False, try to extract lines without OCR
+        - do_lines_ocr: True or False, try to extract lines with OCR
+        - lines_conf: Configuration of lines
+            - do_lines_results: True or False, update images with lines and prediction
+            - model: Name of model to predict lines
+        - do_titles: Extract and generate files with only titles
+        - do_tables: Extract and generate files with only tables
+        - tables_conf:
+            - sep: Indicate which separator use to generate csv with tables lines
+- Origins: Configuration of origin of resources
+    - ocr: aws-ocr/google-ocr, Types of ocr supported
+- Index conf: Configuration of index process
+    - index: Name of index
+    - windows_overlap: Overlap to apply to chunks
+    - windows_length: Length of chunks
+    - modify_index_docs: How to proceed when indexing a document
+        - update: Update by parameter indicated
+        - delete: Delete by parameter indicated
+    - models: Indexing model configuration
+        - alias: Model or pool of models to index (equivalent to name in config file)
+        - embedding_model: Type of embedding that will calculate the vector of embeddings
+        - platform: Provider used to store and get the information
+    - vector_storage: Key to get the configuration of the database from config file
+
+But the necessary ones, are the explained in the readme file.
+
+![parsers](imgs/parsers.png)
+
+**loaders.py (`ManagerLoader`, `DocumentLoader`,`IRStorageLoader`)**
+
+This class is responsible of loading from cloud storage all files associated with the indexing process; this includes files generated in the preprocess (documents text and geospatial information) and [configuration files](#configuration-files).
+
+![parsers](imgs/loaders.png)
+
+**connectors.py (`ManagerConnector`, `Connector`,`ElasticSearchConnector`)**
+
+This class manages the connection with the vector database, checking all the different important things like maintaining the same index during different indexations. If first indexation has been made with some models and metadata, the same models and metadata must be the same for all documents.
+
+If the database is ElasticSearch, the mandatory columns in the index tables are:
+- _index: The name of the index in Elasticsearch.
+- _type: The type of the document. By default, it is set to "_doc".
+- _id: The ID of the chunk in Elasticsearch.
+- _score: An automatic value generated by Haystack.
+- content: The text of the chunk.
+- metadata: Dictionary with all of the metadata values for each chunk. The base metadata fields are:
+  - filename: The name of the file where the chunk text is located.
+  - uri: The path to the cloud where the document has been saved for possible download.
+  - document_id: The identifier of the document to which the chunk of text belongs.
+  - snippet_number: The same value and meaning as the previous field.
+  - snippet_id: The identifier of the text chunk.
+  - _node_content: Metadata introduced by LlamaIndex. String containing all the node content, including metadata, text and realtionships with other nodes.
+  - _node_type: Metadata introduced by LlamaIndex. Type of LlamaIndex node; may be "text", "image", "index" or "document". For snippets is always "text". 
+  - doc_id: Duplicated identifier for the document generated by LlamaIndex
+  - ref_doc_id: Duplicated identifier for the document generated by LlamaIndex
+  - Metadata added by the user...
+- embedding: Column where the snippet embeddings will be stored.
+
+![parsers](imgs/connectors.png)
+
+**vector_storages.py (`ManagerStore`, `DocumentStore`,`LlamaIndex`)**
+
+This class saves the documents and their associated metadata in the database.
+
+![parsers](imgs/vector_storages.png)
+
+
+### Flow
+![flowchart](imgs/genai-infoindexing-v2-decision-flow.png)
+
+In the following diagram flows, each color will represent the following files:
+
+![alt text](imgs/flow1.png)
+
+1.	When the service is initialized, it loads all the [secrets](#secrets) and [configuration files](#configuration-files) containing pools, models, and vector_storage details, to know the ones that are available.
+
+![alt text](imgs/flow2.png)
+
+2. Using the [parser](#parserspy-parserinfoindexing-managerparser) class, the input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
+![alt text](imgs/flow3.png)
+
+3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models in this call must match those used during the first indexation.
+
+![alt text](imgs/flow4.png)
+
+4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded
+
+![alt text](imgs/flow5.png)
+
+5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
+
+![alt text](imgs/flow6.png)
+
+6. Here the modify_index_docs param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is *name of the index without* \\/,|>?\*<" \\_*embedding_model* (the special characters are replaced by _) . An example could be
+    ```text
+    firstindexation_text-embedding-ada-002
+    ```
+
+![alt text](imgs/flow7.png)
+
+7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then all documents are processed by splitting them into chunks (of variable size depending on `window_length` and `window_overlap` [parameters](#parameters-explanation)) and associating each snippet with its corresponding metadata.
+   
+![alt text](imgs/flow8.png)
+
+
+8. Write the documents in the vector storage for each model, following all this steps:
+
+    1. The first step is to internally generate the index name for each requested model.
+    2. Then the object used to generate the embeddings is created
+    3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
+    4. Save the number of pages and tokens for every model to report it after.
+    5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
+    ![alt text](imgs/flow9.png)
+
+
+8.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
+
+    ![alt text](imgs/flow10.png)
+
+
+
+## Troubleshooting
+
+### Common Issues
+
+- Solutions to frequent problems
+
+### FAQ
+
+- Answers to common questions
+
+## Version History
+
+- v1: Release version
