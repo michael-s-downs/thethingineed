@@ -160,7 +160,7 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 ### Architecture
 
-![alt text](imgs/LLMAPIpipeline.drawio.png)
+![alt text](imgs/techhubgenaillm/LLMAPIpipeline.drawio.png)
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
@@ -1207,7 +1207,7 @@ To configure the component on your own cloud use [this guide](#deploy-guide-link
 
 The files-secrets architecture is:
 
-![alt text](imgs/genai-llmapi-v2-config.png)
+![alt text](imgs/techhubgenaillm/genai-llmapi-v2-config.png)
 #### Secrets
 
 All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 3 different secrets:
@@ -1360,31 +1360,9 @@ LLMAPI needs 2 config files to run.
     
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/genai-llmapi-v5-config-file-uses.png)
+![Configuration files diagram](imgs/techhubgenaillm/genai-llmapi-v5-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
-
-### Models
-
-The availabe models with an example pool are:
-
-| Model | Pools       | Platform |
-|-------|-------------|----------|
-| GPT 3.5 |  gpt-3.5-pool-techhub-europe | azure/openai|
-| GPT 3.5 16k |  gpt-3.5-16k-pool-techhub-europe | azure/openai|
-| GPT 4 |  gpt-4-pool-techhub-world | azure/openai|
-| GPT 4 32k |  gpt-4-32k-pool-techhub-world | azure/openai|
-| GPT 4 o |  gpt-4o-pool-techhub-world | azure/openai|
-| Dalle 3 |  gpt-dalle3-pool-techhub-europe | azure/openai|
-| Claude 1 |  claude-instant-v1-pool-europe | bedrock|
-| Claude 2 |  claude-v2-pool-world | bedrock|
-| Claude 2.1 |  claude-v2.1-pool-america | bedrock|
-| Claude 3 haiku |  claude-v3-haiku-pool-europe | bedrock|
-| Claude 3 sonnet |  claude-v3-sonnet-pool-europe | bedrock|
-
-*A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
-
-To get a list with the available models: use the [/get_models endpoint](#endpoints)
 
 ### Environment Variables
 - AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
@@ -1434,77 +1412,77 @@ To conclude, the next call will be done if the current parameter of a model is l
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user (inherits from base_deployment).
 
-![alt text](imgs/llmdeployment.png)
+![alt text](imgs/techhubgenaillm/llmdeployment.png)
 
 **loaders.py (`ManagerLoader`, `DocumentLoader`, `LLMStorageLoader`)**
 
 This class is responsible of loading from cloud storage all files associated with the llmapi process; this includes the [configuration files](#configuration-files) like models and templates/prompts.
 
-![alt text](imgs/loaders.png)
+![alt text](imgs/techhubgenaillm/loaders.png)
 
 **endpoints.py (`ManagerPlatform`, `Platform`, `ImplementedPlatforms`)**
 
 This class manages the connection with the providers of the LLM (currently AWS and Azure OpenAI and OpenAI).
 
-![alt text](imgs/endpoints.png)
+![alt text](imgs/techhubgenaillm/endpoints.png)
 
 **generatives.py (`ManagerModel`, `GenerativeModel`, `ImplementedGenerativesModels`)**
 
 This class deals with the parameters of the LLM API depending on the model used.
 
-![alt text](imgs/generatives.png)
+![alt text](imgs/techhubgenaillm/generatives.png)
 
 **messages.py (`ManagerMessages`, `Message`, `ImplementedModelsMessages`)**
 
 This class manages the message that will be sent to the LLM adapting the input format for each model.
 
-![alt text](imgs/messages.png)
+![alt text](imgs/techhubgenaillm/messages.png)
 
 **adapters.py (`ManagerAdapters`, `BaseAdapter`, `ImplementedModelsAdapters`)**
 
 Adapts the query and the persistence to the model messages format.
 
-![alt text](imgs/adapters.png)
+![alt text](imgs/techhubgenaillm/adapters.png)
 
 **limiters.py (`ManagerQueryLimiter`, `QueryLimiter`, `AzureQueryLimiter`, `BedrockQueryLimiter`)**
 
 When the model has been adapted and with the number of tokens of each message (in query and persistence) limits the whole message to send the ones that fit.
 
-![alt text](imgs/limiters.png)
+![alt text](imgs/techhubgenaillm/limiters.png)
 
 ### Flow
-![alt text](imgs/genai-llmapi-v2-decision-flow.png)
+![alt text](imgs/techhubgenaillm/genai-llmapi-v2-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
-![alt text](imgs/flows.png)
+![alt text](imgs/techhubgenaillm/flows.png)
 
 1. Load the configuration files (available models and templates) to know which ones are available when the service is initialized.
 
-![alt text](imgs/flow1.png)
+![alt text](imgs/techhubgenaillm/flow1.png)
 
 2. The next step is to check if all parameters are ok. Then, the platform is initialized.
 
-![alt text](imgs/flow2.png)
+![alt text](imgs/techhubgenaillm/flow2.png)
 
 3. Once the platform has been initialized the model is next, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
 
-![alt text](imgs/flow3.png)
+![alt text](imgs/techhubgenaillm/flow3.png)
 
 4. For checking if the model has reached the maximum of tokens available for the api key, it is necessary to set the model, so this checking comes right after setting the model in the platform (if it reached the model, it returns an error to the user). If the limit has not been surpassed, the message is set.
 
-![alt text](imgs/flow4.png)
+![alt text](imgs/techhubgenaillm/flow4.png)
 
 5. To set the message properly, these are the things to keep in mind:
     - To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
     - The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
     - The message must be adapted to the specific LLM so the adapters class is in charge of it.
 
-![alt text](imgs/flow5.png)
+![alt text](imgs/techhubgenaillm/flow5.png)
 
 6. The final step is to call the model with all the previous steps set, parse the response, and send it to the user and report the usage (tokens used) to our internal API to have a track of the tokens used for each pair model-api_key.
 
-![alt text](imgs/flow6.png)
+![alt text](imgs/techhubgenaillm/flow6.png)
 
 
 ## Prompt Engineering

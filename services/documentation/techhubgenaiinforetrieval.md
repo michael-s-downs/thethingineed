@@ -33,7 +33,6 @@
     - [Cloud setup](#cloud-setup)
       - [Secrets](#secrets)
       - [Configuration files](#configuration-files)
-    - [Models](#models)
     - [Environment Variables](#environment-variables)
   - [Code Overview](#code-overview)
     - [Files and Classes](#files-and-classes)
@@ -183,7 +182,7 @@ If the response looks like this, you are good to go.
 
 ### Components
 
-![alt text](imgs/flow-retrieval.drawio.png)
+![alt text](imgs/techhubgenaiinforetrieval/flow-retrieval.drawio.png)
 
 This service uses the user's query to retrieve information from the vector database where the units of information obtained from the documents were stored (ElasticSearch).
 
@@ -639,7 +638,7 @@ To configure the component on your own cloud use [this guide](#deploy-guide-link
 
 The files/secrets architecture is:
 
-![alt text](imgs/genai-inforetrieval-v5-config.png)
+![alt text](imgs/techhubgenaiinforetrieval/genai-inforetrieval-v5-config.png)
 #### Secrets
     
 All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 4 different secrets:
@@ -794,30 +793,9 @@ Inforetrieval requires two configuration files and one optional file:
 
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/genai-inforetrieval-v5-config-files-uses.png)
+![Configuration files diagram](imgs/techhubgenaiinforetrieval/genai-inforetrieval-v5-config-files-uses.png)
 
 For the index parameter, the associated json file (same name but ended in .json) will be searched to know if this index was indexed in a different vector_storage, then the retrieval will work with this one instead of the default by the component.
-
-### Models
-
-The system uses various embedding models across different platforms (OpenAI's ADA model and Amazon Bedrock's Cohere model or Huggingface) deployed in various geographical regions, as well as different pools* of models to allow a more balanced deployment of models. It is important to know that a compatible model must be used in the retrieval process for the system to work correctly; this means that if, for instance, the documents are indexed using only the ADA model, said model must also be used during the retrieval process. The list of available models, along with a pool example that they belong to, is as follows:
-
-| Model                         | Pools       | Platform |
-|-------------------------------|-------------|----------|
-| text-embedding-ada-002        |  ada-002-pool-techhub-world | azure|
-| text-embedding-3-large        | ada-003-large-pool-world | azure| 
-| text-embedding-3-small        | ada-003-small-pool-world | azure| 
-| cohere.embed-english-v3       | cohere-english-v3-pool-world | bedrock|
-| cohere.embed-multilingual-v3  | cohere-multilingual-v3-pool-world | bedrock|
-| amazon.titan-embed-text-v1    | titan-v1-pool-world | bedrock|
-| amazon.titan-embed-text-v2:0 | titan-v2-pool-world| bedrock|
-| dpr-encoder                   | No pools (huggingface models are downloaded)|  huggingface| 
-
-In addition to the models selected by the user for document indexing, the system also indexes using the BM25 model by default (as is the one used in Elasticsearch for indexation). This ensures that the documents are enriched with multiple representations, enhancing the effectiveness of the retrieval process.
-
----
-**A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
-
 
 ### Environment Variables
 
@@ -837,65 +815,65 @@ In addition to the models selected by the user for document indexing, the system
 **main.py (`InfoRetrievalDeployment`)**
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![alt text](imgs/inforetrievalDeployment.png)
+![alt text](imgs/techhubgenaiinforetrieval/inforetrievalDeployment.png)
 
 **parsers.py (`ManagerParser`,`InforetrievalParser`)**
 This class parses the input json request received from the api request, getting all the necessary parameters. The parameters parsed can be found in [Parameters explanation](#parameters-explanation).
 
-![alt text](imgs/parsers.png)
+![alt text](imgs/techhubgenaiinforetrieval/parsers.png)
 
 **loaders.py (`ManagerLoader`, `DocumentLoader`, `IRStorageLoader`)**
 This class is responsible of loading from cloud storage all files associated with the inforetrieval process; this includes [configuration files](#configuration-files) and the file associated to an index if the index has been stored in a different vector storage than the default one.
 
-![alt text](imgs/loaders.png)
+![alt text](imgs/techhubgenaiinforetrieval/loaders.png)
 
 **connectors.py ( `ManagerConnector`, `Connector`, `ElasticSearchConnector`)**
 This class manages the connection with the vector database, the main thing in this component is to do queries to the vector database.
 
-![alt text](imgs/connectors.png)
+![alt text](imgs/techhubgenaiinforetrieval/connectors.png)
 
 
 ### Flow
 
 Genai-inforetrieval component is the module in charge of extracting the information from the vector database. It uses the query sent to retrieve the documents previously indexed by genai-infoindexing. As they are like “siblings” (one stores and the other gets), they use the same common classes previously explained (parsers, loaders, connectors and storages) in order to have all of this paired. Thus, the flow of genai-inforetrieval is:
 
-![alt text](imgs/genai-inforetrieval-v5-decision-flow.png)
+![alt text](imgs/techhubgenaiinforetrieval/genai-inforetrieval-v5-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
-![alt text](imgs/flow1.png)
+![alt text](imgs/techhubgenaiinforetrieval/flow1.png)
 
 1. Load the configuration files and secrets (pools, models, and vector_storage details) to know which ones are available (when the service is initialized).
 
-    <img src="imgs/flow2.png" width="900">
+    <img src="imgs/techhubgenaiinforetrieval/flow2.png" width="900">
 
 2. Parse the input from the call to get all the parameters.
 
-    <img src="imgs/flow3.png" width="750">
+    <img src="imgs/techhubgenaiinforetrieval/flow3.png" width="750">
 
 3. Get the connector for the index referred in the call. If there is file for the index with the structure explained above this will be the vector storage (reacheable), if not the program will get the one from the "VECTOR_STORAGE" environment variable.
 
-   ![alt text](imgs/flow4.png)
+   ![alt text](imgs/techhubgenaiinforetrieval/flow4.png)
 
 4. This process manages the embedding models that will be used in the retrieval. If there are models on the call, will be matched with the ones available (to know if it is possible to do the retrieval), if not, the retrieval will be done with all models availables (all used during indexing process)
 
-   ![alt text](imgs/flow5.png)
+   ![alt text](imgs/techhubgenaiinforetrieval/flow5.png)
 
 5. Once all the embedding models are matched, the retrieval will be done with the specified strategy (llamaindex_fusion or genai_retrieaval). In the llamaindex_fusion strategy the llamaindex library does all the process (scoring retrieve...) and the following flow is for the genai_retrieval:
 
-   ![alt text](imgs/flow6.png)
+   ![alt text](imgs/techhubgenaiinforetrieval/flow6.png)
 
     5.1. In this step, all chunks that doesn't have scores for all models (have not been retrieved with every model), will be chosen by their id to do a retrieval with the remaining models. 
 
-    <img src="imgs/flow7.png" width="300">
+    <img src="imgs/techhubgenaiinforetrieval/flow7.png" width="300">
 
     5.2. The retrieval adding in the filters field the "snippet_id" of the chunks to retrieve in order to get the full scores is done.
 
-    ![alt text](imgs/flow8.png)
+    ![alt text](imgs/techhubgenaiinforetrieval/flow8.png)
 
     5.3. When the passages are obtained, the chunks with the same content will be merged to get unique chunks with all models scores, then the rescoring function (if passed, if not, the mean of all scores is estimated by default) will be done. 
 
-    <img src="imgs/flow9.png" width="250">
+    <img src="imgs/techhubgenaiinforetrieval/flow9.png" width="250">
 
         The available rescoring functions are:
         
@@ -914,15 +892,15 @@ In the following diagram flows, each color will represent the following files:
 
 6. Report the tokens used to the api by calling apigw that stores the result in the database (number of tokens by api-key).
 
-    <img src="imgs/flow10.png" width="250">
+    <img src="imgs/techhubgenaiinforetrieval/flow10.png" width="250">
 
 7. Returns the result to the user and end the process for the call
 
-    ![alt text](imgs/flow11.png)
+    ![alt text](imgs/techhubgenaiinforetrieval/flow11.png)
 
 To conclude, here is an example about how the managing of the scores completion is done with "bm25" and "text-embedding-ada-002" models and a top_k=3. In this case, a same chunk has been extracted with both models and the retrieval is re-done with the rest of them, the two remaining ones from "bm25" and the two remaining ones from "text-embedding-ada-002".
 
-<img src="imgs/genai-inforetrieval-v2-behaviour.png">
+<img src="imgs/techhubgenaiinforetrieval/genai-inforetrieval-v2-behaviour.png">
 
 
 ## Troubleshooting

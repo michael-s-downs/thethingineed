@@ -290,7 +290,7 @@ To configure the component on your own cloud use [this guide](#deploy-guide-link
 
 The files/secrets architecture is:
 
-![secrets and config files diagram](imgs/genai-infoindexing-v2-config.png)
+![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2-config.png)
 
 ### Blobs/Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
@@ -436,27 +436,7 @@ Apart from the five secrets explained above, the system needs another configurat
         - retriever_model: model used when retrieving information (in hugging-face models normally are different)
 
 An example where the rest of the data is extracted from the message:
-![Configuration files diagram](imgs/genai-infoindexing-v5-config-files-uses.png)
-
-### Models
-
-The system uses various embedding models across different platforms (OpenAI's ADA model and Amazon Bedrock's Cohere model or Huggingface) deployed in various geographical regions, as well as different pools* of models to allow a more balanced deployment of models. It is important to know that a compatible model must be used in the retrieval process for the system to work correctly; this means that if, for instance, the documents are indexed using only the ADA model, said model must also be used during the retrieval process. The list of available models, along with a pool example that they belong to, is as follows:
-
-| Model                         | Pools       | Platform |
-|-------------------------------|-------------|----------|
-| text-embedding-ada-002        |  ada-002-pool-techhub-world | azure|
-| text-embedding-3-large        | ada-003-large-pool-world | azure| 
-| text-embedding-3-small        | ada-003-small-pool-world | azure| 
-| cohere.embed-english-v3       | cohere-english-v3-pool-world | bedrock|
-| cohere.embed-multilingual-v3  | cohere-multilingual-v3-pool-world | bedrock|
-| amazon.titan-embed-text-v1    | titan-v1-pool-world | bedrock|
-|  amazon.titan-embed-text-v2:0 | titan-v2-pool-world| bedrock|
-| dpr-encoder                   | No pools (huggingface models are downloaded)|  huggingface|  
-
-In addition to the models selected by the user for document indexing, the system also indexes using the BM25 model by default (as is the one used in Elasticsearch for indexation). This ensures that the documents are enriched with multiple representations, enhancing the effectiveness of the retrieval process.
-
----
-**A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
+![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v5-config-files-uses.png)
 
 ### Environment variables
 - AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
@@ -478,7 +458,7 @@ In addition to the models selected by the user for document indexing, the system
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![infoindexing deployment](imgs/infoindexationDeployment.png)
+![infoindexing deployment](imgs/techhubgenaiinfoindexing/infoindexationDeployment.png)
 
 **parsers.py (`ManagerParser`,`InfoindexingParser`)**
 
@@ -539,13 +519,13 @@ Below is a list of all the parameters that the indexing service receives in the 
 
 But the necessary ones, are the explained in the readme file.
 
-![parsers](imgs/parsers.png)
+![parsers](imgs/techhubgenaiinfoindexing/parsers.png)
 
 **loaders.py (`ManagerLoader`, `DocumentLoader`,`IRStorageLoader`)**
 
 This class is responsible of loading from cloud storage all files associated with the indexing process; this includes files generated in the preprocess (documents text and geospatial information) and [configuration files](#configuration-files).
 
-![parsers](imgs/loaders.png)
+![parsers](imgs/techhubgenaiinfoindexing/loaders.png)
 
 **connectors.py (`ManagerConnector`, `Connector`,`ElasticSearchConnector`)**
 
@@ -570,51 +550,51 @@ If the database is ElasticSearch, the mandatory columns in the index tables are:
   - Metadata added by the user...
 - embedding: Column where the snippet embeddings will be stored.
 
-![parsers](imgs/connectors.png)
+![parsers](imgs/techhubgenaiinfoindexing/connectors.png)
 
 **vector_storages.py (`ManagerStore`, `DocumentStore`,`LlamaIndex`)**
 
 This class saves the documents and their associated metadata in the database.
 
-![parsers](imgs/vector_storages.png)
+![parsers](imgs/techhubgenaiinfoindexing/vector_storages.png)
 
 
 ### Flow
-![flowchart](imgs/genai-infoindexing-v2-decision-flow.png)
+![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
-![alt text](imgs/flow1.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow1.png)
 
 1.	When the service is initialized, it loads all the [secrets](#secrets) and [configuration files](#configuration-files) containing pools, models, and vector_storage details, to know the ones that are available.
 
-![alt text](imgs/flow2.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow2.png)
 
 2. Using the [parser](#parserspy-parserinfoindexing-managerparser) class, the input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
-![alt text](imgs/flow3.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow3.png)
 
 3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models in this call must match those used during the first indexation.
 
-![alt text](imgs/flow4.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow4.png)
 
 4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded
 
-![alt text](imgs/flow5.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
 
 5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
 
-![alt text](imgs/flow6.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
 
 6. Here the modify_index_docs param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is *name of the index without* \\/,|>?\*<" \\_*embedding_model* (the special characters are replaced by _) . An example could be
     ```text
     firstindexation_text-embedding-ada-002
     ```
 
-![alt text](imgs/flow7.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow7.png)
 
 7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then all documents are processed by splitting them into chunks (of variable size depending on `window_length` and `window_overlap` [parameters](#parameters-explanation)) and associating each snippet with its corresponding metadata.
    
-![alt text](imgs/flow8.png)
+![alt text](imgs/techhubgenaiinfoindexing/flow8.png)
 
 
 8. Write the documents in the vector storage for each model, following all this steps:
@@ -624,12 +604,12 @@ In the following diagram flows, each color will represent the following files:
     3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
     4. Save the number of pages and tokens for every model to report it after.
     5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
-    ![alt text](imgs/flow9.png)
+    ![alt text](imgs/techhubgenaiinfoindexing/flow9.png)
 
 
 8.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
 
-    ![alt text](imgs/flow10.png)
+    ![alt text](imgs/techhubgenaiinfoindexing/flow10.png)
 
 
 

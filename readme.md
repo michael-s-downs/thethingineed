@@ -1005,14 +1005,52 @@ The available models depend on the region where the suscription is deployed. Mak
 
 - Japan region
 
-  | Platform | Model | Example pool |
-  |----------|-------|--------------|
-  | Azure OpenAI | ada-002 | ada-002-pool-techhub-japan or ada-002-pool-techhub-world |
+| Model Name            | Pools                                                  | Platform |
+|-----------------------|--------------------------------------------------------|------|
+| ada-002-pro-japaneast | ada-002-pool-techhub-japan, ada-002-pool-techhub-world |azure|
+| ada-002-inc-japaneast | ada-002-pool-techhub-japan, ada-002-pool-techhub-world |azure|
+
 - Inc region
 
-  | Platform | Model | Example pool |
-  |----------|-------|--------------|
-  | Azure OpenAI | ada-002 | techhub-pool-us-ada-002 or techhub-pool-world-ada-002 |
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubinc-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-canadaeast|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
+|techhubinc-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-eastus|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-3-small-eastus|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubinc-ada-002-eastus2|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-eastus2|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-3-small-eastus2|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubinc-ada-002-francecentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-francecentral|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-japaneast|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-japaneast|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-northcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-norwayeast|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-norwayeast|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-southindia|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-southindia|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-uksouth|techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-uksouth|techhub-pool-world-ada-3-large|azure|
+|techhubinc-ada-002-westeurope|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|cohere-english-eastus|cohere-english-v3-pool-world|bedrock|
+|cohere-multilingual-eastus|cohere-multilingual-v3-pool-world|bedrock|
+|titan-v1-eastus|titan-v1-pool-world|bedrock|
+|titan-v2-eastus|titan-v2-pool-world|bedrock|
+|dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
+
 
 ### Models LLM
 
@@ -1021,20 +1059,88 @@ The available models depend on the region where the suscription is deployed. Mak
 
 - Japan region
 
-  | Platform | Model | Example pool |
-  |----------|-------|--------------|
-  | Azure OpenAI | GPT 3.5 16k | gpt-3.5-16k-pool-techhub-japan or gpt-3.5-16k-pool-techhub-world |
-  | Azure OpenAI | GPT 4o | gpt-4o-pool-techhub-japan or gpt-4o-pool-techhub-world |
+| Model Name                    | Pools                                               | Platform |
+|-------------------------------|-----------------------------------------------------|------|
+|gpt-4o-judge|gpt-4o-pool-techhub-japan, gpt-4o-pool-techhub-world|azure|
+|techhubinc-JapanEast-gpt-4o-2024-05-13|gpt-4o-pool-techhub-japan, gpt-4o-pool-techhub-world|azure|
+|gpt-35-turbo-16k|gpt-3.5-16k-pool-techhub-japan, gpt-3.5-16k-pool-techhub-world|azure|
+|techhubinc-JapanEast-gpt-35-turbo-16k-0613|gpt-3.5-16k-pool-techhub-japan, gpt-3.5-16k-pool-techhub-world|azure|
+
+
 - Inc region
 
-  | Platform | Model | Example pool |
-  |----------|-------|--------------|
-  | Azure OpenAI | GPT 3.5 16k | techhubinc-pool-us-gpt-3.5-turbo-16k or techhubinc-pool-world-gpt-3.5-turbo-16k |
-  | Azure OpenAI | GPT 4 turbo | techhubinc-pool-us-gpt-3.5-turbo-16k or techhubinc-pool-world-gpt-3.5-turbo-16k |
-  | Azure OpenAI | GPT 4 vision | techhubinc-pool-eu-gpt-4v or techhubinc-pool-world-gpt-4v |
-  | Azure OpenAI | GPT 4o | techhubinc-pool-us-gpt-4o or techhubinc-pool-world-gpt-4o |
-  | Azure OpenAI | GPT 4o mini | techhubinc-pool-eu-gpt-4o-mini or techhubinc-pool-world-gpt-4o-mini |
-  | Azure OpenAI | Dall-E | techhubinc-pool-us-dalle3 or techhubinc-pool-world-dalle3 |
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubinc-AustraliaEast-dall-e-3|techhubinc-pool-world-dalle3|azure|
+|techhubinc-AustraliaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-AustraliaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-AustraliaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-AustraliaEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v|azure|
+|techhubinc-BrazilSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-BrazilSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-CanadaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-CanadaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-CanadaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-EastUS-dall-e-3|techhubinc-pool-us-dalle3, techhubinc-pool-world-dalle3|azure|
+|techhubinc-EastUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-EastUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-EastUS-gpt-4o-2024-05-13|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-EastUS-gpt-4o-mini-2024-07-18|techhubinc-pool-us-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini|azure|
+|techhubinc-EastUS2-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-EastUS2-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-EastUS2-gpt-4o-2024-05-13|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-EastUS2-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-FranceCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-FranceCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-FranceCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-GermanyWestCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-GermanyWestCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-JapanEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-JapanEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-JapanEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-JapanEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v|azure|
+|techhubinc-KoreaCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-KoreaCentral-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-NorthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-NorthCentralUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-NorthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-NorwayEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-NorwayEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-PolandCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-PolandCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthAfricaNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthAfricaNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-SouthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-SouthIndia-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-SouthIndia-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SwedenCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-SwedenCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SwedenCentral-gpt-4-vision-preview|techhubinc-pool-eu-gpt-4v, techhubinc-pool-world-gpt-4v|azure|
+|techhubinc-SwedenCentral-gpt-4o-2024-08-06|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-SwedenCentral-gpt-4o-mini-2024-07-18|techhubinc-pool-eu-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini|azure|
+|techhubinc-SwitzerlandNorth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-SwitzerlandNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-SwitzerlandNorth-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v|azure|
+|techhubinc-SwitzerlandNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-UKSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-UKSouth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-UKSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestEurope-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestEurope-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-WestUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|techhubinc-WestUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v|azure|
+|techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+|claude-v2:1-NorthVirginiaEast|claude-v2.1-pool-america, claude-v2.1-pool-world|bedrock|
+|claude-v2-NorthVirginiaEast|claude-v2-pool-america, claude-v2-pool-world|bedrock|
+|claude-instant-NorthVirginiaEast|claude-instant-v1-pool-america, claude-instant-v1-pool-world|bedrock|
+|claude-v2:1-FranckfurtCentral|claude-v2.1-pool-europe, claude-v2.1-pool-world|bedrock|
+|claude-v2-FranckfurtCentral|claude-v2-pool-europe, claude-v2-pool-world|bedrock|
+|claude-instant-FranckfurtCentral|claude-instant-v1-pool-europe, claude-instant-v1-pool-world|bedrock|
+|claude-3-haiku-ParisWest|claude-v3-haiku-pool-europe, claude-v3-haiku-pool-world|bedrock|
+|claude-3-sonnet-ParisWest|claude-v3-sonnet-pool-europe, claude-v3-sonnet-pool-world|bedrock|
 
 ## Examples
 
@@ -3523,7 +3629,7 @@ When a call is received APIGW authorizes and sends the request to INTEGRATION, I
 
 - INFORETRIEVAL
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-inforetrieval-decision-flow.png "Process flow")
+  ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-inforetrieval-decision-flow.png "Process flow")
 
 - LLMAPI
 

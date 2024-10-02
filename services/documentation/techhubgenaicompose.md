@@ -44,7 +44,6 @@
     - [Cloud setup](#cloud-setup)
     - [Configuration files](#configuration-files)
       - [Secrets](#secrets)
-    - [Models](#models)
     - [Local installation for devs](#local-installation-for-devs)
       - [System requirements](#system-requirements)
       - [Installation](#installation)
@@ -1557,7 +1556,7 @@ Response:
 
 Generated image:
 
-![alt text](imgs/generated_00.png "Image generated")
+![alt text](imgs/techhubgenaicompose/generated_00.png "Image generated")
 
 #### Expand query action
 
@@ -2503,7 +2502,7 @@ Response:
 
 ### Components
 
-![alt text](imgs/composepipeline.png)
+![alt text](imgs/techhubgenaicompose/composepipeline.png)
 
 1. Compose: This service takes care of the following tasks.
     1. Receive the user's query and process it for processing in the rest of the services (obtain metadata or categorization of the query to filter information, reformulate the question to improve the search and retrieval of information, identify user intent, etc.)
@@ -2533,7 +2532,7 @@ To begin using the compose con module, the initial step involves creating a conf
 
 ### Architecture
 
-![alt text](imgs/composepipeline2.png)
+![alt text](imgs/techhubgenaicompose/composepipeline2.png)
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
@@ -2545,7 +2544,7 @@ To configure the component on your own cloud use [this guide](#deploy-guide-link
 
 ### Configuration files
 
-![alt text](imgs/composecloud.png)
+![alt text](imgs/techhubgenaicompose/composecloud.png)
 
 Compose needs multiple files in cloud storage in the path "src/compose/" to run.
 
@@ -2573,26 +2572,7 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
     "port": "redis port"
   }
   ```
-### Models
-
-The availabe models with an example pool are:
-
-- Bedrock
-  - Claude 1 *(claude-instant-v1-pool-europe)*
-  - Claude 2 *(claude-v2-pool-world)*
-  - Claude 2.1 *(claude-v2.1-pool-america)*
-  - Claude 3 haiku *(claude-v3-haiku-pool-europe)*
-  - Claude 3 sonnet *(claude-v3-sonnet-pool-europe)*
-- OpenAi / Azure
-  - GPT 3.5 *(gpt-3.5-pool-techhub-europe)*
-  - GPT 3.5 16k *(gpt-3.5-16k-pool-techhub-europe)*
-  - GPT 4 *(gpt-4-pool-techhub-world)*
-  - GPT 4 32k *(gpt-4-32k-pool-techhub-world)*
-  - GPT 4 O *(gpt-4o-pool-techhub-world)*
-  - Dalle 3 *(gpt-dalle3-pool-techhub-europe)*
-
-*A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
-
+  
 ### Local installation for devs
 
 To get started with COMPOSE service on your local machine, you need to have Retrieval and LLMAPI services running and a template stored in azure blob storage in the path "src/compose/templates".
@@ -2661,9 +2641,9 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 ### Files and Classes
 
-![alt text](imgs/class1.png)
+![alt text](imgs/techhubgenaicompose/class1.png)
 
-![alt text](imgs/class2.png)
+![alt text](imgs/techhubgenaicompose/class2.png)
 
 - **ConfManager**
 
@@ -2735,7 +2715,7 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 Each compose call have the following flow.
 
-![alt text](imgs/composeflow.png)
+![alt text](imgs/techhubgenaicompose/composeflow.png)
 
 If the user wants to use documents, compose calls genai-inforetrieval to obtain the K chunks of the related documents, then executes the actions needed (if there are no chunks no action can be executed except of the llm_action itself) and finally compose calls genai-llmapi using the context created with the document chunks and returns these and the LLM response to the user.
 If the user doesn’t need extra documents, the template will not have the retrieve action so compose just calls genai-llmapi with the query received.
@@ -2904,7 +2884,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
    This action merges the different streamchunks in a streamlist into a single streamchunk. Starts with 1 streambatch containing 1 streamlist with multiple streamchunks and it ends with a streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
    The result chunk will have the merged information in the content field and in the metadata common to all the chunks merged will be saved in the new chunk.
 
-    ![alt text](imgs/merge.png)
+    ![alt text](imgs/techhubgenaicompose/merge.png)
 
     - **Type** (string): Merge type to execute. (meta)
 
@@ -2993,8 +2973,8 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     This action sorts the streamlist by groups. Each group will be sorted by snippet_number, like its natural order and then the groups can be sorted by the maximum score from each group, the mean score from each group and by date.
 
-    ![alt text](imgs/groupby1.png)
-    ![alt text](imgs/groupby2.png)
+    ![alt text](imgs/techhubgenaicompose/groupby1.png)
+    ![alt text](imgs/techhubgenaicompose/groupby2.png)
 
    - **Type** (string): Groupby type to use. (docscore, date).
 
@@ -3053,7 +3033,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    - **Llm_content**: This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved and the and the last element of the streamlist will be the answer generated by the LLM.
   
-    ![alt text](imgs/llmcontent.png)
+    ![alt text](imgs/techhubgenaicompose/llmcontent.png)
 
     Example for 'llm_action' action with type "llm_content":
 
@@ -3082,7 +3062,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    - **Llm_segments**: This takes each one of the document fragments and sends them individually to the LLM. Therefore, you will get as many responses as document fragments you sent. The response will contain a streambatch of one streamlist containing the chunks retrieved with each answer.
   
-    ![alt text](imgs/llmsegment.png)
+    ![alt text](imgs/techhubgenaicompose/llmsegment.png)
 
     Example for 'llm_action' action with type "llm_segment":
 
