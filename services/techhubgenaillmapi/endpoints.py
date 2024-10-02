@@ -96,9 +96,10 @@ class GPTPlatform(Platform):
         :return: Endpoint response
         """
         try:
-            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {self.generativeModel.parse_data()}")
-            answer = requests.post(url=self.url, headers=self.headers,
-                                   data=self.generativeModel.parse_data(), timeout=self.timeout)
+            data_call = self.generativeModel.parse_data()
+            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
+
+            answer = requests.post(url=self.url, headers=self.headers, data=data_call, timeout=self.timeout)
 
             if delta < max_retries:
                 if answer.status_code == 429:
@@ -315,14 +316,15 @@ class BedrockPlatform(Platform):
         :return: Endpoint response
         """
         try:
-            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {self.generativeModel.parse_data()}")
+            data_call = self.generativeModel.parse_data()
+            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
             if provider == "azure":
                 bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone,
                                        aws_access_key_id=self.aws_credentials['access_key'],
                                        aws_secret_access_key=self.aws_credentials['secret_key'])
             else:
                 bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone)
-            answer = bedrock.invoke_model(body=self.generativeModel.parse_data(),
+            answer = bedrock.invoke_model(body=data_call,
                                           modelId=self.generativeModel.model_id)
             self.logger.info(f"LLM response: {answer}.")
             answer = self.parse_response(answer)

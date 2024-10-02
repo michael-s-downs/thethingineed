@@ -271,12 +271,6 @@ class LLMDeployment(BaseDeployment):
             # Set model
             platform.set_model(model)
 
-            # Check template
-            model.template_ok(query_metadata['template'])
-
-            #if self.is_maximum_tokens_reached(json_input, platform, model):
-            #    return self.adapt_output_queue(self.error_message('error', f"Maximum tokens exceeded for model: {platform.MODEL_FORMAT}/{model.model_name}", 429))
-
             # Set message in model
             model.set_message(query_metadata)
 
@@ -304,7 +298,8 @@ class LLMDeployment(BaseDeployment):
             error = ex.errors()[0]
             if error.get('type') == 'value_error' and error.get('loc')[0] == 'x_limits':
                 return self.adapt_output_queue(self.error_message('error', error.get("msg"), 429))
-            output_msg = f"Error parsing JSON: '{error.get('msg')}' in parameter '{error.get('loc')[0]}' for value '{error.get('input')}'"
+            error_depth_level = ''.join([f"['{el}']" for el in list(error.get('loc'))])
+            output_msg = f"Error parsing JSON: '{error.get('msg')}' in parameter '{error_depth_level}' for value '{error.get('input')}'"
             return self.adapt_output_queue(self.error_message('error', output_msg, 400))
         except ValueError as ex:
             self.logger.error(f"[Process] Error parsing JSON. Query error: {ex}.", exc_info=exc_info)
