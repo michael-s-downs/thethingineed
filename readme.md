@@ -12,13 +12,13 @@ The RAG toolkit is composed of several components that are divided into 2 pipeli
 
 - COMPOSE
 
-![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/Architecture_compose.png "Process flow")
+![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitArchitecture_compose.png "Process flow")
 
 - INDEXING AND FLOWMGMT
 
-![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/Architecture_indexing.png "Process flow")
+![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitArchitecture_indexing.png "Process flow")
 
-![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/Architecture_documentmanagement.png "Process flow")
+![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitArchitecture_documentmanagement.png "Process flow")
 
 ## Get started
 
@@ -3591,46 +3591,46 @@ When a call is received APIGW authorizes and sends the request to INTEGRATION, I
 
 - APIGW
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-apigw-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-apigw-decision-flow.png "Process flow")
 
 - INTEGRATION
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-integration-receiver-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-integration-receiver-decision-flow.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-integration-sender-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-integration-sender-decision-flow.png "Process flow")
 
 - PREPROCESS
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/preprocess-start.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitpreprocess-start.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/preprocess-extract.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitpreprocess-extract.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/preprocess-ocr.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitpreprocess-ocr.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/preprocess-end.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitpreprocess-end.png "Process flow")
 
 - INFOINDEXING
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-infoindexing-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-infoindexing-decision-flow.png "Process flow")
 
 - FLOWMGMT
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/flowmgmt-checkend.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitflowmgmt-checkend.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/flowmgmt-infodelete.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitflowmgmt-infodelete.png "Process flow")
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/flowmgmt-checktimeout.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitflowmgmt-checktimeout.png "Process flow")
 
 ### COMPOSE Flow
 
 - COMPOSE
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-compose-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-compose-decision-flow.png "Process flow")
 
 - INFORETRIEVAL
 
-  ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-inforetrieval-decision-flow.png "Process flow")
+  ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-inforetrieval-decision-flow.png "Process flow")
 
 - LLMAPI
 
-    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/genai-llmapi-decision-flow.png "Process flow")
+    ![alt text](https://satechhubproeastus001.blob.core.windows.net/workflows/TechHubGlobalToolkitgenai-llmapi-decision-flow.png "Process flow")
