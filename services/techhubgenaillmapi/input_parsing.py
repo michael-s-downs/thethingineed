@@ -91,6 +91,7 @@ class PersistenceElement(BaseModel):
 class QueryMetadata(BaseModel):
     # Mandatory params passed by main (to generate propertly the platform)
     is_vision_model: bool
+    model_type: str
 
     # Query metadata
     query: Union[str, list]
@@ -144,6 +145,11 @@ class QueryMetadata(BaseModel):
         Template(**v)
         return v
 
+    @model_validator(mode='after')
+    def validate_max_characters_dalle(self):
+        if self.model_type == "dalle3":
+            if len(self.query + str(self.persistence)) > 4000:
+                raise ValueError("Error, in dalle3 the maximum number of characters in the prompt is 4000")
 
 class LLMMetadata(BaseModel):
     # Model metadata

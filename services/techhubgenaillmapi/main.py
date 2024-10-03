@@ -66,29 +66,6 @@ class LLMDeployment(BaseDeployment):
         """ Maximum number of elements in the queue """
         return 1
 
-    @staticmethod
-    def is_maximum_tokens_reached(json_input: dict, platform: Platform, model: GenerativeModel) -> bool:
-        """ Check if the maximum number of tokens has been reached
-
-        :param json_input: Input data
-        :param platform: Platform
-        :param model: Model
-
-        :return: True if the maximum number of tokens has been reached false otherwise
-        """
-        project_conf = json_input['project_conf']
-        dict_tokens = json.loads(project_conf.get('x_limits'))
-        if model.MODEL_MESSAGE == "dalle":
-            model_key = f'llmapi/{platform.MODEL_FORMAT}/{model.model_type}/images'
-        else:
-            model_key = f'llmapi/{platform.MODEL_FORMAT}/{model.model_type}/tokens'
-        if dict_tokens and len(dict_tokens.get(model_key, {})) > 0:
-            count = dict_tokens.get(model_key, {}).get('Current', 1)
-            limit = dict_tokens.get(model_key, {}).get('Limit', 0)
-            if count >= limit:
-                return True
-
-        return False
 
     def error_message(self, status, message, status_code):
         """ Error message
@@ -196,6 +173,42 @@ class LLMDeployment(BaseDeployment):
             template_name = model.DEFAULT_TEMPLATE_NAME
         return self.templates[template_name], template_name # When anyone passed, default_template_name is used
 
+    def parse_platform(self, platform_metadata: dict):
+        parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        parsed_platform_metadata['aws_credentials'] = self.aws_credentials
+        parsed_platform_metadata['models_urls'] = self.models_credentials.get('URLs')
+        return ManagerPlatform.get_platform(parsed_platform_metadata)
+
+    def parse_model(self, llm_metadata: dict, platform: Platform):
+        parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
+                                                                                                {})
+        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT, self.available_models,
+                                       self.available_pools)
+        # Check max_tokens in dalle
+        if model.model_type == "dalle3" and model.max_input_tokens > 4000:
+            raise PrintableGenaiError(400, "Error, in dalle3 the maximum number of characters in the prompt is 4000")
+        return model
+
+    def parse_query(self, query_metadata: dict, model: GenerativeModel):
+        query_metadata['is_vision_model'] = model.is_vision
+        query_metadata['model_type'] = model.model_type
+        query_metadata['template'], query_metadata['template_name'] = self.get_template(query_metadata.get('template_name'),
+                                                       query_metadata.get('template'), query_metadata.get('lang'),
+                                                       query_metadata.get('query'), model)
+        parsed_query_metadata = QueryMetadata(**query_metadata).model_dump(exclude_unset=True, exclude_none=True)
+        #Parameters passed to do pydantic checks now unused
+        parsed_query_metadata.pop('is_vision_model')
+        parsed_query_metadata.pop('model_type')
+
+        return parsed_query_metadata
+
+    def parse_project_conf(self, project_conf: dict, model: GenerativeModel, platform: Platform):
+        project_conf['x_limits'] = json.loads(project_conf.get('x_limits', "{}"))
+        project_conf['platform'] = platform.MODEL_FORMAT
+        project_conf['model'] = model
+        return ProjectConf(**project_conf).model_dump(exclude_unset=True, exclude_none=True)
+
     def parse_input(self, json_input: dict):
         """ Parse input
 
@@ -205,33 +218,11 @@ class LLMDeployment(BaseDeployment):
         if not all(item in json_input.keys() for item in ['query_metadata', 'llm_metadata', 'platform_metadata']):
             raise ValueError("Missing mandatory fields ('query_metadata', 'llm_metadata' or 'platform_metadata')")
 
-        platform_metadata = json_input.get('platform_metadata', {})
-        parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(exclude_unset=True, exclude_none=True)
-        parsed_platform_metadata['aws_credentials'] = self.aws_credentials
-        parsed_platform_metadata['models_urls'] = self.models_credentials.get('URLs')
-        platform = ManagerPlatform.get_platform(parsed_platform_metadata)
-
-        llm_metadata = json_input.get('llm_metadata', {})
-        parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
-        parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT, {})
-        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT, self.available_models, self.available_pools)
-
-        query_metadata = json_input.get('query_metadata', {})
-        query_metadata['is_vision_model'] = model.is_vision
-        query_metadata['template'], query_metadata['template_name'] = self.get_template(query_metadata.get('template_name'),
-                                                       query_metadata.get('template'), query_metadata.get('lang'),
-                                                       query_metadata.get('query'), model)
-        parsed_query_metadata = QueryMetadata(**query_metadata).model_dump(exclude_unset=True, exclude_none=True)
-        #Parameter passed to do pydantic checks now unused
-        parsed_query_metadata.pop('is_vision_model')
-
-        project_conf = json_input.get('project_conf', {})
-        project_conf['x_limits'] = json.loads(project_conf.get('x_limits', "{}"))
-        project_conf['platform'] = platform.MODEL_FORMAT
-        project_conf['model'] = model
-        parsed_project_conf = ProjectConf(**project_conf).model_dump(exclude_unset=True, exclude_none=True)
-
-        return parsed_query_metadata, model, platform, parsed_project_conf['x_reporting']
+        platform = self.parse_platform(json_input.get('platform_metadata', {}))
+        model = self.parse_model(json_input.get('llm_metadata', {}), platform)
+        query_metadata = self.parse_query(json_input.get('query_metadata', {}), model)
+        project_conf = self.parse_project_conf(json_input.get('project_conf', {}), model, platform)
+        return query_metadata, model, platform, project_conf['x_reporting']
     
 
     def endpoint_response(self, status_code, result_message, error_message):
@@ -283,22 +274,24 @@ class LLMDeployment(BaseDeployment):
             if result['status_code'] == 200:
                 if not eval(os.getenv('TESTING', "False")):
                     if model.MODEL_MESSAGE == "dalle":
-                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/images"
-                        self.report_api(result['result']['n'], "", report_url,
-                                        resource, GENAI_LLM_SERVICE, "IMAGES")
+                        reporting_type = "images"
+                        n_tokens = result['result']['n']
                     else:
-                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/tokens"
-                        self.report_api(result['result']['n_tokens'], "", report_url,
-                                        resource, GENAI_LLM_SERVICE, "TOKENS")
+                        reporting_type = "tokens"
+                        n_tokens = result['result']['n_tokens']
+                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                    self.report_api(n_tokens, "", report_url, resource, GENAI_LLM_SERVICE,
+                                    reporting_type.upper())
                 return self.adapt_output_queue(result)
             else:
                 return self.adapt_output_queue(self.error_message('error', result['error_message'], result['status_code']))
 
         except ValidationError as ex:
             error = ex.errors()[0]
-            if error.get('type') == 'value_error' and error.get('loc')[0] == 'x_limits':
+            location = error.get('loc')
+            if error.get('type') == 'value_error' and len(location) > 0 and location[0] == 'x_limits':
                 return self.adapt_output_queue(self.error_message('error', error.get("msg"), 429))
-            error_depth_level = ''.join([f"['{el}']" for el in list(error.get('loc'))])
+            error_depth_level = ''.join([f"['{el}']" for el in list(location)])
             output_msg = f"Error parsing JSON: '{error.get('msg')}' in parameter '{error_depth_level}' for value '{error.get('input')}'"
             return self.adapt_output_queue(self.error_message('error', output_msg, 400))
         except ValueError as ex:
