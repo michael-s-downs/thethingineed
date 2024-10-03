@@ -13,10 +13,15 @@ class UrlImage(BaseModel):
     url: str
     detail: Optional[Literal['high', 'low', 'auto']] = None
 
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
 
 class Base64Image(BaseModel):
     base64: str
     detail: Optional[Literal['high', 'low', 'auto']] = None
+
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
 
 
 class MultimodalObject(BaseModel):
@@ -24,6 +29,10 @@ class MultimodalObject(BaseModel):
     text: Optional[str] = None
     image: Optional[dict] = None
     n_tokens: Optional[PositiveInt] = None
+
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
+
 
     @field_validator('image')
     def validate_image(cls, v, values: FieldValidationInfo):
@@ -48,6 +57,9 @@ class Template(BaseModel):
     user: Union[str, list]
     system: str
 
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
+
     @field_validator('user')
     def validate_user(cls, v):
         if isinstance(v, list):
@@ -67,6 +79,9 @@ class PersistenceElement(BaseModel):
     role: Literal['user', 'assistant']
     content: Union[str, list]
     n_tokens: Optional[Union[str, list]] = None
+
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
 
     @field_validator('content')
     def validate_content(cls, v, values: FieldValidationInfo):
@@ -100,6 +115,9 @@ class QueryMetadata(BaseModel):
     persistence: Optional[list] = None
     template_name: str
     template: dict
+
+    class Config:
+        extra = 'forbid'
 
     @field_validator('query')
     def validate_query(cls, v, values: FieldValidationInfo):
@@ -167,6 +185,9 @@ class LLMMetadata(BaseModel):
     user: Optional[str] = None
     model: str
 
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
+
     @model_validator(mode='after')
     def validate_functions_and_functions_call(self):
         if self.functions and not self.function_call:
@@ -180,11 +201,15 @@ class PlatformMetadata(BaseModel):
     timeout: Optional[PositiveInt] = None
     platform: Literal['azure', 'bedrock', 'openai']
 
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
 
 class ModelLimit(BaseModel):
     Current: int
     Limit: int
 
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
 
 class ProjectConf(BaseModel):
     # Mandatory params passed by main (to check the limits)
@@ -193,6 +218,7 @@ class ProjectConf(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True  # Allow custom types (GenerativeModel)
+        extra = 'forbid' # To not allow extra fields in the object
 
     # Project config metadata
     x_tenant: str
