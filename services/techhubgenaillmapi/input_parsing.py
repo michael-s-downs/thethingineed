@@ -16,6 +16,7 @@ class UrlImage(BaseModel):
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
 
+
 class Base64Image(BaseModel):
     base64: str
     detail: Optional[Literal['high', 'low', 'auto']] = None
@@ -32,7 +33,6 @@ class MultimodalObject(BaseModel):
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
-
 
     @field_validator('image')
     def validate_image(cls, v, values: FieldValidationInfo):
@@ -72,6 +72,7 @@ class Template(BaseModel):
         else:
             raise ValueError("User must be a string or a list of strings")
 
+
 class PersistenceElement(BaseModel):
     # Mandatory params passed by main (to generate propertly the platform)
     is_vision_model: bool
@@ -102,6 +103,7 @@ class PersistenceElement(BaseModel):
                 else:
                     raise ValueError("Elements of the content must be dict {} for vision models")
         return v
+
 
 class QueryMetadata(BaseModel):
     # Mandatory params passed by main (to generate propertly the platform)
@@ -169,6 +171,7 @@ class QueryMetadata(BaseModel):
             if len(self.query + str(self.persistence)) > 4000:
                 raise ValueError("Error, in dalle3 the maximum number of characters in the prompt is 4000")
 
+
 class LLMMetadata(BaseModel):
     # Model metadata
     max_input_tokens: Optional[PositiveInt] = None
@@ -204,12 +207,14 @@ class PlatformMetadata(BaseModel):
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
 
+
 class ModelLimit(BaseModel):
     Current: int
     Limit: int
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
+
 
 class ProjectConf(BaseModel):
     # Mandatory params passed by main (to check the limits)

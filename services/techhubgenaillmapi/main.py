@@ -76,11 +76,7 @@ class LLMDeployment(BaseDeployment):
         :return: Error message
         """
         self.logger.info(message)
-        return {
-            'status': status,
-            'error_message': message,
-            'status_code': status_code
-        }
+        return {'status': status, 'error_message': message, 'status_code': status_code}
 
     def get_data_from_file(self, json_input: dict) -> dict:
         """ Get data from local mount path and replace input key if configured
@@ -223,7 +219,6 @@ class LLMDeployment(BaseDeployment):
         query_metadata = self.parse_query(json_input.get('query_metadata', {}), model)
         project_conf = self.parse_project_conf(json_input.get('project_conf', {}), model, platform)
         return query_metadata, model, platform, project_conf['x_reporting']
-    
 
     def endpoint_response(self, status_code, result_message, error_message):
         response = {
@@ -240,7 +235,6 @@ class LLMDeployment(BaseDeployment):
             return json.dumps(response), status_code
 
         return json.dumps(response)
-
 
     def process(self, json_input: dict) -> Tuple[bool, dict, str]:
         """ Entry point to the service
@@ -334,7 +328,6 @@ class LLMDeployment(BaseDeployment):
             return self.endpoint_response(status_code, "", error_message)
 
         return self.endpoint_response(status_code, "Request finished", error_message)
-
 
     def delete_prompt_template(self, json_input):
         self.logger.info("Delete prompt template request received")
