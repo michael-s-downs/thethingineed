@@ -21,10 +21,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
 from common.indexing.loaders import ManagerLoader
-from input_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf
-
-
-QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
+from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject
 
 
 class LLMDeployment(BaseDeployment):
@@ -32,9 +29,7 @@ class LLMDeployment(BaseDeployment):
         """ Creates the deployment"""
         super().__init__()
         if QUEUE_MODE:
-            self.Q_IN = (provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT'))
-            self.Q_OUT = (provider, os.getenv('Q_GENAI_LLMQUEUE_OUTPUT'))
-            set_queue(self.Q_IN)
+            set_queue((provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT')))
         set_storage(storage_containers)
         self.workspace = storage_containers.get('workspace')
         self.origin = storage_containers.get('origin')
@@ -129,24 +124,6 @@ class LLMDeployment(BaseDeployment):
 
         return json_input
 
-    def adapt_output_queue(self, output: dict) -> Tuple[bool, dict, str]:
-        """ Output adaptations for queue case
-
-        :param output: Output data
-        :return: Tuple with output result
-        """
-        if QUEUE_MODE:
-            must_continue = True
-            next_service = self.Q_OUT[1]
-        else:
-            must_continue = False
-            next_service = ""
-
-            if output.get('status_code', 200) == 200:
-                output = output.get('result', {})
-
-        return must_continue, output, next_service
-
     def get_template(self, template_name: str, template: str, lang: str, query: str, model: GenerativeModel):
         """ Get template
 
@@ -192,6 +169,9 @@ class LLMDeployment(BaseDeployment):
         query_metadata['template'], query_metadata['template_name'] = self.get_template(query_metadata.get('template_name'),
                                                        query_metadata.get('template'), query_metadata.get('lang'),
                                                        query_metadata.get('query'), model)
+
+        query_metadata.pop('lang') # Once template has been obtained, lang is not necessary
+
         parsed_query_metadata = QueryMetadata(**query_metadata).model_dump(exclude_unset=True, exclude_none=True)
         #Parameters passed to do pydantic checks now unused
         parsed_query_metadata.pop('is_vision_model')
@@ -220,6 +200,21 @@ class LLMDeployment(BaseDeployment):
         project_conf = self.parse_project_conf(json_input.get('project_conf', {}), model, platform)
         return query_metadata, model, platform, project_conf['x_reporting']
 
+    def get_validation_error_response(self, error):
+        """ Get validation error response
+
+        :param error: Error
+        :return: Error response
+        """
+        location = error.get('loc')
+        if error.get('type') == 'value_error' and len(location) > 0 and location[0] == 'x_limits':
+            return {'status': 'error', 'error_message': error.get("msg"), 'status_code': 429}
+        error_depth_level = ''.join([f"['{el}']" for el in list(location)])
+        return {
+            'status': 'error',
+            'error_message': f"Error parsing JSON: '{error.get('msg')}' in parameter '{error_depth_level}' for value '{error.get('input')}'",
+            'status_code': 400
+        }
     def endpoint_response(self, status_code, result_message, error_message):
         response = {
             'status': "finished" if status_code == 200 else "error",
@@ -265,35 +260,32 @@ class LLMDeployment(BaseDeployment):
             # Format result
             result = model.get_result(response)
             self.logger.info(f"Result: {result}")
-            if result['status_code'] == 200:
-                if not eval(os.getenv('TESTING', "False")):
-                    if model.MODEL_MESSAGE == "dalle":
-                        reporting_type = "images"
-                        n_tokens = result['result']['n']
-                    else:
-                        reporting_type = "tokens"
-                        n_tokens = result['result']['n_tokens']
-                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
-                    self.report_api(n_tokens, "", report_url, resource, GENAI_LLM_SERVICE,
-                                    reporting_type.upper())
-                return self.adapt_output_queue(result)
-            else:
-                return self.adapt_output_queue(self.error_message('error', result['error_message'], result['status_code']))
+            if result['status_code'] == 200 and not eval(os.getenv('TESTING', "False")):
+                if model.MODEL_MESSAGE == "dalle":
+                    reporting_type = "images"
+                    n_tokens = result['result']['n']
+                else:
+                    reporting_type = "tokens"
+                    n_tokens = result['result']['n_tokens']
+                resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                self.report_api(n_tokens, "", report_url, resource, GENAI_LLM_SERVICE,
+                                reporting_type.upper())
 
         except ValidationError as ex:
-            error = ex.errors()[0]
-            location = error.get('loc')
-            if error.get('type') == 'value_error' and len(location) > 0 and location[0] == 'x_limits':
-                return self.adapt_output_queue(self.error_message('error', error.get("msg"), 429))
-            error_depth_level = ''.join([f"['{el}']" for el in list(location)])
-            output_msg = f"Error parsing JSON: '{error.get('msg')}' in parameter '{error_depth_level}' for value '{error.get('input')}'"
-            return self.adapt_output_queue(self.error_message('error', output_msg, 400))
+            self.logger.error(f"[Process] Error parsing JSON. Error: {ex}.", exc_info=exc_info)
+            result = self.get_validation_error_response(ex.errors()[0])
         except ValueError as ex:
-            self.logger.error(f"[Process] Error parsing JSON. Query error: {ex}.", exc_info=exc_info)
-            return self.adapt_output_queue(self.error_message('error', str(ex), 400))
+            self.logger.error(f"[Process] Error parsing JSON. Error: {ex}.", exc_info=exc_info)
+            result = {'status': 'error', 'error_message': str(ex), 'status_code': 400}
+        except PrintableGenaiError as ex:
+            self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
+            result = {'status': 'error', 'error_message': str(ex), 'status_code': ex.status_code}
         except Exception as ex:
-            self.logger.error(f"[Process] Error parsing JSON. Query error: {ex}.", exc_info=exc_info)
+            self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
             raise ex
+        finally:
+            return ResponseObject(**result).get_response_predict()
+
     
 
     def upload_prompt_template(self, json_input):

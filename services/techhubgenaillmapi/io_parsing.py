@@ -1,6 +1,6 @@
 # Native imports
-import json
-from typing import Literal, Optional, Union
+import json, os
+from typing import Literal, Optional, Union, Tuple
 
 # Installed imports
 from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator
@@ -8,6 +8,9 @@ from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInf
 # Local imports
 from generatives import GenerativeModel
 
+#############################################################################################
+####################################### INPUT PARSING #######################################
+#############################################################################################
 
 class UrlImage(BaseModel):
     url: str
@@ -252,3 +255,54 @@ class ProjectConf(BaseModel):
             if count >= limit:
                 raise ValueError(f"Model '{model_key}' has reached the limit of: '{limit}'")
         return v
+
+
+##############################################################################################
+####################################### OUTPUT PARSING #######################################
+##############################################################################################
+
+QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
+
+class ResponseObject(BaseModel):
+    status_code: int
+    error_message: Optional[str] = None
+    result: Optional[Union[str, dict]] = None
+    status: Literal['finished', 'error']
+
+    @field_validator('status')
+    def validate_status(cls, v, values: FieldValidationInfo):
+        status_code = values.data.get('status_code')
+        if v == "error" and status_code == 200:
+            raise ValueError("If status is 'error', status_code must be different from 200")
+        if v == "finished" and status_code != 200:
+            raise ValueError("If status is 'finished', status_code must be 200")
+        return v
+
+    def get_response_predict(self):
+        output, status_code = self.get_response_base()
+        if QUEUE_MODE:
+            must_continue = True
+            next_service = os.getenv('Q_GENAI_LLMQUEUE_OUTPUT')
+        else:
+            must_continue = False
+            next_service = ""
+
+            if status_code == 200:
+                output = output.get('result', {})
+
+        return must_continue, output, next_service
+
+    def get_response_base(self) -> Tuple[dict, int]:
+        response = {
+            'status': self.status,
+            'status_code': self.status_code
+        }
+        if self.status_code == 200 and self.result:
+            response['result'] = self.result
+        elif self.status_code != 200 and self.error_message:
+            response['error_message'] = self.error_message
+        else:
+            raise ValueError("Internal error, response object must have a result or an error_message")
+        return response, self.status_code
+
+
