@@ -11,7 +11,7 @@ from shutil import rmtree
 
 SECRETS_ROOT_PATH = '/secrets'
 
-ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}")
+ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
 
 
 def convert_service_to_queue(service_name: str, provider: str = "aws") -> str:

@@ -7,7 +7,7 @@ from .streamchunk import StreamChunk
 from common.errors.genaierrors import GenaiError
 
 
-class StreamList(collections.MutableSequence):
+class StreamList(collections.abc.MutableSequence):
     """
     A list-like collection of StreamChunk objects.
 
