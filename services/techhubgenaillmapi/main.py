@@ -20,8 +20,8 @@ from common.utils import load_secrets
 from common.errors.genaierrors import PrintableGenaiError
 from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
-from common.indexing.loaders import ManagerLoader
-from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject
+from common.storage_manager import ManagerStorage
+from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject, adapt_input_queue
 
 
 class LLMDeployment(BaseDeployment):
@@ -33,12 +33,12 @@ class LLMDeployment(BaseDeployment):
         set_storage(storage_containers)
         self.workspace = storage_containers.get('workspace')
         self.origin = storage_containers.get('origin')
-        self.loader = ManagerLoader.get_file_storage({"type": "LLMStorage", "workspace": self.workspace, "origin": self.origin})
-        self.available_pools = self.loader.get_available_pools()
-        self.available_models = self.loader.get_available_models()
+        self.storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": self.workspace, "origin": self.origin})
+        self.available_pools = self.storage_manager.get_available_pools()
+        self.available_models = self.storage_manager.get_available_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
 
-        self.templates, self.templates_names = self.loader.get_templates()
+        self.templates, self.templates_names = self.storage_manager.get_templates()
 
         # Check if default templates are in the templates
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
@@ -72,57 +72,6 @@ class LLMDeployment(BaseDeployment):
         """
         self.logger.info(message)
         return {'status': status, 'error_message': message, 'status_code': status_code}
-
-    def get_data_from_file(self, json_input: dict) -> dict:
-        """ Get data from local mount path and replace input key if configured
-
-        :param json_input: Input data
-        :return: Input data adapted
-        """
-        mount_path = os.getenv('DATA_MOUNT_PATH', "")
-        mount_key = os.getenv('DATA_MOUNT_KEY', "")
-
-        if mount_path and mount_key:
-            file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
-
-            if mount_path in file_path:
-                self.logger.debug(f"Getting document from mount path '{mount_path}'")
-
-                if os.path.exists(file_path):
-                    if os.path.isfile(file_path):
-                        try:
-                            self.logger.debug(f"Getting document from path '{file_path}'")
-                            with open(file_path, "r") as f:
-                                file_content = f.read()
-                        except:
-                            file_content = ""
-
-                        if file_content:
-                            json_input['query_metadata'][mount_key] = file_content
-                        else:
-                            self.logger.error(f"Unable to read file '{file_path}'")
-                    else:
-                        self.logger.warning(f"Document path must be a file '{file_path}'")
-                else:
-                    self.logger.warning(f"Document path not found '{file_path}'")
-            else:
-                self.logger.warning(f"Document path '{file_path}' not inside mounted path '{mount_path}'")
-
-        return json_input
-
-    def adapt_input_queue(self, json_input: dict) -> dict:
-        """ Input adaptations for queue case
-
-        :param json_input: Input data
-        :return: Input data adapted
-        """
-        if QUEUE_MODE:
-            apigw_params = json_input.get('headers', {})
-            json_input["project_conf"] = apigw_params
-
-        json_input = self.get_data_from_file(json_input)
-
-        return json_input
 
     def get_template(self, template_name: str, template: str, lang: str, query: str, model: GenerativeModel):
         """ Get template
@@ -215,21 +164,6 @@ class LLMDeployment(BaseDeployment):
             'error_message': f"Error parsing JSON: '{error.get('msg')}' in parameter '{error_depth_level}' for value '{error.get('input')}'",
             'status_code': 400
         }
-    def endpoint_response(self, status_code, result_message, error_message):
-        response = {
-            'status': "finished" if status_code == 200 else "error",
-            'result': result_message,
-            'status_code': status_code
-        }
-        if error_message:
-            response = {
-                'status': "finished" if status_code == 200 else "error",
-                'error_message': error_message,
-                'status_code': status_code
-            }
-            return json.dumps(response), status_code
-
-        return json.dumps(response)
 
     def process(self, json_input: dict) -> Tuple[bool, dict, str]:
         """ Entry point to the service
@@ -243,7 +177,7 @@ class LLMDeployment(BaseDeployment):
 
         try:
             # Adaptations for queue case
-            json_input = self.adapt_input_queue(json_input)
+            json_input = adapt_input_queue(self.logger, json_input)
 
             # Parse and check input
             query_metadata, model, platform, report_url = self.parse_input(json_input)
@@ -286,41 +220,6 @@ class LLMDeployment(BaseDeployment):
         finally:
             return ResponseObject(**result).get_response_predict()
 
-    
-
-    def upload_prompt_template(self, json_input):
-        self.logger.info("Upload prompt template request received")
-        name = ""
-        content = {}
-        try:
-            name = json_input['name']
-            content = json_input['content']
-
-        except KeyError as ex:
-            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
-            self.logger.error(error_message)
-            return self.endpoint_response(404, "", error_message)
-
-        except Exception as ex:
-            self.logger.error(ex)
-            return self.endpoint_response(500, "", str(ex))
-
-        status_code = 200
-        error_message = ""
-        try:
-            path = self.loader.prompts_path
-            upload_object(self.workspace, content, path + name + ".json")
-            time.sleep(0.5)
-            self.templates, self.templates_names = self.loader.get_templates()
-
-        except Exception as ex:
-            error_message = f"Error uploading prompt file. {ex}"
-            status_code = 500
-            self.logger.error(ex)
-            return self.endpoint_response(status_code, "", error_message)
-
-        return self.endpoint_response(status_code, "Request finished", error_message)
-
     def delete_prompt_template(self, json_input):
         self.logger.info("Delete prompt template request received")
         name = ""
@@ -339,10 +238,10 @@ class LLMDeployment(BaseDeployment):
 
         error_message = ""
         try:
-            path = self.loader.prompts_path
+            path = self.storage_manager.prompts_path
             delete_file(self.workspace, path + name + ".json")
             time.sleep(0.5)
-            self.templates, self.templates_names = self.loader.get_templates()
+            self.templates, self.templates_names = self.storage_manager.get_templates()
 
 
         except Exception as ex:
@@ -377,7 +276,7 @@ def sync_deployment() -> Tuple[str, int]:
 @app.route('/reloadconfig', methods=['GET'])
 def reloadconfig() -> Tuple[str, int]:
     deploy.logger.info("Reload config request received")
-    deploy.templates, deploy.templates_names = deploy.loader.get_templates()
+    deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
     result = json.dumps({
         'status': "ok",
         'status_code': 200
@@ -394,19 +293,17 @@ def healthcheck() -> Dict:
 @app.route('/list_templates', methods=['GET'])
 def list_available_templates() -> Tuple[str, int]:
     deploy.logger.info("List templates request received")
-    return json.dumps({"status": "ok", "templates": deploy.templates_names, "status_code": 200}), 200
+    return ResponseObject(**{"status": "ok", "result": {"templates": deploy.templates_names}, "status_code": 200}).get_response_base()
 
 @app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[str, int]:
     deploy.logger.info("Get template request received")
     template_name = request.args.get('template_name')
     if not template_name:
-        return json.dumps({"status": "error", "error_message": "You must provide a 'template_name' param", "status_code": 400}), 400
+        return ResponseObject(**{"status": "error", "error_message": "You must provide a 'template_name' param", "status_code": 400}).get_response_base()
     if template_name not in deploy.templates_names:
-        return json.dumps({"status": "error", "error_message": f"Template '{template_name}' not found", "status_code": 404}), 404
-    return json.dumps({"status": "ok", "template": deploy.templates[template_name], "status_code": 200}), 200
-
-
+        return ResponseObject(**{"status": "error", "error_message": f"Template '{template_name}' not found", "status_code": 404}).get_response_base()
+    return ResponseObject(**{"status": "ok", "result": {"template": deploy.templates[template_name]}, "status_code": 200}).get_response_base()
 
 @app.route('/get_models', methods=['GET'])
 def get_available_models() -> Tuple[str, int]:
@@ -440,14 +337,22 @@ def get_available_models() -> Tuple[str, int]:
 
 @app.route('/upload_prompt_template', methods=['POST'])
 def upload_prompt_template() -> Tuple[str, int]:
+    deploy.logger.info("Upload prompt template request received")
     dat = request.get_json(force=True)
-    return deploy.upload_prompt_template(dat)
+    response = deploy.storage_manager.upload_template(dat)
+    if response.get('status_code') == 200:
+        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+    return response
 
 
 @app.route('/delete_prompt_template', methods=['POST'])
 def delete_prompt_template() -> Tuple[str, int]:
+    deploy.logger.info("Delete prompt template request received")
     dat = request.get_json(force=True)
-    return deploy.delete_prompt_template(dat)
+    response = deploy.storage_manager.delete_template(dat)
+    if response.get('status_code') == 200:
+        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+    return response
 
 
 if __name__ == "__main__":

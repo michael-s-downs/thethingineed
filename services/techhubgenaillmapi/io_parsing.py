@@ -8,6 +8,9 @@ from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInf
 # Local imports
 from generatives import GenerativeModel
 
+QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
+
+
 #############################################################################################
 ####################################### INPUT PARSING #######################################
 #############################################################################################
@@ -257,11 +260,52 @@ class ProjectConf(BaseModel):
         return v
 
 
+def adapt_input_queue(logger, json_input: dict) -> dict:
+    """ Input adaptations for queue case
+
+    :param json_input: Input data
+    :return: Input data adapted
+    """
+    if QUEUE_MODE:
+        apigw_params = json_input.get('headers', {})
+        json_input["project_conf"] = apigw_params
+
+    mount_path = os.getenv('DATA_MOUNT_PATH', "")
+    mount_key = os.getenv('DATA_MOUNT_KEY', "")
+
+    if not (mount_path and mount_key):
+        logger.warning("Mount path or mount key not found in environment variables")
+        return json_input
+
+    file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
+
+    if mount_path not in file_path:
+        logger.warning(f"Document path '{file_path}' not inside mounted path '{mount_path}'")
+        return json_input
+    logger.debug(f"Getting document from mount path '{mount_path}'")
+    if not os.path.exists(file_path):
+        logger.warning(f"Document path not found '{file_path}'")
+        return json_input
+    if not os.path.isfile(file_path):
+        logger.warning(f"Document path must be a file '{file_path}'")
+        return json_input
+    logger.debug(f"Getting document from path '{file_path}'")
+
+    try:
+        with open(file_path, "r") as f:
+            file_content = f.read()
+    except:
+        file_content = ""
+    if file_content:
+        json_input['query_metadata'][mount_key] = file_content
+    else:
+        logger.error(f"Unable to read file '{file_path}'")
+    return json_input
+
 ##############################################################################################
 ####################################### OUTPUT PARSING #######################################
 ##############################################################################################
 
-QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
 
 class ResponseObject(BaseModel):
     status_code: int
@@ -278,7 +322,7 @@ class ResponseObject(BaseModel):
             raise ValueError("If status is 'finished', status_code must be 200")
         return v
 
-    def get_response_predict(self):
+    def get_response_predict(self) -> Tuple[bool, dict, str]:
         output, status_code = self.get_response_base()
         if QUEUE_MODE:
             must_continue = True
@@ -288,11 +332,11 @@ class ResponseObject(BaseModel):
             next_service = ""
 
             if status_code == 200:
-                output = output.get('result', {})
+                output = json.loads(output).get('result', {})
 
         return must_continue, output, next_service
 
-    def get_response_base(self) -> Tuple[dict, int]:
+    def get_response_base(self) -> Tuple[str, int]:
         response = {
             'status': self.status,
             'status_code': self.status_code
@@ -303,6 +347,4 @@ class ResponseObject(BaseModel):
             response['error_message'] = self.error_message
         else:
             raise ValueError("Internal error, response object must have a result or an error_message")
-        return response, self.status_code
-
-
+        return json.dumps(response), self.status_code

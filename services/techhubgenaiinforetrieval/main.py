@@ -30,7 +30,7 @@ from common.genai_json_parser import *
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir import get_connector, get_embed_model
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
-from common.indexing.loaders import ManagerLoader
+from common.storage_manager import ManagerStorage
 from common.indexing.parsers import ManagerParser, ParserInforetrieval
 from common.indexing.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
@@ -53,7 +53,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         try:
             self.origin = storage_containers.get('origin')
             self.workspace = storage_containers.get('workspace')
-            file_loader = ManagerLoader().get_file_storage(
+            file_loader = ManagerStorage().get_file_storage(
                 {"type": "IRStorage", "workspace": self.workspace, "origin": self.origin})
 
             self.available_pools = file_loader.get_available_pools()
