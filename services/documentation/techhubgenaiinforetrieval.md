@@ -535,10 +535,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 
     ```json
     {
-        "index": "myindex",
-        "delete":{
-            "filename": "manual.docx"
-        }
+        "index": "myindex"
     }
     ```
 - /healthcheck (GET): Used to check if the component is available. Returns:

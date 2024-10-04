@@ -174,6 +174,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 
 - Delete template (POST)
+
     Used to delete a template json file from cloud storage.
 
     URL: http://<deploymentdomain>/compose/delete_template 
@@ -185,6 +186,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 
 - Delete filter template (POST)
+
     Used to delete a filter template json file from cloud storage.
 
     URL: http://<deploymentdomain>/compose/delete_filter_template 
@@ -248,6 +250,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 
 - Upload prompt template (POST)
+
     Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
 
     URL: http://<deploymentdomain>/llm/upload_prompt_template 
@@ -260,6 +263,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 
 - Delete prompt template (POST)
+
     Used to delete a prompt template json file from cloud storage.
 
     URL: http://<deploymentdomain>/llm/delete_prompt_template
@@ -269,11 +273,45 @@ The output can be changed passing in the requests some attribute values:
     "name": "example_template"
     }
     ```
+- Get prompt templates names (GET)
+
+    Used to get the list the available prompt templates.
+
+    URL: http://<deploymentdomain>/llm/get_prompt_templates
+
+    Response:
+
+    ```json
+    {
+        "templates": [
+            "emptysystem_query",
+            "system_query",
+            "system_context",
+            "fixed_system_query"
+        ]
+    }
+    ```
+- Get prompt template (GET)
+
+    Used to get the content of a prompt template. In the url, we have to send the template_name
+
+    URL: http://<deploymentdomain>/llm/get_prompt_template?template_name=example_template
+
+    Response:
+
+    ```json
+    {
+      "template": {"system": "$system", "user": "$query"}
+    }
+    ```
 
 ### INFORETRIEVAL
 
-- /delete-documents (POST): Deletes document from index.
-    Body:
+- Deletes document from index (POST)
+
+    Used to delete document/s from an index. 
+   
+    URL: http://<deploymentdomain>/retrieve/delete-documents
 
     ```json
     {
@@ -283,45 +321,88 @@ The output can be changed passing in the requests some attribute values:
         }
     }
     ```
-- /delete_index (POST): Deletes an index.
-    Body:
+- Delete an index (POST)
 
-    ```json
-    {
-        "index": "myindex",
-        "delete":{
-            "filename": "manual.docx"
-        }
-    }
-    ```
-- /healthcheck (GET): Used to check if the component is available. Returns:
+    Used to delete an index from vector storage
 
-    ```json
-    {
-        "status": "Service available"
-    }
-    ```
-
-- /retrieve_documents (POST): Retrieves document from index.
-    Body:
-
-    ```json
-    {
-        "index": "myindex",
-        "filters":{
-            "filename": "manual.docx"
-        }
-    }
-    ```
-
-- /get_documents_filenames (POST): Retrieves documents filenames from index.
-    Body:
+    URL: http://<deploymentdomain>/retrieve/delete_index
 
     ```json
     {
         "index": "myindex"
     }
     ```
+- Check if the component is available (GET)
+    
+    URL: http://<deploymentdomain>/retrieve/healthcheck
+
+    Returns:
+    ```json
+    {
+        "status": "Service available"
+    }
+    ```
+
+- Retrieve full document from index (POST): 
+
+    Used to retrieve the full document from an index.
+
+    URL: http://<deploymentdomain>/retrieve/delete_index
+    ```json
+        {
+            "index": "myindex",
+            "filters":{
+                "filename": "manual.docx"
+            }
+        }
+    ```
+
+
+- Retrieve filenames from index (POST)
+
+    Used to retrieve the documents filenames from an index.
+    
+    URL: http://<deploymentdomain>/retrieve/get_documents_filenames
+
+    ```json
+    {
+        "index": "myindex"
+    }
+    ```
+
+- Get_models 
+    
+    URL: http://<deploymentdomain>/retrieve/get_models
+
+    Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/retrieve/get_models?platform=azure
+
+    Response:
+
+    ```json
+    {
+      "models": [
+            "techhubinc-ada-002-australiaeast",
+            "techhubinc-ada-002-brazilsouth",
+            "techhubinc-ada-002-canadaeast",
+            "techhubinc-ada-3-large-canadaeast",
+            "techhubinc-ada-3-small-canadaeast",
+            "techhubinc-ada-002-eastus",
+            "techhubinc-ada-3-large-eastus",
+            "techhubinc-ada-3-small-eastus",
+        ],
+        "pools": [
+            "techhub-pool-world-ada-3-small",
+            "techhub-pool-world-ada-002",
+            "techhub-pool-eu-ada-002",
+            "techhub-pool-eu-ada-3-large",
+            "techhub-pool-us-ada-002",
+            "techhub-pool-world-ada-3-large",
+            "techhub-pool-us-ada-3-small",
+            "techhub-pool-us-ada-3-large"
+        ]
+    }
+    ```
+
 
 ## Indexing Pipeline
 
