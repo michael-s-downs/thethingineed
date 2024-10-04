@@ -1,6 +1,5 @@
 ### This code is property of the GGAO ###
 
-
 # Native imports
 import json
 
@@ -16,6 +15,7 @@ from common.services import GENAI_COMPOSE_SERVICE
 from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.genai_status_control import update_status
 from director import Director
+
 
 
 class ComposeDeployment(BaseDeployment):
@@ -320,4 +320,4 @@ def delete_template() -> Tuple[Dict, int]:
 
 if __name__ == "__main__":
     #Process(target=run_redis_cleaner).start()
-    app.run(host="0.0.0.0", debug=False, port=8888)
+    app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

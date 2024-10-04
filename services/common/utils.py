@@ -9,6 +9,7 @@ import os, re
 import json
 from shutil import rmtree
 
+SECRETS_ROOT_PATH = '/secrets'
 ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
 
 
@@ -55,10 +56,10 @@ def convert_to_queue_extractor(extractor_name: str) -> str:
 def load_secrets(vector_storage_needed: bool = True, aws_credentials_needed: bool = True) -> (dict, dict, dict):
     """ Load sensitive content from the secrets
     """
-    models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-    vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage",
+    models_keys_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "models", "models.json")
+    vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "vector-storage",
                                         "vector_storage_config.json")
-    aws_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "aws", "aws.json")
+    aws_keys_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "aws", "aws.json")
     aws_env_vars = ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
 
     # Load AWS credentials
