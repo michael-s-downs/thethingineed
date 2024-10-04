@@ -61,18 +61,6 @@ class LLMDeployment(BaseDeployment):
         """ Maximum number of elements in the queue """
         return 1
 
-
-    def error_message(self, status, message, status_code):
-        """ Error message
-
-        :param status: Status
-        :param message: Message
-        :param status_code: Status code
-        :return: Error message
-        """
-        self.logger.info(message)
-        return {'status': status, 'error_message': message, 'status_code': status_code}
-
     def get_template(self, template_name: str, template: str, lang: str, query: str, model: GenerativeModel):
         """ Get template
 
@@ -220,38 +208,6 @@ class LLMDeployment(BaseDeployment):
         finally:
             return ResponseObject(**result).get_response_predict()
 
-    def delete_prompt_template(self, json_input):
-        self.logger.info("Delete prompt template request received")
-        name = ""
-        status_code = 200
-        try:
-            name = json_input['name']
-
-        except KeyError as ex:
-            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
-            self.logger.error(error_message)
-            return self.endpoint_response(404, "", error_message)
-
-        except Exception as ex:
-            self.logger.error(ex)
-            return self.endpoint_response(500, "", str(ex))
-
-        error_message = ""
-        try:
-            path = self.storage_manager.prompts_path
-            delete_file(self.workspace, path + name + ".json")
-            time.sleep(0.5)
-            self.templates, self.templates_names = self.storage_manager.get_templates()
-
-
-        except Exception as ex:
-            error_message = f"Error deleting prompt file. {ex}"
-            status_code = 500
-            self.logger.error(ex)
-            return self.endpoint_response(status_code, "", error_message)
-
-        return self.endpoint_response(status_code, "Request finished", error_message)
-
 
 app = Flask(__name__)
 deploy = LLMDeployment()
@@ -293,7 +249,7 @@ def healthcheck() -> Dict:
 @app.route('/list_templates', methods=['GET'])
 def list_available_templates() -> Tuple[str, int]:
     deploy.logger.info("List templates request received")
-    return ResponseObject(**{"status": "ok", "result": {"templates": deploy.templates_names}, "status_code": 200}).get_response_base()
+    return ResponseObject(**{"status": "finished", "result": {"templates": deploy.templates_names}, "status_code": 200}).get_response_base()
 
 @app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[str, int]:
@@ -303,7 +259,7 @@ def get_template() -> Tuple[str, int]:
         return ResponseObject(**{"status": "error", "error_message": "You must provide a 'template_name' param", "status_code": 400}).get_response_base()
     if template_name not in deploy.templates_names:
         return ResponseObject(**{"status": "error", "error_message": f"Template '{template_name}' not found", "status_code": 404}).get_response_base()
-    return ResponseObject(**{"status": "ok", "result": {"template": deploy.templates[template_name]}, "status_code": 200}).get_response_base()
+    return ResponseObject(**{"status": "finished", "result": {"template": deploy.templates[template_name]}, "status_code": 200}).get_response_base()
 
 @app.route('/get_models', methods=['GET'])
 def get_available_models() -> Tuple[str, int]:
@@ -341,8 +297,9 @@ def upload_prompt_template() -> Tuple[str, int]:
     dat = request.get_json(force=True)
     response = deploy.storage_manager.upload_template(dat)
     if response.get('status_code') == 200:
+        # Update the templates modification in the llmapi component
         deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
-    return response
+    return ResponseObject(**response).get_response_base()
 
 
 @app.route('/delete_prompt_template', methods=['POST'])
@@ -351,8 +308,10 @@ def delete_prompt_template() -> Tuple[str, int]:
     dat = request.get_json(force=True)
     response = deploy.storage_manager.delete_template(dat)
     if response.get('status_code') == 200:
+        # Update the templates modification in the llmapi component
         deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
-    return response
+    return ResponseObject(**response).get_response_base()
+
 
 
 if __name__ == "__main__":

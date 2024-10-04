@@ -61,6 +61,11 @@ class Platform(ABC):
         """
 
     @abstractmethod
+    def call_model(self, delta=0, max_retries=3) -> dict:
+        """ Method to send the query to the endpoint
+        """
+
+    @abstractmethod
     def set_model(self, generativeModel: GenerativeModel):
         """Set the model and configure urls.
 

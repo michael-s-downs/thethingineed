@@ -12,7 +12,7 @@ import time
 import pandas as pd
 
 # Custom imports
-from common.genai_controllers import load_file, get_dataset, list_files, upload_object
+from common.genai_controllers import load_file, get_dataset, list_files, upload_object, delete_file
 from common.logging_handler import LoggerHandler
 from common.errors.genaierrors import PrintableGenaiError
 
@@ -87,6 +87,13 @@ class BaseStorageManager(ABC):
         """
         pass
 
+    def delete_template(self, dat: dict):
+        """ Delete a template from the storage
+
+        :param dat: dict with the template name
+        """
+        pass
+
 
 class LLMStorageManager(BaseStorageManager):
     MODEL_FORMAT = "LLMStorage"
@@ -114,13 +121,14 @@ class LLMStorageManager(BaseStorageManager):
             raise PrintableGenaiError(400, f"Pools can't be downloaded because {self.models_file_path} not found in {self.workspace}")
         else:
             available_pools = {}
-            for model in json.loads(s3_models_file).get("LLMs").values():
-                pools = model.get("model_pool", [])
-                for pool in pools:
-                    if pool not in available_pools:
-                        available_pools[pool] = []
-                    if model not in available_pools[pool]:
-                        available_pools[pool].append(model)
+            for key, value in json.loads(s3_models_file).get("LLMs").items():
+                for model in value:
+                    pools = model.get("model_pool", [])
+                    for pool in pools:
+                        if pool not in available_pools:
+                            available_pools[pool] = []
+                        if model not in available_pools[pool]:
+                            available_pools[pool].append(model)
             if len(available_pools) == 0:
                 raise PrintableGenaiError(400, f"Pools were not loaded, maybe the models_config.json is wrong")
             # Convert the set in lists
@@ -146,8 +154,8 @@ class LLMStorageManager(BaseStorageManager):
 
     def upload_template(self, dat: dict):
         try:
-            template_name = dat.get('name')
-            content = dat.get('content')
+            template_name = dat['name']
+            content = dat['content']
 
             upload_object(self.workspace, content, self.prompts_path + template_name + ".json")
             time.sleep(0.5)
@@ -162,6 +170,21 @@ class LLMStorageManager(BaseStorageManager):
             self.logger.error(f"Error uploading prompt file. {ex}")
         return response
 
+    def delete_template(self, dat: dict):
+        try:
+            template_name = dat['name']
+            delete_file(self.workspace, self.prompts_path + template_name + ".json")
+            time.sleep(0.5)
+            response = {"status": "finished", "result": "Request finished", "status_code": 200}
+
+        except KeyError as ex:
+            response = {"status": "error", "error_message": f"Error parsing Input, Key: 'name' or 'content' not found",
+                        "status_code": 404}
+            self.logger.error(response)
+        except Exception as ex:
+            response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}","status_code": 500}
+            self.logger.error(f"Error uploading prompt file. {ex}")
+        return response
 
 
 class IRStorageManager(BaseStorageManager):
@@ -216,13 +239,14 @@ class IRStorageManager(BaseStorageManager):
             raise PrintableGenaiError(400, f"Pools can't be downloaded because {self.models_file_path} not found in {self.workspace}")
         else:
             available_pools = {}
-            for model in json.loads(s3_models_file).get("embeddings").values():
-                pools = model.get("model_pool", [])
-                model_name = model.get("embedding_model_name")
-                for pool in pools:
-                    if pool not in available_pools:
-                        available_pools[pool] = set()
-                    available_pools[pool].add(model_name)
+            for key, value in json.loads(s3_models_file).get("embeddings").items():
+                for model in value:
+                    pools = model.get("model_pool", [])
+                    model_name = model.get("embedding_model_name")
+                    for pool in pools:
+                        if pool not in available_pools:
+                            available_pools[pool] = set()
+                        available_pools[pool].add(model_name)
             if len(available_pools) == 0:
                 raise PrintableGenaiError(400, "Pools were not loaded, maybe the models_config.json is wrong")
             # Convert the set in lists
