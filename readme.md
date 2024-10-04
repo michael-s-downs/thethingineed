@@ -277,7 +277,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to get the list the available prompt templates.
 
-    URL: http://<deploymentdomain>/llm/get_prompt_templates
+    URL: http://<deploymentdomain>/llm/list_templates
 
     Response:
 
@@ -295,7 +295,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to get the content of a prompt template. In the url, we have to send the template_name
 
-    URL: http://<deploymentdomain>/llm/get_prompt_template?template_name=example_template
+    URL: http://<deploymentdomain>/llm/get_template?template_name=example_template
 
     Response:
 
