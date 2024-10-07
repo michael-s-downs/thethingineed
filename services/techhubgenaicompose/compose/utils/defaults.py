@@ -17,7 +17,7 @@ SUM_TEMPLATE = {
     },
     "llm_metadata": {
         "max_tokens": 10000,
-        "model": "gpt-3.5-turbo"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -31,7 +31,7 @@ FILTER_TEMPLATE = {
         "template_name": "emptysystem_query"
     },
     "llm_metadata": {
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -46,7 +46,7 @@ REFORMULATE_TEMPLATE = {
     },
     "llm_metadata": {
         # "max_tokens": 10000,
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -60,7 +60,7 @@ TRANSLATE_TEMPLATE = {
         "template": "{\"system\": \"You are a profesional translator and only answer with the translated sentence.\",\"user\": \"$query\"}"
     },
     "llm_metadata": {
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 

@@ -66,7 +66,8 @@ class LangExpansion(ExpansionMethod):
         "el": "greek",
         "he": "hebrew",
         "vi": "vietnamese",
-        "th": "thai"
+        "th": "thai",
+        "ca": "catalan"
         }
 
     async def async_call_llm(self, template, headers, session):
@@ -79,7 +80,7 @@ class LangExpansion(ExpansionMethod):
         Returns:
             dict: In this case the output will be the response of LLM
         """
-        async with session.post(self.URL, json=template, headers=headers, verify_ssl=False) as response:
+        async with session.post(self.URL, json=template, headers=headers, verify_ssl=True) as response:
             LLMP.control_errors(response, async_bool=True)
             return (await response.json(content_type='text/html'))['result']
 
