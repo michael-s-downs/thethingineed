@@ -29,7 +29,8 @@ class LLMDeployment(BaseDeployment):
         """ Creates the deployment"""
         super().__init__()
         if QUEUE_MODE:
-            set_queue((provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT')))
+            self.Q_IN = (provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT'))
+            set_queue(self.Q_IN)
         set_storage(storage_containers)
         self.workspace = storage_containers.get('workspace')
         self.origin = storage_containers.get('origin')
@@ -117,7 +118,7 @@ class LLMDeployment(BaseDeployment):
         return parsed_query_metadata
 
     def parse_project_conf(self, project_conf: dict, model: GenerativeModel, platform: Platform):
-        project_conf['x_limits'] = json.loads(project_conf.get('x_limits', "{}"))
+        project_conf['x-limits'] = json.loads(project_conf.get('x-limits', "{}"))
         project_conf['platform'] = platform.MODEL_FORMAT
         project_conf['model'] = model
         return ProjectConf(**project_conf).model_dump(exclude_unset=True, exclude_none=True)
@@ -144,7 +145,7 @@ class LLMDeployment(BaseDeployment):
         :return: Error response
         """
         location = error.get('loc')
-        if error.get('type') == 'value_error' and len(location) > 0 and location[0] == 'x_limits':
+        if error.get('type') == 'value_error' and len(location) > 0 and location[0] == 'x-limits':
             return {'status': 'error', 'error_message': error.get("msg"), 'status_code': 429}
         error_depth_level = ''.join([f"['{el}']" for el in list(location)])
         return {
@@ -219,10 +220,10 @@ def sync_deployment() -> Tuple[str, int]:
     json_input = request.get_json(force=True)
 
     apigw_params = {
-        'x_tenant': request.headers['x-tenant'],
-        'x_department': request.headers['x-department'],
-        'x_reporting': request.headers['x-reporting'],
-        'x_limits': request.headers.get('x-limits', "{}")
+        'x-tenant': request.headers['x-tenant'],
+        'x-department': request.headers['x-department'],
+        'x-reporting': request.headers['x-reporting'],
+        'x-limits': request.headers.get('x-limits', "{}")
     }
     json_input["project_conf"] = apigw_params
 

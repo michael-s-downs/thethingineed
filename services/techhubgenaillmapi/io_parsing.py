@@ -3,7 +3,7 @@ import json, os
 from typing import Literal, Optional, Union, Tuple
 
 # Installed imports
-from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator
+from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator, Field
 
 # Local imports
 from generatives import GenerativeModel
@@ -230,12 +230,13 @@ class ProjectConf(BaseModel):
     class Config:
         arbitrary_types_allowed = True  # Allow custom types (GenerativeModel)
         extra = 'forbid' # To not allow extra fields in the object
+        allow_population_by_field_name = True # Allow match with alias
 
     # Project config metadata
-    x_tenant: str
-    x_department: str
-    x_reporting: str
-    x_limits: dict
+    x_tenant: str = Field(alias="x-tenant")
+    x_department: str = Field(alias="x-department")
+    x_reporting: str = Field(alias="x-reporting")
+    x_limits: dict = Field(alias="x-limits")
 
     @field_validator('x_limits')
     def validate_x_limits(cls, v, values: FieldValidationInfo):
@@ -331,8 +332,10 @@ class ResponseObject(BaseModel):
             must_continue = False
             next_service = ""
 
-            if status_code == 200:
-                output = json.loads(output).get('result', {})
+        if status_code == 200:
+            output = json.loads(output).get('result', {})
+        else:
+            output = json.loads(output)
 
         return must_continue, output, next_service
 
