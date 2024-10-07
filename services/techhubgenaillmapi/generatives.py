@@ -89,7 +89,7 @@ class PromptGPTModel(GenerativeModel):
                  max_input_tokens: int = 4096,
                  max_tokens: int = 3096,
                  bag_tokens: int = 500,
-                 zone: str = "dolffia",
+                 zone: str = "genai",
                  api_version: str = "2023-08-01-preview",
                  temperature: float = 0,
                  n: int = 1,
@@ -330,7 +330,7 @@ class DalleModel(GPTModel):
 
     def __init__(self,
                  max_input_tokens: int = 4000,
-                 model: str = 'dolffia-dalle3-sweden',
+                 model: str = 'genai-dalle3-sweden',
                  model_type: str = "",
                  n: int = 1,
                  quality: str = "standard",
@@ -467,7 +467,7 @@ class ChatGPTModel(GPTModel):
                  max_input_tokens: int = 4096,
                  max_tokens: int = -1,
                  bag_tokens: int = 500,
-                 zone: str = "dolffia",
+                 zone: str = "genai",
                  api_version: str = "2023-08-01-preview",
                  temperature: float = 0,
                  n: int = 1,
@@ -509,12 +509,12 @@ class ChatGPTvModel(GPTModel):
     MODEL_MESSAGE = "chatGPT-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
 
-    def __init__(self, model: str = 'dolffia-gpt4V-sweden',
+    def __init__(self, model: str = 'genai-gpt4V-sweden',
                  model_type: str = "",
                  max_input_tokens: int = 32768,
                  max_tokens: int = 1000,  # -1 does not work in vision models
                  bag_tokens: int = 500,
-                 zone: str = "dolffia-sweden",
+                 zone: str = "genai-sweden",
                  api_version: str = "2024-02-15-preview",
                  temperature: float = 0,
                  n: int = 1,
