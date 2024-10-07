@@ -66,7 +66,8 @@ class LangExpansion(ExpansionMethod):
         "el": "greek",
         "he": "hebrew",
         "vi": "vietnamese",
-        "th": "thai"
+        "th": "thai",
+        "ca": "catalan"
         }
 
     async def async_call_llm(self, template, headers, session):
