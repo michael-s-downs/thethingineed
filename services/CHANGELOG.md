@@ -3,8 +3,20 @@
 
 # Changelog
 ## vXX ()
+- genai-llmapi
+    - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
+    - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
+    - [Improvement] Common function in utils to get models endpoint 
+- genai-inforetrieval
+    - [New] Added usage of retriever_model parameter in config file when calling huggingface models
+    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
+    - [Improvement] Common function in utils to get models endpoint
+- genai-infoindexing:
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
+    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
 - genai-compose:
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
+    - [Fix] Fix models from default templates
 
 ## v05 (2014-09-23)
 - genai-infoindexing:
