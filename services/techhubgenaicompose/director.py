@@ -11,7 +11,7 @@ from confmanager import ConfManager
 from actionsmanager import ActionsManager
 from outputmanager import OutputManager
 from common.utils import get_error_word_from_exception
-from compose.query import expansion
+from compose.query import expansion, filter_query, reformulate_query
 
 
 class Director(AbstractManager):
@@ -40,8 +40,9 @@ class Director(AbstractManager):
 
                 for envvar in secret:
                     os.environ[envvar] = secret[envvar]
-            except:
+            except Exception as _:
                 self.logger.warning(f"Unable to load secret '{secret_path}'")
+
 
     def get_output(self):
         """Gets the output from the API call
@@ -77,7 +78,6 @@ class Director(AbstractManager):
         self.actions_manager.get_and_drop_query_actions()
         self.run_query_actions()
         self.run_actions()
-        self.filter_result()
         self.output_manager = OutputManager(self.compose_conf)
         output = self.get_output()
         if self.conf_manager.persist_m:
@@ -85,41 +85,37 @@ class Director(AbstractManager):
 
         return output
 
-    def filter_result(self):
-        filtered = False
-        if self.conf_manager.filter_m is None:
-            return
-        if self.conf_manager.filter_m.resultfilters:
-            for sl in self.sb:
-                for sc in sl:
-                    if sc.answer:
-                        filter_query_response = f"Query:{self.conf_manager.template_m.query}. Response:{sc.answer}. Context:{sl.join_get_content()}"
-                        sc.answer, filtered = self.conf_manager.filter_m.run(filter_query_response,
-                                                                             self.conf_manager.headers, output=True)
 
     def run_query_actions(self):
         if len(self.actions_manager.query_actions_confs) == 0:
             return
         
         for actions_conf in self.actions_manager.query_actions_confs:
-            self.logger.info(f"Query Action: {actions_conf}")
+            self.logger.info(f"-> Query Action: {actions_conf}")
             action = actions_conf['action']
             action_params = actions_conf['action_params']
             function_map = {
                 "expansion": expansion,
+                "filter_query": filter_query,
+                "reformulate_query": reformulate_query
             }
 
             action_function = function_map.get(action)
 
             if not action_function:
-                raise self.raise_PrintableGenaiError(404, "Query action not found, choose one between \"expansion\"")
+                raise self.raise_PrintableGenaiError(404, f"Query action not found, choose one between {[function_map.keys()]}")
             ap = action_params.get('params', {})
+
+            if action_function == reformulate_query:
+                ap["PD"] = self.PD
+                ap["lang"] = self.conf_manager.lang
+                ap["session_id"] = self.conf_manager.session_id
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             ap["headers"]= self.conf_manager.headers
             output = action_function(action_params['type'], ap if ap else {}, self.conf_manager.template_m.query, self.actions_manager.actions_confs)
             self.add_end_to_trace(action, langfuse_sg, output=output)
-            self.logger.info(f"Action: {action} executed")
+            self.logger.info(f"-> Action: {action} executed")
 
 
     def run_actions(self):
@@ -127,7 +123,7 @@ class Director(AbstractManager):
                 IF action is summarize, uses different input parameters
         """
         for actions_conf in self.actions_manager.actions_confs:
-            self.logger.info(f"Action: {actions_conf}")
+            self.logger.info(f"-> Action: {actions_conf}")
 
             action = actions_conf['action']
             action_params = actions_conf['action_params']
@@ -142,7 +138,8 @@ class Director(AbstractManager):
                 "batchsplit": self.sb.batchsplit,
                 "sort": self.sb.sort,
                 "batchsort": self.sb.batchsort,
-                "groupby": self.sb.groupby
+                "groupby": self.sb.groupby,
+                "filter_response": self.sb.filter_response
             }
 
             action_function = function_map.get(action)
@@ -157,13 +154,17 @@ class Director(AbstractManager):
                 ap["top_qa"] = self.conf_manager.template_m.top_qa
                 ap["query_type"] = self.conf_manager.template_m.query_type
                 ap["llm_action"] = self.conf_manager.template_m.llm_action
+            
+            if action_function == self.sb.filter_response:
+                ap["headers"] = self.conf_manager.headers
+                ap["query"] = self.conf_manager.template_m.query
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             action_function(action_params['type'], ap if ap else {})
             if action_function == self.sb.llm_action:
                 self.logger.info(f"Persist dict after run llm {self.PD.PD.keys()}")
             self.add_end_to_trace(action, langfuse_sg)
-            self.logger.info(f"Action: {action} executed")
+            self.logger.info(f"-> Action: {action} executed")
 
     def add_start_to_trace(self, action_name, action_params):
         """
@@ -182,7 +183,7 @@ class Director(AbstractManager):
         """
         try:
             action_params = action_params.copy()
-            if action_name in ["llm_action", "retrieve", "expansion"]:
+            if action_name in ["llm_action", "retrieve", "expansion", "filter_response", "filter_query"]:
                 if "headers_config" in action_params:
                     action_params.pop("headers_config")
                 return self.conf_manager.langfuse_m.add_generation(
@@ -214,12 +215,12 @@ class Director(AbstractManager):
             None
         """
         try:
-            if action_name == "llm_action":
+            if action_name in ["llm_action", "filter_response"]:
                 self.conf_manager.langfuse_m.add_generation_output(
                     generation=langfuse_sg,
                     output=self.sb.to_list_serializable()
                 )
-            elif action_name == "expansion":
+            elif action_name in ["expansion", "filter_query"]:
                 self.conf_manager.langfuse_m.add_generation_output(
                     generation=langfuse_sg,
                     output=output
@@ -303,22 +304,6 @@ class Director(AbstractManager):
 
         filtered = False
         reformulated = False
-        if self.conf_manager.filter_m and self.conf_manager.filter_m.queryfilters:
-            generation = self.conf_manager.langfuse_m.add_generation(
-                name="filter",
-                metadata={},
-                input=self.conf_manager.template_m.query,
-                model="",
-                model_params={}
-            )
-            self.conf_manager.template_m.query, filtered = self.conf_manager.filter_m.run(
-                self.conf_manager.template_m.query, self.conf_manager.headers)
-            if ("search_topic" in template_params) and (len(template_params['search_topic']) == 0):
-                template_params['search_topic'] = self.conf_manager.template_m.query
-            self.conf_manager.langfuse_m.add_generation_output(
-                generation=generation,
-                output=self.conf_manager.template_m.query
-            )
 
         if not filtered and self.conf_manager.reformulate_m:
             generation = self.conf_manager.langfuse_m.add_generation(

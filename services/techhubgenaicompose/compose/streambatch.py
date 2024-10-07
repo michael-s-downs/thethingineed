@@ -166,6 +166,10 @@ class StreamBatch:
         """
         for streamlist in self.streambatch:
             streamlist.llm_action(summary_type, summary_params)
+    
+    def filter_response(self, filter_type, filter_params):
+        for streamlist in self.streambatch:
+            streamlist.filter_response(filter_type, filter_params)
 
     def batchmerge(self, merge_type, merge_params) -> None:
         """Merge the StreamList objects in the StreamBatch using batch merge.

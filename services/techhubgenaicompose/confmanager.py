@@ -8,7 +8,6 @@ from datetime import datetime
 from copy import deepcopy
 
 from basemanager import AbstractManager
-from pcutils.filters import FilterManager
 from pcutils.reformulate import ReformulateManager
 from pcutils.persist import PersistManager
 from pcutils.template import TemplateManager
@@ -55,7 +54,6 @@ class ConfManager(AbstractManager):
             self.apigw_params)
         self.clear_quotes = compose_config.get("clear_quotes", self.clear_quotes)
         self.template_m = TemplateManager().parse(compose_config)
-        self.filter_m = FilterManager().parse(compose_config)
         self.reformulate_m = ReformulateManager().parse(compose_config)
         self.persist_m = PersistManager().parse(compose_config)
         if self.template_m.query is not None:
@@ -160,7 +158,7 @@ class ConfManager(AbstractManager):
         return lang
 
     def clean_model(self, model: str):
-        remove_strings = ["genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
+        remove_strings = ["dolffia-", "genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
                           "-NorthVirginiaEast", "-FranckfurtCentral", "-ParisWest", "-AustraliaEast", "AustraliaEast",
                           "-CanadaEast", "CanadaEast", "-EastUs", "EastUs", "-EastUs2", "EastUs2", "Francia",
                           "JapanEast", "-NorthCentralUs", "NorthCentralUS", "-sweden", "-SouthCentralUs", "-france",
