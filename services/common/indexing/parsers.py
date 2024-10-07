@@ -60,7 +60,8 @@ class Parser(ABC):
             return {
                 "alias": alias,
                 "platform": "huggingface",  # harcoded for retrocompatibility
-                "embedding_model": model_selected.get('embedding_model')
+                "embedding_model": model_selected.get('embedding_model'),
+                "retriever_model": model_selected.get('retriever_model')
             }
         else:
             raise PrintableGenaiError(400, f"Platform {platform} not supported")

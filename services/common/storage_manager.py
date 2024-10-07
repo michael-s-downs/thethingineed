@@ -260,7 +260,8 @@ class IRStorageManager(BaseStorageManager):
             raise PrintableGenaiError(400, f"Pools can't be downloaded because {self.models_file_path} not found in {self.workspace}")
         else:
             available_embedding_models = set()
-            for model in json.loads(s3_models_file).get("embeddings").values():
+            for key, value in json.loads(s3_models_file).get("embeddings").items():
+                for model in value:
                     available_embedding_models.add(model.get("embedding_model"))
             return available_embedding_models
 

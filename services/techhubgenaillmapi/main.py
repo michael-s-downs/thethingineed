@@ -22,7 +22,7 @@ from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
 from common.storage_manager import ManagerStorage
 from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject, adapt_input_queue
-
+from common.utils import get_models
 
 class LLMDeployment(BaseDeployment):
     def __init__(self):
@@ -263,33 +263,15 @@ def get_template() -> Tuple[str, int]:
 
 @app.route('/get_models', methods=['GET'])
 def get_available_models() -> Tuple[str, int]:
+    deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) > 1:
-        return json.dumps({"status": "error", "error_message":
-            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'model_type' param", "status_code": 400}), 400
-    if dat.get("platform"):
-        models = []
-        pools = []
-        for model in deploy.available_models.get(dat["platform"], []):
-            models.append(model.get("model"))
-            pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": models, "pools": list(set(pools))}, "status_code": 200}), 200
-    elif dat.get("pool"):
-        models = [model.get("model") for model in deploy.available_pools.get(dat["pool"], [])]
-        return json.dumps({"status": "ok", "models": models, "status_code": 200}), 200
-    elif dat.get("model_type") or dat.get("zone"):
-        key = "model_type" if dat.get("model_type") else "zone"
-        response_models = []
-        pools = []
-        for platform, models in deploy.available_models.items():
-            for model in models:
-                if model.get(key) == dat[key]:
-                    response_models.append(model.get("model"))
-                    pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": response_models, "pools": list(set(pools))}, "status_code": 200}), 200
-    else:
-        return json.dumps({"status": "error", "error_message": "You must provide a 'platform', 'pool', 'zone' or 'model_type' param", "status_code": 400}), 400
-
+    if len(dat) != 1 or list(dat.items())[0][0] not in ['platform', 'pool', 'zone', 'model_type']:
+        return ResponseObject(**{"status": "error", "error_message":
+            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'model_type' param", "status_code": 400}).get_response_base()
+    key, value = list(dat.items())[0]
+    models, pools = get_models(deploy.available_models, deploy.available_pools, key, value)
+    return ResponseObject(**{"status": "finished", "result":
+        {"models": models, "pools": list(set(pools)) if pools else []}, "status_code": 200}).get_response_base()
 
 @app.route('/upload_prompt_template', methods=['POST'])
 def upload_prompt_template() -> Tuple[str, int]:

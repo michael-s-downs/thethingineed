@@ -4,4 +4,4 @@
 .terraform/
 .terraform.lock.hcl
 services/models
-services/vector_storage
+services/vector-storage
