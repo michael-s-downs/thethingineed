@@ -129,8 +129,7 @@ def get_models(available_models, available_pools, key, value):
         available_models = []
         for platform, models in aux_available_models.items():
             for model in models:
-                model["platform"] = platform
-                available_models.append(model)
+                available_models.append({**model, 'platform': platform})
     if key == "pool":
         models = []
         for model in available_pools.get(value, []):

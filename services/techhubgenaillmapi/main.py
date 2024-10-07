@@ -107,7 +107,7 @@ class LLMDeployment(BaseDeployment):
                                                        query_metadata.get('template'), query_metadata.get('lang'),
                                                        query_metadata.get('query'), model)
 
-        query_metadata.pop('lang') # Once template has been obtained, lang is not necessary
+        query_metadata.pop('lang', None) # Once template has been obtained, lang is not necessary
 
         parsed_query_metadata = QueryMetadata(**query_metadata).model_dump(exclude_unset=True, exclude_none=True)
         #Parameters passed to do pydantic checks now unused
