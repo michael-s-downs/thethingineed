@@ -681,6 +681,28 @@ These are the following compose templates currently available
  * retrieve_batchmerge_llm: to perform several retrievals, with content generation.
  * expand_query_lang_llm: to do a retrieval translating the queries in different languages, with content generation.
  * dalle: for calling DALL-E model.
+ 
+ #### Compose Template Expected parameters:
+ 
+ * retrieve: index, query, top_k, filters
+ * retrieve_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_reference: index, query, top_k, filters, model, platform, query, system, llm_template
+ * multiple_retrieval: index, query, top_k, filters
+ * llm_model:  model, platform, query, system, llm_template
+ * multiple_retrieval_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_embeddings: index, query, top_k, filters, embedding_model (a single one)
+ * retrieve_embeddings_llm: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template
+ * retrieve_hybrid_scoring: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom
+ * retrieve_hybrid_scoring_llm:index, query, top_k, filters, embedding_model (a single one), rescoring_function , model, platform, query, system, llm_template
+ * retrieve_hybrid_scoring_rrf: index, query, top_k, filters, embedding_model (a single one), strategy_mode
+ * retrieve_hybrid_scoring_rrf_llm:index, query, top_k, filters, embedding_model (a single one), strategy_mode , model, platform, query, system, llm_template
+ * retrieve_sort_llm:index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template
+ * retrieve_merge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_fulldocument:index, query, top_k, filters
+ * retrieve_fulldoc_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_batchmerge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * expand_query_lang_llm: langs (list of languages to expand), index, query, model, platform, llm_template
+ * dalle: style, size, quality, model, query
 
 
 ### Compose actions template
