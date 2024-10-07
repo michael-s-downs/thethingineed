@@ -21,15 +21,23 @@ from common.genai_controllers import provider
 from common.services import GENAI_LLM_ENDPOINTS
 from common.errors.genaierrors import PrintableGenaiError
 
+SETTING_MODEL_MSG = "Setting model to use."
+
+MESSAGE_PROCESSED_MSG = "Message processed."
+
+PARSING_RESPONSE_MSG = "Parsing response."
+
+REQUEST_TIMED_OUT_MSG = "The request timed out."
+
 
 class Platform(ABC):
     MODEL_FORMAT = "Platform"
 
-    def __init__(self, aws_credentials, models_credentials, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
-        :param models_credentials: Models credentials
+        :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
 
@@ -37,12 +45,12 @@ class Platform(ABC):
         logger_handler = LoggerHandler(GENAI_LLM_ENDPOINTS, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
 
-        self.url: str = None
-        self.headers: dict = None
+        self.url = None
+        self.headers = None
         self.timeout = timeout
 
         self.aws_credentials = aws_credentials
-        self.models_credentials = models_credentials
+        self.models_urls = models_urls
 
     @abstractmethod
     def parse_response(self, answer: dict) -> dict:
@@ -50,6 +58,11 @@ class Platform(ABC):
 
         :param answer: Dict response by the endpoint
         :return: Validated response
+        """
+
+    @abstractmethod
+    def call_model(self, delta=0, max_retries=3) -> dict:
+        """ Method to send the query to the endpoint
         """
 
     @abstractmethod
@@ -70,15 +83,15 @@ class Platform(ABC):
 class GPTPlatform(Platform):
     MODEL_FORMAT = "GPTPlatform"
 
-    def __init__(self, aws_credentials, models_credentials, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
-        :param models_credentials: Models credentials
+        :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
 
-        super().__init__(aws_credentials, models_credentials, timeout)
+        super().__init__(aws_credentials, models_urls, timeout)
 
     def call_model(self, delta=0, max_retries=3) -> dict:
         """ Method to send the query to the endpoint
@@ -88,9 +101,10 @@ class GPTPlatform(Platform):
         :return: Endpoint response
         """
         try:
-            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {self.generativeModel.parse_data()}")
-            answer = requests.post(url=self.url, headers=self.headers,
-                                   data=self.generativeModel.parse_data(), timeout=self.timeout)
+            data_call = self.generativeModel.parse_data()
+            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
+
+            answer = requests.post(url=self.url, headers=self.headers, data=data_call, timeout=self.timeout)
 
             if delta < max_retries:
                 if answer.status_code == 429:
@@ -112,8 +126,8 @@ class GPTPlatform(Platform):
             return answer
 
         except requests.exceptions.Timeout:
-            self.logger.error(f"The request timed out.")
-            return {"error": "The request timed out.", "msg": "The request timed out.", "status_code": 408}
+            self.logger.error(REQUEST_TIMED_OUT_MSG)
+            return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}
@@ -125,14 +139,14 @@ class GPTPlatform(Platform):
 class OpenAIPlatform(GPTPlatform):
     MODEL_FORMAT = "openai"
 
-    def __init__(self, aws_credentials, models_credentials, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
-        :param models_credentials: Models credentials
+        :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_credentials, timeout)
+        super().__init__(aws_credentials, models_urls, timeout)
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -140,7 +154,7 @@ class OpenAIPlatform(GPTPlatform):
         :param answer: Dict response by the endpoint
         :return: Validated response
         """
-        self.logger.debug("Parsing response.")
+        self.logger.debug(PARSING_RESPONSE_MSG)
         if 'error' in answer and 'code' in answer['error'] and answer['error']['code'] == 400:
             return {"error": answer, "msg": str(answer['error']['message']), "status_code": answer['error']['code']}
         elif 'error' in answer and 'code' in answer['error'] and answer['error']['code'] == 'invalid_api_key':
@@ -159,7 +173,7 @@ class OpenAIPlatform(GPTPlatform):
                 answer = self.call_model()
                 self.logger.info(f"LLM response: {answer}.")
 
-        self.logger.info("Message processed.")
+        self.logger.info(MESSAGE_PROCESSED_MSG)
         return answer
 
     def build_url(self, generativeModel: GenerativeModel):
@@ -170,9 +184,9 @@ class OpenAIPlatform(GPTPlatform):
         """
         self.logger.debug("Building url.")
         if generativeModel.MODEL_MESSAGE == "chatGPT":
-            url = self.models_credentials.get('OPENAI_GPT_CHAT_URL')
+            url = self.models_urls.get('OPENAI_GPT_CHAT_URL')
         elif generativeModel.MODEL_MESSAGE == "promptGPT":
-            url = self.models_credentials.get('OPENAI_GPT_PROMPT_URL')
+            url = self.models_urls.get('OPENAI_GPT_PROMPT_URL')
         else:
             raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 
@@ -184,7 +198,7 @@ class OpenAIPlatform(GPTPlatform):
 
         :param generativeModel: Model used to make the query
         """
-        self.logger.debug("Setting model to use.")
+        self.logger.debug(SETTING_MODEL_MSG)
         super().set_model(generativeModel)
 
         self.headers = {'Authorization': "Bearer " + generativeModel.api_key, 'Content-Type': "application/json"}
@@ -194,14 +208,14 @@ class OpenAIPlatform(GPTPlatform):
 class AzurePlatform(GPTPlatform):
     MODEL_FORMAT = "azure"
 
-    def __init__(self, aws_credentials, models_credentials, timeout: int = 60):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 60):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
-        :param models_credentials: Models credentials
+        :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_credentials, timeout)
+        super().__init__(aws_credentials, models_urls, timeout)
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -209,7 +223,7 @@ class AzurePlatform(GPTPlatform):
         :param answer: Dict response by the endpoint
         :return: Validated response
         """
-        self.logger.debug("Parsing response.")
+        self.logger.debug(PARSING_RESPONSE_MSG)
         if 'error' in answer and 'code' in answer['error'] and answer['error']['code'] == '401':
             return {"error": answer, "msg": str(answer['error']['message']),
                     "status_code": int(answer['error']['code'])}
@@ -229,7 +243,7 @@ class AzurePlatform(GPTPlatform):
                 self.generativeModel.set_message(message)
                 answer = self.call_model()
                 self.logger.info(f"LLM response: {answer}.")
-        self.logger.info("Message processed.")
+        self.logger.info(MESSAGE_PROCESSED_MSG)
         return answer
 
     def build_url(self, generativeModel: GenerativeModel):
@@ -239,11 +253,11 @@ class AzurePlatform(GPTPlatform):
         """
         self.logger.debug("Building url.")
         if generativeModel.MODEL_MESSAGE in ["chatGPT", "chatGPT-v"]:
-            template = Template(self.models_credentials.get('AZURE_GPT_CHAT_URL'))
+            template = Template(self.models_urls.get('AZURE_GPT_CHAT_URL'))
         elif generativeModel.MODEL_MESSAGE == "promptGPT":
-            template = Template(self.models_credentials.get('AZURE_GPT_PROMPT_URL'))
+            template = Template(self.models_urls.get('AZURE_GPT_PROMPT_URL'))
         elif generativeModel.MODEL_MESSAGE == "dalle":
-            template = Template(self.models_credentials.get('AZURE_DALLE_URL'))
+            template = Template(self.models_urls.get('AZURE_DALLE_URL'))
         else:
             raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 
@@ -271,14 +285,14 @@ class AzurePlatform(GPTPlatform):
 class BedrockPlatform(Platform):
     MODEL_FORMAT = "bedrock"
 
-    def __init__(self, aws_credentials, models_credentials, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
-        :param models_credentials: Models credentials
+        :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_credentials, timeout)
+        super().__init__(aws_credentials, models_urls, timeout)
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -286,9 +300,9 @@ class BedrockPlatform(Platform):
         :param answer: Dict response by the endpoint
         :return: Validated response
         """
-        self.logger.debug("Parsing response.")
+        self.logger.debug(PARSING_RESPONSE_MSG)
         # TODO Parse response
-        self.logger.info("Message processed.")
+        self.logger.info(MESSAGE_PROCESSED_MSG)
         return answer
 
     def set_model(self, generativeModel: GenerativeModel):
@@ -296,7 +310,7 @@ class BedrockPlatform(Platform):
 
         :param generativeModel: Model used to make the query
         """
-        self.logger.debug("Setting model to use.")
+        self.logger.debug(SETTING_MODEL_MSG)
         super().set_model(generativeModel)
 
     def call_model(self, delta=0, max_retries=3) -> dict:
@@ -307,22 +321,23 @@ class BedrockPlatform(Platform):
         :return: Endpoint response
         """
         try:
-            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {self.generativeModel.parse_data()}")
+            data_call = self.generativeModel.parse_data()
+            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
             if provider == "azure":
                 bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone,
                                        aws_access_key_id=self.aws_credentials['access_key'],
                                        aws_secret_access_key=self.aws_credentials['secret_key'])
             else:
                 bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone)
-            answer = bedrock.invoke_model(body=self.generativeModel.parse_data(),
+            answer = bedrock.invoke_model(body=data_call,
                                           modelId=self.generativeModel.model_id)
             self.logger.info(f"LLM response: {answer}.")
             answer = self.parse_response(answer)
             return answer
 
         except requests.exceptions.Timeout:
-            self.logger.error(f"The request timed out.")
-            return {"error": "The request timed out.", "msg": "The request timed out.", "status_code": 408}
+            self.logger.error(REQUEST_TIMED_OUT_MSG)
+            return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}

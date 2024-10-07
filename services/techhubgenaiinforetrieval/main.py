@@ -30,10 +30,11 @@ from common.genai_json_parser import *
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir import get_connector, get_embed_model
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
-from common.indexing.loaders import ManagerLoader
+from common.storage_manager import ManagerStorage
 from common.indexing.parsers import ManagerParser, ParserInforetrieval
 from common.indexing.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
+from common.utils import get_models
 
 
 class InfoRetrievalDeployment(BaseDeployment):
@@ -53,7 +54,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         try:
             self.origin = storage_containers.get('origin')
             self.workspace = storage_containers.get('workspace')
-            file_loader = ManagerLoader().get_file_storage(
+            file_loader = ManagerStorage().get_file_storage(
                 {"type": "IRStorage", "workspace": self.workspace, "origin": self.origin})
 
             self.available_pools = file_loader.get_available_pools()
@@ -437,33 +438,16 @@ def get_documents_filenames() -> Tuple[Dict, int]:
 
 
 @app.route('/get_models', methods=['GET'])
-def get_available_models() -> Tuple[str, int]:
+def get_available_models() -> Tuple[Dict, int]:
+    deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) > 1:
-        return json.dumps({"status": "error", "error_message":
-            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'embedding_model' param", "status_code": 400}), 400
-    if dat.get("platform"):
-        models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get("platform") == dat["platform"]:
-                models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": models, "pools": list(set(pools))}, "status_code": 200}), 200
-    elif dat.get("pool"):
-        return json.dumps({"status": "ok", "models": deploy.available_pools.get(dat["pool"], []), "status_code": 200}), 200
-    elif dat.get("embedding_model") or dat.get("zone"):
-        key = "embedding_model" if dat.get("embedding_model") else "zone"
-        response_models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get(key) == dat[key]:
-                response_models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": response_models, "pools": list(set(pools))}, "status_code": 200}), 200
-    else:
-        return json.dumps({"status": "error", "error_message": "You must provide a 'platform', 'pool', 'zone' or 'embedding_model' param", "status_code": 400}), 400
-
+    if len(dat) != 1 or list(dat.items())[0][0] not in ['platform', 'pool', 'zone', 'embedding_model']:
+        return {"status": "error", "error_message":
+            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'model_type' param", "status_code": 400}, 400
+    key, value = list(dat.items())[0]
+    models, pools = get_models(deploy.available_models, deploy.available_pools, key, value)
+    return {"status": "ok", "result":
+        {"models": models, "pools": list(set(pools)) if pools else []}, "status_code": 200}, 200
 
 
 
