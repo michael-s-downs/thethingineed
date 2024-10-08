@@ -175,7 +175,7 @@ class QueryMetadata(BaseModel):
     def validate_max_characters_dalle(self):
         if self.model_type == "dalle3":
             if len(self.query + str(self.persistence)) > 4000:
-                raise ValueError("Error, in dalle3 the maximum number of characters in the prompt is 4000")
+                raise ValueError("Error, in dalle3 the maximum number of characters in the prompt is 4000 (query + persistence is longer)")
 
 
 class LLMMetadata(BaseModel):
