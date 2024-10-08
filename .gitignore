@@ -5,3 +5,4 @@
 .terraform.lock.hcl
 services/models
 services/vector-storage
+secrets
