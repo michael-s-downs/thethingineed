@@ -15,6 +15,7 @@
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
 - genai-compose:
+    - [Improvement] Config model param for action expansion query by lang
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
     - [Fix] Fix models from default templates
 
