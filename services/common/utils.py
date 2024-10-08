@@ -114,3 +114,37 @@ def get_error_word_from_exception(ex, json_string) -> str:
         error_param.append(json_string[i])
     error_param = "".join(error_param)
     return error_param
+
+def get_models(available_models, available_pools, key, value):
+    """ Get the LLM or embedding models filtered by key from the available models
+
+    :param available_models: Available models
+    :param available_pools: Available pools
+    :param key: Key to get the models from
+    :return: dict - Models
+    """
+
+    if isinstance(available_models, dict):
+        aux_available_models = available_models.copy()
+        available_models = []
+        for platform, models in aux_available_models.items():
+            for model in models:
+                available_models.append({**model, 'platform': platform})
+    if key == "pool":
+        models = []
+        for model in available_pools.get(value, []):
+            if isinstance(model, dict):
+                models.append(model.get("model"))
+            else:
+                models.append(model)
+        return models, None
+    elif key in ["embedding_model", "platform", "zone", "model_type"]:
+        models = []
+        pools = []
+        for model in available_models:
+            if model.get(key) == value:
+                models.append(model.get("model") if model.get('model') else model.get('embedding_model_name'))
+                pools.extend(model.get("model_pool", []))
+        return models, pools
+    else:
+        raise ValueError(f"Key {key} not supported.")

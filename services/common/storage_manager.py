@@ -6,18 +6,19 @@ from abc import ABC
 from typing import List
 import json
 import os
+import time
 
 # Installed imports
 import pandas as pd
 
 # Custom imports
-from common.genai_controllers import load_file, get_dataset, list_files
+from common.genai_controllers import load_file, get_dataset, list_files, upload_object, delete_file
 from common.logging_handler import LoggerHandler
 from common.errors.genaierrors import PrintableGenaiError
 
 
-class DocumentLoader(ABC):
-    MODEL_FORMAT = "DocumentLoader"
+class BaseStorageManager(ABC):
+    MODEL_FORMAT = "BaseStorageManager"
 
     def __init__(self, workspace, origin):
         logger_handler = LoggerHandler(self.MODEL_FORMAT, level=os.environ.get('LOG_LEVEL', "INFO"))
@@ -79,7 +80,22 @@ class DocumentLoader(ABC):
         """
         return model_type == cls.MODEL_FORMAT
 
-class LLMStorageLoader(DocumentLoader):
+    def upload_template(self, dat: dict):
+        """ Uploads a template to the storage
+
+        :param dat: dict with the template name and content
+        """
+        pass
+
+    def delete_template(self, dat: dict):
+        """ Delete a template from the storage
+
+        :param dat: dict with the template name
+        """
+        pass
+
+
+class LLMStorageManager(BaseStorageManager):
     MODEL_FORMAT = "LLMStorage"
 
     def __init__(self, workspace, origin):
@@ -136,8 +152,42 @@ class LLMStorageLoader(DocumentLoader):
 
         return templates, list(templates.keys())
 
+    def upload_template(self, dat: dict):
+        try:
+            template_name = dat['name']
+            content = dat['content']
 
-class IRStorageLoader(DocumentLoader):
+            upload_object(self.workspace, content, self.prompts_path + template_name + ".json")
+            time.sleep(0.5)
+            response = {"status": "finished", "result": "Request finished", "status_code": 200}
+
+        except KeyError as ex:
+            response = {"status": "error", "error_message": f"Error parsing Input, Key: 'name' or 'content' not found",
+                        "status_code": 404}
+            self.logger.error(response)
+        except Exception as ex:
+            response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}","status_code": 500}
+            self.logger.error(f"Error uploading prompt file. {ex}")
+        return response
+
+    def delete_template(self, dat: dict):
+        try:
+            template_name = dat['name']
+            delete_file(self.workspace, self.prompts_path + template_name + ".json")
+            time.sleep(0.5)
+            response = {"status": "finished", "result": "Request finished", "status_code": 200}
+
+        except KeyError as ex:
+            response = {"status": "error", "error_message": f"Error parsing Input, Key: 'name' or 'content' not found",
+                        "status_code": 404}
+            self.logger.error(response)
+        except Exception as ex:
+            response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}","status_code": 500}
+            self.logger.error(f"Error uploading prompt file. {ex}")
+        return response
+
+
+class IRStorageManager(BaseStorageManager):
     MODEL_FORMAT = "IRStorage"
 
     def __init__(self, workspace, origin):
@@ -180,7 +230,7 @@ class IRStorageLoader(DocumentLoader):
                             if not embedding_model_name in available_pools[key][embedding_model][pool]:
                                 (available_pools[key][embedding_model][pool].append(embedding_model_name))
             if len(available_pools) == 0:
-                raise PrintableGenaiError(400, f"Pools were not loaded, maybe the models_config.json is wrong")
+                raise PrintableGenaiError(400, "Pools were not loaded, maybe the models_config.json is wrong")
             return available_pools
 
     def get_available_pools(self):
@@ -198,7 +248,7 @@ class IRStorageLoader(DocumentLoader):
                             available_pools[pool] = set()
                         available_pools[pool].add(model_name)
             if len(available_pools) == 0:
-                raise PrintableGenaiError(400, f"Pools were not loaded, maybe the models_config.json is wrong")
+                raise PrintableGenaiError(400, "Pools were not loaded, maybe the models_config.json is wrong")
             # Convert the set in lists
             for key, value in available_pools.items():
                 available_pools[key] = list(value)
@@ -332,22 +382,22 @@ class IRStorageLoader(DocumentLoader):
         return metadata
 
 
-class ManagerLoader(object):
-    MODEL_TYPES = [IRStorageLoader, LLMStorageLoader]
+class ManagerStorage(object):
+    MODEL_TYPES = [IRStorageManager, LLMStorageManager]
 
     @staticmethod
-    def get_file_storage(conf: dict) -> DocumentLoader:
+    def get_file_storage(conf: dict) -> BaseStorageManager:
         """ Method to instantiate the document loader class: [IRStorage, LLMStorage]
 
         :param conf: Loader configuration. Example:  {"type":"IRStorage"}
         """
-        for loader in ManagerLoader.MODEL_TYPES:
+        for loader in ManagerStorage.MODEL_TYPES:
             loader_type = conf.get('type')
             if loader.is_platform_type(loader_type):
                 conf.pop('type')
                 return loader(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerLoader.get_possible_platforms()}")
+                         f"Possible values: {ManagerStorage.get_possible_platforms()}")
 
     @staticmethod
     def get_possible_platforms() -> List:
@@ -355,4 +405,4 @@ class ManagerLoader(object):
 
         :param conf: Model configuration. Example:  {"type":"IRStorage"}
         """
-        return [store.MODEL_FORMAT for store in ManagerLoader.MODEL_TYPES]
+        return [store.MODEL_FORMAT for store in ManagerStorage.MODEL_TYPES]

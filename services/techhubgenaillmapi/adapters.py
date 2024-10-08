@@ -140,8 +140,6 @@ class GPT4VAdapter(BaseAdapter):
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(content, "utf-8"))))
             except:
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
-        else:
-            raise PrintableGenaiError(400, "Image must be one in [image_url, image_b64] and match the content with the type")
 
         if image['image'].get('detail') == "low":
             return 85
@@ -235,6 +233,9 @@ class Claude3Adapter(BaseAdapter):
         :param image: Image to get tokens from
         :return: int - Number of tokens
         """
+        if image['image'].get('detail'):
+            raise PrintableGenaiError(400, "Detail parameter not allowed in Claude vision model")
+
         if image['type'] == "image_url":
             try:
                 downloaded_img = requests.get(image['image']['url']).content
@@ -248,8 +249,6 @@ class Claude3Adapter(BaseAdapter):
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(base64_str, "utf-8"))))
             except:
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
-        else:
-            raise PrintableGenaiError(400, "Image type must be one in [image_url, image_b64] and match the content with the type")
 
         #TODO - Check what are they doing with image tokens calculation (this way appears in the api)
         width, height = self.resize_image(img.width, img.height, 1568, 1568)
