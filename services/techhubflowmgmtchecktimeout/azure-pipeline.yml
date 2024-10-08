@@ -15,7 +15,7 @@ trigger:
 
 variables:
 - group: Variables para CI
-- group: Images base params
+- group: Params Python
 - group: RegistryVariables
 
 - name: serviceName
@@ -25,7 +25,7 @@ variables:
 - name:  vmImageName
   value: 'ubuntu-20.04'
 - name:  pythonVersion
-  value: '3.8'
+  value: '$(python_version)'
 - name:  baseImage
   value: '$(default_base)'
 - name:  registryServerName
