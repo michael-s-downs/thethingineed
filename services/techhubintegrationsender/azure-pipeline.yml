@@ -14,7 +14,7 @@ trigger:
     - 'helm/'
 variables:
 - group: Variables para CI
-- group: Images base params
+- group: Params Python
 - group: RegistryVariables
 
 - name: serviceName
