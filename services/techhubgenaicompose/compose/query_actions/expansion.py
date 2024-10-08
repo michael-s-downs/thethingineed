@@ -136,6 +136,8 @@ class LangExpansion(ExpansionMethod):
         if langs is None or len(langs) == 0:
             langs = ["en", "es"]
         
+        translate_model = params.get("model")
+        
         if not isinstance(langs, list):
             raise PrintableGenaiError(500, "Param <langs> is not a list")
 
@@ -144,6 +146,8 @@ class LangExpansion(ExpansionMethod):
             lang = self.parse_lang(lang)
             TRANSLATE_QUERY = f"Sentence: {self.query} \n Language: {lang}"
             TRANSLATE_TEMPLATE["query_metadata"]["query"] = TRANSLATE_QUERY
+            if translate_model is not None:
+                TRANSLATE_TEMPLATE["llm_metadata"]["model"] = translate_model
             templates.append(deepcopy(TRANSLATE_TEMPLATE))
 
         loop = asyncio.new_event_loop()
