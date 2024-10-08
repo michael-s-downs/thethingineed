@@ -12,7 +12,7 @@ llama-index-vector-stores-elasticsearch==0.2.0
 llama-index==0.10.41
 llama-index-embeddings-huggingface==0.2.1
 
-Flask==1.1.2
-Jinja2==3.0.3
-itsdangerous==2.0.1
-Werkzeug==0.16.1
+Flask==3.0.3
+Jinja2==3.1.4
+itsdangerous==2.2.0
+Werkzeug==3.0.4
