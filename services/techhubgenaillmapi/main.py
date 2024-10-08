@@ -618,4 +618,4 @@ if __name__ == "__main__":
     if QUEUE_MODE:
         deploy.async_deployment()
     else:
-        app.run(host="0.0.0.0", debug=False, port=8888)
+        app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)
