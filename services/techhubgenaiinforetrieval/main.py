@@ -543,4 +543,4 @@ def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dic
                 {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=8888)
+    app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)
