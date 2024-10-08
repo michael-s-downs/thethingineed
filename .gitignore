@@ -6,3 +6,4 @@
 services/models
 services/vector-storage
 secrets
+.env
