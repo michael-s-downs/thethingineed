@@ -17,6 +17,10 @@ from integration_base import *
 # Global vars
 app = Flask(__name__)
 
+with app.app_context():
+    logger.info(f"---- Loading custom files ({os.getenv('INTEGRATION_NAME').upper()})")
+    load_custom_files()
+
 
 @app.route('/process', methods=['POST'])
 def process() -> str:
@@ -68,14 +72,6 @@ def reloadconfig() -> str:
     logger.info(f"---- Reloading custom files ({os.getenv('INTEGRATION_NAME').upper()})")
     load_custom_files()
     return json.dumps({'status': "ok"})
-
-@app.before_first_request
-def startup():
-    """ Logics to do only the first time
-    """
-    logger.info(f"---- Loading custom files ({os.getenv('INTEGRATION_NAME').upper()})")
-    load_custom_files()
-
 
 if __name__ == '__main__':
     logger.info(f"---- Launching service ({'NON ' if not requests_manager.storage_delete_request else ''}DELETE MODE)")
