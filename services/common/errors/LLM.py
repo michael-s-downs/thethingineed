@@ -40,10 +40,10 @@ class LLMParser():
         elif status_code == 404:
             raise PrintableGenaiError(status_code, "Deployed model is not available, check if the url is correct, otherwise please reach out to your administrator")
         elif status_code == 500:
-            raise GenaiError(status_code, error_message)
+            raise GenaiError(status_code, f"Internal server error {error_message}")
         else:
             self.logger.warning(f"Error not implemented for status code {status_code}")
-            raise GenaiError(status_code, error_message)
+            raise GenaiError(status_code, f"Error not implemented for: {error_message}")
 
     def parse_response(self, r):
         """Parse response from LLM API returning the result if successful, otherwise raise an error
