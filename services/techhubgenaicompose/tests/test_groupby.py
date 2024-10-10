@@ -51,6 +51,15 @@ class TestGroupByDoc:
         ):
             groupby.process({"desc": True, "method": "invalid"})
 
+    def test_groupby_doc_no_params(self, mock_streamlist):
+        """Test the GroupByDoc process method with no params (default values)."""
+        groupby = GroupByDoc(mock_streamlist)
+        result = groupby.process(None)
+
+        assert result[0].get("document_id") == "doc1"
+        assert result[1].get("document_id") == "doc1"
+        assert result[2].get("document_id") == "doc2"
+
 
 class TestGroupByDate:
     def test_groupby_date(self, mock_streamlist):
@@ -60,6 +69,14 @@ class TestGroupByDate:
 
         assert result[0].get("date") == "2023-10-09"
         assert result[2].get("date") == "2023-10-10"
+
+    def test_groupby_date_no_params(self, mock_streamlist):
+        """Test the GroupByDate process method with no params (default values)."""
+        groupby = GroupByDate(mock_streamlist)
+        result = groupby.process(None)
+
+        assert result[0].get("date") == "2023-10-10"
+        assert result[2].get("date") == "2023-10-09"
 
 
 class TestGroupByFactory:
