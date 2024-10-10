@@ -1,3 +1,5 @@
+### This code is property of the GGAO ###
+
 import pytest 
 
 from statistics import mean 
@@ -15,7 +17,7 @@ def test_stream_chunk_initialization():
 
         "content": "Test content", 
 
-        "meta": {"author": "John Doe"}, 
+        "meta": {"author": "Fernando Alonso"}, 
 
         "scores": {"accuracy": 0.8, "relevance": 0.9}, 
 
@@ -31,7 +33,7 @@ def test_stream_chunk_initialization():
 
     assert chunk.content == "Test content" 
 
-    assert chunk.meta == {"author": "John Doe"} 
+    assert chunk.meta == {"author": "Fernando Alonso"} 
 
     assert chunk.scores == {"accuracy": 0.8, "relevance": 0.9} 
 
@@ -59,7 +61,7 @@ def test_get_metadata():
 
     response_dict = { 
 
-        "meta": {"author": "John Doe", "length": "short"} 
+        "meta": {"author": "Fernando Alonso", "length": "short"} 
 
     } 
 
@@ -67,7 +69,7 @@ def test_get_metadata():
 
       
 
-    assert chunk.get_metadata("author") == "John Doe" 
+    assert chunk.get_metadata("author") == "Fernando Alonso" 
 
       
 
@@ -83,7 +85,7 @@ def test_get():
 
         "content": "Test content", 
 
-        "meta": {"author": "John Doe"}, 
+        "meta": {"author": "Fernando Alonso"}, 
 
         "scores": {"accuracy": 0.8, "relevance": 0.9}, 
 
@@ -99,7 +101,7 @@ def test_get():
 
     assert chunk.get("answer") == "Test answer" 
 
-    assert chunk.get("metadata") == {"author": "John Doe"} 
+    assert chunk.get("metadata") == {"author": "Fernando Alonso"} 
 
     assert chunk.get("scores") == {"accuracy": 0.8, "relevance": 0.9} 
 

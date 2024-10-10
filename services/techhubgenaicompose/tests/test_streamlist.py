@@ -1,3 +1,5 @@
+### This code is property of the GGAO ###
+
 import pytest
 from compose.streamlist import StreamList
 from compose.streamchunk import StreamChunk
@@ -11,7 +13,7 @@ def stream_chunk():
         "content": "This is a test chunk",
         "meta": {"source": "test_source", "id": 1},
         "scores": {"relevance": 0.9, "accuracy": 0.8},
-        "answer": "This is an answer"
+        "answer": "Example answer 123"
     })
 
 @pytest.fixture
@@ -43,6 +45,32 @@ def test_delitem(stream_list, stream_chunk):
     stream_list.append(stream_chunk)
     del stream_list[0]
     assert len(stream_list) == 0
+
+def test_str_method(stream_list, stream_chunk):
+    stream_list.append(stream_chunk)
+    # Test if __str__ returns the expected string representation
+    expected_str = str([stream_chunk])
+    assert str(stream_list) == expected_str
+
+def test_repr_method(stream_list, stream_chunk):
+    stream_list.append(stream_chunk)
+    # Test if __repr__ returns the expected string representation (same as __str__)
+    expected_repr = str([stream_chunk])
+    assert repr(stream_list) == expected_repr
+
+def test_iter_method(stream_list, stream_chunk):
+    stream_list.append(stream_chunk)
+    stream_list.append(StreamChunk({
+        "content": "Second chunk",
+        "meta": {},
+        "scores": {},
+        "answer": "Second answer"
+    }))
+    
+    # Collecting elements via iteration
+    iterated_elements = [chunk for chunk in stream_list]
+
+    assert iterated_elements == stream_list.to_list()
 
 def test_setitem_valid(stream_list, stream_chunk):
     stream_list.append(stream_chunk)
