@@ -383,7 +383,6 @@ The output can be changed passing in the requests some attribute values:
       "models": [
             "techhubinc-ada-002-australiaeast",
             "techhubinc-ada-002-brazilsouth",
-            "techhubinc-ada-002-canadaeast",
             "techhubinc-ada-3-large-canadaeast",
             "techhubinc-ada-3-small-canadaeast",
             "techhubinc-ada-002-eastus",
