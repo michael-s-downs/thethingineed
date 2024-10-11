@@ -11,7 +11,7 @@ from common.errors.LLM import LLMParser
 def params():
     return {
         "headers": {"Authorization": "Bearer dummy_token"},
-        "langs": ["en", "es"]
+        "langs": ["en", "espanol"]
     }
 
 @pytest.fixture
