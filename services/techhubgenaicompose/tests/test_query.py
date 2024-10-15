@@ -1,9 +1,10 @@
+### This code is property of the GGAO ###
+
 import pytest
 from unittest.mock import MagicMock, patch
 from compose.query import expansion
 from common.errors.genaierrors import PrintableGenaiError
 
-### This code is property of the GGAO ###
 
 @pytest.mark.asyncio(loop_scope="session")
 @patch('compose.query.ExpansionFactory')

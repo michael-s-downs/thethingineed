@@ -1,3 +1,5 @@
+### This code is property of the GGAO ###
+
 import pytest
 from compose.actions.rescore import (
     # RescoreMethod,
