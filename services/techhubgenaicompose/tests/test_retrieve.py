@@ -9,7 +9,6 @@ from compose.actions.retrieve import (
 import json
 from common.errors.genaierrors import PrintableGenaiError
 from unittest.mock import patch, MagicMock
-# from typing import Dict, List
 
 
 @pytest.fixture
@@ -53,22 +52,25 @@ def documents_params():
 
 class RetrieveMethodTest(RetrieveMethod):
     def process(self):
-        return []
+        super().process()
 
     def _get_example(self):
         return super()._get_example()
 
 
 class TestRetrieveMethod:
+    # Test that an attempt to instantiate the abstract RetrieveMethod class raises a TypeError
     def test_retrieve_method_subclass(self):
         with pytest.raises(TypeError):
             RetrieveMethod(params={})
 
+    # Test that the process method in the RetrieveMethodTest returns None
     def test_retrieve_method_process(self):
-        retrieve_method = RetrieveMethod(params={})
+        retrieve_method = RetrieveMethodTest(params={})
         result = retrieve_method.process()
         assert result is None
 
+    # Test that the _get_example method returns an empty dictionary
     def test_retrieve_method_get_example(self):
         retrieve_method = RetrieveMethodTest(params={})
         result = retrieve_method._get_example()
@@ -76,11 +78,13 @@ class TestRetrieveMethod:
 
 
 class TestDoNothing:
+    # Test that the DoNothing class returns the original streamlist
     def test_do_nothing(self, streamlist_params):
         do_nothing = DoNothing(streamlist_params)
         result = do_nothing.process()
         assert result == streamlist_params["streamlist"]
 
+    # Test that the get_example method returns the correct example type
     def test_do_nothing_get_example(self):
         do_nothing = DoNothing({})
         example = json.loads(do_nothing.get_example())
@@ -89,6 +93,7 @@ class TestDoNothing:
 
 class TestChunksRetriever:
     @patch("requests.post")
+    # Test that the ChunksRetriever processes a valid request and returns the expected document
     def test_chunks_retriever(self, mock_post, chunks_params):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -115,6 +120,7 @@ class TestChunksRetriever:
         assert result[0]["answer"] == "example answer"
 
     @patch("requests.post")
+    # Test that the ChunksRetriever raises an error when the query is empty
     def test_chunks_retriever_empty_query(self, mock_post, chunks_params):
         chunks_params["generic"]["index_conf"]["query"] = ""
         chunks_retriever = ChunksRetriever(chunks_params)
@@ -125,12 +131,14 @@ class TestChunksRetriever:
         assert excinfo.value.status_code == 400
         assert "Query is empty" in str(excinfo.value)
 
+    # Test that the get_example method returns the correct example type for chunks retriever
     def test_chunks_retriever_get_example(self):
         chunks_retriever = ChunksRetriever({})
         example = json.loads(chunks_retriever.get_example())
         assert example["type"] == "get_chunks"
 
     @patch("requests.post")
+    # Test that the ChunksRetriever raises an error when the query is missing
     def test_chunks_retriever_missing_query(self, mock_post, chunks_params):
         del chunks_params["generic"]["index_conf"]["query"]
         chunks_retriever = ChunksRetriever(chunks_params)
@@ -142,6 +150,7 @@ class TestChunksRetriever:
         assert "Query not found in the template" in str(excinfo.value)
 
     @patch("requests.post")
+    # Test that the ChunksRetriever raises an error on HTTP request failure
     def test_chunks_retriever_http_error(self, mock_post, chunks_params):
         mock_response = MagicMock()
         mock_response.status_code = 500
@@ -157,6 +166,7 @@ class TestChunksRetriever:
         assert "Error from genai-inforetrieval: b'Server Error'" in str(excinfo.value)
 
     @patch("requests.post")
+    # Test that the ChunksRetriever raises an error when no documents are found
     def test_chunks_retriever_no_documents(self, mock_post, chunks_params):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -174,6 +184,7 @@ class TestChunksRetriever:
 
 class TestDocumentsRetriever:
     @patch("requests.post")
+    # Test that the DocumentsRetriever processes a valid request and returns the expected documents
     def test_documents_retriever(self, mock_post, documents_params):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -196,6 +207,7 @@ class TestDocumentsRetriever:
         assert result[0]["meta"] == {"field1": "value1"}
 
     @patch("requests.post")
+    # Test that the DocumentsRetriever raises an error on HTTP request failure
     def test_documents_retriever_http_error(self, mock_post, documents_params):
         mock_response = MagicMock()
         mock_response.status_code = 500
@@ -210,6 +222,7 @@ class TestDocumentsRetriever:
         assert excinfo.value.status_code == 500
         assert "Error from Retrieval: b'Server Error'" in str(excinfo.value)
 
+    # Test that the get_example method returns the correct example type for documents retriever
     def test_documents_retriever_get_example(self):
         documents_retriever = DocumentsRetriever({})
         example = json.loads(documents_retriever.get_example())
@@ -217,11 +230,13 @@ class TestDocumentsRetriever:
 
 
 class TestRetrieverFactory:
+    # Test that the RetrieverFactory creates a DoNothing retriever and returns the original streamlist
     def test_retriever_factory_do_nothing(self, streamlist_params):
         factory = RetrieverFactory("streamlist")
         result = factory.process(streamlist_params)
         assert result == streamlist_params["streamlist"]
 
+    # Test that the RetrieverFactory creates a ChunksRetriever and processes it correctly
     def test_retriever_factory_chunks(self, chunks_params):
         factory = RetrieverFactory("get_chunks")
         with patch.object(
@@ -230,6 +245,7 @@ class TestRetrieverFactory:
             result = factory.process(chunks_params)
             assert result == "mock_chunks_result"
 
+    # Test that the RetrieverFactory creates a DocumentsRetriever and processes it correctly
     def test_retriever_factory_documents(self, documents_params):
         factory = RetrieverFactory("get_documents")
         with patch.object(
@@ -238,6 +254,7 @@ class TestRetrieverFactory:
             result = factory.process(documents_params)
             assert result == "mock_documents_result"
 
+    # Test that the RetrieverFactory raises an error for an invalid retriever type
     def test_retriever_factory_invalid_type(self):
         with pytest.raises(PrintableGenaiError) as excinfo:
             RetrieverFactory("invalid_type")
