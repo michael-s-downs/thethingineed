@@ -7,6 +7,7 @@ from compose.actions.rescore import (
 )
 from unittest.mock import patch
 from common.errors.genaierrors import PrintableGenaiError
+import json
 
 
 class MockStream:
@@ -64,6 +65,22 @@ class TestGenaiRescorer:
         rescore = GenaiRescorer(streamlist)
         doc_ids = list(rescore.get_document_ids())
         assert doc_ids == ["id1", "id2"]
+
+    def test_process_request_failed(self, streamlist):
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 500
+            mock_post.return_value.content = b"Error"
+            rescore = GenaiRescorer(streamlist)
+            with pytest.raises(PrintableGenaiError, match="Error"):
+                rescore.process(params={})
+
+    def test_get_example(self):
+        rescore = GenaiRescorer([])
+        example = rescore.get_example()
+        assert (
+            example
+            == '{"type": "genai", "params": ' + json.dumps(rescore.TEMPLATE) + "}"
+        )
 
 
 class TestRescoreFactory:
