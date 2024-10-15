@@ -45,7 +45,6 @@ def _split_sentences(text: str, language_name="english") -> List[str]:
     sentences = sentence_tokenizer.tokenize(text)
     return sentences
 
-
 def split_by_word_respecting_sent_boundary(text: str, split_length: int, split_overlap: int, language="english") -> Tuple[List[str], List[int], List[int]]:
     """
     Splits the text into parts of split_length words while respecting sentence boundaries.

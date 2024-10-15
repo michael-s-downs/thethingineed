@@ -77,9 +77,6 @@ class PersistManager(AbstractManager):
             if action['action'] == 'summarize' or action['action'] == 'llm_action':
                 action['action_params']['params']['session_id'] = session_id
 
-        if reformulated:
-            return template
-        
         max_persistence = self.get_param(self.params, "max_persistence", int)
 
         # Initialize PD to fix the max_persistence

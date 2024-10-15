@@ -1,4 +1,6 @@
-# test_expansion.py
+### This code is property of the GGAO ###
+
+
 import pytest
 import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -11,7 +13,7 @@ from common.errors.LLM import LLMParser
 def params():
     return {
         "headers": {"Authorization": "Bearer dummy_token"},
-        "langs": ["en", "es"]
+        "langs": ["en", "espanol"]
     }
 
 @pytest.fixture
