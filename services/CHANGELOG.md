@@ -2,7 +2,8 @@
 
 
 # Changelog
-## vXX ()
+
+## vXX (XXXX-XX-XX)
 - genai-llmapi
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
