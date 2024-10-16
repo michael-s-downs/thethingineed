@@ -166,7 +166,7 @@ class LLMDeployment(BaseDeployment):
 
         try:
             # Adaptations for queue case
-            json_input = adapt_input_queue(self.logger, json_input)
+            json_input = adapt_input_queue(json_input)
 
             # Parse and check input
             query_metadata, model, platform, report_url = self.parse_input(json_input)
@@ -195,8 +195,8 @@ class LLMDeployment(BaseDeployment):
                                 reporting_type.upper())
 
         except ValidationError as ex:
-            self.logger.error(f"[Process] Error parsing JSON. Error: {ex}.", exc_info=exc_info)
             result = self.get_validation_error_response(ex.errors()[0])
+            self.logger.error(f"[Process] {result['error_message']}.", exc_info=exc_info)
         except ValueError as ex:
             self.logger.error(f"[Process] Error parsing JSON. Error: {ex}.", exc_info=exc_info)
             result = {'status': 'error', 'error_message': str(ex), 'status_code': 400}
@@ -206,8 +206,8 @@ class LLMDeployment(BaseDeployment):
         except Exception as ex:
             self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
             raise ex
-        finally:
-            return ResponseObject(**result).get_response_predict()
+
+        return ResponseObject(**result).get_response_predict()
 
 
 app = Flask(__name__)

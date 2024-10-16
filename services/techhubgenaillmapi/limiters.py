@@ -100,7 +100,7 @@ class QueryLimiter(ABC):
         """
         self.logger.info("Proceding without persistence")
         if self._get_num_images(self.message.substituted_query) > self.max_images:
-            raise PrintableGenaiError(400, "Too many images in request. Max is 10.")
+            raise PrintableGenaiError(400, f"Too many images in request. Max is {self.max_images}.")
         tokens_api_call = self._get_n_tokens(self.message.substituted_query)
         max_tokens_with_bag = self.max_tokens - self.bag_tokens
         if tokens_api_call > max_tokens_with_bag and self.message.context:
@@ -211,7 +211,7 @@ class ManagerQueryLimiter(object):
             if querylimiter.is_limiter_type(querylimiter_type):
                 conf.pop('querylimiter')
                 return querylimiter(**conf)
-        raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
+        raise PrintableGenaiError(400, f"QueryLimiter type doesnt exist {conf}. "
                          f"Possible values: {ManagerQueryLimiter.get_possible_querylimiters()}")
 
     @staticmethod
