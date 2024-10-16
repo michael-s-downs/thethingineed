@@ -1,14 +1,11 @@
 ### This code is property of the GGAO ###
 
 
-from compose.streambatch import StreamBatch
-from compose.streamlist import StreamList
 from basemanager import AbstractManager
 import json
 import re
 import copy
 from string import Template
-
 
 class ActionsManager(AbstractManager):
     def __init__(self, compose_confs, params):
@@ -52,8 +49,7 @@ class ActionsManager(AbstractManager):
             self.actions_confs = [self.safe_substitute(action, self.params, clear_quotes) for action in
                                   self.compose_confs]
 
-        self.llm_summarize_retrocompatible()
-        self.check_summarize_params()
+        self.check_llm_action_params()
 
         self.logger.debug(f"Actions parsed: {self.actions_confs}")
         if sum(1 for a in self.actions_confs if a.get('action') == 'retrieve') < 1:
@@ -94,8 +90,6 @@ class ActionsManager(AbstractManager):
             self.logger.debug("[Process ] Search topic appears in template_params")
 
             template_dict['action_params']['params']['generic']['index_conf']['query'] = template_params['search_topic']
-            if 'top_k' not in template_dict['action_params']['params']['generic']['index_conf']:
-                template_dict['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
 
             self.logger.debug(f"Busqueda para retrieval: {template_params['search_topic']}")
         query = template_dict['action_params']['params']['generic']['index_conf']['query']
@@ -104,8 +98,6 @@ class ActionsManager(AbstractManager):
             search_topic = query.split('based on')[1].strip()
             search_topic = search_topic.replace('"', '').replace("'", "").replace('.', '')
             template_dict['action_params']['params']['generic']['index_conf']['query'] = search_topic
-        elif 'top_k' not in template_params['action_params']['params']['generic']['index_conf']:
-            template_dict['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
 
         self.logger.info("Busqueda para retrieval: %s",
                          template_dict['action_params']['params']['generic']['index_conf']['query'])
@@ -115,14 +107,10 @@ class ActionsManager(AbstractManager):
         self.logger.info("[Process ] Template ready for retrieval")
         return template_dict
 
-    def llm_summarize_retrocompatible(self):
-        for action in self.actions_confs:
-            if action['action'] == "summarize":
-                action['action'] = "llm_action"
 
-    def check_summarize_params(self):
+    def check_llm_action_params(self):
         for action in self.actions_confs:
-            if action['action'] == "summarize":
+            if action['action'] == "llm_action":
                 action_params = action['action_params']
                 if action_params.get("params") is not None:
                     query_metadata = action_params['params'].get('query_metadata')

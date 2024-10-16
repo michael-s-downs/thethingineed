@@ -1,3 +1,4 @@
+### This code is property of the GGAO ###
 
 import pytest
 from compose.streamlist import StreamList, StreamChunk

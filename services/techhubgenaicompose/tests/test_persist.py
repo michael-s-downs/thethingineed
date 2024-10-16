@@ -69,7 +69,7 @@ def test_persist_manager_run(persist_manager):
 
 def test_persist_manager_run_no_chat_type(persist_manager):
     persist_manager.type = "not_chat"
-    template = [{'action': 'summarize', 'action_params': {'params': {}}}]
+    template = [{'action': 'llm_action', 'action_params': {'params': {}}}]
     result = persist_manager.run(template, "session_123", PersistDict(), False)
     assert result == template
 
