@@ -1,0 +1,146 @@
+### This code is property of the GGAO ###
+
+import pytest
+from compose.actions.merge import MergeMethod, AddMerge, MetaMerge, MergeFactory
+from compose.streamchunk import StreamChunk
+from common.errors.genaierrors import PrintableGenaiError
+
+
+@pytest.fixture(scope="class")
+def mock_streamchunk():
+    """Create a mock StreamChunk for testing."""
+    return [
+        StreamChunk({"content": "chunk1", "meta": {"key": "value1"}}),
+        StreamChunk({"content": "chunk2", "meta": {"key": "value2"}}),
+    ]
+
+
+class TestMergeMethod(MergeMethod):
+    """Test subclass for MergeMethod to cover abstract methods."""
+
+    TYPE = "test"
+
+    def process(self):
+        """Mock process method for testing."""
+        return []
+
+    def _get_example(self):
+        """Return a mock example using super and ensure it returns the expected format."""
+        example = super()._get_example()
+        return {
+            "type": self.TYPE,
+            "params": {},
+        }
+
+
+class TestMergeMethodExample:
+    """Test suite for MergeMethod subclass."""
+
+    def test_get_example(self):
+        """Test the get_example method of MergeMethod."""
+        merge_method = TestMergeMethod([])
+        example = merge_method.get_example()
+        expected_example = '{"type": "test", "params": {}}'
+        assert example == expected_example
+
+
+class TestAddMerge:
+    """Test suite for AddMerge class."""
+
+    def test_process(self, mock_streamchunk):
+        """Test the process method of AddMerge."""
+        add_merge = AddMerge(mock_streamchunk)
+        result = add_merge.process()
+        assert len(result) == 1
+        assert result[0]["content"] == "chunk1\nchunk2"
+
+    def test_get_example(self):
+        """Test the get_example method of AddMerge."""
+        add_merge = AddMerge([])
+        example = add_merge.get_example()
+        expected_example = '{"type": "add", "params": {"SEQ": "\\n"}}'
+        assert example == expected_example
+
+
+class TestMetaMerge:
+    """Test suite for MetaMerge class."""
+
+    def test_process_with_params(self, mock_streamchunk):
+        """Test the process method of MetaMerge with parameters."""
+        meta_merge = MetaMerge(mock_streamchunk)
+        params = {
+            "template": "Custom content: $content",
+            "sep": ", ",
+            "grouping_key": None,
+        }
+        result = meta_merge.process(params)
+
+        assert len(result) == 1
+        assert result[0].content == "Custom content: chunk1, Custom content: chunk2"
+
+    def test_process_with_grouping_key(self, mock_streamchunk):
+        """Test the process method of MetaMerge with a grouping key."""
+        meta_merge = MetaMerge(mock_streamchunk)
+        params = {
+            "template": "Grouped content: $content",
+            "sep": ", ",
+            "grouping_key": "key",
+        }
+        result = meta_merge.process(params)
+
+        assert len(result) > 0
+        assert all(isinstance(chunk, StreamChunk) for chunk in result)
+
+    def test_process_with_grouping_key_and_multiple_chunks(self, mock_streamchunk):
+        """Test the process method of MetaMerge with a grouping key and multiple chunks."""
+        mock_streamchunk[0].meta["key"] = "group1"
+        mock_streamchunk[1].meta["key"] = "group2"
+
+        meta_merge = MetaMerge(mock_streamchunk)
+        params = {
+            "template": "Grouped content: $content",
+            "sep": ", ",
+            "grouping_key": "key",
+        }
+        result = meta_merge.process(params)
+
+        assert len(result) == 2
+        assert result[0].content == "Grouped content: chunk1"
+        assert result[1].content == "Grouped content: chunk2"
+
+    def test_get_example(self):
+        """Test the _get_example method of MetaMerge."""
+        meta_merge = MetaMerge([])
+        example = meta_merge._get_example()
+        expected_example = {"type": "meta", "params": {"template": "Content: $content"}}
+        assert example == expected_example
+
+    def test_process_with_default_params(self, mock_streamchunk):
+        """Test the process method of MetaMerge with default parameters."""
+        meta_merge = MetaMerge(mock_streamchunk)
+        result = meta_merge.process(None)
+
+        assert len(result) == 1
+        assert result[0].content == "Content: chunk1-##########-Content: chunk2"
+
+
+class TestMergeFactory:
+    """Test suite for MergeFactory class."""
+
+    def test_create_meta_merge(self, mock_streamchunk):
+        """Test creating MetaMerge via MergeFactory."""
+        factory = MergeFactory("meta")
+        params = {
+            "template": "Content: $content",
+            "sep": ", ",
+            "grouping_key": None,
+        }
+        result = factory.process(mock_streamchunk, params)
+
+        assert len(result) == 1
+        assert result[0].content == "Content: chunk1, Content: chunk2"
+
+    def test_invalid_merge_type(self):
+        """Test MergeFactory with an invalid merge type."""
+        with pytest.raises(PrintableGenaiError):
+            MergeFactory("invalid_type")
