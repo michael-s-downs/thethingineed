@@ -3,11 +3,15 @@ import json, os
 from typing import Literal, Optional, Union, Tuple
 
 # Installed imports
-from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator, Field
+from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator, Field, confloat
 
 # Local imports
 from generatives import GenerativeModel
+from common.logging_handler import LoggerHandler
 
+# Create logger
+logger_handler = LoggerHandler("io_parsing", level=os.environ.get('LOG_LEVEL', "INFO"))
+logger = logger_handler.logger
 QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
 
 
@@ -85,7 +89,7 @@ class PersistenceElement(BaseModel):
 
     role: Literal['user', 'assistant']
     content: Union[str, list]
-    n_tokens: Optional[Union[str, list]] = None
+    n_tokens: Optional[Union[PositiveInt, list]] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
@@ -181,7 +185,7 @@ class QueryMetadata(BaseModel):
 class LLMMetadata(BaseModel):
     # Model metadata
     max_input_tokens: Optional[PositiveInt] = None
-    temperature: Optional[PositiveInt] = None
+    temperature: Optional[confloat(ge=0.0, le=2.0)] = None
     max_tokens: Optional[PositiveInt] = None
     stop: Optional[str] = None
     functions: Optional[list] = None
@@ -202,7 +206,7 @@ class LLMMetadata(BaseModel):
         if self.functions and not self.function_call:
             raise ValueError("Internal error, function_call is mandatory because you put the functions param")
         elif self.function_call and not self.functions:
-            raise ValueError("Internal error, functions is mandatory because you put the functions param")
+            raise ValueError("Internal error, functions is mandatory because you put the function_call param")
 
 
 class PlatformMetadata(BaseModel):
@@ -261,7 +265,7 @@ class ProjectConf(BaseModel):
         return v
 
 
-def adapt_input_queue(logger, json_input: dict) -> dict:
+def adapt_input_queue(json_input: dict) -> dict:
     """ Input adaptations for queue case
 
     :param json_input: Input data
@@ -275,7 +279,8 @@ def adapt_input_queue(logger, json_input: dict) -> dict:
     mount_key = os.getenv('DATA_MOUNT_KEY', "")
 
     if not (mount_path and mount_key):
-        logger.warning("Mount path or mount key not found in environment variables")
+        if QUEUE_MODE:
+            logger.warning("Mount path or mount key not found in environment variables")
         return json_input
 
     file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
