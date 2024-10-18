@@ -6,13 +6,13 @@ trigger:
   branches:
     include: 
     - develop
-    - main
+    - master
   paths:
     include:
-    - genai-base-38
+    - genai-base
 
 variables:
-- group: Images base params
+- group: Params Python
 - group: Variables para CI
 - group: RegistryVariables
 

@@ -6,18 +6,18 @@ trigger:
   branches:
     include: 
     - develop
-    - main
+    - master
   paths:
     include:
-    - default-base-38
+    - integration-base
 
 variables:
-- group: Images base params
+- group: Params Python
 - group: Variables para CI
 - group: RegistryVariables
 
 - name: imageName
-  value: '$(default_base)'
+  value: '$(integration_base)'
 - name: vmImageName
   value: 'ubuntu-latest'
 - name: pythonVersion

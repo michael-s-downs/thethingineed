@@ -58,7 +58,7 @@ def import_user_functions():
                     modules.append(getattr(importlib.import_module(f"genai_sdk_services.{module}.{file_}"), cls[0]))
         except Exception as ex:
             print(f"Exception {str(ex)}")
-            pass
+
     modules = list(set(modules))
 
     return modules
