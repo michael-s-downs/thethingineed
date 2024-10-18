@@ -17,7 +17,12 @@ from common.utils import load_secrets
 from generatives import ChatGPTModel, GenerativeModel, DalleModel, ChatGPTvModel, ChatClaudeModel, LlamaModel
 
 models_credentials, aws_credentials = load_secrets(vector_storage_needed=False)
-models_urls = models_credentials.get('URLs')
+models_urls = {
+        "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
+        "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
+		"AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
+        "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions"
+}
 
 model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",

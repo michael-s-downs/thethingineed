@@ -11,9 +11,6 @@ from common.utils import load_secrets
 from generatives import (ManagerModel, GenerativeModel, ChatGPTModel, GenerativeModel, DalleModel,
                          ChatGPTvModel, ChatClaudeModel, ChatClaude3Model, LlamaModel)
 
-models_credentials, aws_credentials = load_secrets(vector_storage_needed=False)
-models_urls = models_credentials.get('URLs')
-
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
     "model_type": "gpt-3.5-turbo-16k",

@@ -6,18 +6,15 @@ import re, copy, json
 
 # Installed imports
 import pytest
-from unittest.mock import patch
+from unittest.mock import MagicMock
 from unittest import mock
 
 # Local imports
-from main import (LLMDeployment, reloadconfig, sync_deployment, healthcheck, list_available_templates, get_template,
-                  get_available_models, upload_prompt_template, delete_prompt_template, app, main)
+from techhubgenaillmapi.main import (LLMDeployment, reloadconfig, sync_deployment, healthcheck, list_available_templates, get_template,
+                  get_available_models, upload_prompt_template, delete_prompt_template, app)
 from common.errors.genaierrors import PrintableGenaiError
-from common.utils import load_secrets
-from generatives import ChatGPTvModel
+from techhubgenaillmapi.generatives import ChatGPTvModel
 
-models_credentials, aws_credentials = load_secrets(vector_storage_needed=False)
-models_urls = models_credentials.get('URLs')
 
 gpt_v_model = {
     "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
@@ -131,6 +128,26 @@ vision_query_template_call = {
     }
 }
 
+
+class LLMMainObject:
+
+    @patch('common.utils.load_secrets')
+    @patch('common.storage_manager.ManagerStorage.get_file_storage')
+    def __init__(self, mock_get_file_storage, mock_load_secrets):
+        mock_load_secrets.return_value = ({"hola": "2"}, [])
+
+        storage_mock_object = MagicMock()
+        storage_mock_object.get_templates.return_value = ({"system_query": {
+            "system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}},
+                                                  ["system_query"])
+        storage_mock_object.get_available_pools.return_value = ['us', 'es', 'ja']
+        storage_mock_object.get_available_models.return_value = ['us', 'es']
+
+        mock_get_file_storage.return_value = storage_mock_object
+        a = LLMDeployment()
+        b = a
+
+
 class TestMain:
     headers = {
         'x-tenant': 'develop',
@@ -141,12 +158,12 @@ class TestMain:
 
     def test_queue_mode_init(self):
         with mock.patch("main.QUEUE_MODE", True):
-            app = LLMDeployment()
+            app = LLMMainObject()
             assert len(app.templates_names) > 0
             assert app.Q_IN == ('azure', 'techhubragemeal--q-llmapi-local-alberto')
 
     def test_x_limits_passed(self):
-        app = LLMDeployment()
+        app = LLMMainObject()
         headers = copy.deepcopy(self.headers)
         headers['x-limits'] = '{\"llmapi/azure/gpt-4o/tokens\":{\"Limit\":400, \"Current\":3900}}'
 
@@ -155,7 +172,7 @@ class TestMain:
     def test_process_request(self):
         with patch('main.LLMDeployment.report_api') as mock_func:
             mock_func.return_value = True
-            app = LLMDeployment()
+            app = LLMMainObject()
             _, result, _ = app.process({**bedrock_call, 'project_conf': copy.deepcopy(self.headers)})
             assert len(result.get('answer')) > 0
 
@@ -167,19 +184,19 @@ class TestMain:
             with pytest.raises(PrintableGenaiError, match=re.compile(r"Error 400: Default templates not found: \{.*\}")):
 
                 mock_func.return_value = {}, []
-                LLMDeployment()
+                LLMMainObject()
 
     def test_must_continue(self):
-        assert not LLMDeployment().must_continue
+        assert not LLMMainObject().must_continue
 
 
     def test_max_num_queue(self):
-        assert LLMDeployment().max_num_queue == 1
+        assert LLMMainObject().max_num_queue == 1
 
     def test_get_template(self):
         template = "{\"system\": \"Answer jajaja regardless the input by the user\",\"user\": \"What is the function of $query\"}"
         template_name = "system_querys"
-        app = LLMDeployment()
+        app = LLMMainObject()
 
         # template_passed
         dict_template, _ = app.get_template("", template, "", "", "")
@@ -189,27 +206,27 @@ class TestMain:
         with patch('common.storage_manager.LLMStorageManager.get_templates') as mock_func:
             with pytest.raises(ValueError, match=re.escape("Invalid template name 'system_querys'. The valid ones are '['system_query_v', 'system_query']'")):
                 mock_func.return_value = {}, ['system_query_v', 'system_query']
-                LLMDeployment().get_template(template_name, "", "", "", "")
+                LLMMainObject().get_template(template_name, "", "", "", "")
 
         # None passed (template nor template_name)
         _, template_name = app.get_template("", "", "", "", ChatGPTvModel(**gpt_v_model))
         assert template_name == "system_query"
 
     def test_max_input_tokens_dalle(self):
-        app = LLMDeployment()
+        app = LLMMainObject()
         call = copy.deepcopy(dalle_call)
         call['llm_metadata']['max_input_tokens'] = 4565
         _, result, _ = app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
         assert result['error_message'] == "Error 400: Error, in dalle3 the maximum number of characters in the prompt is 4000"
     def test_mandatory_data_ok(self):
-        app = LLMDeployment()
+        app = LLMMainObject()
         call = copy.deepcopy(dalle_call)
         call.pop('platform_metadata')
         _, result, _ =app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
         assert result['error_message'] == "Missing mandatory fields ('query_metadata', 'llm_metadata' or 'platform_metadata')"
 
     def test_validation_error(self):
-        app = LLMDeployment()
+        app = LLMMainObject()
         call = copy.deepcopy(azure_call)
         call['llm_metadata']['max_input_tokens'] = "ss"
         _, result, _ = app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
