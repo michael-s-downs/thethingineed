@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-__version__ = "0.2.4.5"
+__version__ = "0.3.5"
 __author__ = "Juan Francisco Puerto Jiménez, David Puente Mur"
 
 import os

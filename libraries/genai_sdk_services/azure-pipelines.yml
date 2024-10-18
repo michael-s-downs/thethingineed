@@ -1,0 +1,65 @@
+### This code is property of the GGAO ###
+
+
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+trigger:
+  batch: true
+  branches:
+    include: 
+    - develop
+    - main
+    - feature/python311
+
+pool:
+  vmImage: 'ubuntu-latest'
+strategy:
+  matrix:
+    Python311:
+      python.version: '3.11'
+
+variables:
+- group: Images base params
+
+- name: projectFeed
+  value: '$(feed_genai)'
+- name: feedName
+  value: '$(artifact_name)'
+- name: python_version
+  value: $[replace(variables['python.version'], '.', '')]
+
+steps:
+
+- script: echo "##vso[task.setvariable variable=python_version]$(echo $(python.version) | tr -d '.')"
+  displayName: Set python_version variable
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: Use Python $(python.version)
+
+- script: sudo apt-get install libmagic1
+  displayName: Install magic
+
+- script: |
+    pip install --upgrade pip
+    python -m pip install -U setuptools wheel twine
+    python setup.py install
+  displayName: Install dependencies
+
+- script: |
+    python setup.py build_ext --inplace
+    python setup.py bdist_wheel --python-tag=cp$(python_version)
+  displayName: Build package
+
+- task: TwineAuthenticate@1
+  inputs:
+    artifactFeed: '${{ variables.projectFeed }}'
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  displayName: Configure twine authentication
+
+- script: twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  displayName: Publish to artifacts feed

@@ -18,7 +18,7 @@ import magic
 import zipfile
 import pandas as pd
 import xml.etree.ElementTree as et
-from google.oauth2 import service_account
+# from google.oauth2 import service_account
 from docx import Document
 from docx.document import Document as doctwo
 from docx.oxml.table import CT_Tbl
@@ -39,7 +39,7 @@ from wand.color import Color
 from wand.image import Image
 
 # Custom imports
-from genai_sdk_services.resources.vision.BaseOCR import CloudVision, Textract, TesseractOCR, BaseOCR, FormRecognizer
+from genai_sdk_services.resources.vision.BaseOCR import  Textract, TesseractOCR, BaseOCR, FormRecognizer
 from genai_sdk_services.resources.vision.ocr2visionfeatures import detect_document, runOCR, get_blocks_cells
 
 
@@ -119,7 +119,7 @@ class BaseFileService:
 
 class ImageService(BaseFileService):
     TYPE_FILE = ["jpeg", "jpg", "png", "svg", "tiff", "ps"]
-    OCR_SERVICES = [Textract(), CloudVision(), TesseractOCR(), FormRecognizer()]
+    OCR_SERVICES = [Textract(), TesseractOCR(), FormRecognizer()]
 
     ocr_credentials = {}
 
