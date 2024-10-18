@@ -45,19 +45,6 @@ def top_k_filter():
     return TopKFilter(streamlist)
 
 
-'''
-@pytest.fixture
-def permission_filter():
-    """Fixture para crear una instancia de PermissionFilter con un streamlist de ejemplo."""
-    streamlist = [
-        {"meta": {"knowler_id": "1"}},
-        {"meta": {"knowler_id": "2"}},
-        {"meta": {"knowler_id": "3"}},
-    ]
-    return PermissionFilter(streamlist)
-'''
-
-
 @pytest.fixture
 def metadata_filter():
     """Fixture para crear una instancia de MetadataFilter con una lista de ejemplo."""
@@ -265,18 +252,12 @@ class TestMetadataFilter:
 
         assert result is True
 
-    '''
     def test_apply_subfilter_metaintext(self, metadata_filter):
         """Test apply_subfilter with 'metaintext' condition."""
-        metadata = {"city": "New York"}
-        sub_filter = {
-            "metaintext": ("city", ["New York is a city", "London is a city"])
-        }
-
-        # Asegúrate de que este resultado sea verdadero
-        result = metadata_filter.apply_subfilter(metadata, sub_filter)
+        result = metadata_filter.apply_subfilter(
+            {"city": "New York"}, {"metaintext": ("city", "New York is a big city.")}
+        )
         assert result is True
-    '''
 
     def test_apply_subfilter_eq_date(self, metadata_filter):
         """Test apply_subfilter with 'eq_date' condition."""
@@ -480,3 +461,40 @@ class TestRelatedToFilter:
 
         assert headers == expected_headers
         assert template == expected_template
+
+    def test_get_example_dict(self, filter_instance):
+        expected_result = {
+            "type": filter_instance.TYPE,
+            "params": filter_instance.TEMPLATE,
+        }
+
+        assert filter_instance._get_example() == expected_result
+
+    def test_get_example_json(self, filter_instance):
+        expected_result = json.dumps(
+            {"type": filter_instance.TYPE, "params": filter_instance.TEMPLATE}
+        )
+
+        assert filter_instance.get_example() == expected_result
+
+    @pytest.mark.asyncio
+    async def test_parallel_calls(self, filter_instance):
+        templates = [{"query_metadata": {"context": "test context"}}]
+        headers = {"Content-type": "application/json"}
+
+        mock_response = {"answer": "Yes"}
+
+        with patch("aiohttp.ClientSession") as mock_session:
+            mock_session_instance = mock_session.return_value.__aenter__.return_value
+            with patch.object(
+                filter_instance,
+                "async_call_llm",
+                new=AsyncMock(return_value=mock_response),
+            ) as mock_async_call_llm:
+                responses = await filter_instance.parallel_calls(templates, headers)
+
+                mock_async_call_llm.assert_called_once_with(
+                    templates[0], headers, mock_session_instance
+                )
+
+        assert responses == [mock_response]

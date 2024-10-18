@@ -1,3 +1,5 @@
+### This code is property of the GGAO ###
+
 import pytest
 from compose.actions.groupby import GroupByDoc, GroupByDate, GroupByFactory
 from common.errors.genaierrors import PrintableGenaiError
