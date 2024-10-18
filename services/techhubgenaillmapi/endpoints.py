@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 
 # Installed imports
 import boto3
+import botocore
 
 # Custom imports
 from generatives import GenerativeModel
@@ -115,7 +116,7 @@ class GPTPlatform(Platform):
                     self.logger.warning(f"Internal server error, retrying, try {delta + 1}/{max_retries}")
                     raise ConnectionError("Internal server error")
 
-            if answer.status_code in [503, 502, 500, 404, 400]:
+            if answer.status_code in [503, 502, 500, 404, 400, 429]:
                 self.logger.warning(f"Error: {answer.text}")
                 return {"error": answer.text,
                         "msg": str(answer.text),
@@ -159,19 +160,8 @@ class OpenAIPlatform(GPTPlatform):
             return {"error": answer, "msg": str(answer['error']['message']), "status_code": answer['error']['code']}
         elif 'error' in answer and 'code' in answer['error'] and answer['error']['code'] == 'invalid_api_key':
             return {"error": answer, "msg": str(answer['error']['message']), "status_code": 401}
-        elif 'error' in answer and answer['error']['status'] == 500:
-            message = str(answer['error']['message'])
-            match = re.search("(?:you requested )(\d{3,})(?: tokens)", message, re.I)
-            if match is None:
-                self.logger.error(f"match is None for message {message}.")
-                return {"error": answer, "msg": "Match is None", "status_code": 500}
-            else:
-                new_limit = int(match.group(1)) - self.generativeModel.max_tokens
-                message = self.generativeModel.limit_message_tokens(self.generativeModel.message,
-                                                                    self.generativeModel.max_tokens - new_limit)
-                self.generativeModel.set_message(message)
-                answer = self.call_model()
-                self.logger.info(f"LLM response: {answer}.")
+        elif 'error' in answer:
+            return {"error": answer, "msg": str(answer['error']['message']), "status_code": 500}
 
         self.logger.info(MESSAGE_PROCESSED_MSG)
         return answer
@@ -185,8 +175,6 @@ class OpenAIPlatform(GPTPlatform):
         self.logger.debug("Building url.")
         if generativeModel.MODEL_MESSAGE == "chatGPT":
             url = self.models_urls.get('OPENAI_GPT_CHAT_URL')
-        elif generativeModel.MODEL_MESSAGE == "promptGPT":
-            url = self.models_urls.get('OPENAI_GPT_PROMPT_URL')
         else:
             raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 
@@ -231,18 +219,8 @@ class AzurePlatform(GPTPlatform):
             return {"error": answer, "msg": str(answer['error']['message']),
                     "status_code": int(answer['error']['status'])}
         elif 'error' in answer:
-            message = str(answer['error']['message'])
-            match = re.search("(?:you requested )(\d{3,})(?: tokens)", message, re.I)
-            if match is None:
-                self.logger.error(f"match is None for message {message}.")
-                return {"error": answer, "msg": "Match is None", "status_code": 500}
-            else:
-                new_limit = int(match.group(1)) - self.generativeModel.max_tokens
-                message = self.generativeModel.limit_message_tokens(self.generativeModel.message,
-                                                                    self.generativeModel.max_tokens - new_limit)
-                self.generativeModel.set_message(message)
-                answer = self.call_model()
-                self.logger.info(f"LLM response: {answer}.")
+            return {"error": answer, "msg": answer['error']['message'], "status_code": 500}
+
         self.logger.info(MESSAGE_PROCESSED_MSG)
         return answer
 
@@ -254,8 +232,6 @@ class AzurePlatform(GPTPlatform):
         self.logger.debug("Building url.")
         if generativeModel.MODEL_MESSAGE in ["chatGPT", "chatGPT-v"]:
             template = Template(self.models_urls.get('AZURE_GPT_CHAT_URL'))
-        elif generativeModel.MODEL_MESSAGE == "promptGPT":
-            template = Template(self.models_urls.get('AZURE_GPT_PROMPT_URL'))
         elif generativeModel.MODEL_MESSAGE == "dalle":
             template = Template(self.models_urls.get('AZURE_DALLE_URL'))
         else:
@@ -321,6 +297,8 @@ class BedrockPlatform(Platform):
         :return: Endpoint response
         """
         try:
+            if delta > max_retries:
+                return {"error": "Max retries reached", "msg": "Max retries reached", "status_code": 500}
             data_call = self.generativeModel.parse_data()
             self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
             if provider == "azure":
@@ -341,6 +319,11 @@ class BedrockPlatform(Platform):
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}
+        except botocore.exceptions.ClientError as error:
+            self.logger.error(f"Error calling botocore: {error}")
+            message = error.response['message']
+            status_code = error.response['ResponseMetadata']['HTTPStatusCode']
+            return {"error": error, "msg": message, "status_code": status_code}
         except ConnectionError:
             time.sleep(random.random())
             return self.call_model(delta + 1, max_retries)

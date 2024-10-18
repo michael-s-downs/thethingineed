@@ -68,7 +68,8 @@ class BaseAdapter(ABC):
         """ Method to get the number of tokens from an image"""
         pass
 
-    def resize_image(self, width, height, width_resize, height_resize) -> Tuple[int, int]:
+    @staticmethod
+    def resize_image(width, height, width_resize, height_resize) -> Tuple[int, int]:
         """ Resize an image to have the correct format in order to count tokens
 
         :param width: Width of the image
@@ -142,11 +143,12 @@ class GPT4VAdapter(BaseAdapter):
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
 
         if image['image'].get('detail') == "low":
-            return 85
-        width, height = self.resize_image(img.width, img.height, 1024, 1024)
-        h = ceil(height / 512)
-        w = ceil(width / 512)
-        total = 85 + 170 * h * w
+            total = 85
+        else:
+            width, height = self.resize_image(img.width, img.height, 1024, 1024)
+            h = ceil(height / 512)
+            w = ceil(width / 512)
+            total = 85 + 170 * h * w
 
         media_type = img.format
         if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
@@ -281,10 +283,10 @@ class ManagerAdapters(object):
                 conf.pop('adapter')
                 return adapter(**conf)
         raise PrintableGenaiError(400, f"Adapter type doesnt exist {conf}. "
-                         f"Possible values: {ManagerAdapters.get_possible_platforms()}")
+                         f"Possible values: {ManagerAdapters.get_possible_adapters()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_adapters() -> List:
         """ Method to list the adapters: [claude3, gpt4v, dalle, base]
 
         :param conf: Adapter configuration. Example:  {"adapter":"claude3"}

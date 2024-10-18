@@ -57,7 +57,6 @@ class Message(ABC):
     def preprocess(self):
         """Given a query and a context it will return the text in the GPT model format. 
         """
-        pass
 
     @classmethod
     def is_message_type(cls, message_type: str):
@@ -70,40 +69,6 @@ class Message(ABC):
                f'context:{self.context}, ' \
                f'template_name:{self.template_name}, ' \
                f'template:{self.template}}}'
-
-
-class PromptGPT3Message(Message):
-    MODEL_FORMAT = "promptGPT"
-
-    def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system: str = ""):
-        """Prompt object. It is used for text-only models such as gpt3-turbo instuct
-
-        :param query: Question made.
-        :param template: Template used to build the prompt.
-        :param template_name: Template Name used to build the prompt.
-        :param context: Context used to answer the question.
-        :param system: Not used in this version
-
-        """
-        super().__init__()
-        if isinstance(query, list):
-            raise PrintableGenaiError(400, "query must be a string for non vision models")
-        self.query = query
-        self.context = context
-        self.template_name = template_name
-        self.template = template
-        self.multiprompt = False
-
-    def preprocess(self) -> str:
-        """Given a query and a context it will return the text in the GPT model format.
-
-        :return: List with the messages in the correct format for the model
-        """
-
-        user_prompt = Template(self.template["user"])
-        return user_prompt.safe_substitute(query=self.query, context=self.context)
-
 
 class DalleMessage(Message):
     MODEL_FORMAT = "dalle"
@@ -431,11 +396,11 @@ class Llama3Message(Message):
 
 
 class ManagerMessages(object):
-    MESSAGE_TYPES = [PromptGPT3Message, ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message]
+    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message]
 
     @staticmethod
     def get_message(conf: dict) -> Message:
-        """ Method to instantiate the message class: [promptGPT, chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: message object
@@ -446,11 +411,11 @@ class ManagerMessages(object):
                 conf.pop('message')
                 return message(**conf)
         raise PrintableGenaiError(400, f"Message type doesnt exist {conf}. "
-                         f"Possible values: {ManagerMessages.get_possible_platforms()}")
+                         f"Possible values: {ManagerMessages.get_possible_messages()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
-        """ Method to list the messages: [promptGPT, chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+    def get_possible_messages() -> List:
+        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: available messages

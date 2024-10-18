@@ -81,110 +81,6 @@ class GenerativeModel(ABC):
 
 
 
-class PromptGPTModel(GenerativeModel):
-    MODEL_MESSAGE = "promptGPT"
-
-    def __init__(self, model: str = 'gpt35turbo-sweden-instruct',
-                 model_type: str = "",
-                 max_input_tokens: int = 4096,
-                 max_tokens: int = 3096,
-                 bag_tokens: int = 500,
-                 zone: str = "genai",
-                 api_version: str = "2023-08-01-preview",
-                 temperature: float = 0,
-                 n: int = 1,
-                 logprobs: int = 0,
-                 stop: List = [DEFAULT_STOP_MSG],
-                 models_credentials: dict = None):
-        """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
-
-        :param model: Model name used in the gpt endpoint
-        :model_type: Model type used in the gpt endpoint
-        :param max_input_tokens: Max number of tokens desired in the input
-        :param max_tokens: Max number of tokens desired in the output
-        :param bag_tokens: Number of tokens reserved to generative models.
-        :param zone: openai domain used in azure
-        :param api_version: azure api version used
-        :param temperature: Higher values like 0.8 will make the output more random,
-                            while lower values like 0.2 will make it more focused and deterministic
-        :param n: How many completions to generate for each prompt.
-        :param logprobs: Include the log probabilities on the logprobs most likely tokens
-        :param stop: Up to 4 sequences where the API will stop generating further tokens.
-        :param models_credentials: Credentials to use the model
-        """
-        super().__init__(models_credentials, zone)
-        self.model_name = model
-        self.model_type = model_type
-        self.max_input_tokens = max_input_tokens
-        self.max_tokens = max_tokens
-        self.bag_tokens = bag_tokens
-        self.zone = zone
-        self.api_version = api_version
-        self.temperature = temperature
-        self.n = n
-        self.logprobs = logprobs
-        self.stop = stop
-        self.is_vision = False
-
-    def parse_data(self) -> json:
-        """ Convert message and model data into json format.
-
-        :return: Query in json format to be sent.
-        """
-        data = dict(model=self.model_name,
-                    max_tokens=self.max_tokens,
-                    temperature=self.temperature,
-                    logprobs=self.logprobs,
-                    stop=self.stop,
-                    prompt=self.message.preprocess(),
-                    top_p=1)
-        return json.dumps(data)
-
-    def get_result(self, response: dict) -> dict:
-        """ Method to format the model response.
-
-        :param response: Dict returned by  LLM endpoint.
-
-        :return: Dict with the answer, tokens used and logprobs.
-        """
-        choice = response["choices"][0]
-
-        text = choice['text']
-        if re.search(NOT_FOUND_MSG, text, re.I):
-            answer = NOT_FOUND_MSG
-            self.logger.info("Answer not found.")
-        else:
-            answer = text.strip()
-            self.logger.info(f"LLM response: {answer}.")
-
-        # Logporbs
-        logprobs_response = choice.get('logprobs')
-        logprobs = []
-        if logprobs_response:
-            tokens = logprobs_response['tokens']
-            token_logporb = logprobs_response['token_logprobs']
-
-            for token, token_logporb in zip(tokens, token_logporb):
-                # if token == self.stop[0]:
-                #    break
-                logprobs.append([token, token_logporb])
-
-        text_generated = {
-            'answer': answer,
-            'logprobs': logprobs,
-            'n_tokens': response['usage']['total_tokens'],
-            'query_tokens': response['usage']['prompt_tokens'],
-            'input_tokens': response['usage']['prompt_tokens'],
-            'output_tokens': response['usage']['completion_tokens']
-        }
-        result = {
-            'status': "finished",
-            'result': text_generated,
-            'status_code': 200
-        }
-        return result
-
-
 class GPTModel(GenerativeModel):
     MODEL_MESSAGE = None
 
@@ -221,7 +117,11 @@ class GPTModel(GenerativeModel):
         self.bag_tokens = bag_tokens
         self.zone = zone
         self.api_version = api_version
-        self.temperature = temperature
+        if temperature >= 0.0:
+            if temperature >= 0.0 and temperature <= 2.0:
+                self.temperature = temperature
+            else:
+                raise ValueError(f"Temperature must be between 0.0 and 2.0 for the model {self.model_name}")
         self.n = n
         self.functions = functions
         self.function_call = function_call
@@ -265,7 +165,7 @@ class GPTModel(GenerativeModel):
         :return: Dict with the answer, tokens used and logprobs.
         """
         # Check status code
-        if 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
+        if 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 429, 500, 502, 503]:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -415,10 +315,6 @@ class DalleModel(GPTModel):
                 'error_message': 'content_filter',
                 'status_code': 400
             }
-        # if query has made with a function_call, return answer
-        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
-            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
-
         else:
             # check if message is in the response
             if self.response_format == 'b64_json':
@@ -582,7 +478,11 @@ class ClaudeModel(GenerativeModel):
         self.bag_tokens = bag_tokens
         self.zone = zone
         self.api_version = api_version
-        self.temperature = temperature
+        if temperature >= 0.0:
+            if temperature >= 0.0 and temperature <= 1.0:
+                self.temperature = temperature
+            else:
+                raise ValueError(f"Temperature must be between 0.0 and 1.0 for the model {self.model_name}")
         self.stop_sequences = stop
 
     def set_message(self, config: dict):
@@ -621,8 +521,13 @@ class ClaudeModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'status_code' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500,
-                                                                                            502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500, 502, 503]:
+            return {
+                'status': 'error',
+                'error_message': json.loads(response.get('body').read()),
+                'status_code': response['ResponseMetadata']['HTTPStatusCode']
+            }
+        elif 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -769,7 +674,11 @@ class LlamaModel(GenerativeModel):
         self.max_tokens = max_tokens
         self.bag_tokens = bag_tokens
         self.zone = zone
-        self.temperature = temperature
+        if temperature >= 0.0:
+            if temperature >= 0.0 and temperature <= 1.0:
+                self.temperature = temperature
+            else:
+                raise ValueError(f"Temperature must be between 0.0 and 1.0 for the model {self.model_name}")
         self.stop_sequences = stop
         self.is_vision = False
 
@@ -823,8 +732,13 @@ class LlamaModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'status_code' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500,
-                                                                                            502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500, 502, 503]:
+            return {
+                'status': 'error',
+                'error_message': json.loads(response.get('body').read()),
+                'status_code': response['ResponseMetadata']['HTTPStatusCode']
+            }
+        elif 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -862,7 +776,7 @@ class LlamaModel(GenerativeModel):
 
 
 class ManagerModel(object):
-    MODEL_TYPES = [PromptGPTModel, ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaude3Model, ChatGPTvModel, LlamaModel]
+    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaude3Model, ChatGPTvModel, LlamaModel]
 
     @staticmethod
     def find_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:
@@ -880,17 +794,6 @@ class ManagerModel(object):
                 break
         return selected_model
 
-    @staticmethod
-    def delete_not_used_keys(keys: List[str], model_conf: dict) -> dict:
-        """ Method to delete keys from the model configuration.
-
-        :param keys: List of keys to be removed.
-        :param model_conf: Model configuration.
-        :return: Model configuration without the keys.
-        """
-        for key in keys:
-            model_conf.pop(key, None)
-        return model_conf
 
     @staticmethod
     def get_model(conf: dict, platform_name: str, available_models: dict, available_pools: dict) -> GenerativeModel:
@@ -913,7 +816,7 @@ class ManagerModel(object):
             selected_model = ManagerModel.find_model_in_available_models(model_in, available_models)
 
         if selected_model:
-            ## check model message: chatGPT, promptGPT,....
+            ## check model message: chatGPT, chatGPT-v,....
             for model in ManagerModel.MODEL_TYPES:
                 if model.get_message_type(selected_model.get('message')):
                     conf.pop('model', None)
