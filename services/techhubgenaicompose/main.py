@@ -17,7 +17,6 @@ from common.genai_status_control import update_status
 from director import Director
 
 
-
 class ComposeDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
@@ -126,7 +125,7 @@ class ComposeDeployment(BaseDeployment):
         except Exception as ex:
             error_message = "Error saving session to redis"
             status_code = 500
-            self.logger.error(error_message + ex)
+            self.logger.error(error_message + str(ex))
             return self.endpoint_response(status_code, "", error_message)
 
         resource = "compose/load_session/"

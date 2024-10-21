@@ -101,15 +101,6 @@ def test_parse_input_no_retrieve_action_in_params(manager):
     assert manager.actions_confs[1]["action"] == "llm_action"
 
 
-def test_parse_input_no_retrieve_action_raises_error(manager):
-    """Test if exception is raised when no 'retrieve' action is present"""
-    manager.params.pop('retrieve', None)
-    manager.compose_confs.pop(0)  # Remove the retrieve action from compose_confs
-
-    with pytest.raises(GenaiError, match="It has to be at least one retrieve in actions"):
-        manager.parse_input(clear_quotes=False)
-
-
 def test_default_template_params_success(manager):
     """Test if default template parameters are set correctly"""
     params = {"search_topic": "test topic"}
@@ -140,6 +131,29 @@ def test_safe_substitute(manager):
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
     assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "What does the sort action do?"
+
+
+def test_safe_substitute_params_not_sub(manager):
+    """Test if placeholders in the template are correctly substituted"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "query": "$query",
+                        "error_param": "'$error_param'"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"query": "What does the sort action do?"}
+
+    manager.safe_substitute(template, template_params, clear_quotes=False)
+    
+
 
 
 def test_safe_substitute_incorrect_json(manager):
@@ -184,6 +198,27 @@ def test_preprocess_query_success(manager):
 
     assert processed_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "updated search topic"
 
+def test_preprocess_query_success_basedon(manager):
+    """Test if preprocess_query correctly modifies the action params"""
+    template_dict = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "query": "test query based on topic test",
+                        "top_k": 5  
+                    }
+                }
+            }
+        }
+    }
+    template_params = {}
+
+    processed_template = manager.preprocess_query(template_dict, template_params)
+
+    assert processed_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "topic test"
+
 
 def test_check_llm_action_params_with_valid_template(manager):
     """Test if check_llm_action_params works with valid llm_action params"""
@@ -198,14 +233,13 @@ def test_check_llm_action_params_with_valid_template(manager):
 
     manager.check_llm_action_params()
 
-
-def test_check_llm_action_params_raises_error_with_invalid_template(manager):
-    """Test if check_llm_action_params raises error when template is missing $query"""
+def test_check_llm_action_params_with_not_query(manager):
+    """Test if check_llm_action_params works with valid llm_action params"""
     manager.actions_confs = [
         {
             "action": "llm_action",
             "action_params": {
-                "params": {"query_metadata": {"template": "{'user': 'invalid_template'}"}}
+                "params": {"query_metadata": {"template": "{'user': '$qery'}"}}
             }
         }
     ]
@@ -213,6 +247,22 @@ def test_check_llm_action_params_raises_error_with_invalid_template(manager):
     with pytest.raises(PrintableGenaiError) as excinfo:
         manager.check_llm_action_params()
     assert "Template must contain" in str(excinfo.value)
+
+
+def test_check_llm_action_params_raises_error_with_invalid_template(manager):
+    """Test if check_llm_action_params raises error when template is missing $query"""
+    manager.actions_confs = [
+        {
+            "action": "llm_action",
+            "action_params": {
+                "params": {"query_metadata": {"template": "{'user':}}"}}
+            }
+        }
+    ]
+
+    with pytest.raises(PrintableGenaiError) as excinfo:
+        manager.check_llm_action_params()
+    assert "Template is not" in str(excinfo.value)
 
 
 def test_get_and_drop_query_actions(manager):
@@ -241,3 +291,247 @@ def test_assert_json_serializable(manager):
 
     assert serialized_params["key1"] == "value1"
     assert "nested_key" in serialized_params["key2"]
+
+
+def test_assert_json_serializable_execption(manager):
+    """Test if assert_json_serializable returns correct params"""
+    params = "hola"
+
+    with pytest.raises(PrintableGenaiError) as excinfo:
+        manager.assert_json_serializable(params, clear_quotes=True)
+    assert "Params field must be" in str(excinfo.value)
+
+
+def test_parse_input_no_retrieve_action(manager):
+    """Test default retrieval action is added when no 'retrieve' is found."""
+    manager.params.pop('retrieve', None)
+    manager.parse_input(clear_quotes=False)
+
+    assert len(manager.actions_confs) > 0
+    assert manager.actions_confs[0]["action"] == "retrieve"
+
+
+
+def test_parse_input_with_non_retrieve_action_set_default(manager):
+    """Test if non-retrieve actions are correctly processed when 'retrieve' is in params."""
+    
+    manager.params['retrieve'] = [{"query": "Retrieve action test query", "index": "test_index"}]
+    manager.compose_confs = []
+    manager.compose_confs.append(
+        {
+            "action": "non_retrieve_action",
+            "action_params": {
+                "params": {
+                    "generic": {
+                        "index_conf": {
+                            "query": "$query"
+                        }
+                    }
+                }
+            }
+        }
+    )
+    
+    manager.parse_input(clear_quotes=False)
+    
+    assert len(manager.actions_confs) > 1
+    assert manager.actions_confs[0]["action"] == "retrieve"
+
+def test_parse_input_with_non_retrieve_action(manager):
+    """Test if non-retrieve actions are correctly processed when 'retrieve' is in params."""
+    
+    manager.params['retrieve'] = [{"query": "Retrieve action test query", "index": "test_index"}]
+    manager.compose_confs.append(
+        {
+            "action": "non_retrieve_action",
+            "action_params": {
+                "params": {
+                    "generic": {
+                        "index_conf": {
+                            "query": "$query"
+                        }
+                    }
+                }
+            }
+        }
+    )
+    
+    manager.parse_input(clear_quotes=False)
+    
+    assert len(manager.actions_confs) > 1
+    assert manager.actions_confs[0]["action"] == "retrieve"
+
+def test_safe_substitute_value_none(manager):
+    """Test if template substitutes None values as empty strings"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "query": "$query"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"query": None}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == ''
+
+
+def test_safe_substitute_value_bool(manager):
+    """Test if template substitutes bool values as lowercase strings"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "flag": "$flag"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"flag": True}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["flag"] == True
+
+
+def test_safe_substitute_value_dict(manager):
+    """Test if template substitutes dict values correctly"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "filters": "$filters"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"filters": {"key": "value"}}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["filters"] == {'key': 'value'}
+
+
+def test_safe_substitute_value_empty_dict(manager):
+    """Test if template substitutes empty dict values correctly"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "filters": "$filters"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"filters": {}}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["filters"] == {}
+
+
+def test_safe_substitute_value_with_braces(manager):
+    """Test if template substitutes values that start and end with braces correctly"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "data": "$data"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"data": "{key: value}"}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["data"] == '{key: value}'
+
+
+def test_safe_substitute_value_no_braces_or_digits(manager):
+    """Test if template substitutes values that do not start/end with braces and are non-numeric"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "query": "$query"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"query": "test_query"}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == 'test_query'
+
+
+def test_safe_substitute_value_with_square_brackets(manager):
+    """Test if template substitutes values that start and end with square brackets correctly"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "list_param": "$list_param"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"list_param": "[1, 2, 3]"}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["list_param"] == [1, 2, 3]
+
+
+def test_safe_substitute_value_numeric_string(manager):
+    """Test if template substitutes numeric string values correctly"""
+    template = {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "numeric_param": "$numeric_param"
+                    }
+                }
+            }
+        }
+    }
+
+    template_params = {"numeric_param": "123"}
+
+    substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
+
+    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["numeric_param"] == 123

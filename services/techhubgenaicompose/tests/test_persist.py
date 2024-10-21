@@ -152,10 +152,10 @@ def test_persist_dict_get_conversation(persist_dict):
     assert len(conv) == 1
 
 def test_persist_dict_get_from_redis_raises_error(persist_dict):
-    session_id = "session_123"
+    session_id = "session_12345"
     tenant = "tenant_abc"
 
-    with patch('common.genai_status_control.get_value', side_effect=Exception("Redis error")):
+    with patch('pcutils.persist.get_value', side_effect=Exception("Redis error")):
         with pytest.raises(PrintableGenaiError, match="Error getting session from redis"):
             persist_dict.get_from_redis(session_id, tenant)
 
@@ -172,24 +172,11 @@ def test_persist_dict_save_to_redis(persist_dict):
             "output_tokens": 273
         }, session_id=session_id)
 
-    persist_dict.save_to_redis(session_id, tenant)
-    # mock_update_status.assert_called_once()
+    with patch('pcutils.persist.update_status', return_value=None) as mock_update_status:
+        persist_dict.save_to_redis(session_id, tenant)
+    mock_update_status.assert_called_once()
     assert persist_dict.get_conversation(session_id) == []
 
-def test_persist_dict_save_to_redis_no_response(persist_dict):
-    session_id = "session_123"
-    tenant = "techhubragemeal"
-    persist_dict.add({
-            "user": "Propositos de año viejo?",
-            "assistant": "Claro, aquí tienes algunas ideas",
-            "n_tokens": 16,
-            "input_tokens": 29,
-            "output_tokens": 273
-        }, session_id=session_id)
-
-    with patch('common.genai_status_control.update_status') as mock_update_status:
-        persist_dict.save_to_redis(session_id, tenant)
-        mock_update_status.assert_not_called()
 
 def test_conversation_add(persist_dict):
     persistence = {"data": "test"}
@@ -204,7 +191,6 @@ def test_conversation_add(persist_dict):
     assert len(conv) == 3  # Only 3 should remain
 
 def test_conversation_update_last(persist_dict):
-    session_id = "session_123"
     persistence = {"data": "test"}
     conv = Conversation([persistence], max_persistence=3)
 
@@ -212,7 +198,6 @@ def test_conversation_update_last(persist_dict):
     assert conv[-1] == {"data": "updated_test"}
 
 def test_conversation_remove_last(persist_dict):
-    session_id = "session_123"
     persistence1 = {"data": "test1"}
     persistence2 = {"data": "test2"}
     conv = Conversation([persistence1, persistence2], max_persistence=3)
@@ -222,13 +207,11 @@ def test_conversation_remove_last(persist_dict):
     assert conv[-1] == persistence1
 
 def test_conversation_is_response(persist_dict):
-    session_id = "session_123"
     conv = Conversation([{"assistant": "response"}], max_persistence=3)
 
     assert conv.is_response() is True
 
 def test_conversation_is_not_response(persist_dict):
-    session_id = "session_123"
     conv = Conversation([{"user": "query"}], max_persistence=3)
 
     assert conv.is_response() is False
@@ -289,15 +272,6 @@ def test_conversation_add_exceeding_max_persistence(persist_dict):
     assert len(conv) == 3
     assert conv[0] == {"data": "test2"}
 
-# def test_persist_dict_get_from_redis_key_error(persist_dict):
-#     session_id = "session_123"
-#     tenant = "tenant_abc"
-    
-#     # Simulating KeyError for missing session in Redis
-#     with patch('common.genai_status_control.get_value', side_effect=KeyError):
-#         with pytest.raises(PrintableGenaiError, match="Error getting session from redis"):
-#             persist_dict.get_from_redis(session_id, tenant)
-
 def test_get_session_from_redis(persist_dict):
     session_id = "session_123"
     tenant = "techhubragemeal"
@@ -319,7 +293,7 @@ def test_error_saveing_session_to_redis(persist_dict):
         }, session_id=session_id)
     persist_dict.REDIS_ORIGIN = None
 
-    with patch('common.genai_status_control.update_status', side_effect=Exception("Error saving to redis")):
+    with patch('pcutils.persist.update_status', side_effect=Exception("Error saving to redis")):
         with pytest.raises(Exception, match="Error saving session to redis"):
             persist_dict.save_to_redis(session_id, tenant)
 

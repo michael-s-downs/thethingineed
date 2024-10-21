@@ -24,9 +24,6 @@ class ActionsManager(AbstractManager):
     def parse_input(self, clear_quotes):
         """Parses params in the configuration for each action, spliting retrieve from the other actions.
 
-        Raises:
-            GenaiError: It has to be at least one retrieve in actions.
-
         """
         self.logger.debug("Actions parse INIT")
 
@@ -116,17 +113,14 @@ class ActionsManager(AbstractManager):
                     query_metadata = action_params['params'].get('query_metadata')
                     template = query_metadata.get('template')
                     if template:
-                        if template is not None:
-                            try:
-                                template_dict = eval(template)
-                            except SyntaxError:
-                                self.raise_PrintableGenaiError(500,
-                                                               "Template is not well formed, must be a dict {} structure")
+                        try:
+                            template_dict = eval(template)
+                        except SyntaxError:
+                            self.raise_PrintableGenaiError(500,
+                                                            "Template is not well formed, must be a dict {} structure")
 
-                            if "$query" not in template_dict.get("user"):
-                                self.raise_PrintableGenaiError(500, "Template must contain $query to be replaced")
-                        else:
-                            self.raise_PrintableGenaiError(500, "Template is not in api call")
+                        if "$query" not in template_dict.get("user"):
+                            self.raise_PrintableGenaiError(500, "Template must contain $query to be replaced")
 
     def safe_substitute(self, template, template_params, clear_quotes):
         """Replaces the placeholders with its param value
@@ -230,11 +224,3 @@ class ActionsManager(AbstractManager):
         self.actions_confs = actions_temp
 
         
-
-        
-        
-        
-            
-        
-        
-                
