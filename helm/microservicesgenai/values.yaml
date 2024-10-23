@@ -112,3 +112,8 @@ keda:
   keda_key:
   keda_creds_name:
   keda_azure_param:
+  msg_count:
+  queue_name:
+  keda_type:
+  min_replicas:
+  max_replicas:
