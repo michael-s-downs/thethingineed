@@ -16,6 +16,7 @@ common:
   storage_backend:
   queue_delete_on_read:
   queue_mode:
+  storage_queue:
 ocr:
   bytes_mode:
 integration:
@@ -100,3 +101,14 @@ langfuse:
   langfuse_host:
   langfuse_public_key:
   langfuse_secret_key:
+# Ingress
+ingress:
+  enabled: false
+  basedomain:
+  port: 80
+keda:
+  enabled: false
+  keda_auth_name:
+  keda_key:
+  keda_creds_name:
+  keda_azure_param:
