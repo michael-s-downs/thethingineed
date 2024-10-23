@@ -15,7 +15,7 @@ data "azurerm_servicebus_namespace_authorization_rule" "default" {
 }
 
 resource "azurerm_servicebus_queue" "queues" {
-  for_each     = { for queue in var.service_bus_queues : "${azurerm_servicebus_namespace.sb.name}.${queue.name}" => queue }
+  for_each     = { for queue in var.name_queues : "${azurerm_servicebus_namespace.sb.name}.${queue.name}" => queue }
   name         = "${var.rg}--q-${each.value.name}"
   namespace_id = azurerm_servicebus_namespace.sb.id
 

@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Chart.Name }}--keda
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ .Chart.Name }}
+  minReplicaCount: {{ .Values.keda.min_replicas }}
+  maxReplicaCount: {{ .Values.keda.max_replicas }}
+  pollingInterval: 10
+  cooldownPeriod: 30
+  triggers:
+    - type: {{ .Values.keda.keda_type }}
+      metadata:
+        queueName: {{ .Values.keda.queue_name }}
+        messageCount: {{ .Values.keda.msg_count }}
+      authenticationRef:
+        name: {{ .Values.keda.keda_auth_name }}

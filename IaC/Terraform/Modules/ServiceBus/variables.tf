@@ -18,14 +18,14 @@ variable "capacity" {
   description = "Service bus capacity."
 }
 
-variable "service_bus_queues" {
+variable "name_queues" {
   type = list(object({
     name                  = string
     max_size_in_megabytes = number
     enable_partitioning   = bool
     requires_session      = bool
   }))
-  description = "Service bus list of queues."
+  description = "Names of queues."
 }
 
 variable "tags" {

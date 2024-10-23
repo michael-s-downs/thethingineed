@@ -44,4 +44,3 @@ do
     echo "Copying file $file from $origin to $destination"
     azcopy copy "$origin" "$destination" --overwrite=true
 done
-

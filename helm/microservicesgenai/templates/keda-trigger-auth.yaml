@@ -1,0 +1,12 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ .Values.keda.keda_auth_name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  secretTargetRef:
+    - key: {{ .Values.keda.key }}
+      name: {{ .Values.keda.keda_creds_name }}
+      parameter: {{ .Values.keda.keda_azure_param }}
+{{- end }}
