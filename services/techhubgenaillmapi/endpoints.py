@@ -321,7 +321,7 @@ class BedrockPlatform(Platform):
             return {"error": e, "msg": str(e), "status_code": 500}
         except botocore.exceptions.ClientError as error:
             self.logger.error(f"Error calling botocore: {error}")
-            message = error.response['message']
+            message = error.response['Error']['Message']
             status_code = error.response['ResponseMetadata']['HTTPStatusCode']
             return {"error": error, "msg": message, "status_code": status_code}
         except ConnectionError:

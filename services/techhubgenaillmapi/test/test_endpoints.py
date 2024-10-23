@@ -2,12 +2,12 @@
 
 
 # Native imports
-import re, copy, os
+import re, copy, json
 
 import botocore.exceptions
 # Installed imports
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, mock_open
 import requests
 
 # Local imports
@@ -16,7 +16,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
 from generatives import ChatGPTModel, GenerativeModel, DalleModel, ChatGPTvModel, ChatClaudeModel, LlamaModel
 
-models_credentials, aws_credentials = load_secrets(vector_storage_needed=False)
+aws_credentials = {"access_key": "346545", "secret_key": "87968"}
 models_urls = {
         "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
         "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
@@ -30,7 +30,7 @@ model = {
     "max_input_tokens": 16384,
     "zone": "techhubinc-EastUS2",
     "api_version": "2024-02-15-preview",
-    'models_credentials': models_credentials.get('api-keys').get('azure', {})
+    'models_credentials': {"techhubinc-EastUS2": "mock_api"}
 }
 
 claude_model = {
@@ -40,7 +40,7 @@ claude_model = {
     "max_input_tokens": 200000,
     "zone": "us-east-1",
     "api_version": "bedrock-2023-05-31",
-    'models_credentials': models_credentials.get('api-keys').get('bedrock', {})
+    'models_credentials': {"us-east-1": "mock_api"}
 }
 
 llama3_model = {
@@ -49,7 +49,7 @@ llama3_model = {
     "model_type": "llama3-v1-70b",
     "max_input_tokens": 8000,
     "zone": "us-east-1",
-    "models_credentials": models_credentials.get('api-keys').get('bedrock', {})
+    "models_credentials": {"us-east-1": "mock_api"}
 }
 
 # Message that uses BaseAdapter:
@@ -147,11 +147,21 @@ class TestAzurePlatform:
 
 
     def test_call_model(self):
-        generativeModel = ChatGPTModel(**model)
-        generativeModel.set_message(message_dict)
-        self.azure_platform.set_model(generativeModel)
-        result = generativeModel.get_result(self.azure_platform.call_model())
-        assert result['status_code'] == 200
+        with patch('requests.post') as mock_post:
+            mock_object = MagicMock()
+            mock_object.json.return_value = {"choices": [{"message": {"content": "asdf"}}],
+                                             "status_code": 200,
+                                             "usage":{"total_tokens": 1000, "completion_tokens": 501, "prompt_tokens": 154}}
+            mock_post.return_value = mock_object
+            generativeModel = ChatGPTModel(**model)
+            generativeModel.set_message(message_dict)
+            self.azure_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.azure_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+            assert result['result']['n_tokens'] == 1000
+            assert result['result']['output_tokens'] == 501
+            assert result['result']['input_tokens'] == 154
 
 
     def test_call_model_errors(self):
@@ -210,19 +220,34 @@ class TestBedrockPlatform:
 
     @patch("endpoints.provider", "azure")
     def test_call_model_bedrock(self):
-        generativeModel = ChatClaudeModel(**claude_model)
-        generativeModel.set_message(message_dict)
-        self.bedrock_platform.set_model(generativeModel)
-        result = generativeModel.get_result(self.bedrock_platform.call_model())
-        assert result['status_code'] == 200
+        with patch('boto3.client') as mock_post:
+            body = MagicMock()
+            body.read.return_value = json.dumps({"content": [{"text": "asdf"}], "usage":{"input_tokens":454, "output_tokens":5454}})
+            mock_post.return_value.invoke_model.return_value = {"body": body}
+            generativeModel = ChatClaudeModel(**claude_model)
+            generativeModel.set_message(message_dict)
+            self.bedrock_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+            assert result['result']['input_tokens'] == 454
+            assert result['result']['output_tokens'] == 5454
 
     @patch("endpoints.provider", "aws")
     def test_call_model_aws(self):
-        generativeModel = LlamaModel(**llama3_model)
-        generativeModel.set_message(message_dict)
-        self.bedrock_platform.set_model(generativeModel)
-        result = generativeModel.get_result(self.bedrock_platform.call_model())
-        assert result['status_code'] == 200
+        with patch('boto3.client') as mock_post:
+            body = MagicMock()
+            body.read.return_value = json.dumps({"generation": "asdf", "generation_token_count":454, "prompt_token_count":5454})
+            mock_post.return_value.invoke_model.return_value = {"body": body}
+            generativeModel = LlamaModel(**llama3_model)
+            generativeModel.set_message(message_dict)
+            self.bedrock_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+            assert result['result']['output_tokens'] == 454
+            assert result['result']['input_tokens'] == 5454
+
 
 
     def test_call_model_errors(self):

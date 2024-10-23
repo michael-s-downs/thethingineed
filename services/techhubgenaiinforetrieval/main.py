@@ -326,8 +326,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                 sorted_documents = self.rrf_retrieval_strategy(retrievers_arguments, input_object)
             elif input_object.strategy == "genai_retrieval":
                 sorted_documents = self.genai_retrieval_strategy(retrievers_arguments, input_object)
-            else:
-                raise PrintableGenaiError(400, f"Strategy '{input_object.strategy}' not implemented")
 
             tokens_report = {}
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
@@ -443,7 +441,7 @@ def get_available_models() -> Tuple[Dict, int]:
     dat = request.args
     if len(dat) != 1 or list(dat.items())[0][0] not in ['platform', 'pool', 'zone', 'embedding_model']:
         return {"status": "error", "error_message":
-            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'model_type' param", "status_code": 400}, 400
+            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'embedding_model' param", "status_code": 400}, 400
     key, value = list(dat.items())[0]
     models, pools = get_models(deploy.available_models, deploy.available_pools, key, value)
     return {"status": "ok", "result":

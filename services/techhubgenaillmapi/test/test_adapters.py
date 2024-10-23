@@ -158,9 +158,11 @@ class TestGPT4VAdapter:
                 'url': url
             }
         }
-        result = adapter._adapt_image(image)
-        assert image == {'type': 'image_url', 'image_url': {'url': url}}
-        assert result == 425
+        with patch('PIL.Image.open') as mock_image_open:
+            mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
+            result = adapter._adapt_image(image)
+            assert image == {'type': 'image_url', 'image_url': {'url': url}}
+            assert result == 765
         image_b64 = {
             'type': 'image_b64',
             'image': {
@@ -170,6 +172,7 @@ class TestGPT4VAdapter:
         result = adapter._adapt_image(image_b64)
         assert image_b64 == {'type': 'image_url', 'image_url': {'url': "data:image/jpeg;base64," + base64}}
         assert result == 765
+
         image_detail = {
             'type': 'image_url',
             'image': {
@@ -177,9 +180,12 @@ class TestGPT4VAdapter:
                 'detail': "low"
             }
         }
-        result = adapter._adapt_image(image_detail)
-        assert image_detail == {'type': 'image_url', 'image_url': {'url': url, 'detail': 'low'}}
-        assert result == 85
+        with patch('PIL.Image.open') as mock_image_open:
+            mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
+            result = adapter._adapt_image(image_detail)
+            assert image_detail == {'type': 'image_url', 'image_url': {'url': url, 'detail': 'low'}}
+            assert result == 85
+
         image_b64_wrong = {
             'type': 'image_b64',
             'image': {
@@ -197,6 +203,17 @@ class TestGPT4VAdapter:
         with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid url format"):
             adapter._adapt_image(img_wrong_url)
 
+        image_wrong_format = {
+            'type': 'image_url',
+            'image': {
+                'url': url,
+                'detail': "low"
+            }
+        }
+        with patch('PIL.Image.open') as mock_image_open:
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format [jpeg, png, gif, webp]")):
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
+                adapter._adapt_image(image_wrong_format)
 
 class TestDalleAdapter:
     def test_init_query_persistence(self):
@@ -247,11 +264,16 @@ class TestClaude3Adapter:
                 'url': url
             }
         }
-        result = adapter._adapt_image(image)
-        assert image.get('source').get('type') == "base64"
-        assert image.get('source').get('media_type') == "image/jpeg"
-        assert isinstance(image.get('source').get('data'), str)
-        assert result == 393
+        with patch('PIL.Image.open') as mock_image_open:
+            with patch('requests.get') as mock_requests_get:
+                mock_requests_get.return_value = MagicMock(content=b"image")
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
+                result = adapter._adapt_image(image)
+                assert image.get('source').get('type') == "base64"
+                assert image.get('source').get('media_type') == "image/jpeg"
+                assert isinstance(image.get('source').get('data'), str)
+                assert result == 642
+
         image_b64 = {
             'type': 'image_b64',
             'image': {
@@ -289,5 +311,15 @@ class TestClaude3Adapter:
         with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid url format"):
             adapter._adapt_image(img_wrong_url)
 
+        image_b64 = {
+            'type': 'image_b64',
+            'image': {
+                'base64': base64
+            }
+        }
+        with patch('PIL.Image.open') as mock_image_open:
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format [jpeg, png, gif, webp]")):
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
+                adapter._adapt_image(image_b64)
 
 
