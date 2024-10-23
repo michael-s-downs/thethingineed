@@ -18,7 +18,7 @@ resource "azurerm_storage_container" "sa_container" {
 }
 
 resource "azurerm_storage_queue" "queues" {
-  count                = var.create_queues ? length(var.name_queues) : 0
+  count                = var.create_queues ? 0 : length(var.name_queues)
   name                 = "${var.rg}--q-${var.name_queues[count.index].name}"
   storage_account_name = azurerm_storage_account.sa.name
 
@@ -54,7 +54,7 @@ resource "azurerm_private_dns_a_record" "blob_recordset" {
 }
 
 resource "azurerm_private_endpoint" "pep_queue" {
-  count               = var.create_queues ? 1 : 0
+  count               = var.create_queues ? 0 : 1
   name                = "pep-${var.resource_queue}-${var.rg}"
   location            = var.location_vnet
   resource_group_name = var.rg
