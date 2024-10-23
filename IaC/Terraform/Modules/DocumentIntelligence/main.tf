@@ -6,6 +6,8 @@ resource "azurerm_cognitive_account" "document_intelligence" {
   kind     = "FormRecognizer"
   sku_name = "S0"
 
+  custom_subdomain_name = var.rg
+
   tags = var.tags
 }
 
