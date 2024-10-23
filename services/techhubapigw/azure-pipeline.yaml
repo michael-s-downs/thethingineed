@@ -1,0 +1,72 @@
+### This code is property of the GGAO ###
+
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - master
+  paths:
+    include:
+    - 'services/'
+    - 'helm/'
+
+variables:
+- group: Variables para CI
+- group: Params Python
+- group: RegistryVariables
+
+- name: serviceName
+  value: 'techhubapigw'
+- name:  projectName
+  value: 'TechHubApigw'
+- name: sourceName
+  value: 'techhubapigw'
+- name:  vmImageName
+  value: 'ubuntu-20.04'
+- name:  registryServerName
+  value: '$(registryName).azurecr.io'
+- name: acrRegistryLogin
+  value: '$(registryLogin)'
+- name: acrRegistryPassword
+  value: '$(registryPassword)'
+- name: templateType
+  value: 'microservicesgenai'
+- name: helmRepoLocation
+  value: '$(Agent.BuildDirectory)/s/helm'
+- name: helmVersion
+  value: '$(helmVer)'
+- name: projectLocation
+  value: '$(Agent.BuildDirectory)/s/services'
+- name: description
+  value: 'Microservice to apigw. Authorization and forward the requests'
+- name: 'apiProjectName'
+  value: 'techhubapigw'
+- name: feedGenai
+  value: '$(feed_genai)'
+
+stages:
+- stage: Building
+  displayName: Build image
+  jobs:
+  - job:
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - template: ../ap-apigw-template.yml
+      parameters:
+        serviceName: '$(serviceName)'
+        sourceName: '$(sourceName)'
+        registryServerName: '$(registryServerName)'
+        acrRegistryLogin:  '$(acrRegistryLogin)'
+        acrRegistryPassword:  '$(acrRegistryPassword)'
+        defaultWorkingDirectory: '$(system.defaultWorkingDirectory)'
+        tag: '$(Build.BuildNumber)'
+        projectLocation: '$(projectLocation)'
+        helmRepoLocation: '$(helmRepoLocation)'
+        helmVersion: '$(helmVersion)'
+        templateType: '$(templateType)'
+        description: '$(description)'
+        apiProjectName: '$(apiProjectName)'
+        libraryFeed: '$(feedGenai)'
