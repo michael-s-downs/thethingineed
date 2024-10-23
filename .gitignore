@@ -7,4 +7,3 @@ services/models
 services/vector-storage
 secrets
 .env
-./IaC/vars/*
