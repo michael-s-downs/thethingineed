@@ -7,12 +7,12 @@ terraform {
     }
 
   }
-  # backend "azurerm" {
-  #   resource_group_name  = var.status_rg
-  #   storage_account_name = var.status_storage
-  #   container_name       = var.status_container_sa
-  #   key                  = var.status_key_sa
-  # }
+  backend "azurerm" {
+    resource_group_name  = var.status_rg
+    storage_account_name = var.status_storage
+    container_name       = var.status_container_sa
+    key                  = var.status_key_sa
+  }
 }
 
 provider "azurerm" {
@@ -31,6 +31,7 @@ locals {
     "mysqlServer" = "privatelink.mysql.database.azure.com"
     "redisCache"  = "privatelink.redis.cache.windows.net"
     "mysqlServer" = "privatelink.mysql.database.azure.com"
+    "account"     = "privatelink.cognitiveservices.azure.com"
   }
 }
 
@@ -99,6 +100,21 @@ module "techhub_redis" {
   rg_dns            = var.RG_NAME_DNS
   vnet              = var.VNET_NAME
   resource          = "redisCache"
+  subnet            = var.RG_SUBNET
+
+  depends_on = [azurerm_resource_group.rg]
+}
+
+module "techhub_di" {
+  source            = "./Modules/DocumentIntelligence"
+  rg                = var.RG_NAME
+  location          = var.RG_LOCATION
+  location_vnet     = var.RG_LOCATION_VNET
+  tags              = local.common_tags
+  private_dns_zones = local.privates_dns_zones
+  rg_dns            = var.RG_NAME_DNS
+  vnet              = var.VNET_NAME
+  resource          = "account"
   subnet            = var.RG_SUBNET
 
   depends_on = [azurerm_resource_group.rg]

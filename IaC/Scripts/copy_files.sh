@@ -4,7 +4,13 @@ storageNameDestinyKey=$(az storage account keys list --account-name $storageName
 storageNameOrigin=$TF_VAR_SA_NAME_ORIGIN
 storageNameOriginKey=$TF_VAR_SA_ORIGIN_KEY
 promptsLLM=$TF_VAR_LLM_PROMPTS
-modelsConfig=$TF_VAR_MODELS_CONFIG
+modelsConfigLLM=$TF_VAR_MODELS_CONFIG_LLM
+modelsConfigIR=$TF_VAR_MODELS_CONFIG_IR
+integrationModelMap=$TF_VAR_MODELS_MAP
+embeddingModelDefault=$TF_VAR_EMBEDDING_MODELS
+templatesCompose=$TF_VAR_COMPOSE_TEMPLATES
+queryFiltersTemplates=$TF_VAR_QUERY_FILTERS_TEMPLATES
+layoutConfig=$TF_VAR_LAYOUT_CONFIG
 blobNameDestiny=$TF_VAR_BLOB_DESTINY
 blobNameOrigin=$TF_VAR_CONFIG_ORIGIN
 
@@ -15,12 +21,19 @@ sasOrigin=$(az storage account generate-sas --account-key $storageNameOriginKey 
 
 # Declare files to copy
 echo "Declaring files to copy"
-declare -a filesToCopy=($modelsConfig)
+declare -a filesToCopy=($modelsConfigLLM $layoutConfig $modelsConfigIR $embeddingModelDefault $integrationModelMap)
 
 # Add prompts LLM
 IFS=', ' read -r -a promptsLLMArray <<< "${promptsLLM//[\[\]\"]}"
 filesToCopy+=("${promptsLLMArray[@]}")
 
+# Add templates compose
+IFS=', ' read -r -a templatesComposeArray <<< "${templatesCompose//[\[\]\"]}"
+filesToCopy+=("${templatesComposeArray[@]}")
+
+# Add query filters compose
+IFS=', ' read -r -a queryFiltersTemplatesArray <<< "${queryFiltersTemplates//[\[\]\"]}"
+filesToCopy+=("${queryFiltersTemplatesArray[@]}")
 
 echo "Copying files from $storageNameOrigin to $storageNameDestiny"
 # Copy files
@@ -31,4 +44,3 @@ do
     echo "Copying file $file from $origin to $destination"
     azcopy copy "$origin" "$destination" --overwrite=true
 done
-
