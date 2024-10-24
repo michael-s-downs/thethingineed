@@ -1,3 +1,4 @@
+{{- if .Values.keda.enabled_object }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -17,3 +18,4 @@ spec:
         messageCount: {{ .Values.keda.msg_count }}
       authenticationRef:
         name: {{ .Values.keda.keda_auth_name }}
+{{- end }}
