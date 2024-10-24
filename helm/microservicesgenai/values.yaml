@@ -108,6 +108,7 @@ ingress:
   port: 80
 keda:
   enabled: false
+  enabled_object: false
   keda_auth_name:
   keda_key:
   keda_creds_name:
