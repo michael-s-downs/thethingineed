@@ -73,7 +73,7 @@ resource "azurerm_private_endpoint" "pep_queue" {
 }
 
 resource "azurerm_private_dns_a_record" "queue_recordset" {
-  count               = var.create_queues ? 1 : 0
+  count               = var.create_queues ? 0 : 1
   name                = azurerm_storage_account.sa.name
   zone_name           = data.azurerm_private_dns_zone.dns_zone_queue.name
   resource_group_name = var.rg_dns
