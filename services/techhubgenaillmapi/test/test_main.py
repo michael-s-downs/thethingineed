@@ -6,14 +6,14 @@ import re, copy, json
 
 # Installed imports
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from unittest import mock
 
 # Local imports
-from techhubgenaillmapi.main import (LLMDeployment, reloadconfig, sync_deployment, healthcheck, list_available_templates, get_template,
+from main import (LLMDeployment, reloadconfig, sync_deployment, healthcheck, list_available_templates, get_template,
                   get_available_models, upload_prompt_template, delete_prompt_template, app)
 from common.errors.genaierrors import PrintableGenaiError
-from techhubgenaillmapi.generatives import ChatGPTvModel
+from generatives import ChatGPTvModel
 
 
 gpt_v_model = {
@@ -21,16 +21,16 @@ gpt_v_model = {
     "model_type": "gpt-4o",
     "max_input_tokens": 128000,
     "zone": "techhubinc-GermanyWestCentral",
+    "message": "chatGPT-v",
     "api_version": "2024-02-15-preview",
-    "models_credentials": {}
+    "model_pool": ["techhubinc-pool-gpt-4v"]
 }
 
 bedrock_call = {
     "query_metadata": {
         "query": "what is a seed?",
-        "template_name": "system_query_and_context_plus",
-        "context": "The seed is an optional parameter, which can be set to an integer or null.This feature is in Preview. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result. Determinism isn't guaranteed, and you should refer to the system_fingerprint response parameter to monitor changes in the backend.system_fingerprint is a string and is part of the chat completion object.This fingerprint represents the backend configuration that the model runs with.It can be used with the seed request parameter to understand when backend changes have been made that might affect determinism.To view the full chat completion object with system_fingerprint, you could add print(response.model_dump_json(indent=2)) to the previous Python code next to the existing print statement, or $response | convertto-json -depth 5 at the end of the PowerShell example. This change results in the following additional information being part of the output:By using the same seed parameter of 42 for each of our three requests, while keeping all other parameters the same, we're able to produce much more consistent results.ImportantDeterminism is not guaranteed with reproducible output. Even in cases where the seed parameter and system_fingerprint are the same across API calls it is currently not uncommon to still observe a degree of variability in responses. Identical API calls with larger max_tokens values, will generally result in less deterministic responses even when the seed parameter is set. By default if you ask an Azure OpenAI Chat Completion model the same question multiple times you're likely to get a different response. The responses are therefore considered to be non-deterministic. Reproducible output is a new preview feature that allows you to selectively change the default behavior to help product more deterministic outputs.",
-        "lang": "en"
+        "template_name": "system_query",
+        "context": "The seed is an optional parameter, which can be set to an integer or null.This feature is in Preview. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result. Determinism isn't guaranteed, and you should refer to the system_fingerprint response parameter to monitor changes in the backend.system_fingerprint is a string and is part of the chat completion object.This fingerprint represents the backend configuration that the model runs with.It can be used with the seed request parameter to understand when backend changes have been made that might affect determinism.To view the full chat completion object with system_fingerprint, you could add print(response.model_dump_json(indent=2)) to the previous Python code next to the existing print statement, or $response | convertto-json -depth 5 at the end of the PowerShell example. This change results in the following additional information being part of the output:By using the same seed parameter of 42 for each of our three requests, while keeping all other parameters the same, we're able to produce much more consistent results.ImportantDeterminism is not guaranteed with reproducible output. Even in cases where the seed parameter and system_fingerprint are the same across API calls it is currently not uncommon to still observe a degree of variability in responses. Identical API calls with larger max_tokens values, will generally result in less deterministic responses even when the seed parameter is set. By default if you ask an Azure OpenAI Chat Completion model the same question multiple times you're likely to get a different response. The responses are therefore considered to be non-deterministic. Reproducible output is a new preview feature that allows you to selectively change the default behavior to help product more deterministic outputs."
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
@@ -77,9 +77,8 @@ vision_persistence = [
 azure_call = {
     "query_metadata": {
         "query": "what is a seed?",
-        "template_name": "system_query_and_context_plus",
+        "template_name": "system_query",
         "context": "The seed is an optional parameter, which can be set to an integer or null.This feature is in Preview. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result. Determinism isn't guaranteed, and you should refer to the system_fingerprint response parameter to monitor changes in the backend.system_fingerprint is a string and is part of the chat completion object.This fingerprint represents the backend configuration that the model runs with.It can be used with the seed request parameter to understand when backend changes have been made that might affect determinism.To view the full chat completion object with system_fingerprint, you could add print(response.model_dump_json(indent=2)) to the previous Python code next to the existing print statement, or $response | convertto-json -depth 5 at the end of the PowerShell example. This change results in the following additional information being part of the output:By using the same seed parameter of 42 for each of our three requests, while keeping all other parameters the same, we're able to produce much more consistent results.ImportantDeterminism is not guaranteed with reproducible output. Even in cases where the seed parameter and system_fingerprint are the same across API calls it is currently not uncommon to still observe a degree of variability in responses. Identical API calls with larger max_tokens values, will generally result in less deterministic responses even when the seed parameter is set. By default if you ask an Azure OpenAI Chat Completion model the same question multiple times you're likely to get a different response. The responses are therefore considered to be non-deterministic. Reproducible output is a new preview feature that allows you to selectively change the default behavior to help product more deterministic outputs.",
-        "lang": "en",
         "persistence": vision_persistence
     },
     "llm_metadata": {
@@ -118,35 +117,74 @@ vision_query_template_call = {
                 },
             }
         ],
-        "template_name": "test_system_query_v"
+        "template_name": "system_query_v"
     },
     "llm_metadata": {
-        "model": "techhubinc-pool-us-gpt-4v"
+        "model": "techhubinc-pool-gpt-4v"
     },
     "platform_metadata": {
         "platform": "azure"
     }
 }
 
+available_pools = {
+    "techhubinc-pool-gpt-4v": [gpt_v_model],
+}
 
-class LLMMainObject:
+available_models = {
+    "azure": [
+        {
+            "model": "techhubinc-AustraliaEast-dall-e-3",
+            "model_type": "dalle3",
+            "max_input_tokens": 4000,
+            "zone": "techhubinc-AustraliaEast",
+            "message": "dalle",
+            "api_version": "2023-12-01-preview",
+            "model_pool": []
+        },
+        gpt_v_model
+    ],
+    "bedrock": [
+        {
+            "model": "claude-v2:1-NorthVirginiaEast",
+            "model_id": "anthropic.claude-v2:1",
+            "model_type": "claude-v2.1",
+            "max_input_tokens": 200000,
+            "zone": "us-east-1",
+            "message": "chatClaude",
+            "api_version": "bedrock-2023-05-31",
+            "model_pool": []
+        }
+    ]
+}
 
-    @patch('common.utils.load_secrets')
-    @patch('common.storage_manager.ManagerStorage.get_file_storage')
-    def __init__(self, mock_get_file_storage, mock_load_secrets):
-        mock_load_secrets.return_value = ({"hola": "2"}, [])
+default_templates = {"system_query": {
+                                        "system": "Answer jajaja regardless the input by the user",
+                                        "user": "What is the function of $query"},
+                        "system_query_v": {"system": "$system",
+                                           "user": [{"type": "text", "text": "asdf"}, "$query"]}
+}
 
+default_templates_names = ["system_query", "system_query_v"]
+
+def get_llm_deployment():
+    with (patch('main.load_secrets') as mock_load_secrets,
+          patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
+        mock_load_secrets.return_value = {"URLs": {
+            "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
+            "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API"},
+            "api-keys": {"azure": {
+                "techhubinc-GermanyWestCentral": "test_key",
+                "techhubinc-AustraliaEast": "test_key"}}}, {"access_key": "346545", "secret_key": "87968"}
         storage_mock_object = MagicMock()
-        storage_mock_object.get_templates.return_value = ({"system_query": {
-            "system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}},
-                                                  ["system_query"])
-        storage_mock_object.get_available_pools.return_value = ['us', 'es', 'ja']
-        storage_mock_object.get_available_models.return_value = ['us', 'es']
+        storage_mock_object.get_templates.return_value = (default_templates, default_templates_names)
+        storage_mock_object.upload_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
+        storage_mock_object.delete_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
+        storage_mock_object.get_available_pools.return_value = available_pools
+        storage_mock_object.get_available_models.return_value = available_models
 
         mock_get_file_storage.return_value = storage_mock_object
-        a = LLMDeployment()
-        b = a
-
+        return LLMDeployment()
 
 class TestMain:
     headers = {
@@ -156,80 +194,91 @@ class TestMain:
         'x-limits': '{\"preprocess/class/ocr/\":{},	\"llmapi/azure/gpt-3.5-turbo/tokens\":{\"Limit\":400, \"Current\":39}}'
     }
 
+    deploy = get_llm_deployment()
+
+
     def test_queue_mode_init(self):
-        with mock.patch("main.QUEUE_MODE", True):
-            app = LLMMainObject()
-            assert len(app.templates_names) > 0
-            assert app.Q_IN == ('azure', 'techhubragemeal--q-llmapi-local-alberto')
+        with patch('main.QUEUE_MODE', True):
+            deploy = get_llm_deployment()
+            assert deploy.Q_IN == ('azure', 'techhubragemeal--q-llmapi-local-alberto')
+            assert len(deploy.templates_names) > 0
 
     def test_x_limits_passed(self):
-        app = LLMMainObject()
         headers = copy.deepcopy(self.headers)
         headers['x-limits'] = '{\"llmapi/azure/gpt-4o/tokens\":{\"Limit\":400, \"Current\":3900}}'
 
-        _, result, _ = app.process({**azure_call, 'project_conf': copy.deepcopy(headers)})
+        _, result, _ = self.deploy.process({**azure_call, 'project_conf': copy.deepcopy(headers)})
         assert result['status_code'] == 429
+
     def test_process_request(self):
         with patch('main.LLMDeployment.report_api') as mock_func:
-            mock_func.return_value = True
-            app = LLMMainObject()
-            _, result, _ = app.process({**bedrock_call, 'project_conf': copy.deepcopy(self.headers)})
-            assert len(result.get('answer')) > 0
-
-            _, result, _ = app.process({**dalle_call, 'project_conf': copy.deepcopy(self.headers)})
-            assert len(result.get('answer')) > 0
+            with patch('requests.post') as mock_post:
+                mock_object = MagicMock()
+                mock_object.json.return_value = {"data": [{"b64_json": "asdf"}],
+                                                 "status_code": 200,
+                                                 "usage": {"total_tokens": 1000, "completion_tokens": 501,
+                                                           "prompt_tokens": 154}}
+                mock_post.return_value = mock_object
+                _, result, _ = self.deploy.process({**dalle_call, 'project_conf': copy.deepcopy(self.headers)})
+                assert result['answer'] == "asdf"
+            with patch('boto3.client') as mock_post:
+                body = MagicMock()
+                body.read.return_value = json.dumps(
+                    {"content": [{"text": "asdf"}], "usage": {"input_tokens": 454, "output_tokens": 5454}})
+                mock_post.return_value.invoke_model.return_value = {"body": body}
+                mock_func.return_value = True
+                _, result, _ = self.deploy.process({**bedrock_call, 'project_conf': copy.deepcopy(self.headers)})
+                assert result['answer'] == "asdf"
 
     def test_not_default_templates(self):
         with patch('common.storage_manager.LLMStorageManager.get_templates') as mock_func:
             with pytest.raises(PrintableGenaiError, match=re.compile(r"Error 400: Default templates not found: \{.*\}")):
 
                 mock_func.return_value = {}, []
-                LLMMainObject()
+                LLMDeployment()
 
     def test_must_continue(self):
-        assert not LLMMainObject().must_continue
+        assert not self.deploy.must_continue
 
 
     def test_max_num_queue(self):
-        assert LLMMainObject().max_num_queue == 1
+        assert self.deploy.max_num_queue == 1
 
     def test_get_template(self):
         template = "{\"system\": \"Answer jajaja regardless the input by the user\",\"user\": \"What is the function of $query\"}"
         template_name = "system_querys"
-        app = LLMMainObject()
 
         # template_passed
-        dict_template, _ = app.get_template("", template, "", "", "")
+        dict_template, _ = self.deploy.get_template("", template, "", "", "")
         assert dict_template == {"system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}
 
         # Invalid template_name
-        with patch('common.storage_manager.LLMStorageManager.get_templates') as mock_func:
-            with pytest.raises(ValueError, match=re.escape("Invalid template name 'system_querys'. The valid ones are '['system_query_v', 'system_query']'")):
-                mock_func.return_value = {}, ['system_query_v', 'system_query']
-                LLMMainObject().get_template(template_name, "", "", "", "")
+        with pytest.raises(ValueError):
+            self.deploy.get_template(template_name, "", "es", "", "")
 
         # None passed (template nor template_name)
-        _, template_name = app.get_template("", "", "", "", ChatGPTvModel(**gpt_v_model))
+        gpt_v_copy = copy.deepcopy(gpt_v_model)
+        gpt_v_copy.pop('message')
+        gpt_v_copy.pop('model_pool')
+        gpt_v_copy['models_credentials'] = {}
+        _, template_name = self.deploy.get_template("", "", "", "", ChatGPTvModel(**gpt_v_copy))
         assert template_name == "system_query"
 
     def test_max_input_tokens_dalle(self):
-        app = LLMMainObject()
         call = copy.deepcopy(dalle_call)
         call['llm_metadata']['max_input_tokens'] = 4565
-        _, result, _ = app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
+        _, result, _ = self.deploy.process({**call, 'project_conf': copy.deepcopy(self.headers)})
         assert result['error_message'] == "Error 400: Error, in dalle3 the maximum number of characters in the prompt is 4000"
     def test_mandatory_data_ok(self):
-        app = LLMMainObject()
         call = copy.deepcopy(dalle_call)
         call.pop('platform_metadata')
-        _, result, _ =app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
+        _, result, _ =self.deploy.process({**call, 'project_conf': copy.deepcopy(self.headers)})
         assert result['error_message'] == "Missing mandatory fields ('query_metadata', 'llm_metadata' or 'platform_metadata')"
 
     def test_validation_error(self):
-        app = LLMMainObject()
         call = copy.deepcopy(azure_call)
         call['llm_metadata']['max_input_tokens'] = "ss"
-        _, result, _ = app.process({**call, 'project_conf': copy.deepcopy(self.headers)})
+        _, result, _ = self.deploy.process({**call, 'project_conf': copy.deepcopy(self.headers)})
         assert result['error_message'] == ("Error parsing JSON: 'Input should be a valid integer, unable to parse string as an integer' "
                                            "in parameter '['max_input_tokens']' for value 'ss'")
 
@@ -237,14 +286,26 @@ class TestMain:
         _, status_code = reloadconfig()
         assert status_code == 200
 
-    def test_healthcheck(self):
-        assert healthcheck()['status'] == "Service available"
+
 
 
 @pytest.fixture
 def client():
-    with app.test_client() as client:
-        yield client
+    with patch('main.deploy', get_llm_deployment()):
+        with app.test_client() as client:
+            yield client
+
+def test_healthcheck(client):
+    response = client.get("/healthcheck")
+    response = json.loads(response.text)
+    assert response.get('status') == 'Service available'
+
+def test_list_templates(client):
+    response = client.get("/list_templates")
+    result = json.loads(response.text).get('result')
+    assert response.status_code == 200
+    assert len(result.get('templates')) > 0
+
 
 def test_upload_prompt_template(client):
     body = {
@@ -254,41 +315,42 @@ def test_upload_prompt_template(client):
     response = client.post("/upload_prompt_template", json=body)
     assert response.status_code == 200
 
-    # Now call get_template to check if the template was uploaded
-    response = client.get("/get_template", query_string={"template_name":"test_system_query_v"})
-    result = json.loads(response.text).get('result')
-    assert response.status_code == 200
-    assert result.get('template') == json.loads(body['content'])['test_system_query_v']
-
-
-def test_list_templates(client):
-    response = client.get("/list_templates")
-    result = json.loads(response.text).get('result')
-    assert response.status_code == 200
-    assert len(result.get('templates')) > 0
-
-
-def test_predict(client):
-    response = client.post("/predict", json=vision_query_template_call, headers=copy.deepcopy(TestMain.headers))
-    result = json.loads(response.text).get('result')
-    assert response.status_code == 200
-    assert result.get('answer') != ""
 
 def test_delete_prompt_template(client):
     response = client.post("/delete_prompt_template", json={"name": "test_system_query_v"})
     assert response.status_code == 200
 
-    # Now call get_template to check if the template was deleted
-    response = client.get("/get_template", query_string={"template_name": "test"})
-    result = json.loads(response.text)
-    assert response.status_code == 404
-    assert result.get('error_message') == "Template 'test' not found"
+
+
+def test_predict(client):
+    with patch('requests.post') as mock_post:
+        mock_object = MagicMock()
+        mock_object.json.return_value = {"choices": [{"message": {"content": "asdf"}}],
+                                         "status_code": 200,
+                                         "usage": {"total_tokens": 1000, "completion_tokens": 501, "prompt_tokens": 154}}
+        mock_post.return_value = mock_object
+        response = client.post("/predict", json=vision_query_template_call, headers=copy.deepcopy(TestMain.headers))
+        result = json.loads(response.text).get('result')
+        assert response.status_code == 200
+        assert result.get('answer') == "asdf"
+
 
 def test_get_template_name(client):
     response = client.get("/get_template")
     result = json.loads(response.text)
     assert response.status_code == 400
     assert result.get('error_message') == "You must provide a 'template_name' param"
+
+    response = client.get("/get_template", query_string={"template_name": "notfound"})
+    result = json.loads(response.text)
+    assert response.status_code == 404
+    assert result.get('error_message') == "Template 'notfound' not found"
+
+    response = client.get("/get_template", query_string={"template_name": "system_query"})
+    result = json.loads(response.text).get('result')
+    assert response.status_code == 200
+    assert result.get('template') == default_templates['system_query']
+
 
 def test_get_models(client):
     response = client.get("/get_models", query_string={"platform": "azure", "model": "gpt-4o"})

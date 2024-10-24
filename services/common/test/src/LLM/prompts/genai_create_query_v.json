@@ -1,0 +1,6 @@
+{
+	"system_query_v": {
+		"system": "$system",
+		"user": ["$query"]
+	}
+}

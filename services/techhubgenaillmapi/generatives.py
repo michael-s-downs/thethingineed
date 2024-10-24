@@ -521,13 +521,13 @@ class ClaudeModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500, 502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] != 200:
             return {
                 'status': 'error',
                 'error_message': json.loads(response.get('body').read()),
                 'status_code': response['ResponseMetadata']['HTTPStatusCode']
             }
-        elif 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
+        elif 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
