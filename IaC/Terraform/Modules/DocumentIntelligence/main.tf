@@ -1,5 +1,5 @@
 resource "azurerm_cognitive_account" "document_intelligence" {
-  name                = "di-${var.rg}-${var.location}"
+  name                = var.rg
   location            = var.location
   resource_group_name = var.rg
 
