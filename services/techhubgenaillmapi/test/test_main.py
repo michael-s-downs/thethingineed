@@ -286,8 +286,7 @@ class TestMain:
         _, status_code = reloadconfig()
         assert status_code == 200
 
-    def test_healthcheck(self):
-        assert healthcheck()['status'] == "Service available"
+
 
 
 @pytest.fixture
@@ -295,6 +294,11 @@ def client():
     with patch('main.deploy', get_llm_deployment()):
         with app.test_client() as client:
             yield client
+
+def test_healthcheck(client):
+    response = client.get("/healthcheck")
+    response = json.loads(response.text)
+    assert response.get('status') == 'Service available'
 
 def test_list_templates(client):
     response = client.get("/list_templates")

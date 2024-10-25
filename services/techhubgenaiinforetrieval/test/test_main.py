@@ -1,9 +1,6 @@
 ### This code is property of the GGAO ###
-
-
 # Native imports
 import re, copy, json
-from typing import List
 
 # Installed imports
 import pytest
@@ -11,13 +8,12 @@ from unittest.mock import patch, MagicMock
 from llama_index.core import MockEmbedding
 from llama_index.core.schema import NodeWithScore
 from llama_index.core.schema import TextNode
-from llama_index.core.base.base_retriever import BaseRetriever
+import elasticsearch
 
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from common.utils import load_secrets
-from main import app, InfoRetrievalDeployment
+from main import app, InfoRetrievalDeployment, manage_actions_get_elasticsearch, manage_actions_delete_elasticsearch
 from elasticsearch_adaption import ElasticsearchStoreAdaption
 
 ada_002_germany = {
@@ -82,7 +78,9 @@ def get_connector():
     connector.get_documents_filenames.return_value = ('finished', [{'filename': 'test', 'chunks': 1},
                                                                   {'filename': 'test2', 'chunks': 1}], 200)
     connector.get_documents.return_value = ('finished', ['doc1', 'doc2'], 200)
-    connector.delete_documents.return_value = MagicMock(body={'failures': [], 'deleted': 2})
+    magic_object = MagicMock(body={'failures': [], 'deleted': 2})
+    magic_object.get.return_value = 2
+    connector.delete_documents.return_value = magic_object
     connector.delete_index.return_value = True
     return connector
 
@@ -110,6 +108,9 @@ class TestMain:
         self.connector.exist_index.return_value = False
         with pytest.raises(PrintableGenaiError):
             InfoRetrievalDeployment.assert_correct_models("test", self.models, self.connector)
+
+    def test_max_num_queue(self):
+        assert self.deployment.max_num_queue == 1
 
     def test_get_bm25_vector_store(self):
         # Case wrong (the index have not been indexed)
@@ -244,6 +245,7 @@ def client():
             yield client
 
 def test_retrieve_documents(client):
+    # ok case
     body = {
         "index": "test",
         "filters": "{\"test_system_query_v\": {\"system\": \"$system\", \"user\": [{\"type\": \"text\", \"text\": \"Answer the question as youngster: \"},{\"type\": \"image_url\",\"image\": {\"url\": \"https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png\",\"detail\": \"high\"}},\"$query\"]}}"
@@ -254,6 +256,16 @@ def test_retrieve_documents(client):
         result = json.loads(response.text).get('result')
         assert response.status_code == 200
         assert result.get('docs') == ['doc1', 'doc2']
+
+    # Not filters passed
+    body = {
+        "index": "test"
+    }
+    response = client.post("/retrieve_documents", json=body)
+    result = json.loads(response.text)
+    assert response.status_code == 400
+    assert result.get('result') == "There must at least one filter"
+
 
 def test_retrieve_documents_filenames(client):
     body = {
@@ -266,6 +278,12 @@ def test_retrieve_documents_filenames(client):
         assert response.status_code == 200
         assert result.get('docs') == [{'filename': 'test', 'chunks': 1}, {'filename': 'test2', 'chunks': 1}]
 
+    # Not index passed
+    response = client.post("/get_documents_filenames", json={})
+    result = json.loads(response.text)
+    assert response.status_code == 400
+    assert result.get('result') == "Missing parameter: index"
+
 
 def test_get_models(client):
     response = client.get("/get_models", query_string={"platform": "azure", "zone": "dd"})
@@ -277,3 +295,115 @@ def test_get_models(client):
     result = json.loads(response.text).get('result')
     assert response.status_code == 200
     assert len(result.get('models')) > 0
+
+
+def test_delete_index(client):
+    body = {
+        "index": "test"
+    }
+    with patch('main.get_connector') as mock_get_connector:
+        mock_get_connector.return_value = get_connector()
+        response = client.post("/delete_index", json=body)
+        result = json.loads(response.text).get('result')
+        assert response.status_code == 200
+        assert result == "Index 'test' deleted for '1' models"
+
+def test_process(client):
+    with patch('main.deploy.sync_deployment') as mock_post:
+        mock_post.return_value = {"status_code": 200, "result": "success", "status": "finished"}
+        json_input = {}
+        response = client.post("/process", json=json_input, headers=copy.deepcopy(TestMain.headers))
+        assert response.status_code == 200
+
+def test_healthcheck(client):
+    response = client.get("/healthcheck")
+    response = json.loads(response.text)
+    assert response.get('status') == 'Service available'
+
+def test_delete_documents(client):
+    body = {
+        "index": "test",
+        "delete": {
+            "filename": ["test.pdf"]
+        }
+    }
+    with patch('main.get_connector') as mock_get_connector:
+        mock_get_connector.return_value = get_connector()
+        response = client.post("/delete-documents", json=body)
+        result = json.loads(response.text).get('result')
+        assert response.status_code == 200
+        assert result == "Documents that matched the filters were deleted for 'test'"
+
+
+def test_manage_actions_get_elastic():
+    with patch('main.deploy', get_ir_deployment()):
+        # Index not found
+        connector = MagicMock()
+        connector.get_documents_filenames.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
+        response, status_code = manage_actions_get_elasticsearch("test", "get_documents_filenames", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Index 'test' not found"
+
+        # Operation not allowed
+        response, status_code = manage_actions_get_elasticsearch("test", "wrong_operation", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Unsupported operation"
+
+        #Exception during process
+        connector.get_documents_filenames.side_effect = KeyError("d")
+        response, status_code = manage_actions_get_elasticsearch("test", "get_documents_filenames", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Error processing operation 'get_documents_filenames': 'd'"
+
+
+def test_manage_actions_delete_elastic():
+    with patch('main.deploy', get_ir_deployment()):
+        # Index not found
+        connector = MagicMock()
+        connector.delete_documents.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Documents not found for filters: {}"
+
+        # Operation not allowed
+        response, status_code = manage_actions_delete_elasticsearch("test", "wrong_operation", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Unsupported operation"
+
+        #Exception during process
+        connector.delete_documents.side_effect = KeyError("d")
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Error processing operation 'delete-documents': 'd'"
+
+        # Failures during delete
+        connector = MagicMock()
+        magic_object = MagicMock(body={'failures': [{"test": "test"}], 'deleted': 0})
+        magic_object.get.return_value = 0
+        connector.delete_documents.return_value = magic_object
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Documents not found for filters: {}"
+
+        # Documents not found
+        connector = MagicMock()
+        magic_object = MagicMock(body={'failures': [], 'deleted': 0})
+        magic_object.get.return_value = 0
+        connector.delete_documents.return_value = magic_object
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Documents not found for filters: {}"
+
+        # Error deleting
+        magic_object = MagicMock(body={'failures': [], 'deleted': -1})
+        magic_object.get.return_value = -1
+        connector.delete_documents.return_value = magic_object
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
+        assert status_code == 400
+        assert re.match(r"Error deleting documents: \[<MagicMock name='mock.delete_documents\(\)' id='(?P<id>\d+)'>\]", response['result'])
+
+        # Delete index index not found
+        connector.delete_index.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
+        response, status_code = manage_actions_delete_elasticsearch("test", "delete_index", {}, connector)
+        assert status_code == 400
+        assert response['result'] == "Index 'test' not found"

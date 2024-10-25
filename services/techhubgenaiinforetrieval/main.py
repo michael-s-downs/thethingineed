@@ -518,27 +518,20 @@ def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dic
             deploy.logger.debug(f"Index '{index_name}' not found")
         except Exception as ex:
             deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}",
-                    'status_code': 400}, 400
+            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}", 'status_code': 400}, 400
     if operation == "delete-documents":
         deleted = sum(result.get('deleted', 0) for result in results)
         if deleted == 0:
-            return json.dumps({'status': "error",
-                               'result': f"Documents not found for filters: {filters}",
-                               'status_code': 400}), 400
+            return {'status': "error",'result': f"Documents not found for filters: {filters}",'status_code': 400}, 400
         elif deleted > 0:
-            return json.dumps(
-                {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",
-                 'status_code': 200}), 200
+            return {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",'status_code': 200}, 200
         else:
-            return json.dumps(
-                {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}), 400
+            return {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}, 400
     elif operation == "delete_index":
         if len(results) == 0:
-            return json.dumps({'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}), 400
+            return {'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}, 400
         else:
-            return json.dumps(
-                {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}), 200
+            return {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}, 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

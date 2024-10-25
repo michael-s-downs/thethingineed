@@ -7,3 +7,7 @@ services/models
 services/vector-storage
 secrets
 .env
+
+.coverage
+htmlcov/
+.pytest_cache/

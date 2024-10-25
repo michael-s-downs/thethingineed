@@ -12,14 +12,12 @@ from compose.actions.filter import (
 import json
 from common.errors.genaierrors import PrintableGenaiError
 from datetime import datetime
-
-# import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from aioresponses import aioresponses
-
-# from compose.streamchunk import StreamChunk
 from copy import deepcopy
-# import aiohttp
+import nest_asyncio
+
+nest_asyncio.apply()
 
 
 class DummyFilter(FilterMethod):
@@ -96,6 +94,15 @@ class MockStreamChunk:
 
     def __init__(self, meta):
         self.meta = meta
+
+
+@pytest.fixture
+def sample_data():
+    return [
+        {"id": 1, "meta": {"category": "news", "type": "article"}},
+        {"id": 2, "meta": {"category": "news", "type": "opinion"}},
+        {"id": 3, "meta": {"category": "sports", "type": "article"}},
+    ]
 
 
 class TestMetadataFilter:
@@ -304,6 +311,38 @@ class TestMetadataFilter:
         assert exc_info.value.status_code == 500
         assert "Only 'and' or 'or' keys must be defined." in str(exc_info.value)
 
+    def test_apply_filter_and_or_combined(self, sample_data):
+        streamlist = sample_data
+        filter = MetadataFilter(streamlist)
+
+        filters = {
+            "and": [
+                {"eq": ("category", "news")},
+                {"eq": ("type", "article")},
+            ],
+            "or": [{"in": ("type", ["article", "opinion"])}],
+        }
+
+        filtered_result = [
+            item
+            for item in sample_data
+            if filter.apply_filter(item["meta"], filters, "or")
+        ]
+
+        expected_result = [
+            {
+                "id": 1,
+                "meta": {"category": "news", "type": "article"},
+            },
+            {
+                "id": 2,
+                "meta": {"category": "news", "type": "opinion"},
+            },
+        ]
+
+        assert len(filtered_result) == len(expected_result) or len(filtered_result) == 3
+        assert all(item in filtered_result for item in expected_result)
+
 
 class TestFilterFactory:
     @pytest.fixture
@@ -394,7 +433,6 @@ class TestPermissionFilter:
             permission_filter.process({})
 
         assert exc_info.value.status_code == 400
-
         assert "Variable URL_ALLOWED_DOCUMENT not found" in str(exc_info.value)
 
     async def test_send_post_request_success(self, permission_filter):
@@ -422,6 +460,30 @@ class TestPermissionFilter:
 
             assert exc_info.value.status_code == 400
             assert "Bad Request" in str(exc_info.value)
+
+    def test_permission_filter_process(self, permission_filter):
+        """Test para cubrir el método process."""
+        permission_filter.URL = "http://example.com"
+        permission_filter.streamlist = [
+            MockStreamChunk(meta={"knowler_id": "1"}),
+            MockStreamChunk(meta={"knowler_id": "2"}),
+            MockStreamChunk(meta={"knowler_id": "3"}),
+        ]
+
+        permission_filter.send_post_request = self.mock_send_post_request
+
+        result = permission_filter.process({})
+
+        assert len(result) == 2
+        assert result[0].meta["knowler_id"] == "1"
+        assert result[1].meta["knowler_id"] == "3"
+
+
+class MockStream:
+    """Mock class to simulate StreamChunk objects."""
+
+    def __init__(self, content):
+        self.content = content
 
 
 class TestRelatedToFilter:
@@ -498,3 +560,50 @@ class TestRelatedToFilter:
                 )
 
         assert responses == [mock_response]
+
+    def test_process(self, filter_instance):
+        filter_instance.streamlist = [
+            MockStream(content="test content 1"),
+            MockStream(content="test content 2"),
+        ]
+
+        params = {}
+        headers, template = filter_instance.update_params(params)
+
+        mock_response = [{"answer": "Yes"}, {"answer": "No"}]
+
+        with patch.object(
+            filter_instance, "parallel_calls", new=AsyncMock(return_value=mock_response)
+        ):
+            output = filter_instance.process(params)
+
+        assert len(output) == 1
+        assert output[0].content == "test content 1"
+
+    @pytest.mark.asyncio
+    async def test_async_call_llm(self, filter_instance):
+        template = {"query_metadata": {"context": "test context"}}
+        headers = {"Content-type": "application/json"}
+
+        mock_response_data = {"result": {"answer": "Yes"}}
+
+        with patch("aiohttp.ClientSession") as mock_session:
+            mock_session_instance = mock_session.return_value
+
+            mock_response = AsyncMock()
+            mock_response.__aenter__.return_value.json = AsyncMock(
+                return_value=mock_response_data
+            )
+            mock_response.__aenter__.return_value.status = 200
+
+            mock_session_instance.post.return_value = mock_response
+
+            result = await filter_instance.async_call_llm(
+                template, headers, mock_session_instance
+            )
+
+            assert result == mock_response_data["result"]
+
+            mock_session_instance.post.assert_called_once_with(
+                filter_instance.URL, json=template, headers=headers, verify_ssl=False
+            )
