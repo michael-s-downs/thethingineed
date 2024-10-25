@@ -13,6 +13,12 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     cert-manager.io/acme-challenge-type: http01
     acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: '0'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '600'
+    nginx.org/client-max-body-size: '0'
+    nginx.org/proxy-connect-timeout: 600s
+    nginx.org/proxy-read-timeout: 600s
 spec:
   rules:
   - host: {{ .Values.ingress.basedomain }}
