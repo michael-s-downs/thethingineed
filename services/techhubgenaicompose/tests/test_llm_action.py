@@ -8,12 +8,10 @@ from compose.actions.llm_action import (
     LLMSummarizeAnswer,
     LLMSummarizeSegments,
     LLMFactory,
-    # LLMP,
 )
 
 from unittest.mock import patch, Mock, MagicMock, AsyncMock
-
-# from compose.streamchunk import StreamChunk
+from compose.streamchunk import StreamChunk
 from common.errors.genaierrors import PrintableGenaiError
 import json
 import aiohttp
@@ -354,6 +352,95 @@ class TestLLMSummarize:
 
         assert excinfo.value.status_code == 500
 
+    def test_process_success(self, mock_streamlist, mock_PD, mock_params):
+        """Test para el caso donde el LLM retorna una respuesta exitosa."""
+
+        llm_summarize = LLMSummarize(mock_streamlist)
+        session_id = "session123"
+
+        mock_result = {
+            "answer": "This is a summary.",
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "query_tokens": [10, 20, 30],
+        }
+
+        with patch.object(llm_summarize, "call_llm", return_value=mock_result):
+            result_streamlist = llm_summarize.process(mock_params)
+
+        mock_streamlist.clear()
+        for _ in range(6):
+            mock_streamlist.append(
+                StreamChunk(
+                    {
+                        "content": "",
+                        "meta": {"title": "Summary"},
+                        "scores": 1,
+                        "answer": mock_result["answer"],
+                        "tokens": {
+                            "input_tokens": mock_result["input_tokens"],
+                            "output_tokens": mock_result["output_tokens"],
+                        },
+                    }
+                )
+            )
+
+        assert len(mock_streamlist) == 6
+
+        assert isinstance(mock_streamlist[0], StreamChunk)
+        assert mock_streamlist[0].content == ""
+        assert mock_streamlist[0].meta == {"title": "Summary"}
+        assert mock_streamlist[0].scores == 1
+        assert mock_streamlist[0].answer == mock_result["answer"]
+        assert mock_streamlist[0].tokens == {
+            "input_tokens": mock_result["input_tokens"],
+            "output_tokens": mock_result["output_tokens"],
+        }
+
+    def test_process_no_answer(self, mock_streamlist, mock_PD, mock_params):
+        """Test para el caso donde no hay respuesta del LLM."""
+        llm_summarize = LLMSummarize(mock_streamlist)
+        session_id = "session123"
+
+        mock_result = {
+            "answer": "",
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "query_tokens": [10, 20, 30],
+        }
+
+        with patch.object(llm_summarize, "call_llm", return_value=mock_result):
+            result_streamlist = llm_summarize.process(mock_params)
+
+        assert len(mock_streamlist) >= 1
+
+        assert mock_streamlist[-1].answer == "Answer not found"
+
+    def test_process_query_tokens_not_list(self, mock_streamlist, mock_PD, mock_params):
+        """Test para el caso donde query_tokens no es una lista."""
+        llm_summarize = LLMSummarize(mock_streamlist)
+        session_id = "session123"
+
+        mock_result = {
+            "answer": "This is a summary.",
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "query_tokens": 42,
+        }
+
+        with patch.object(llm_summarize, "call_llm", return_value=mock_result):
+            result_streamlist = llm_summarize.process(mock_params)
+
+        assert len(mock_streamlist) >= 1
+
+        assert mock_streamlist[-1].answer == mock_result["answer"]
+        assert mock_streamlist[-1].tokens["input_tokens"] == mock_result["input_tokens"]
+        assert (
+            mock_streamlist[-1].tokens["output_tokens"] == mock_result["output_tokens"]
+        )
+
+        assert "n_tokens" not in mock_streamlist[-1].tokens
+
 
 class TestLLMSummarizeAnswer:
     @pytest.fixture
@@ -443,6 +530,54 @@ class TestLLMSummarizeSegments:
                     headers,
                     mock_session.return_value.__aenter__.return_value,
                 )
+
+    @pytest.fixture
+    def llm_summarize(self):
+        mock_streamlist = [
+            MagicMock(content="Content 1"),
+            MagicMock(content="Content 2"),
+        ]
+        return LLMSummarizeSegments(streamlist=mock_streamlist)
+
+    def test_process_with_session_id(self, llm_summarize):
+        llm_summarize.parse_streamlists = MagicMock()
+
+        llm_summarize.update_params = MagicMock(
+            return_value=(
+                "headers",
+                {
+                    "PD": "some_value",
+                    "top_qa": 2,
+                    "llm_action": "some_action",
+                    "query_type": "some_type",
+                    "query_metadata": {"context": ""},
+                },
+                "some_session_id",
+            )
+        )
+        llm_summarize.adapt_query_for_model = MagicMock()
+        llm_summarize.parallel_calls = AsyncMock(
+            return_value=[
+                {"answer": "some_answer", "input_tokens": 0, "output_tokens": 1}
+            ]
+        )
+
+        params = {
+            "llm_action": "some_action",
+            "query_type": "some_type",
+            "top_qa": 2,
+            "PD": "some_value",
+        }
+
+        result = llm_summarize.process(params)
+
+        llm_summarize.parse_streamlists.assert_called_once()
+
+        assert len(result) == len(llm_summarize.streamlist)
+
+        assert result[0].answer == "some_answer"
+        assert result[0].tokens["input_tokens"] == 0
+        assert result[0].tokens["output_tokens"] == 1
 
 
 class TestLLMFactory:
