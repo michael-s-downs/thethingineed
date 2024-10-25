@@ -1,22 +1,18 @@
 ### This code is property of the GGAO ###
-import ast
 # Native imports
 import re, copy, json
-from typing import List
 
-import elasticsearch
 # Installed imports
 import pytest
 from unittest.mock import patch, MagicMock
 from llama_index.core import MockEmbedding
 from llama_index.core.schema import NodeWithScore
 from llama_index.core.schema import TextNode
-from llama_index.core.base.base_retriever import BaseRetriever
+import elasticsearch
 
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from common.utils import load_secrets
 from main import app, InfoRetrievalDeployment, manage_actions_get_elasticsearch, manage_actions_delete_elasticsearch
 from elasticsearch_adaption import ElasticsearchStoreAdaption
 
