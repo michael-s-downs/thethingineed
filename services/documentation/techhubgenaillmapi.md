@@ -326,8 +326,7 @@ In dall-e persistence, we always send the user role, because the assistant role 
         "n_tokens": 0,
         "input_tokens": 10,
         "query_tokens": 4,
-        "output_tokens": 0,
-        "n": 1
+        "output_tokens": 0
     },
     "status_code": 200
 }

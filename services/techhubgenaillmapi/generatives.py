@@ -335,8 +335,7 @@ class DalleModel(GPTModel):
             'n_tokens': 0,
             'input_tokens': self.message.get_query_tokens(self.message.preprocess()),
             'query_tokens': self.message.user_query_tokens,
-            'output_tokens': 0,
-            'n': self.n
+            'output_tokens': 0
         }
         result = {
             'status': "finished",
