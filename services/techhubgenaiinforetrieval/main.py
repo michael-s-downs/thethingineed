@@ -222,7 +222,7 @@ class InfoRetrievalDeployment(BaseDeployment):
 
         # Complete the scores that have not been obtained till this point
         ids_incompleted_docs = self.get_ids_empty_scores(docs_by_retrieval, set(unique_docs.keys()))
-        if len(ids_incompleted_docs) > 0:
+        if sum([len(docs) for docs in docs_by_retrieval.values()]) > 0:
             self.logger.debug(f"Re-scoring with {', '.join(list(zip(*retrievers_arguments))[3])} retrievers")
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
                 input_object.filters['snippet_id'] = ids_incompleted_docs[retriever_type]
@@ -410,7 +410,7 @@ def retrieve_documents() -> Tuple[Dict, int]:
     index = json_input.get('index', "")
     filters = json_input.get('filters', {})
     if len(filters) < 1:
-        response = {'status': "error", 'result': "There must at least one filter", 'status_code': 400}
+        response = {'status': "error", 'error_message': "There must at least one filter", 'status_code': 400}
         return response, 400
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
@@ -424,7 +424,7 @@ def get_documents_filenames() -> Tuple[Dict, int]:
     json_input = request.get_json(force=True)
 
     if not json_input or 'index' not in json_input or not json_input['index'].strip():
-        return {'status': "error", 'result': "Missing parameter: index", 'status_code': 400}, 400
+        return {'status': "error", 'error_message': "Missing parameter: index", 'status_code': 400}, 400
 
     index = json_input.get('index', "")
 
@@ -474,15 +474,15 @@ def manage_actions_get_elasticsearch(index: str, operation: str, filters: dict, 
                 response = {'status': status, 'result': {"status_code": status_code, "docs": result, "status": status}}
                 return response, status_code
             else:
-                return {'status': "error", 'result': "Unsupported operation", 'status_code': 400}, 400
+                return {'status': "error", 'error_message': "Unsupported operation", 'status_code': 400}, 400
         except elasticsearch.NotFoundError:
             deploy.logger.debug(f"Index '{index_name}' not found")
         except Exception as ex:
             deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}",
+            return {'status': "error", 'error_message': f"Error processing operation '{operation}': {str(ex)}",
                     'status_code': 400}, 400
 
-    return {'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}, 400
+    return {'status': "error", 'error_message': f"Index '{index}' not found", 'status_code': 400}, 400
 
 def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dict, connector: Connector):
     """
@@ -512,24 +512,24 @@ def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dic
             elif operation == "delete_index":
                 result = connector.delete_index(index_name)
             else:
-                return {'status': "error", 'result': "Unsupported operation", 'status_code': 400}, 400
+                return {'status': "error", 'error_message': "Unsupported operation", 'status_code': 400}, 400
             results.append(result)
         except elasticsearch.NotFoundError:
             deploy.logger.debug(f"Index '{index_name}' not found")
         except Exception as ex:
             deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}", 'status_code': 400}, 400
+            return {'status': "error", 'error_message': f"Error processing operation '{operation}': {str(ex)}", 'status_code': 400}, 400
     if operation == "delete-documents":
         deleted = sum(result.get('deleted', 0) for result in results)
         if deleted == 0:
-            return {'status': "error",'result': f"Documents not found for filters: {filters}",'status_code': 400}, 400
+            return {'status': "error", 'error_message': f"Documents not found for filters: {filters}",'status_code': 400}, 400
         elif deleted > 0:
             return {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",'status_code': 200}, 200
         else:
-            return {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}, 400
+            return {'status': "error", 'error_message': f"Error deleting documents: {results}", 'status_code': 400}, 400
     elif operation == "delete_index":
         if len(results) == 0:
-            return {'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}, 400
+            return {'status': "error", 'error_message': f"Index '{index}' not found", 'status_code': 400}, 400
         else:
             return {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}, 200
 

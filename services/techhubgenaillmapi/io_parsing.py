@@ -186,6 +186,7 @@ class LLMMetadata(BaseModel):
     # Model metadata
     max_input_tokens: Optional[PositiveInt] = None
     temperature: Optional[confloat(ge=0.0, le=2.0)] = None
+    n: Optional[PositiveInt] = None
     max_tokens: Optional[PositiveInt] = None
     stop: Optional[str] = None
     functions: Optional[list] = None
