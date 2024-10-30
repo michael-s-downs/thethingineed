@@ -8,6 +8,11 @@ variable "RG_LOCATION" {
   description = "Resource location."
 }
 
+variable "RG_LOCATION_VNET" {
+  type        = string
+  description = "Resource location of vnet."
+}
+
 variable "SA_TIER" {
   type        = string
   description = "Defines the Tier to use for this storage account. Valid options are Standard and Premium. For FileStorage accounts only Premium is valid. Changing this forces a new resource to be created."
@@ -41,4 +46,25 @@ variable "SB_QUEUES" {
     requires_session      = bool
   }))
   description = "Service bus list of queues"
+}
+
+variable "RG_NAME_DNS" {
+  type        = string
+  description = "Resource group of private dns zones deployed"
+  default     = "Techhub"
+}
+
+variable "VNET_NAME" {
+  type        = string
+  description = "Name of virtual network"
+}
+
+variable "RG_SUBNET" {
+  type        = string
+  description = "Name of subnet"
+}
+
+variable "CREATE_SB" {
+  type        = bool
+  description = "Variable to decide if create sb or azure storage queue"
 }

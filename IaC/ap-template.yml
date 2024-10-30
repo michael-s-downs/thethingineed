@@ -3,7 +3,6 @@ trigger:
   branches:
     include:
     - develop
-    - release/v*
     - master
   paths:
     include:
@@ -42,7 +41,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'validate'
-  - stage: AzureStorageArtifact
+  - stage: TerraformArtifact
     condition: succeeded('TerraformValidate')
     dependsOn: TerraformValidate
     jobs:
@@ -57,12 +56,12 @@ stages:
         - task: PublishBuildArtifacts@1
           inputs:
             PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Terraform'
-            ArtifactName: 'GlobalToolkit'
+            ArtifactName: 'Terraform'
             publishLocation: 'Container'
   - stage: ScriptsArtifact
-    condition: succeeded('AzureStorageArtifact')
+    condition: succeeded('TerraformArtifact')
     dependsOn: 
-      - AzureStorageArtifact
+      - TerraformArtifact
     jobs:
     - job: CopyFilesScriptsAndPublish
       steps:
@@ -77,6 +76,3 @@ stages:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Scripts'
           ArtifactName: 'Scripts'
           publishLocation: 'Container'
-
-        
-        

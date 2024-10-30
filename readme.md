@@ -383,7 +383,6 @@ The output can be changed passing in the requests some attribute values:
       "models": [
             "techhubinc-ada-002-australiaeast",
             "techhubinc-ada-002-brazilsouth",
-            "techhubinc-ada-002-canadaeast",
             "techhubinc-ada-3-large-canadaeast",
             "techhubinc-ada-3-small-canadaeast",
             "techhubinc-ada-002-eastus",
@@ -1136,7 +1135,6 @@ The available models depend on the region where the suscription is deployed. Mak
 |--------|------|------|
 |techhubinc-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
 |techhubinc-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-canadaeast|techhub-pool-world-ada-002|azure|
 |techhubinc-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
 |techhubinc-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
 |techhubinc-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
@@ -1155,7 +1153,6 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
 |techhubinc-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
 |techhubinc-ada-002-southindia|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-southindia|techhub-pool-world-ada-3-large|azure|
 |techhubinc-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
 |techhubinc-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
 |techhubinc-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
