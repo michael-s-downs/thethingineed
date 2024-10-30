@@ -127,7 +127,7 @@ class LangExpansion(ExpansionMethod):
         retrieve_action = None
         for action in actions_confs:
             if action["action"] == "retrieve":
-                retrieve_action = action
+                retrieve_action = deepcopy(action)
         
         if retrieve_action is None:
             raise PrintableGenaiError(404, "Action retrieve not found for query expansion")
@@ -144,7 +144,7 @@ class LangExpansion(ExpansionMethod):
         templates = []
         for lang in langs:
             lang = self.parse_lang(lang)
-            TRANSLATE_QUERY = f"Sentence: {self.query} \n Language: {lang}"
+            TRANSLATE_QUERY = f"Sentence: <{self.query}> \n Language: {lang}"
             TRANSLATE_TEMPLATE["query_metadata"]["query"] = TRANSLATE_QUERY
             if translate_model is not None:
                 TRANSLATE_TEMPLATE["llm_metadata"]["model"] = translate_model

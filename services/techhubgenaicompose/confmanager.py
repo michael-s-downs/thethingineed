@@ -158,7 +158,7 @@ class ConfManager(AbstractManager):
         return lang
 
     def clean_model(self, model: str):
-        remove_strings = ["dolffia-", "genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
+        remove_strings = ["genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
                           "-NorthVirginiaEast", "-FranckfurtCentral", "-ParisWest", "-AustraliaEast", "AustraliaEast",
                           "-CanadaEast", "CanadaEast", "-EastUs", "EastUs", "-EastUs2", "EastUs2", "Francia",
                           "JapanEast", "-NorthCentralUs", "NorthCentralUS", "-sweden", "-SouthCentralUs", "-france",
