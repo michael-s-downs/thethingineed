@@ -8,7 +8,6 @@ from datetime import datetime
 from copy import deepcopy
 
 from basemanager import AbstractManager
-from pcutils.reformulate import ReformulateManager
 from pcutils.persist import PersistManager
 from pcutils.template import TemplateManager
 from langfusemanager import LangFuseManager
@@ -54,7 +53,6 @@ class ConfManager(AbstractManager):
             self.apigw_params)
         self.clear_quotes = compose_config.get("clear_quotes", self.clear_quotes)
         self.template_m = TemplateManager().parse(compose_config)
-        self.reformulate_m = ReformulateManager().parse(compose_config)
         self.persist_m = PersistManager().parse(compose_config)
         if self.template_m.query is not None:
             self.lang = self.parse_lang(compose_config, self.template_m.query)

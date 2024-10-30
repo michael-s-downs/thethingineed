@@ -12,7 +12,7 @@ from common.errors.LLM import LLMParser
 from common.genai_controllers import load_file, storage_containers
 
 LLMP = LLMParser()
-S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
+S3_QUERYFILTERSPATH = "src/compose/filter_templates"
 
 class FilterMethod(ABC):
     """Abstract base class for defining query filters.
@@ -52,9 +52,9 @@ class FilterMethod(ABC):
         try:
             template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
             if not template:
-                raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
+                raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
-            raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
+            raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
         return json.loads(template)
 
 

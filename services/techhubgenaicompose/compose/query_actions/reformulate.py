@@ -10,11 +10,9 @@ from abc import abstractmethod, ABC
 from compose.utils.defaults import REFORMULATE_TEMPLATE
 from common.errors.genaierrors import PrintableGenaiError
 from common.errors.LLM import LLMParser
-from common.genai_controllers import load_file, storage_containers
 
 
 LLMP = LLMParser()
-S3_QUERYREFORMULATESPATH = "src/compose/queryfilters_templates"
 
 class ReformulateMethod(ABC):
     """Abstract base class for defining query filters.

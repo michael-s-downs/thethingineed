@@ -17,7 +17,7 @@ from ..utils.defaults import FILTER_TEMPLATE
 from common.genai_controllers import load_file, storage_containers
 
 LLMP = LLMParser()
-S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
+S3_QUERYFILTERSPATH = "src/compose/filter_templates"
 
 
 class FilterResponseMethod(ABC):
