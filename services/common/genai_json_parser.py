@@ -111,6 +111,7 @@ def get_exc_info(cutoff=10) -> bool:
     """
     log_level = os.environ.get('LOG_LEVEL', "INFO")
     numeric_level = getattr(logging, log_level.upper(), 20)
+    a = numeric_level <= cutoff
     return numeric_level <= cutoff
 
 

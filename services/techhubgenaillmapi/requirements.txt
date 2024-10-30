@@ -1,4 +1,5 @@
 ### This code is property of the GGAO ###
 
 transformers==4.40.1
-tiktoken==0.4.0
+tiktoken==0.7.0
+pytest==8.3.3

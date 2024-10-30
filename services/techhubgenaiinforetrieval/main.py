@@ -30,10 +30,11 @@ from common.genai_json_parser import *
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir import get_connector, get_embed_model
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
-from common.indexing.loaders import ManagerLoader
+from common.storage_manager import ManagerStorage
 from common.indexing.parsers import ManagerParser, ParserInforetrieval
 from common.indexing.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
+from common.utils import get_models
 
 
 class InfoRetrievalDeployment(BaseDeployment):
@@ -53,7 +54,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         try:
             self.origin = storage_containers.get('origin')
             self.workspace = storage_containers.get('workspace')
-            file_loader = ManagerLoader().get_file_storage(
+            file_loader = ManagerStorage().get_file_storage(
                 {"type": "IRStorage", "workspace": self.workspace, "origin": self.origin})
 
             self.available_pools = file_loader.get_available_pools()
@@ -325,8 +326,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                 sorted_documents = self.rrf_retrieval_strategy(retrievers_arguments, input_object)
             elif input_object.strategy == "genai_retrieval":
                 sorted_documents = self.genai_retrieval_strategy(retrievers_arguments, input_object)
-            else:
-                raise PrintableGenaiError(400, f"Strategy '{input_object.strategy}' not implemented")
 
             tokens_report = {}
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
@@ -437,33 +436,16 @@ def get_documents_filenames() -> Tuple[Dict, int]:
 
 
 @app.route('/get_models', methods=['GET'])
-def get_available_models() -> Tuple[str, int]:
+def get_available_models() -> Tuple[Dict, int]:
+    deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) > 1:
-        return json.dumps({"status": "error", "error_message":
-            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'embedding_model' param", "status_code": 400}), 400
-    if dat.get("platform"):
-        models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get("platform") == dat["platform"]:
-                models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": models, "pools": list(set(pools))}, "status_code": 200}), 200
-    elif dat.get("pool"):
-        return json.dumps({"status": "ok", "models": deploy.available_pools.get(dat["pool"], []), "status_code": 200}), 200
-    elif dat.get("embedding_model") or dat.get("zone"):
-        key = "embedding_model" if dat.get("embedding_model") else "zone"
-        response_models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get(key) == dat[key]:
-                response_models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": response_models, "pools": list(set(pools))}, "status_code": 200}), 200
-    else:
-        return json.dumps({"status": "error", "error_message": "You must provide a 'platform', 'pool', 'zone' or 'embedding_model' param", "status_code": 400}), 400
-
+    if len(dat) != 1 or list(dat.items())[0][0] not in ['platform', 'pool', 'zone', 'embedding_model']:
+        return {"status": "error", "error_message":
+            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'embedding_model' param", "status_code": 400}, 400
+    key, value = list(dat.items())[0]
+    models, pools = get_models(deploy.available_models, deploy.available_pools, key, value)
+    return {"status": "ok", "result":
+        {"models": models, "pools": list(set(pools)) if pools else []}, "status_code": 200}, 200
 
 
 
@@ -536,27 +518,20 @@ def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dic
             deploy.logger.debug(f"Index '{index_name}' not found")
         except Exception as ex:
             deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}",
-                    'status_code': 400}, 400
+            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}", 'status_code': 400}, 400
     if operation == "delete-documents":
         deleted = sum(result.get('deleted', 0) for result in results)
         if deleted == 0:
-            return json.dumps({'status': "error",
-                               'result': f"Documents not found for filters: {filters}",
-                               'status_code': 400}), 400
+            return {'status': "error",'result': f"Documents not found for filters: {filters}",'status_code': 400}, 400
         elif deleted > 0:
-            return json.dumps(
-                {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",
-                 'status_code': 200}), 200
+            return {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",'status_code': 200}, 200
         else:
-            return json.dumps(
-                {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}), 400
+            return {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}, 400
     elif operation == "delete_index":
         if len(results) == 0:
-            return json.dumps({'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}), 400
+            return {'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}, 400
         else:
-            return json.dumps(
-                {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}), 200
+            return {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}, 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=8888)
+    app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

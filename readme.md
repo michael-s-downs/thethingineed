@@ -661,11 +661,49 @@ The request would like like below
 
 A compose template is a JSON file detailing all the action steps the orchestrator needs to execute. These actions define the orchestrator flow; the main two actions are 'retrieve' and 'llm_action', but there are other actions that apply to the result of the 'retrieve' action: filter, merge, batchmerge, sort and groupby.
 
-There are three different compose templates currently available (in the future, templates could be added).
- * techhub_retrieval_reference: to retrieve documents and generate content with a LLM
- * techhub_llm_model: to use a LLM directly, without a retrieval
- * techhub_retrieval: to only retrieve documents, without content generation. This  template does not use a LLM.
- * techhub_multiple_retrieval: to perform several retrievals, without content generation. This template does not use a LLM.
+These are the following compose templates currently available
+ * retrieve: to only retrieve documents, without content generation. This  template does not use a LLM.
+ * retrieve_llm: to retrieve documents and content generation.
+ * retrieve_reference: to retrieve documents and generate content with a LLM
+ * llm_model: to use a LLM directly, without a retrieval
+ * multiple_retrieval: to perform several retrievals, without content generation. This template does not use a LLM.
+ * multiple_retrieval_llm: to perform several retrievals, with content generation.
+ * retrieve_embeddings: to do a retrieval selecting an embedding model, without content generation. This template does not use a LLM.
+ * retrieve_embeddings_llm: to do a retrieval selecting an embedding model, with content generation.
+ * retrieve_hybrid_scoring: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), without content generation. This template does not use a LLM.
+ * retrieve_hybrid_scoring_llm: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), with content generation.
+ * retrieve_hybrid_scoring_rrf: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), without content generation. This template does not use a LLM.
+ * retrieve_hybrid_scoring_rrf_llm: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), with content generation.
+ * retrieve_sort_llm: to do retrieval and sorting chunks, with content generation.
+ * retrieve_merge_llm: to merge the content of chunks with metadata filename, with content generation.
+ * retrieve_fulldocument: to retrieve a full document, without content generation. This  template does not use a LLM.
+ * retrieve_fulldoc_llm: to retrieve a full document, with content generation.
+ * retrieve_batchmerge_llm: to perform several retrievals, with content generation.
+ * expand_query_lang_llm: to do a retrieval translating the queries in different languages, with content generation.
+ * dalle: for calling DALL-E model.
+ 
+ #### Compose Template Expected parameters:
+ 
+ * retrieve: index, query, top_k, filters
+ * retrieve_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_reference: index, query, top_k, filters, model, platform, query, system, llm_template
+ * multiple_retrieval: index, query, top_k, filters
+ * llm_model:  model, platform, query, system, llm_template
+ * multiple_retrieval_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_embeddings: index, query, top_k, filters, embedding_model (a single one)
+ * retrieve_embeddings_llm: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template
+ * retrieve_hybrid_scoring: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom
+ * retrieve_hybrid_scoring_llm:index, query, top_k, filters, embedding_model (a single one), rescoring_function , model, platform, query, system, llm_template
+ * retrieve_hybrid_scoring_rrf: index, query, top_k, filters, embedding_model (a single one), strategy_mode
+ * retrieve_hybrid_scoring_rrf_llm:index, query, top_k, filters, embedding_model (a single one), strategy_mode , model, platform, query, system, llm_template
+ * retrieve_sort_llm:index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template
+ * retrieve_merge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_fulldocument:index, query, top_k, filters
+ * retrieve_fulldoc_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * retrieve_batchmerge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
+ * expand_query_lang_llm: langs (list of languages to expand), index, query, model, platform, llm_template
+ * dalle: style, size, quality, model, query
+
 
 ### Compose actions template
 

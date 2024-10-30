@@ -4,6 +4,7 @@
 from typing import List
 from copy import deepcopy
 from string import Template
+from abc import abstractmethod
 
 from ..utils.defaults import EMPTY_STREAM
 from ..streamlist import StreamList
@@ -22,6 +23,7 @@ class CombineBatchMethod:
         """
         self.streambatch = streambatch
 
+    @abstractmethod
     def process(self) -> List:
         """Process the streambatch given the method
         """
@@ -42,7 +44,7 @@ class JoinCombine2(CombineBatchMethod):
 
         self.streambatch = streambatch
 
-    def process(self, template: str, SEP: str = "\n") -> List:
+    def process(self, template: str, SEP: str = "\n") -> StreamList:
         """Process the streambatch given the method
         """
         sl1, sl2 = self.streambatch
@@ -52,7 +54,9 @@ class JoinCombine2(CombineBatchMethod):
 
         es = deepcopy(EMPTY_STREAM)
         es.update({"content": content})
-        return StreamList().retrieve("streamlist", {"streamlist": [es]})
+        sls = StreamList()
+        sls.retrieve("streamlist", {"streamlist": [es]})
+        return sls
 
 
 class CombineJoin2(CombineBatchMethod):
@@ -73,9 +77,9 @@ class CombineJoin2(CombineBatchMethod):
     def _repeat(sl1, sl2):
         if len(sl1) != len(sl2):
             if len(sl1) < len(sl2):
-                sl1 = sl1 * (len(sl2) // len(sl1) + 1)
+                sl1 = sl1.streamlist * (len(sl2) // len(sl1) + 1)
             else:
-                sl2 = sl2 * (len(sl1) // len(sl2) + 1)
+                sl2 = sl2.streamlist * (len(sl1) // len(sl2) + 1)
 
         return sl1, sl2
 
@@ -97,6 +101,7 @@ class CombineJoin2(CombineBatchMethod):
                 es = deepcopy(EMPTY_STREAM)
                 es.update({"content": content})
                 new_streamlist.append(StreamChunk(es))
+
         return new_streamlist
 
 

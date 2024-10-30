@@ -985,7 +985,7 @@ Furthermore, an example of persistence incluiding images in url format (the imag
                                   },
                                   {
                                     "type": "image_url",
-                                    "url": "https://imagelink.jpg"
+                                    "image":{"url": "https://imagelink.jpg"}
                                   }
                                 ]
     },
@@ -1280,7 +1280,7 @@ LLMAPI needs 2 config files to run.
                 },
                 {
                 "type": "image_url",
-                "image_url":{
+                "image":{
                     "url": "https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png",
                     "detail": "high"
                 }

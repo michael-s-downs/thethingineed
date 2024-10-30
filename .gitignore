@@ -3,5 +3,11 @@
 **/__pycache__/
 .terraform/
 .terraform.lock.hcl
-models
-vector_storage
+services/models
+services/vector-storage
+secrets
+.env
+
+.coverage
+htmlcov/
+.pytest_cache/

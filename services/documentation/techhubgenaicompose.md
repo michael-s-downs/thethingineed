@@ -3116,6 +3116,29 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
+    The available abbreviations are:
+    - "ja": "japanese",
+    - "es": "spanish",
+    - "en": "english",
+    - "fr": "french",
+    - "de": "german",
+    - "zh": "chinese",
+    - "it": "italian",
+    - "ko": "korean",
+    - "pt": "portuguese",
+    - "ru": "russian",
+    - "ar": "arabic",
+    - "hi": "hindi",
+    - "tr": "turkish",
+    - "nl": "dutch",
+    - "sv": "swedish",
+    - "pl": "polish",
+    - "el": "greek",
+    - "he": "hebrew",
+    - "vi": "vietnamese",
+    - "th": "thai",
+    - "ca": "catalan"
+
 ## Troubleshooting
 
 ### Common Issues
