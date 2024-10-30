@@ -74,7 +74,7 @@ class LLMDeployment(BaseDeployment):
             return eval(template), ""
 
         elif template_name:
-            if lang:
+            if lang and f"{template_name}_{lang}" in self.templates_names:
                 template_name = f"{template_name}_{lang}"
             if template_name not in self.templates_names:
                 raise ValueError(f"Invalid template name '{template_name}'. The valid ones are '{self.templates_names}'")
