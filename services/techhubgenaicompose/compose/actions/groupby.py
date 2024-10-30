@@ -47,28 +47,6 @@ class GroupByMethod(ABC):
 
         """
 
-    def get_example(self):
-        """Get an example of the group by method.
-
-        Returns:
-            str: A JSON string representing an example of the group by method.
-
-        """
-        return json.dumps(self._get_example())
-
-    @abstractmethod
-    def _get_example(self) -> Dict:
-        """Get an example of the group by method.
-
-        This method should be implemented by subclasses to define the specific
-        logic for generating an example of the group by method.
-
-        Returns:
-            Dict: A dictionary representing an example of the group by method.
-
-        """
-        return {}
-
 
 class GroupByDoc(GroupByMethod):
     """
@@ -100,8 +78,8 @@ class GroupByDoc(GroupByMethod):
         """
 
         if params:
-            desc = params.get('desc', True)
-            method = params.get('method', "max")
+            desc = params.get("desc", True)
+            method = params.get("method", "max")
         else:
             desc = True
             method = "max"
@@ -111,13 +89,15 @@ class GroupByDoc(GroupByMethod):
         elif method == "mean":
             method = mean
         else:
-            raise PrintableGenaiError(404, "Groupby sorting method not found, try max or mean")
+            raise PrintableGenaiError(
+                404, "Groupby sorting method not found, try max or mean"
+            )
 
         grouped_dict = defaultdict(list)
         group_score = {}
 
         for sc in self.streamlist:
-            doc_id = sc.get('document_id')
+            doc_id = sc.get("document_id")
             grouped_dict[doc_id].append(sc)
 
         for doc_key, group in grouped_dict.items():
@@ -127,23 +107,15 @@ class GroupByDoc(GroupByMethod):
             group_score[doc_key] = method(scores)
 
         for doc_key in grouped_dict:
-            grouped_dict[doc_key].sort(key=lambda chunk: chunk.get('snippet_number'))
+            grouped_dict[doc_key].sort(key=lambda chunk: chunk.get("snippet_number"))
 
-        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk
-                in grouped_dict[doc_key]]
-
-    def _get_example(self) -> Dict:
-        """Get an example of the group by method.
-
-        Returns:
-            dict: An example of the group by method.
-        """
-        return {
-            "type": self.TYPE,
-            "params": {
-                "desc": True
-            }
-        }
+        return [
+            chunk
+            for doc_key in dict(
+                sorted(group_score.items(), key=lambda item: item[1], reverse=desc)
+            )
+            for chunk in grouped_dict[doc_key]
+        ]
 
 
 class GroupByDate(GroupByMethod):
@@ -163,11 +135,10 @@ class GroupByDate(GroupByMethod):
     TYPE = "date"
 
     def process(self, params):
-        """Process the streamlist given the method
-        """
+        """Process the streamlist given the method"""
 
         if params:
-            desc = params.get('desc', True)
+            desc = params.get("desc", True)
         else:
             desc = True
 
@@ -175,23 +146,20 @@ class GroupByDate(GroupByMethod):
         group_score = {}
 
         for sc in self.streamlist:
-            date_id = sc.get('date')
+            date_id = sc.get("date")
             grouped_dict[date_id].append(sc)
             group_score[date_id] = parse(date_id)
 
         for doc_key in grouped_dict:
-            grouped_dict[doc_key].sort(key=lambda chunk: chunk.get('snippet_number'))
+            grouped_dict[doc_key].sort(key=lambda chunk: chunk.get("snippet_number"))
 
-        return [chunk for doc_key in dict(sorted(group_score.items(), key=lambda item: item[1], reverse=desc)) for chunk
-                in grouped_dict[doc_key]]
-
-    def _get_example(self) -> Dict:
-        return {
-            "type": self.TYPE,
-            "params": {
-                "desc": True
-            }
-        }
+        return [
+            chunk
+            for doc_key in dict(
+                sorted(group_score.items(), key=lambda item: item[1], reverse=desc)
+            )
+            for chunk in grouped_dict[doc_key]
+        ]
 
 
 class GroupByFactory:
@@ -210,8 +178,10 @@ class GroupByFactory:
                 break
 
         if self.groupbymethod is None:
-            raise PrintableGenaiError(status_code=404,
-                                      message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}")
+            raise PrintableGenaiError(
+                status_code=404,
+                message=f"Provided groupby does not match any of the possible ones: {', '.join(f.TYPE for f in self.GROUPBY)}",
+            )
 
     def process(self, streamlist: list, params):
         """Process the streamlist with the given params

@@ -8,3 +8,8 @@ services/vector-storage
 secrets
 .env
 IaC/Terraform/vars/
+
+
+.coverage
+htmlcov/
+.pytest_cache/

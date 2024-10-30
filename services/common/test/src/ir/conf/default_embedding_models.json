@@ -1,0 +1,13 @@
+{
+    "bm25": "bm25",
+    "text-embedding-ada-002": "techhub-pool-world-ada-002",
+    "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base": "dpr-encoder",
+    "cohere.embed-english-v3": "cohere-english-v3-pool-world",
+    "cohere.embed-multilingual-v3": "cohere-multilingual-v3-pool-world",
+    "text-embedding-3-large": "techhub-pool-world-ada-3-large",
+    "text-embedding-3-small": "techhub-pool-world-ada-3-small",
+    "amazon.titan-embed-text-v2:0": "titan-v2-pool-world",
+    "amazon.titan-embed-text-v1": "titan-v1-pool-world",
+    "dunzhang/stella_en_1.5B_v5": "dunzhang-stella-1.5B-v5",
+    "BAAI/bge-multilingual-gemma2": "bge-multilingual-gemma2"
+}

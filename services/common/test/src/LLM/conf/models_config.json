@@ -1,0 +1,714 @@
+{
+	"LLMs": {
+		"bedrock": [{
+			"model": "claude-v2:1-NorthVirginiaEast",
+			"model_id": "anthropic.claude-v2:1",
+			"model_type": "claude-v2.1",
+			"max_input_tokens": 200000,
+			"zone": "us-east-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v2.1-pool-america",
+			"claude-v2.1-pool-world"]
+		},
+		{
+			"model": "claude-v2-NorthVirginiaEast",
+			"model_id": "anthropic.claude-v2",
+			"model_type": "claude-v2",
+			"max_input_tokens": 100000,
+			"zone": "us-east-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v2-pool-america",
+			"claude-v2-pool-world"]
+		},
+		{
+			"model": "claude-instant-NorthVirginiaEast",
+			"model_id": "anthropic.claude-instant-v1",
+			"model_type": "claude-instant-v1",
+			"max_input_tokens": 100000,
+			"zone": "us-east-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-instant-v1-pool-america",
+			"claude-instant-v1-pool-world"]
+		},
+		{
+			"model": "claude-v2:1-FranckfurtCentral",
+			"model_id": "anthropic.claude-v2:1",
+			"model_type": "claude-v2.1",
+			"max_input_tokens": 200000,
+			"zone": "eu-central-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v2.1-pool-europe",
+			"claude-v2.1-pool-world"]
+		},
+		{
+			"model": "claude-v2-FranckfurtCentral",
+			"model_id": "anthropic.claude-v2",
+			"model_type": "claude-v2",
+			"max_input_tokens": 100000,
+			"zone": "eu-central-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v2-pool-europe",
+			"claude-v2-pool-world"]
+		},
+		{
+			"model": "claude-instant-FranckfurtCentral",
+			"model_id": "anthropic.claude-instant-v1",
+			"model_type": "claude-instant-v1",
+			"max_input_tokens": 100000,
+			"zone": "eu-central-1",
+			"message": "chatClaude",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-instant-v1-pool-europe",
+			"claude-instant-v1-pool-world"]
+		},
+		{
+			"model": "claude-3-haiku-ParisWest",
+			"model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+			"model_type": "claude-v3-haiku",
+			"max_input_tokens": 200000,
+			"zone": "eu-west-3",
+			"message": "chatClaude3",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v3-haiku-pool-europe",
+			"claude-v3-haiku-pool-world"]
+		},
+		{
+			"model": "claude-3-sonnet-ParisWest",
+			"model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+			"model_type": "claude-v3-sonnet",
+			"max_input_tokens": 200000,
+			"zone": "eu-west-3",
+			"message": "chatClaude3",
+			"api_version": "bedrock-2023-05-31",
+			"model_pool": ["claude-v3-sonnet-pool-europe",
+			"claude-v3-sonnet-pool-world"]
+		},{
+			"model": "meta-llama-3-70b-NorthVirginiaEast",
+			"model_id":"meta.llama3-70b-instruct-v1:0",
+			"model_type": "llama3-v1-70b",
+			"max_input_tokens": 8000,
+			"zone": "us-east-1",
+			"message": "chatLlama3",
+			"model_pool": [
+				"llama-v3-70b-pool-world"
+			]
+		},{
+			"model": "meta-llama-3-8b-NorthVirginiaEast",
+			"model_id":"meta.llama3-8b-instruct-v1:0",
+			"model_type": "llama3-v1-8b",
+			"max_input_tokens": 8000,
+			"zone": "us-east-1",
+			"message": "chatLlama3",
+			"model_pool": [
+				"llama-v3-8b-pool-world"
+			]
+		},{
+			"model": "meta-llama-3.1-70b-Oregon",
+			"model_id":"meta.llama3-1-70b-instruct-v1:0",
+			"model_type": "llama3.1-v1-70b",
+			"max_input_tokens": 128000,
+			"zone": "us-west-2",
+			"message": "chatLlama3",
+			"model_pool": [
+				"llama-v3.1-70b-pool-world"
+			]
+		},{
+			"model": "meta-llama-3.1-8b-Oregon",
+			"model_id":"meta.llama3-1-8b-instruct-v1:0",
+			"model_type": "llama3.1-v1-8b",
+			"max_input_tokens": 128000,
+			"zone": "us-west-2",
+			"message": "chatLlama3",
+			"model_pool": [
+				"llama-v3.1-8b-pool-world"
+			]
+		}
+	],
+		"azure": [{
+			"model": "techhubinc-AustraliaEast-dall-e-3",
+			"model_type": "dalle3",
+			"max_input_tokens": 4000,
+			"zone": "techhubinc-AustraliaEast",
+			"message": "dalle",
+			"api_version": "2023-12-01-preview",
+			"model_pool": ["techhubinc-pool-world-dalle3"]
+		},
+		{
+			"model": "techhubinc-AustraliaEast-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-AustraliaEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-AustraliaEast-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-AustraliaEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-AustraliaEast-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-AustraliaEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-AustraliaEast-gpt-4-vision-preview",
+			"model_type": "gpt-4v",
+			"max_input_tokens": 32768,
+			"zone": "techhubinc-AustraliaEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4v"]
+		},
+		{
+			"model": "techhubinc-BrazilSouth-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-BrazilSouth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-BrazilSouth-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-BrazilSouth",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-CanadaEast-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-CanadaEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-CanadaEast-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-CanadaEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-CanadaEast-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-CanadaEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-EastUS-dall-e-3",
+			"model_type": "dalle3",
+			"max_input_tokens": 4000,
+			"zone": "techhubinc-EastUS",
+			"message": "dalle",
+			"api_version": "2023-12-01-preview",
+			"model_pool": ["techhubinc-pool-us-dalle3",
+			"techhubinc-pool-world-dalle3"]
+		},
+		{
+			"model": "techhubinc-EastUS-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-EastUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-3.5-turbo-16k",
+			"techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-EastUS-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-EastUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-EastUS-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-EastUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-EastUS-gpt-4o-mini-2024-07-18",
+			"model_type": "gpt-4o-mini",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-EastUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-04-01-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o-mini",
+			"techhubinc-pool-world-gpt-4o-mini"]
+		},
+		{
+			"model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-EastUS2",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-3.5-turbo-16k",
+			"techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-EastUS2-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-EastUS2",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-EastUS2-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-EastUS2",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-FranceCentral-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-FranceCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-3.5-turbo-16k",
+			"techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-FranceCentral-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-FranceCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-FranceCentral-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-FranceCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-GermanyWestCentral-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-GermanyWestCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-GermanyWestCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-JapanEast-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-JapanEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-JapanEast-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-JapanEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-JapanEast-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-JapanEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-JapanEast-gpt-4-vision-preview",
+			"model_type": "gpt-4v",
+			"max_input_tokens": 32768,
+			"zone": "techhubinc-JapanEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4v"]
+		},
+		{
+			"model": "techhubinc-KoreaCentral-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-KoreaCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-KoreaCentral-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-KoreaCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-NorthCentralUS-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-NorthCentralUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-NorthCentralUS-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-NorthCentralUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-3.5-turbo-16k",
+			"techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-NorthCentralUS-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-NorthCentralUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-NorwayEast-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-NorwayEast",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-NorwayEast-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-NorwayEast",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-PolandCentral-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-PolandCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-PolandCentral-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-PolandCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SouthAfricaNorth-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthAfricaNorth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SouthAfricaNorth-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthAfricaNorth",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-SouthCentralUS-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthCentralUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SouthCentralUS-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthCentralUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-SouthIndia-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthIndia",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-SouthIndia-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SouthIndia",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SwedenCentral-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-SwedenCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-3.5-turbo-16k",
+			"techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-SwedenCentral-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SwedenCentral",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SwedenCentral-gpt-4-vision-preview",
+			"model_type": "gpt-4v",
+			"max_input_tokens": 32768,
+			"zone": "techhubinc-SwedenCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4v",
+			"techhubinc-pool-world-gpt-4v"]
+		},
+		{
+			"model": "techhubinc-SwedenCentral-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SwedenCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-SwedenCentral-gpt-4o-mini-2024-07-18",
+			"model_type": "gpt-4o-mini",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SwedenCentral",
+			"message": "chatGPT-v",
+			"api_version": "2024-04-01-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o-mini",
+			"techhubinc-pool-world-gpt-4o-mini"]
+		},
+		{
+			"model": "techhubinc-SwitzerlandNorth-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-SwitzerlandNorth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-SwitzerlandNorth-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SwitzerlandNorth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-SwitzerlandNorth-gpt-4-vision-preview",
+			"model_type": "gpt-4v",
+			"max_input_tokens": 32768,
+			"zone": "techhubinc-SwitzerlandNorth",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4v"]
+		},
+		{
+			"model": "techhubinc-SwitzerlandNorth-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-SwitzerlandNorth",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-UKSouth-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-UKSouth",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-UKSouth-gpt-35-turbo-16k-0613",
+			"model_type": "gpt-3.5-turbo-16k",
+			"max_input_tokens": 16384,
+			"zone": "techhubinc-UKSouth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-3.5-turbo-16k"]
+		},
+		{
+			"model": "techhubinc-UKSouth-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-UKSouth",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-WestEurope-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestEurope",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-WestEurope-gpt-4o-2024-05-13",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestEurope",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-eu-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-WestUS-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		},
+		{
+			"model": "techhubinc-WestUS-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestUS",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-WestUS-gpt-4-vision-preview",
+			"model_type": "gpt-4v",
+			"max_input_tokens": 32768,
+			"zone": "techhubinc-WestUS",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4v",
+			"techhubinc-pool-world-gpt-4v"]
+		},
+		{
+			"model": "techhubinc-WestUS3-gpt-4-turbo-2024-04-09",
+			"model_type": "gpt-4-turbo",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestUS3",
+			"message": "chatGPT",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4-turbo",
+			"techhubinc-pool-world-gpt-4-turbo"]
+		},
+		{
+			"model": "techhubinc-WestUS3-gpt-4o-2024-08-06",
+			"model_type": "gpt-4o",
+			"max_input_tokens": 128000,
+			"zone": "techhubinc-WestUS3",
+			"message": "chatGPT-v",
+			"api_version": "2024-02-15-preview",
+			"model_pool": ["techhubinc-pool-us-gpt-4o",
+			"techhubinc-pool-world-gpt-4o"]
+		}]
+	}
+}

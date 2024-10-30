@@ -1,0 +1,6 @@
+[run]
+omit =
+        *__init__*
+        *test*
+        config-3.py
+        config.py

@@ -1,0 +1,10 @@
+[run]
+omit =
+    config.py
+    config-3.py
+    *test*
+    *test*
+    *test*
+    *test*
+    *test*
+    *test*
