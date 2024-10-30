@@ -3100,7 +3100,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Within this action, there is one type:
 
-   - **Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja".
+   - **Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
     Example:
 
@@ -3109,7 +3109,8 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action": "expansion",
         "action_params":{
             "params": {
-                "langs" : ["es", "ja", "chinese"]
+                "langs" : ["es", "ja", "chinese"],
+                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
             },
             "type": "lang"
         }

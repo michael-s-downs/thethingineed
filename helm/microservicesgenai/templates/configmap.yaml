@@ -16,3 +16,4 @@ data:
 {{- include "retrieve" . | indent 2 }}
 {{- include "gunicorn" . | indent 2 }}
 {{- include "langfuse" . | indent 2 }}
+{{- include "apigw" . | indent 2 }}

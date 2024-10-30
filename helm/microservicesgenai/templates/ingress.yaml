@@ -1,0 +1,38 @@
+{{ if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "shortname" . }}
+  labels:
+    app: {{ template "shortname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/acme-challenge-type: http01
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: '0'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '600'
+    nginx.org/client-max-body-size: '0'
+    nginx.org/proxy-connect-timeout: 600s
+    nginx.org/proxy-read-timeout: 600s
+spec:
+  rules:
+  - host: {{ .Values.ingress.basedomain }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ template "shortname" . }}
+            port:
+               number: {{ .Values.ingress.port }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.basedomain }}
+    secretName: wild-tls
+{{ end }}
