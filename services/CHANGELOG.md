@@ -11,13 +11,19 @@
     - [Improvement] Add temperature range control by LLM
     - [Fix] Prompt models deleted from the config file
     - [Fix] Get response from bedrock when exception is raised manually
+    - [Fix] When lang template not found, use base template instead
 - genai-inforetrieval
     - [New] Added usage of retriever_model parameter in config file when calling huggingface models
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
+    - [Fix] Error message instead of result when endpoint fails
 - genai-infoindexing:
-    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
-    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
+  - [New] Refactor of the way to get the chnks (chunking_methods.py)
+  - [New] New method to do the chunking: surrounding_context_window
+  - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
+  - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
+  - [Improvement] Check if the same chunking method is always used for the index
+  - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
 - genai-compose:
     - [Improvement] Config model param for action expansion query by lang
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var

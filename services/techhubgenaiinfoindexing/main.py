@@ -85,7 +85,7 @@ class InfoIndexationDeployment(BaseDeployment):
             self.connector.connect()
 
             # check if the models used are the same
-            self.connector.assert_correct_index_conf(input_object.index, self.all_models, input_object.models)
+            self.connector.assert_correct_index_conf(input_object.index, input_object.chunking_method['method'], self.all_models, input_object.models)
             vector_db = ManagerVectorDB.get_vector_database({'type': "LlamaIndex", 'connector': self.connector,
                                                              'workspace': self.workspace, 'origin': self.origin,
                                                              'aws_credentials': self.aws_credentials})
