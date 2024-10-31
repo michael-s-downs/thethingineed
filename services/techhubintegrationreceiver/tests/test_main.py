@@ -2,14 +2,17 @@
 
 
 # Native imports
+import os
+import sys
 import json
 from unittest import mock
-from unittest.mock import patch, MagicMock
+from functools import wraps
 
 # Installed imports
 import pytest
 
 # Custom imports
+sys.path.append(os.getenv('LOCAL_COMMON_PATH'))
 from main import app
 
 
@@ -19,6 +22,24 @@ def client():
         yield client
 
 
+# Decorator to reuse mocks
+def mock_resources(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        @mock.patch('main.provider_resources.storage_download_folder')
+        def mocked(mock_storage_download_folder):
+            # Set mocks return values
+            mock_storage_download_folder.return_value = True
+
+            # Call function with mocks applied
+            return func(*args, **kwargs)
+
+        return mocked()
+
+    return wrapper
+
+
+@mock_resources
 def test_healthcheck(client):
     """Test the healthcheck endpoint."""
     response = client.get("/healthcheck")
@@ -27,6 +48,7 @@ def test_healthcheck(client):
     assert json.loads(response.data).get('status', "") == "ok"
 
 
+@mock_resources
 def test_killcheck(client):
     """Test the killcheck endpoint."""
     response = client.get("/killcheck")
@@ -35,15 +57,13 @@ def test_killcheck(client):
     assert json.loads(response.data).get('status', "") == "ok"
 
 
+@mock_resources
 def test_reloadconfig(client):
     """Test the reloadconfig endpoint."""
-    with patch("main.provider_resources.storage_download_folder") as mock_storage_download_folder:
-        mock_storage_download_folder.return_value = True  # MOCK NOT WORKING!
+    response = client.get("/reloadconfig")
 
-        response = client.get("/reloadconfig")
-
-        assert response.status_code == 200
-        assert json.loads(response.data).get('status', "") == "ok"
+    assert response.status_code == 200
+    assert json.loads(response.data).get('status', "") == "ok"
 
 
 # TODO: fix and mock currents, add for validation and adaptation
