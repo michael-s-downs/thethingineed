@@ -89,6 +89,8 @@ class FilterLLM(FilterResponseMethod):
         substitutions = self.filter_template.get("substitutions")
 
         answer = self.streamlist[-1].answer
+        if answer is None:
+            raise PrintableGenaiError("No answer found to filter")
         
         context = " ".join([streamchunk.content for streamchunk in self.streamlist])
         filter_query_response = f"Query:{query}. Response:{answer}. Context:{context}"
