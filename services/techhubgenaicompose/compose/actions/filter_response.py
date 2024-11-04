@@ -65,9 +65,9 @@ class FilterLLM(FilterResponseMethod):
         try:
             template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
             if not template:
-                raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
+                raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
-            raise self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
+            raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
         return json.loads(template)
 
     def process(self, params):
