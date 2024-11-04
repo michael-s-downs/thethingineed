@@ -45,34 +45,60 @@ stages:
     condition: succeeded('TerraformValidate')
     dependsOn: TerraformValidate
     jobs:
-      - job: CopyFilesIaCAndPublish
+      - job: CopyFilesIaCAndPublishAzure
         steps:
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Terraform'
+            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Terraform/Azure'
             Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Terraform'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Terraform/Azure'
             CleanTargetFolder: true
         - task: PublishBuildArtifacts@1
           inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Terraform'
-            ArtifactName: 'Terraform'
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Terraform/Azure'
+            ArtifactName: 'Terraform-Azure'
+            publishLocation: 'Container'
+      - job: CopyFilesIaCAndPublishAWS
+        steps:
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Terraform/AWS'
+            Contents: '**'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Terraform/AWS'
+            CleanTargetFolder: true
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Terraform/AWS'
+            ArtifactName: 'Terraform-AWS'
             publishLocation: 'Container'
   - stage: ScriptsArtifact
     condition: succeeded('TerraformArtifact')
     dependsOn: 
       - TerraformArtifact
     jobs:
-    - job: CopyFilesScriptsAndPublish
+    - job: CopyFilesScriptsAndPublishAzure
       steps:
       - task: CopyFiles@2
         inputs:
-          SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Scripts'
+          SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Scripts/Azure'
           Contents: '**'
-          TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Scripts'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Scripts/Azure'
           CleanTargetFolder: true
       - task: PublishBuildArtifacts@1
         inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Scripts'
-          ArtifactName: 'Scripts'
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Scripts/Azure'
+          ArtifactName: 'Scripts-Azure'
+          publishLocation: 'Container'
+    - job: CopyFilesScriptsAndPublishAWS
+      steps:
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)/IaC/Scripts/AWS'
+          Contents: '**'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)/IaC/Scripts/AWS'
+          CleanTargetFolder: true
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/IaC/Scripts/AWS'
+          ArtifactName: 'Scripts-AWS'
           publishLocation: 'Container'
