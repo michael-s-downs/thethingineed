@@ -59,16 +59,11 @@ class MixQueries(ReformulateMethod):
         if self.query == "" or self.query is None:
             raise PrintableGenaiError(status_code=400, message="Query is empty, cannot filter")
 
-        retrieve_action = None
-        for action in actions_confs:
-            if action["action"] == "retrieve":
-                retrieve_action = action
-
         headers = params.pop("headers")
         max_persistence = params.get("max_persistence", 5)
         template_name = params.get("template_name")
         lang = params.get("lang")
-        save_mod_query = params.get("save_mod_query")
+        save_mod_query = params.get("save_mod_query", False)
         session_id = params.get("session_id")
         PD = params.get("PD")
         
@@ -84,14 +79,18 @@ class MixQueries(ReformulateMethod):
             r = requests.post(self.URL, json=template, headers=headers, verify=True)
             result = LLMP.parse_response(r)
             query =  result['answer'].replace("\n", " ")
-            if save_mod_query:
+            if save_mod_query is False:
                 PD.update_last({"user": query}, session_id)
             else:
                 PD.update_last({"user":self.query, "assistant": query}, session_id)
                 PD.add({"user": query}, session_id)
 
-            retrieve_action["action_params"]["params"]["generic"]["index_conf"]["query"] = query
-            actions_confs.insert(0, deepcopy(retrieve_action))
+            for action in actions_confs:
+                if action["action"] == "retrieve":
+                    action["action_params"]["params"]["generic"]["index_conf"]["query"] = query
+                if action["action"] == "llm_action":
+                    action["action_params"]["params"]["query_metadata"]["query"] = query
+                
 
             return query
 

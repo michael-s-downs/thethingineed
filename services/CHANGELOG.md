@@ -4,6 +4,9 @@
 # Changelog
 
 ## vXX (XXXX-XX-XX)
+- all
+    - [New] Unit test
+
 - genai-llmapi
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
@@ -19,6 +22,9 @@
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
 - genai-compose:
+    - [New] Update and refactor filer query from param call to template action
+    - [New] Update and refactor filer response from param call to template action
+    - [New] Update and refactor reformulate query from param call to template action
     - [Improvement] Config model param for action expansion query by lang
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
     - [Fix] Fix models from default templates
