@@ -1,6 +1,7 @@
 ### This code is property of the GGAO ###
 
 
+import os
 import random
 import string
 import re
@@ -40,6 +41,7 @@ class ConfManager(AbstractManager):
         self.lang = None
         self.reformulate_m = None
         self.langfuse_m = None
+        self.update_model_from_defaults()
         self.parse_conf_actions(compose_config)
 
     def parse_conf_actions(self, compose_config):
@@ -94,7 +96,7 @@ class ConfManager(AbstractManager):
             if name:
                 self.raise_PrintableGenaiError(404, f"Template file doesn't exists for name {name}")
             else:
-                self.raise_PrintableGenaiError(404, f"Mandatory param <name> not found in template.")
+                self.raise_PrintableGenaiError(404, "Mandatory param <name> not found in template.")
 
         if isinstance(model_template, str) and len(model_template) > 0:
             if model_template[0] != '$':
@@ -103,7 +105,7 @@ class ConfManager(AbstractManager):
                 if isinstance(model_request, str):
                     model = model_request
                 else:
-                    self.raise_PrintableGenaiError(404, f"There is no model defined in the request or template")
+                    self.raise_PrintableGenaiError(404, "There is no model defined in the request or template")
         else:
             model = model_template
 
@@ -164,3 +166,23 @@ class ConfManager(AbstractManager):
         for substring in remove_strings:
             model = model.replace(substring, "")
         return model
+
+
+    def update_model_from_defaults(self):
+        """Updates all default templates with the model set in the environ
+        """
+        default_model = os.getenv("DEFAULT_LLM_MODEL")
+        if default_model is None:
+            return
+        
+        from compose.utils.defaults import SUM_TEMPLATE, FILTER_TEMPLATE, REFORMULATE_TEMPLATE, TRANSLATE_TEMPLATE, FILTERED_ACTIONS
+
+        SUM_TEMPLATE["llm_metadata"]["model"] = default_model
+        FILTER_TEMPLATE["llm_metadata"]["model"] = default_model
+        REFORMULATE_TEMPLATE["llm_metadata"]["model"] = default_model
+        TRANSLATE_TEMPLATE["llm_metadata"]["model"] = default_model
+        FILTERED_ACTIONS[1]["action_params"]["params"]["llm_metadata"]["model"] = default_model
+        
+        
+
+            
