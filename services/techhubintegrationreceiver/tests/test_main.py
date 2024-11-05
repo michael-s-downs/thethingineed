@@ -10,8 +10,10 @@ from functools import wraps
 
 # Installed imports
 import pytest
+from dotenv import load_dotenv
 
 # Custom imports
+load_dotenv("tests/environment_variables.txt")
 sys.path.append(os.getenv('LOCAL_COMMON_PATH'))
 from main import app
 

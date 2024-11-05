@@ -1,0 +1,22 @@
+### This code is property of the GGAO ###
+
+
+INTEGRATION_NAME=search
+TENANT=integration_test
+LOG_LEVEL=INFO
+DEBUG_TENANTS=integration_test
+PROVIDER=azure
+AWS_ACCESS_KEY=integration_test
+AWS_SECRET_KEY=integration_test
+AZ_CONN_STR_QUEUE=integration_test
+AZ_CONN_STR_STORAGE=integration_test
+STORAGE_DATA=integration_test
+STORAGE_BACKEND=integration_test
+STORAGE_CONFIG_FOLDER=src/integration/{integration_name}/
+STORAGE_RESULTS_FOLDER=results/{integration_name}/
+STORAGE_PERSIST_FOLDER=current_requests/{integration_name}/
+STORAGE_PERSIST_REQUEST=False
+STORAGE_DELETE_REQUEST=True
+LOCAL_COMMON_PATH=common
+INTEGRATION_QUEUE_URL=integration_test
+VECTOR_STORAGE=integration_test
