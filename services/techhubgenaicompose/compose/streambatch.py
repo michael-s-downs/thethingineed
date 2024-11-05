@@ -1,10 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-from typing import Union, List
-
 from .streamlist import StreamList
-from .streamchunk import StreamChunk
 from .batchactions import MergeBatchFactory, SplitBatchFactory, CombineBatchFactory, BatchSortFactory
 
 

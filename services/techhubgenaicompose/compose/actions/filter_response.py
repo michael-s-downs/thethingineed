@@ -3,10 +3,7 @@
 
 import os
 import json
-import asyncio
-import aiohttp
 
-from copy import deepcopy
 import random
 import requests
 from typing import List, Dict

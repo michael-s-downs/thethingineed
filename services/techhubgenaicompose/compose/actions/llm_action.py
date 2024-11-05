@@ -2,7 +2,6 @@
 
 
 import os
-import json
 import logging
 import asyncio
 import aiohttp
