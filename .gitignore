@@ -8,6 +8,8 @@ services/vector-storage
 secrets
 .env
 
+*coverage.sh
+*coverage.bat
 .coverage
 htmlcov/
 .pytest_cache/
