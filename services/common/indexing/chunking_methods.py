@@ -8,15 +8,22 @@ import uuid
 import os
 import re
 import json
+import logging
+
 
 # Installed imports
 from llama_index.core.node_parser import SentenceSplitter, SentenceWindowNodeParser
+from llama_index.core.schema import IndexNode
+from llama_index.core import Document
 import mmh3
 
 
 # Custom imports
 from common.errors.genaierrors import PrintableGenaiError
 from common.genai_controllers import load_file
+from common.logging_handler import LoggerHandler
+from common.services import CHUNKING_SERVICE
+
 
 class ChunkingMethod(ABC):
     CHUNKING_FORMAT = "ChunkingMethod"
@@ -26,6 +33,12 @@ class ChunkingMethod(ABC):
         self.window_overlap = window_overlap
         self.origin = origin
         self.workspace = workspace
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
+
+        logger_handler = LoggerHandler(CHUNKING_SERVICE, level=os.environ.get('LOG_LEVEL', "INFO"))
+        self.logger = logger_handler.logger
+
 
     @abstractmethod
     def get_chunks(self, docs: list, encoding):
@@ -125,6 +138,52 @@ class Simple(ChunkingMethod):
 class Recursive(ChunkingMethod):
     CHUNKING_FORMAT = "recursive"
 
+    def __init__(self, window_length: int, window_overlap: int, origin: tuple, workspace: tuple, sub_window_length: int,
+                 sub_window_overlap: int,):
+        super().__init__(window_length, window_overlap, origin, workspace)
+        self.sub_window_length = sub_window_length
+        self.sub_window_overlap = sub_window_overlap
+
+    def get_chunks(self, docs: list, encoding) -> list:
+        """Get nodes from documents
+
+        :param docs: list of documents
+        :param encoding: encoding to use
+
+        :return: list of nodes
+        """
+        nodes_per_doc = []
+        for doc in docs:
+            # If not added, does not appear in inforetrieval (value substituted by llama_index in indexation)
+            doc.metadata.setdefault('document_id', str(uuid.uuid4()))
+            # Exclude when splitting (chunk size dependent on the metadata)
+            doc.excluded_llm_metadata_keys = list(doc.metadata.keys())
+            doc.excluded_embed_metadata_keys = list(doc.metadata.keys())
+
+            base_nodes = SentenceSplitter(chunk_size=self.window_length, chunk_overlap=self.window_overlap,
+                                                 tokenizer=encoding.encode, paragraph_separator="\\n\\n").get_nodes_from_documents([doc], show_progress=True)
+            sub_node_splitter = SentenceSplitter(chunk_size=self.sub_window_length, chunk_overlap=self.sub_window_overlap,
+                                                 tokenizer=encoding.encode, paragraph_separator="\\n\\n")
+            nodes = []
+            for i, base_node in enumerate(base_nodes):
+                self.logger.debug(f"Doing recursive children of node {i}")
+                base_doc = Document(text=base_node.text, metadata=base_node.metadata)
+                base_doc.excluded_llm_metadata_keys = list(doc.metadata.keys())
+                base_doc.excluded_embed_metadata_keys = list(doc.metadata.keys())
+                sub_nodes = sub_node_splitter.get_nodes_from_documents([base_doc])
+
+                # add subnodes to all nodes (IndexNode format mandatory)
+                nodes.extend([IndexNode.from_text_node(sn, base_node.node_id) for sn in sub_nodes])
+                # also add original node to node (IndexNode format mandatory)
+                nodes.append(IndexNode.from_text_node(base_node, base_node.node_id))
+
+
+            if eval(os.getenv('TESTING', "False")):
+                final_nodes = self._add_nodes_metadata(nodes, self.origin)
+            else:
+                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
+            nodes_per_doc.append(final_nodes)
+        return nodes_per_doc
 
 class SurroundingContextWindow(ChunkingMethod):
     CHUNKING_FORMAT = "surrounding_context_window"

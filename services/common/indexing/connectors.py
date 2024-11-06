@@ -343,13 +343,29 @@ class ElasticSearchConnector(Connector):
         for model in models:
             # All models sent does exist
             index_name = ELASTICSEARCH_INDEX(index, model)
+            # Get the node_type used in first indexation
+            try:
+                result = self.connection.search(index=index_name,
+                                                query={"bool": {"must": {"match_all": {}}}},
+                                                size=1, from_=0)
+                node_type = result["hits"]["hits"][0]["_source"]["metadata"]["_node_type"]
+            except RequestError as e:
+                return "error", (f"Error: {e.info['error']['reason']} caused by: "
+                                 f"{e.info['error']['caused_by']['reason']}"), 400
+            # Get the metadata used in first indexation
             index_metadata = self.get_index_mapping(index_name)[index_name]['mappings']['properties']['metadata']['properties'].keys()
-            if chunking_method == "surrounding_context_window" and not all(elem in index_metadata for elem in ['window', 'original_text']):
-                raise PrintableGenaiError(400, f"Error the index '{index_name}' is not compatible "
-                                               f"with the chunking method '{chunking_method}'. It must have the metadata 'window' and 'original_text'")
-            elif chunking_method == "simple" and any(elem in index_metadata for elem in ['window', 'original_text']):
-                raise PrintableGenaiError(400, f"Error the index '{index_name}' is not compatible "
-                                               f"with the chunking method '{chunking_method}'. It must not have the metadata 'window' and 'original_text'")
+            if (chunking_method == "surrounding_context_window" and (node_type != "TextNode" or
+                    not all(elem in index_metadata for elem in ['window', 'original_text']))):
+                raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+            else:
+                if chunking_method == "simple" and (node_type != "TextNode" or any(elem in index_metadata for elem in ['window', 'original_text'])):
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+                if chunking_method == "recursive" and node_type != "IndexNode":
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                                   f"with the chunking method '{chunking_method}' at first time.")
+
 
     @staticmethod
     def _generate_filters(filters: dict):
