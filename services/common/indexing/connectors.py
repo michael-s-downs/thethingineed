@@ -332,6 +332,18 @@ class ElasticSearchConnector(Connector):
             filenames.append({"filename": filename, "chunks": doc_count})
 
         return "finished", filenames, 200
+    
+    def list_indices(self):
+        """Method to list all indices in the Elasticsearch database."""
+        if self.connection is None:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+
+        try:
+            indices = self.connection.indices.get_alias(index="*")
+            return list(indices.keys())
+        except Exception as e:
+            raise PrintableGenaiError(500, f"Error retrieving indices: {str(e)}")
+
 
     ############################################################################################################
     #                                                                                                          #

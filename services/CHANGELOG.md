@@ -14,8 +14,10 @@
     - [Fix] When lang template not found, use base template instead
 - genai-inforetrieval
     - [New] Added usage of retriever_model parameter in config file when calling huggingface models
+    - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
+    - [Improvement] Endpoints logic separated into different file from main
     - [Fix] Error message instead of result when endpoint fails
 - genai-infoindexing:
   - [New] Refactor of the way to get the chnks (chunking_methods.py)
