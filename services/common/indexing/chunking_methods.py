@@ -222,7 +222,7 @@ class SurroundingContextWindow(ChunkingMethod):
         return nodes_per_doc
 
 class ManagerChunkingMethods(object):
-    IM_TYPES = [Simple, Recursive, SurroundingContextWindow]
+    CHUNKING_METHODS = [Simple, Recursive, SurroundingContextWindow]
 
     @staticmethod
     def get_chunking_method(conf: dict) -> ChunkingMethod:
@@ -230,15 +230,15 @@ class ManagerChunkingMethods(object):
 
         :param conf: Chunking method configuration. Example:  {"type":"simple", ...}
         """
-        for chunking_method in ManagerChunkingMethods.IM_TYPES:
+        for chunking_method in ManagerChunkingMethods.CHUNKING_METHODS:
             chunking_method_type = conf.get('method')
             if chunking_method.is_method_type(chunking_method_type):
                 conf.pop('method')
                 return chunking_method(**conf)
         raise PrintableGenaiError(400, f"Chunking method type doesnt exist {conf}. "
-                         f"Possible values: {ManagerChunkingMethods.get_possible_im()}")
+                         f"Possible values: {ManagerChunkingMethods.get_possible_chunking_methods()}")
 
     @staticmethod
-    def get_possible_im() -> List:
+    def get_possible_chunking_methods() -> List:
         """ Method to list the methods types: [Simple, Recursive, SurroundingContextWindow]"""
-        return [im.MODEL_FORMAT for im in ManagerChunkingMethods.IM_TYPES]
+        return [cm.CHUNKING_FORMAT for cm in ManagerChunkingMethods.CHUNKING_METHODS]
