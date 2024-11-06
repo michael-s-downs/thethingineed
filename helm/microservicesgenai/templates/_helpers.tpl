@@ -136,6 +136,20 @@ heritage: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
+{{/*Create variables for apigw.*/}}
+{{- define "apigw" -}}
+{{- $apigw := .Values.apigw | default dict -}}
+{{- range $key,$value := $apigw }}
+{{- if $value }}
+{{- if eq $key "sqldb" }}
+{{ (printf "ConnectionStrings__%s" $key) }}: {{ $value | quote }}
+{{- else }}
+{{ (printf "Uhis__%s" $key) }}: {{ $value | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 {{/*Create variables for gunicorn.*/}}
 {{- define "gunicorn" -}}
 {{- $gunicorn := .Values.gunicorn | default dict -}}

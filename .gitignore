@@ -7,6 +7,9 @@ services/models
 services/vector-storage
 secrets
 .env
+IaC/Terraform/Azure/vars/
+IaC/Terraform/AWS/vars/
+
 
 *coverage.sh
 *coverage.bat
