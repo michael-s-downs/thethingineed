@@ -13,8 +13,10 @@
     - [Fix] Get response from bedrock when exception is raised manually
 - genai-inforetrieval
     - [New] Added usage of retriever_model parameter in config file when calling huggingface models
+    - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
+    - [Improvement] Endpoints logic separated into different file from main
 - genai-infoindexing:
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
