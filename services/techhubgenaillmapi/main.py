@@ -186,7 +186,7 @@ class LLMDeployment(BaseDeployment):
             if result['status_code'] == 200 and not eval(os.getenv('TESTING', "False")):
                 if model.MODEL_MESSAGE == "dalle":
                     reporting_type = "images"
-                    n_tokens = result['result']['n']
+                    n_tokens = 1
                 else:
                     reporting_type = "tokens"
                     n_tokens = result['result']['n_tokens']
