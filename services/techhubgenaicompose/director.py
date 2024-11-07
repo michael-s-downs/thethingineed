@@ -302,31 +302,11 @@ class Director(AbstractManager):
         
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
-        filtered = False
-        reformulated = False
-
-        if not filtered and self.conf_manager.reformulate_m:
-            generation = self.conf_manager.langfuse_m.add_generation(
-                name="reformulate",
-                metadata={},
-                input=self.conf_manager.template_m.query,
-                model="",
-                model_params={}
-            )
-            self.conf_manager.template_m.query, reformulated = self.conf_manager.reformulate_m.run(
-                self.conf_manager.template_m.query, self.conf_manager.session_id, self.conf_manager.headers, self.PD,
-                self.conf_manager.lang)
-            self.conf_manager.langfuse_m.add_generation_output(
-                generation=generation,
-                output=self.conf_manager.template_m.query
-            )
-
         template_params = self.conf_manager.template_m.set_params(template_params)
 
         try:
             if self.conf_manager.persist_m:
-                template = self.conf_manager.persist_m.run(template, self.conf_manager.session_id, self.PD,
-                                                           reformulated)
+                template = self.conf_manager.persist_m.run(template, self.conf_manager.session_id, self.PD)
 
             return template
 

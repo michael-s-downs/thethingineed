@@ -59,7 +59,7 @@ class PersistManager(AbstractManager):
     def get_param(self, params:dict, param_name: str, param_type):
         return super().get_param(params, param_name, param_type, self.defaults_dict)
 
-    def run(self, template, session_id, PD, reformulated):
+    def run(self, template, session_id, PD, reformulated=False):
         """Executes the persistence logic based on the provided template and session data.
 
         Args:

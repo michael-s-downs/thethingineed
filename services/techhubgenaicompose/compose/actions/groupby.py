@@ -1,12 +1,11 @@
 ### This code is property of the GGAO ###
 
 
-import json
 from dateutil.parser import parse
 from statistics import mean
 from collections import defaultdict
 from abc import abstractmethod, ABC
-from typing import List, Dict
+from typing import List
 from common.errors.genaierrors import PrintableGenaiError
 
 

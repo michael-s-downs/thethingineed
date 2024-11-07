@@ -135,7 +135,7 @@ class ConfManager(AbstractManager):
                 return ""
             lang, prob = get_language(query, return_acc=True, possible_langs=["es", "en", "ja"])
             self.logger.debug(f"Detected lang: <{lang}>")
-            if prob > 0.8 and lang in ["es", "en", "ja"]:
+            if prob > 0.8:
                 return lang
             self.logger.debug(f"Detected <{lang}>, not enough prob")
             return ""

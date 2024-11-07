@@ -35,16 +35,6 @@ class FilterResponseMethod(ABC):
         """
         pass
 
-    def get_example(self):
-        return json.dumps(self._get_example())
-
-    @abstractmethod
-    def _get_example(self) -> Dict:
-        """Return example
-        """
-        return {}
-
-
 class FilterLLM(FilterResponseMethod):
     TYPE = "llm"
     TEMPLATE = FILTER_TEMPLATE
@@ -87,7 +77,7 @@ class FilterLLM(FilterResponseMethod):
 
         answer = self.streamlist[-1].answer
         if answer is None:
-            raise PrintableGenaiError("No answer found to filter")
+            raise PrintableGenaiError(400, "No answer found to filter")
         
         context = " ".join([streamchunk.content for streamchunk in self.streamlist])
         filter_query_response = f"Query:{query}. Response:{answer}. Context:{context}"
@@ -123,16 +113,6 @@ class FilterLLM(FilterResponseMethod):
         return self.streamlist 
 
 
-    def get_example(self):
-        return json.dumps(self._get_example())
-
-    def _get_example(self) -> Dict:
-        """Example to generate compose dict
-        """
-        return {
-            'type': self.TYPE,
-            'params': self.TEMPLATE
-        }
 
 
 class FilterResponseFactory:
