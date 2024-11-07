@@ -1,4 +1,4 @@
- 6# InfoIndexing Service Documentation
+ # InfoIndexing Service Documentation
 
 ## Index
 

@@ -1164,6 +1164,43 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
+- Dev region
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubdev-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-canadaeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-eastus|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-eastus|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-eastus2|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-eastus2|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-eastus2|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-francecentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-francecentral|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-japaneast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-japaneast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-japaneast|techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-norwayeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-norwayeast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-southindia|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-southindia|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-uksouth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-uksouth|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-westeurope|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
+|dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
+
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
 ### Models LLM
@@ -1247,6 +1284,70 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v|azure|
 |techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+
+- Dev region
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|
+|techhubdev-AustraliaEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-AustraliaEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-AustraliaEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-AustraliaEast-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-BrazilSouth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-BrazilSouth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-CanadaEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-CanadaEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-CanadaEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-EastUS-dall-e-3|techhubdev-pool-us-dalle3, techhubdev-pool-world-dalle3|azure|
+|techhubdev-EastUS-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-EastUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-EastUS-gpt-4o-2024-05-13|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-EastUS-gpt-4o-mini-2024-07-18|techhubdev-pool-us-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini|azure|
+|techhubdev-EastUS2-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-EastUS2-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-EastUS2-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-FranceCentral-gpt-35-turbo-16k-0613|techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-FranceCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-FranceCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-GermanyWestCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-GermanyWestCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-JapanEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-JapanEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-JapanEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-JapanEast-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-KoreaCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-KoreaCentral-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-NorthCentralUS-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-NorthCentralUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-NorwayEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-NorwayEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-PolandCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-PolandCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthAfricaNorth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthAfricaNorth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthCentralUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthCentralUS-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthIndia-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthIndia-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwedenCentral-gpt-35-turbo-16k-0613|techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-SwedenCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwedenCentral-gpt-4-vision-preview|techhubdev-pool-eu-gpt-4v, techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-SwedenCentral-gpt-4o-2024-08-06|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SwedenCentral-gpt-4o-mini-2024-07-18|techhubdev-pool-eu-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini|azure|
+|techhubdev-SwitzerlandNorth-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-SwitzerlandNorth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwitzerlandNorth-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-SwitzerlandNorth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-UKSouth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-UKSouth-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-UKSouth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestEurope-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestEurope-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-WestUS-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-WestUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestUS-gpt-4-vision-preview|techhubdev-pool-us-gpt-4v, techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-WestUS3-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestUS3-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
