@@ -31,9 +31,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
 
 class InfoRetrievalDeployment(BaseDeployment):
-    MODEL_FORMATS = {
-        "bm25--score": "sparse"
-    }
+
 
     TOKENIZER = {
         "bm25--score": None
@@ -179,6 +177,9 @@ class InfoRetrievalDeployment(BaseDeployment):
                                            http_auth=(connector.username, connector.password),
                                            verify_certs=False, timeout=30)
 
+            # Check if the strategy selected can be done with the index passed
+            #self.assert_correct_index_for_strategy()
+
             # If no models are passed, we will retrieve with bm25 and the models used in the indexation process
             if len(input_object.models) == 0:
                 input_object.models = self.get_default_models(input_object.index, connector)
@@ -189,7 +190,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                                                                  connector, input_object.query)
 
             retrieval_strategy = ManagerRetrievalStrategies.get_retrieval_strategy({"strategy": input_object.strategy})
-            sorted_documents = retrieval_strategy.do_retrieval_strategy(retrievers_arguments, input_object)
+            sorted_documents = retrieval_strategy.do_retrieval_strategy(input_object, retrievers_arguments)
 
             tokens_report = {}
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:

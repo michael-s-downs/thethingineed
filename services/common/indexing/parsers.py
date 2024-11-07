@@ -221,8 +221,9 @@ class ParserInfoindexing(Parser):
 
 
 class ParserInforetrieval(Parser):
-
-    AVAILABLE_STRATEGIES = ["genai_retrieval", "llamaindex_fusion"]
+    GENAI_STRATEGIES = ["genai_retrieval", "recursive_genai_retrieval", "surrounding_genai_retrieval"]
+    LLAMAINDEX_STRATEGIES = ["llamaindex_fusion"]
+    AVAILABLE_STRATEGIES = GENAI_STRATEGIES + LLAMAINDEX_STRATEGIES
     AVAILABLE_RESCORING_FUNCTIONS = ["mean", "length", "loglength", "pos", "posnorm", "norm", "nll", "rrf"]
 
     MODEL_FORMAT = "inforetrieval"
@@ -288,8 +289,8 @@ class ParserInforetrieval(Parser):
             raise PrintableGenaiError(400, f"Strategy '{self.strategy}' not supported, the available ones are {self.AVAILABLE_STRATEGIES}")
 
     def get_strategy_mode(self, index_conf):
-        if self.strategy == "genai_retrieval" and "strategy_mode" in index_conf:
-            raise PrintableGenaiError(400, "Strategy 'genai_retrieval' does not use 'strategy_mode' parameter, use 'llamaindex_fusion' instead")
+        if self.strategy in self.GENAI_STRATEGIES and "strategy_mode" in index_conf:
+            raise PrintableGenaiError(400, f"Strategy '{self.strategy}' does not use 'strategy_mode' parameter, use one in '{self.LLAMAINDEX_STRATEGIES}' instead")
         strategy_mode = index_conf.get("strategy_mode", "reciprocal_rerank")
         if strategy_mode not in FUSION_MODES._value2member_map_:
             raise PrintableGenaiError(400, f"Strategy mode '{strategy_mode}' not implemented, try one of {[i.value for i in FUSION_MODES]}")
@@ -301,8 +302,8 @@ class ParserInforetrieval(Parser):
 
 
     def get_rescoring_function(self, index_conf):
-        if self.strategy == "llamaindex_fusion" and "rescoring_function" in index_conf:
-            raise PrintableGenaiError(400, "Strategy 'llamaindex_fusion' does not use 'rescoring_function' parameter, use 'genai_retrieval' instead")
+        if self.strategy in self.LLAMAINDEX_STRATEGIES and "rescoring_function" in index_conf:
+            raise PrintableGenaiError(400, f"Strategy '{self.strategy}' does not use 'rescoring_function' parameter, use one in '{self.GENAI_STRATEGIES}' instead")
         self.rescoring_function = index_conf.get("rescoring_function", "mean")
         if self.rescoring_function not in self.AVAILABLE_RESCORING_FUNCTIONS:
             raise PrintableGenaiError(400, f"Rescoring function '{self.rescoring_function}' not supported, the available ones are {self.AVAILABLE_RESCORING_FUNCTIONS}")
