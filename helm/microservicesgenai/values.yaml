@@ -41,6 +41,7 @@ compose:
   cron_time:
   uri_prefix_knowler:
   url_allowed_documents_knowler:
+  default_llm_model:
 indexing:
   aws_region_name:
   vector_storage:
