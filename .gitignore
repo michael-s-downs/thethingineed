@@ -13,6 +13,9 @@ IaC/Terraform/AWS/vars/
 
 *coverage.sh
 *coverage.bat
+IaC/Terraform/vars/
+
+
 .coverage
 htmlcov/
 .pytest_cache/

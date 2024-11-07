@@ -2,7 +2,7 @@
 
 
 import collections
-from .actions import FilterFactory, RetrieverFactory, RescoreFactory, MergeFactory, LLMFactory, SortFactory, GroupByFactory
+from .actions import FilterFactory, RetrieverFactory, RescoreFactory, MergeFactory, LLMFactory, SortFactory, GroupByFactory, FilterResponseFactory
 from .streamchunk import StreamChunk
 from common.errors.genaierrors import GenaiError
 
@@ -223,3 +223,8 @@ class StreamList(collections.abc.MutableSequence):
         """
         groupbymethod = GroupByFactory(groupby_type)
         self.streamlist = groupbymethod.process(self.streamlist, groupby_params)
+    
+    def filter_response(self, filter_type, filter_params):
+        
+        filtermethod = FilterResponseFactory(filter_type)
+        self.streamlist = filtermethod.process(self.streamlist, filter_params)

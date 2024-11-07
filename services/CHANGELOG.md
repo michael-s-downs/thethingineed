@@ -4,6 +4,9 @@
 # Changelog
 
 ## vXX (XXXX-XX-XX)
+- all
+    - [New] Unit test
+
 - genai-llmapi
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
     - [Change] Prompt models deleted (from code and files)
@@ -24,9 +27,20 @@
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
 - genai-compose:
+    - [New] Update and refactor filer query from param call to template action
+    - [New] Update and refactor filer response from param call to template action
+    - [New] Update and refactor reformulate query from param call to template action
+    - [New] Langfuse params host, public key and private key can be set in call params
+    - [New] Env var DEFAULT_LLM_MODEL to config default templates model
+    - [New] Filter templates folder renamed to "filter_templates" from "queryfilter_templates"
+    - [New] Unit test
     - [Improvement] Config model param for action expansion query by lang
+    - [Improvement] Query expansion works with multiple retrieval
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
     - [Fix] Fix models from default templates
+    - [Fix] Query expansion list as copy instead of reference
+    - [Fix] Raise PrintableErrors called wrong
+    - [Fix] Possible langs removed from langdetection
 - ALL:
   - [New] Add unit tests with pytest
 

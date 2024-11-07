@@ -4,7 +4,6 @@
 from typing import List
 from abc import abstractmethod
 
-from ..utils.defaults import EMPTY_STREAM
 from ..streamlist import StreamList
 from common.errors.genaierrors import GenaiError
 

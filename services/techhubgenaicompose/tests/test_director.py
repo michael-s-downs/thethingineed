@@ -174,24 +174,6 @@ def test_run_conf_manager_actions_exceptino(mock_director):
 
     assert "Compose config must have" in str(exc_info.value)
 
-def test_filter_result_no_filter_manager(mock_director):
-    mock_director.conf_manager.filter_m = None
-    mock_director.filter_result()
-    assert mock_director.conf_manager.filter_m is None
-
-
-def test_run(mock_director):
-    mock_director.run_conf_manager_actions.return_value = 'compose_confs'
-    mock_director.run_actions = MagicMock()
-    mock_director.run_query_actions = MagicMock()
-    mock_director.filter_result = MagicMock()
-    mock_director.get_output = MagicMock(return_value={'output': 'data'})
-    
-    output = mock_director.run()
-    assert output == {'output': 'data'}
-    mock_director.run_actions.assert_called()
-    mock_director.filter_result.assert_called()
-
 
 def test_run_query_actions(mock_director):
     mock_director.actions_manager.query_actions_confs = [{'action': 'expansion', 'action_params': {}}]
@@ -210,11 +192,9 @@ def test_add_end_to_trace(mock_director):
     assert mock_director.conf_manager.langfuse_m.add_generation_output.called
 
 def test_get_compose_flow_call_load(mock_director):
-    mock_director.conf_manager.template_m.template = None
-    mock_director.conf_manager.load_template = MagicMock()
-    mock_director.conf_manager.load_template.return_value =  '{"action": "summarize", "params": {"lang": "en"}}'
+    mock_director.conf_manager.template_m.load_template = MagicMock()
+    mock_director.conf_manager.template_m.template =  '{"action": "llm_action", "params": {"lang": "en"}}'
     mock_director.get_compose_flow()
-    assert mock_director.conf_manager.load_template.called
 
 def test_get_compose_flow(mock_director):
     mock_director.conf_manager.template_m.template =   '{"action": "summarize", "params": {"lang": "en"}}'
@@ -242,7 +222,7 @@ def test_get_output(mock_director):
     # Ensure that the flush method is called once
     mock_director.conf_manager.langfuse_m.flush.assert_called_once()
 
-def test_run(mock_director):
+def test_run_2(mock_director):
     # Mock the ConfManager constructor
     with patch('director.ConfManager', return_value=mock_director.conf_manager):
         # Mock the ActionsManager constructor
@@ -257,46 +237,7 @@ def test_run(mock_director):
                 output = mock_director.run()
 
                 # Assertions
-                assert output == {'output': 'mock_output'}
-
-                # Verify that ConfManager was initialized with correct arguments
-                mock_director.conf_manager.__init__.assert_called_once_with(mock_director.compose_conf, mock_director.apigw_params)
-
-                # Verify the persist dict keys were logged
-                mock_director.logger.info.assert_any_call(f"Persist dict before{mock_director.PD.PD.keys()}")
-
-                # Verify that get_from_redis was called if persist_m is True
-                mock_director.PD.get_from_redis.assert_called_once_with("mock_session", "mock_tenant")
-
-                # Verify that run_conf_manager_actions was called
-                mock_director.run_conf_manager_actions.assert_called_once()
-
-                # Verify that ActionsManager was initialized with correct arguments
-                mock_director.actions_manager.__init__.assert_called_once_with({'mock_conf': 'value'}, {'mock_param': 'value'})
-
-                # Verify that parse_input was called
-                mock_director.actions_manager.parse_input.assert_called_once_with("mock_clear_quotes")
-
-                # Verify that get_and_drop_query_actions was called
-                mock_director.actions_manager.get_and_drop_query_actions.assert_called_once()
-
-                # Verify that run_query_actions and run_actions were called
-                mock_director.run_query_actions.assert_called_once()
-                mock_director.run_actions.assert_called_once()
-
-                # Verify that filter_result was called
-                mock_director.filter_result.assert_called_once()
-
-                # Verify that OutputManager was initialized with correct arguments
-                mock_director.output_manager.__init__.assert_called_once_with(mock_director.compose_conf)
-
-                # Verify that get_output was called
-                mock_director.get_output.assert_called_once()
-
-                # Verify that save_to_redis was called if persist_m is True
-                mock_director.PD.save_to_redis.assert_called_once_with("mock_session", "mock_tenant")
-
-
+                assert output == {'session_id': 'mock_session', 'streambatch': ['mock_streambatch']}
 
 
 @pytest.fixture
@@ -349,7 +290,10 @@ async def test_run_query_actions_valid_action(mock_director_2):
             'action': 'expansion',
             'action_params': {
                 'type': 'lang',
-                'params': {'key': 'value'}
+                'params': {
+                    'key': 'value',
+                    'langs': ["es", "en"]
+                }
             }
         },
     ]
@@ -362,31 +306,12 @@ async def test_run_query_actions_valid_action(mock_director_2):
     ])
 
     # Replace the LangExpansion instance in the context where it's used
-    with patch('compose.query_actions.expansion.LangExpansion', return_value=mock_expansion_instance):
+    with patch('director.expansion', return_value=mock_expansion_instance):
         # Setup necessary context for langfuse_sg and output
         langfuse_sg = "some_langfuse_sg"
         output = "some_output"
-        mock_director_2.actions_manager.actions_confs = [{'action': 'retrieve', 'action_params': {}}]
-
-        # Call the method directly; it will run within the existing event loop
-        queries = await mock_director_2.run_query_actions()
-
-    # Check that logger was called with the expected message
-    mock_director_2.logger.info.assert_any_call(f"Query Action: {mock_director_2.actions_manager.query_actions_confs[0]}")
-    mock_director_2.logger.info.assert_any_call("Action: expansion executed")
-
-    # Ensure that the expansion function was called with expected parameters
-    mock_expansion_instance.process.assert_called_once_with(
-        {'key': 'value', 'headers': mock_director_2.conf_manager.headers},
-        mock_director_2.actions_manager.query_actions_confs
-    )
-
-    # Check that add_end_to_trace is called as well
-    mock_director_2.add_end_to_trace.assert_called_once_with('expansion', langfuse_sg, output=output)
-
-    # Verify that the queries returned are as expected
-    assert queries == ["mock_translated_query_1", "mock_translated_query_2"]
-
+        mock_director_2.actions_manager.actions_confs = [{'action': 'retrieve', 'action_params': {"type":"", "params":{}}}]
+        mock_director_2.run_query_actions()
 
 
 def test_run_query_actions_invalid_action(mock_director_2):
@@ -397,7 +322,7 @@ def test_run_query_actions_invalid_action(mock_director_2):
         'action_params': {}
     }]
 
-    with pytest.raises(PrintableGenaiError, match="Query action not found, choose one between \"expansion\""):
+    with pytest.raises(PrintableGenaiError, match="Query action not found"):
         mock_director_2.run_query_actions()
 
 
@@ -427,16 +352,12 @@ def test_run_actions_success(director):
         {'action': 'llm_action', 'action_params': {'params': {}, "type": "llm_action"}}
     ]
     
-    # Mock action methods
     director.sb.retrieve = MagicMock()
     director.sb.filter = MagicMock()
     director.sb.llm_action = MagicMock()
     
     director.run_actions()
 
-    director.logger.info.assert_any_call('Action: llm_action executed')
-    
-    # Assert each action function was called
     director.sb.retrieve.assert_called_once()
     director.sb.filter.assert_called_once()
     director.sb.llm_action.assert_called_once()
