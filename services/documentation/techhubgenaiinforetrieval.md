@@ -22,8 +22,10 @@
       - [Delete documents: `url/delete-documents`](#delete-documents-urldelete-documents)
       - [Delete index: `url/delete_index`](#delete-index-urldelete_index)
       - [Filenames retrieval: `url/get_documents_filenames`](#filenames-retrieval-urlget_documents_filenames)
+      - [List indices: `url/get_models`](#list-indices-urlget_models)
       - [Parameters](#parameters)
       - [Examples](#examples-1)
+      - [List indices: `url/list_indices`](#list-indices-urllist_indices)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
     - [Request and Response Formats for /process](#request-and-response-formats-for-process)
@@ -434,7 +436,7 @@ The response would be a list of all the available models on the platform:
     "status_code": 200
 }
 ```
-
+#### List indices: `url/get_models`
 #### Parameters
 
 The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
@@ -513,6 +515,45 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 }
 ```
 
+#### List indices: `url/list_indices`
+Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this: 
+https://techhubapigw.app.dev.techhubnttdata.com/retrieve/list_indices
+
+The response would be a list of index names along with the models associated with each one:
+```json
+{
+    "indices": [
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_1"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002",
+                "text-embedding-large",
+                "cohere.embed-multilingual-v3"
+            ],
+            "name": "index_2"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_3"
+        },
+        {
+            "models": [
+                "text-embedding-large"
+            ],
+            "name": "index_4"
+        }
+    ],
+    "status": "ok",
+    "status_code": 200
+}
+```
 
 ## API Reference
 
@@ -570,6 +611,31 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 - /get_models (GET): Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
   Request: https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 
+- /list_indices (GET): Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
+  Request: https://techhubapigw.app.dev.techhubnttdata.com/retrieve/list_indices
+Returns:
+    ```json
+    {
+    "indices": [
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_1"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002",
+                "text-embedding-large",
+                "cohere.embed-multilingual-v3"
+            ],
+            "name": "index_2"
+        }
+    ],
+    "status": "ok",
+    "status_code": 200
+    }
+    ```
 ### Request and Response Formats for /process
 
 ### Parameters explanation
