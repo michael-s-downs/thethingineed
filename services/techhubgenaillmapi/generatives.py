@@ -335,8 +335,7 @@ class DalleModel(GPTModel):
             'n_tokens': 0,
             'input_tokens': self.message.get_query_tokens(self.message.preprocess()),
             'query_tokens': self.message.user_query_tokens,
-            'output_tokens': 0,
-            'n': self.n
+            'output_tokens': 0
         }
         result = {
             'status': "finished",
@@ -521,8 +520,13 @@ class ClaudeModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'status_code' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500,
-                                                                                            502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 404, 408, 500, 502, 503]:
+            return {
+                'status': 'error',
+                'error_message': json.loads(response.get('body').read()),
+                'status_code': response['ResponseMetadata']['HTTPStatusCode']
+            }
+        elif 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
