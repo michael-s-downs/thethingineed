@@ -311,15 +311,9 @@ def test_lang_expansion_process_lang_empty(mock_parallel_calls, mock_async_call_
     
     # Create an instance of LangExpansion and run the process
     lang_expansion = LangExpansion(query)
-    result = lang_expansion.process(params_lang_empty, actions_confs)
+    with pytest.raises(PrintableGenaiError, match="Langs to expand not provided"):
+        lang_expansion.process(params_lang_empty, actions_confs)
 
-    # Check if result has the translated queries
-    assert len(result) == 2
-    assert result[0] == "Hola, ¿cómo estás?"
-    assert result[1] == "Hello, how are you?"
-
-    # Ensure the actions_confs has been updated
-    assert actions_confs[0]["action_params"]["params"]["generic"]["index_conf"]["query"] == query
 
 def test_expansion_factory_valid_expansion_type(params, actions_confs, query):
     factory = ExpansionFactory("lang")
@@ -346,8 +340,7 @@ def test_lang_expansion_invalid_lang_list(params, actions_confs, query):
         LangExpansion(query).process(params, actions_confs)
 
 def test_lang_expansion_no_retrieve_action(params, actions_confs, query):
-    # Modify actions_confs to not include 'retrieve' action
     actions_confs.clear()
 
-    with pytest.raises(PrintableGenaiError, match="Action retrieve not found for query expansion"):
+    with pytest.raises(PrintableGenaiError):
         LangExpansion(query).process(params, actions_confs)

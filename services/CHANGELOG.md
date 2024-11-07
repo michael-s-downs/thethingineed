@@ -4,12 +4,16 @@
 # Changelog
 
 ## vXX (XXXX-XX-XX)
+- all
+    - [New] Unit test
+
 - genai-llmapi
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
+    - [Change] Prompt models deleted (from code and files)
+    - [Change] Param 'n' deleted as it was not used when parsing model response
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
-    - [Fix] Prompt models deleted from the config file
     - [Fix] Get response from bedrock when exception is raised manually
     - [Fix] When lang template not found, use base template instead
 - genai-inforetrieval
@@ -18,7 +22,8 @@
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
     - [Improvement] Endpoints logic separated into different file from main
-    - [Fix] Error message instead of result when endpoint fails
+    - [Fix] Endpoints now return error_message in response instead of result when goes wrong
+    - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
 - genai-infoindexing:
   - [New] Refactor of the way to get the chnks (chunking_methods.py)
   - [New] New method to do the chunking: surrounding_context_window
@@ -27,11 +32,24 @@
   - [Improvement] Check if the same chunking method is always used for the index
   - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
 - genai-compose:
+    - [New] Update and refactor filer query from param call to template action
+    - [New] Update and refactor filer response from param call to template action
+    - [New] Update and refactor reformulate query from param call to template action
+    - [New] Langfuse params host, public key and private key can be set in call params
+    - [New] Env var DEFAULT_LLM_MODEL to config default templates model
+    - [New] Filter templates folder renamed to "filter_templates" from "queryfilter_templates"
+    - [New] Unit test
     - [Improvement] Config model param for action expansion query by lang
+    - [Improvement] Query expansion works with multiple retrieval
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
     - [Fix] Fix models from default templates
+    - [Fix] Query expansion list as copy instead of reference
+    - [Fix] Raise PrintableErrors called wrong
+    - [Fix] Possible langs removed from langdetection
+- ALL:
+  - [New] Add unit tests with pytest
 
-## v05 (2014-09-23)
+## v05 (2024-09-23)
 - genai-infoindexing:
     - [New] Titan model added
     - [New] Cohere english and multilingual models added

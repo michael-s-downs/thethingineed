@@ -82,8 +82,6 @@ Below is a list of all the parameters that can be included in the request body, 
         - **top_k** (optional): Number of passages to be returned.
         - **top_qa** (optional): Number of passages sent to LLM.
     - **lang** (optional): This parameter forces the answer to be in this language even if the question is in other languages. If not indicated, try to respond in the same language. In both cases must exist an LLM template for that language with the pattern . For now, in this functionality only English (“en”), Spanish (“es”) and Japan (“ja”). “{templatename}_{language}”, for example “summary_es”. Otherwise, the default template is used without the language suffix, using the main language ("en" normally).
-    - **queryfilters** (optional): Text in JSON format with the definition of the filters applied to the user query.
-    - **queryfilter_template** (optional): Name of the template (JSON saved in application side) to use instead of the JSON of the queryfilters parameter.
     - **persist** (optional):
         The user has the option to enable conversation storage by adding a new parameter called "persist" with the following format:
 
@@ -103,12 +101,10 @@ Below is a list of all the parameters that can be included in the request body, 
       - **type**(required): Persistence type, for now, only “chat” mode available.
       - **params**:
         - **max_persistence** (optional): Maximum number of iterations of the conversation history to consider for sending to the LLM task. By default is 3.
-    - **reformulate** (optional): Parameters to reformulate query based on previous iterations.
-      - **type** (required): Reformulate type, for now, only “mixqueries” mode available.
-      - **params**:
-        - **max_persistence** (optional): Maximum number of queries of the conversation history to consider for reformulate task. By default 5.
-        - **template_name**: LLM template used for the query reformulation task.
-        - **save_mod_query**: Boolean parameter that defines whether what you want to store for the next question is the original query or the reformulated question.
+    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse.
+      - **host**: Url hosting langfuse server.
+      - **public_key**: Langfuse project public key.
+      - **secret_key**: Langfuse project secret key.
     - **output** (optional): Configurations of what to return in the output.
       - **scores**: Boolean to add or not scores in the output.
       - **lang**: Boolean to add or not language (passed or autodetected) in the output.
@@ -508,7 +504,6 @@ Please note that the compose template being used is: **techhub_retrieval_referen
     }
 }
 ```
-
 
 Example using python requests:
 
@@ -1076,7 +1071,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Within this action, there is one type:
 
-   - **Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja".
+   - **Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
     Example:
 
@@ -1085,12 +1080,202 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action": "expansion",
         "action_params":{
             "params": {
-                "langs" : ["es", "ja", "chinese"]
+                "langs" : ["es", "ja", "chinese"],
+                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
             },
             "type": "lang"
         }
     }
     ```
+
+    The available abbreviations are:
+    - "ja": "japanese",
+    - "es": "spanish",
+    - "en": "english",
+    - "fr": "french",
+    - "de": "german",
+    - "zh": "chinese",
+    - "it": "italian",
+    - "ko": "korean",
+    - "pt": "portuguese",
+    - "ru": "russian",
+    - "ar": "arabic",
+    - "hi": "hindi",
+    - "tr": "turkish",
+    - "nl": "dutch",
+    - "sv": "swedish",
+    - "pl": "polish",
+    - "el": "greek",
+    - "he": "hebrew",
+    - "vi": "vietnamese",
+    - "th": "thai",
+    - "ca": "catalan"
+
+9. **Reformulate query**
+    This action allows the user to reformulate the original query to improve the quality of the responses.
+
+   Parameters of this action:
+
+   - **Type** (string): Method to use for the reformulate. (mix_queries)
+
+   Within this action, there is one type:
+
+   - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+
+    Example:
+
+    ```json
+   {
+        "action": "reformulate_query",
+        "action_params":{
+            "params":{
+                "max_persistence": 3,
+                "template_name": "reformulate",
+                "save_mod_query": false
+            },
+            "type": "mix_queries"
+        }
+    }
+    ```
+
+    - Params:
+      - Max_persistence (int): Max number of older sessions to use.
+      - Template_name (string): Template used while calling the LLMAPI.
+      - Save_mod_query (bool): Used to save or not the original query.
+
+10. **filter query**
+    this action allows the user to filter the query to protect the tool from malicious queries or not wanted topics. If the query is filtered, compose will cancel all the following actions.
+
+    parameters of this action:
+
+    - **type** (string): method to use for the reformulate. (llm)
+
+    within this action, there is one type:
+
+    - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
+
+    example action:
+
+    ```json
+    {
+        "action": "filter_query",
+        "action_params":{
+            "params": {
+                "template" : "query_filter"
+            },
+            "type": "llm"
+        }
+    }
+    ```
+
+    Parameters:
+
+    - **template**: Filter template name to use.
+
+    Example filter template:
+
+    ```json
+    {
+        "filter_types": ["GPT"],
+        "substitutions_template": "Classifies the query into one of the following categories:
+            1) Drugs: when the query mentions drugs or drug dealers.
+            2) Politics: If the query mentions politicians...
+            3) Other: If the consultation does not mention any of the above topics.
+        Answer only with the category and topic (do not give any explanation or reasoning). Query: ",
+        "substitutions": [{
+                "from": "Drugs",
+                "to": "Always start the answer by saying that you are a very young AI and should not be asked about drugs and that you should be ashamed to ask such a question to someone so young, and that you prefer to talk about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }, {
+                "from": "Politics",
+                "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }
+    ]}
+    ```
+
+    Parameters:
+
+    - **filter_types**: Currently There is only one type of filter, GPT.
+
+    - **substitutions_template**: It will be the prompt used for classification.
+
+    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+
+11. **Filter response**
+    This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
+
+    Parameters of this action:
+
+    - **Type** (string): Method to use for the reformulate. (llm)
+
+    Within this action, there is one type:
+
+    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
+
+    Example action:
+
+    ```json
+        {
+        "action": "filter_response",
+        "action_params":{
+            "params": {
+                "template" : "response_filter"
+            },
+            "type": "llm"
+        }
+    }
+    ```
+
+    Example filter template:
+
+    ```json
+    {
+        "filter_types": [
+            "GPT"
+        ],
+        "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Incorrect: The 'Response' is not related to the 'query'. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, customer numbers, usernames, etc.",
+        "substitutions": [{
+            "from": "Correct",
+            "to": null
+            },
+            {
+                "from": "Incorrect",
+                "to": "Notify that a hallucination has been detected in the generated response and that the query cannot be answered.",
+                "extra_words": [
+                    "weather",
+                    "nature"
+                ],
+                "randpick": 3
+            }, {
+                "from": "Sensitive Information",
+                "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+                "extra_words": [
+                    "weather",
+                    "nature",
+                    "landscapes",
+                    "flora and fauna",
+                    "geography"
+                ],
+                "randpick": 3
+            }
+        ]
+    }
+    ```
+
+    Parameters:
+
+    - **filter_types**: Currently There is only one type of filter, GPT.
+
+    - **substitutions_template**: It will be the prompt used for classification.
+
+    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ### LLM Prompt Templates
 
@@ -1163,6 +1348,43 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
 |techhubinc-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
+
+- Dev region
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubdev-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-canadaeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-eastus|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-eastus|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-eastus2|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-eastus2|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-eastus2|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-francecentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-francecentral|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-japaneast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-japaneast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-3-small-japaneast|techhub-pool-world-ada-3-small|azure|
+|techhubdev-ada-002-norwayeast|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-norwayeast|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-southindia|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-southindia|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-uksouth|techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-uksouth|techhub-pool-world-ada-3-large|azure|
+|techhubdev-ada-002-westeurope|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
+|dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
@@ -1247,6 +1469,70 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v|azure|
 |techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
+
+- Dev region
+| Model Name | Pools | Platform |
+|--------|------|------|
+|techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|
+|techhubdev-AustraliaEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-AustraliaEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-AustraliaEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-AustraliaEast-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-BrazilSouth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-BrazilSouth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-CanadaEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-CanadaEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-CanadaEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-EastUS-dall-e-3|techhubdev-pool-us-dalle3, techhubdev-pool-world-dalle3|azure|
+|techhubdev-EastUS-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-EastUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-EastUS-gpt-4o-2024-05-13|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-EastUS-gpt-4o-mini-2024-07-18|techhubdev-pool-us-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini|azure|
+|techhubdev-EastUS2-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-EastUS2-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-EastUS2-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-FranceCentral-gpt-35-turbo-16k-0613|techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-FranceCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-FranceCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-GermanyWestCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-GermanyWestCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-JapanEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-JapanEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-JapanEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-JapanEast-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-KoreaCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-KoreaCentral-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-NorthCentralUS-gpt-35-turbo-16k-0613|techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-NorthCentralUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-NorwayEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-NorwayEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-PolandCentral-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-PolandCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthAfricaNorth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthAfricaNorth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthCentralUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SouthCentralUS-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthIndia-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SouthIndia-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwedenCentral-gpt-35-turbo-16k-0613|techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-SwedenCentral-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwedenCentral-gpt-4-vision-preview|techhubdev-pool-eu-gpt-4v, techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-SwedenCentral-gpt-4o-2024-08-06|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-SwedenCentral-gpt-4o-mini-2024-07-18|techhubdev-pool-eu-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini|azure|
+|techhubdev-SwitzerlandNorth-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-SwitzerlandNorth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-SwitzerlandNorth-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-SwitzerlandNorth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-UKSouth-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-UKSouth-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-UKSouth-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestEurope-gpt-4-turbo-2024-04-09|techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestEurope-gpt-4o-2024-05-13|techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-WestUS-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-WestUS-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestUS-gpt-4-vision-preview|techhubdev-pool-us-gpt-4v, techhubdev-pool-world-gpt-4v|azure|
+|techhubdev-WestUS3-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
+|techhubdev-WestUS3-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
@@ -1781,7 +2067,8 @@ The first step you need to take to run the indexing pipeline on your local machi
 "REDIS_PASSWORD" : "",
 "LANGFUSE_SECRET_KEY": "",
 "LANGFUSE_PUBLIC_KEY": "",
-"LANGFUSE_HOST": ""
+"LANGFUSE_HOST": "",
+"DEFAULT_LLM_MODEL": ""
 ```
 
 Create a python 3.8 environment and install the required libraries in with the "requirements.txt" file.
@@ -2069,6 +2356,7 @@ Example of filter action using type “metadata”:
     }
 }
 ```
+
 Allowed date types:
 - Yyyy-mm-dd
 - Yyyy/mm/dd
@@ -2082,7 +2370,7 @@ Allowed date types:
 - Mm-dd-yy
 - Mm-dd-yyyy
 
-**Merge** 
+**Merge**
 
 This action merges the different streamchunks in a streamlist into a single streamchunk. Starts with 1 streambatch containing 1 streamlist with multiple streamchunks and it ends with a streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group. The result chunk will have the merged information in the content field and in the metadata common to all the chunks merged will be saved in the new chunk.
 
@@ -3492,6 +3780,514 @@ Response:
             ]
         ],
         "answer": "A streamlist is a list of chunks returned from documents that are retrieved based on a query. The streamlist is sorted according to model scores, with the most relevant documents at the beginning of the list. Each element in the streamlist contains content, metadata, and scores."
+    },
+    "status_code": 200
+}
+```
+
+##### Reformulate action
+
+We will call compose with "base_request" calling the template "retrieve_reformulate". To create this template we add the action 'reformulate_query' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "session_id": "mysession123",
+            "persist": {
+                "type": "chat",
+                "params": {
+                    "max_persistence": 20
+                }
+            }
+            "template": {
+                "name": "retrieve_reformulate",
+                "params": {
+                    "query": "Explain the action groupby",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Body for the second call:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "session_id": "mysession123",
+            "persist": {
+                "type": "chat",
+                "params": {
+                    "max_persistence": 10
+                }
+            }
+            "template": {
+                "name": "retrieve_reformulate",
+                "params": {
+                    "query": "Give me an example",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "reformulate_query",
+        "action_params":{
+            "params":{
+                "max_persistence": 3,
+                "template_name": "reformulate",
+                "save_mod_query": false
+            },
+            "type": "mix_queries"
+
+        }
+    },
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    }
+]
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "mysession123",
+        "streambatch": [
+            [
+                {
+                    "content": "[ {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"index_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  5,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"dolffia\"\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\",\n          \"max_input_tokens\": 5000\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"system\": \"You are a helpful assistant\",\n          \"template_name\":  \"system_query_and_context_plus\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nGroupBy: In this example, to call the action it is used “action”: “groupby”.",
+                    "meta": {
+                        "uri": "https://d2astorage.blob.core.windows.net/techhubragemeal-dataivandegregoriougarte/request_20241030_081443_481898_g653jt/manual.docx",
+                        "sections_headers": "",
+                        "tables": "",
+                        "filename": "manual.docx",
+                        "document_id": "3c7dd2f6-9892-4a27-bdc0-c10631638e14",
+                        "snippet_number": 67,
+                        "snippet_id": "72e8c3f2-95d2-4afb-a582-2490909aaeca"
+                    },
+                    "scores": {
+                        "bm25--score": 0.7501995802320419,
+                        "text-embedding-ada-002--score": 0.91500807
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {...},
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\".",
+                    "tokens": {
+                        "input_tokens": 1651,
+                        "output_tokens": 127
+                    }
+                }
+            ]
+        ],
+        "answer": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\"."
+    },
+    "status_code": 200
+}
+```
+
+Session saved with the reformulated query:
+
+```json
+"conv": [
+    {
+        "user": "Explain the action groupby",
+        "assistant": "The action \"groupby\" is used to sort the streamlist by groups. Each group is sorted by snippet_number in its natural order, and then the groups can be sorted by the maximum score from each group, the mean score from each group, or by date. The available types for grouping are \"docscore\" and \"date\". For the \"docscore\" type, you can specify the sorting method as \"max\" or \"mean\". The \"desc\" parameter is used to select between descending or ascending order.",
+        "n_tokens": 1452,
+        "input_tokens": 1503,
+        "output_tokens": 105
+    },
+    {
+        "user": "Can you provide an example of how to use the action groupby?",
+        "assistant": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\".",
+        "n_tokens": 1481,
+        "input_tokens": 1651,
+        "output_tokens": 127
+    }
+]
+```
+
+##### Filter query action
+
+We will call compose with "base_request" calling the template "retrieve_filter_query". To create this template we add the action 'filter_query' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "template": {
+                "name": "retrieve_filter_query",
+                "params": {
+                    "query": "Explain how to ",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "filter_query",
+        "action_params":{
+            "params": {
+                "template" : "query_filter"
+            },
+            "type": "llm"
+        }
+    },
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    }
+]
+```
+
+Filter template:
+
+```json
+{
+    "filter_types": [
+        "GPT"
+    ],
+    "substitutions_template": "Classifies the query into one of the following categories:1) Drugs: when the query mentions drugs or drug dealers.         2) Politics: If the query mentions politicians...         3) Other: If the consultation does not mention any of the above topics.     Answer only with the category and topic (do not give any explanation or reasoning). Query: "
+    ,"substitutions": [
+        {
+            "from": "Drugs",
+            "to": "Always start the answer by saying you cannot talk about drugs and the change the topic to:",
+            "extra_words": [
+                "climate",
+                "nature",
+                "landscapes"
+            ],
+            "randpick": 3
+        },
+        {
+            "from": "Politics",
+            "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
+            "extra_words": [
+                "climate",
+                "nature",
+                "landscapes"
+            ],
+            "randpick": 3
+        }
+    ]
+}
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "main/session_20241105_120039_583246_5zwgxu/gpt-3.5-16k",
+        "streambatch": [
+            [
+                {
+                    "content": "",
+                    "meta": {
+                        "field1": ""
+                    },
+                    "scores": {
+                        "bm25": 1,
+                        "sim-example": 1
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "I'm sorry, but I cannot provide information or engage in discussions about drugs. However, I'd be more than happy to talk about other topics such as nature, landscapes, or climate. Is there anything specific you would like to know or discuss?",
+                    "tokens": {
+                        "input_tokens": 39,
+                        "output_tokens": 50
+                    }
+                }
+            ]
+        ],
+        "answer": "I'm sorry, but I cannot provide information or engage in discussions about drugs. However, I'd be more than happy to talk about other topics such as nature, landscapes, or climate. Is there anything specific you would like to know or discuss?"
+    },
+    "status_code": 200
+}
+```
+
+##### Filter response action
+
+We will call compose with "base_request" calling the template "retrieve_filter_response". To create this template we add the action 'filter_response' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "template": {
+                "name": "retrieve_filter_response",
+                "params": {
+                    "query": "Explain how to use compose",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    },
+    {
+        "action": "filter_response",
+        "action_params":{
+            "params": {
+                "template" : "response_filter"
+            },
+            "type": "llm"
+        }
+    }
+]
+```
+
+Filter template:
+
+*For example we use compose as the topic to detect.*
+
+```json
+{
+    "filter_types": [
+        "GPT"
+    ],
+    "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Compose: The 'Response' is related with compose, templates, rag. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, client numbers, usernames, drugs, etc.",
+    "substitutions": [
+        {
+            "from": "Correct",
+            "to": null
+        },
+        {
+            "from": "Compose",
+            "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+            "extra_words": [
+                "weather",
+                "nature",
+                "geography"
+            ],
+            "randpick": 3
+        },
+        {
+            "from": "Sensitive Information",
+            "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+            "extra_words": [
+                "weather",
+                "nature",
+                "geography"
+            ],
+            "randpick": 3
+        }
+    ]
+}
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "sessions_exmample",
+        "streambatch": [
+            [
+                {
+                    "content": "Platform (string): Platform hosting the LLM.\nQuery (string)\nTemplate_name (string):  Template name to use while calling genai-llmapi.\nSystem (string): Context and task that will be sent to the LLM.\n\nCalling Compose Service\n\nThe API Documentation provides detailed information on how to call the compose. The key parameter to include is the template's name, which defines the compose flow to be followed. As mentioned earlier, these configuration templates are stored in cloud storage, specifically S3 and Azure Storage. These are some basic examples of requests for the compose service and their corresponding templates:\nThe simplest request would be to call for the LLM with a query and without retrieval. \n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"llm\",\n                \"params\": {\n                    \"query\": \"What are the New Year's resolutions?\"\n                }\n            }\n        ,\n            \"persist\": {\n                \"type\": \"chat\",\n                \"params\": {\n                \"max_persistence\": 20\n                }\n            }\n    }}\n}\n\nIn this example we call compose using the template “llm” stored in cloud, with the param “query” and we set persistence to store / load the conversation with the llm with a maximum number of 20 iterations between user and llm.",
+                    "meta": {
+                        "uri": "https://d2astorage.blob.core.windows.net/techhubragemeal-dataivandegregoriougarte/request_20241030_081443_481898_g653jt/manual.docx",
+                        "sections_headers": "",
+                        "tables": "",
+                        "filename": "manual.docx",
+                        "document_id": "3c7dd2f6-9892-4a27-bdc0-c10631638e14",
+                        "snippet_number": 34,
+                        "snippet_id": "89a2005d-d0c0-4b05-8b46-81d1b7e571cf"
+                    },
+                    "scores": {
+                        "bm25--score": 0.6510145758092428,
+                        "text-embedding-ada-002--score": 0.8994908
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {...},
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "I'm sorry, but I cannot provide the information you are requesting as it may involve sensitive information. However, I'm here to help you with other topics. If you'd like, we can discuss topics such as nature, weather, or geography. Let me know how I can assist you further!",
+                    "tokens": {
+                        "input_tokens": 1536,
+                        "output_tokens": 221
+                    }
+                }
+            ]
+        ],
+        "answer": "I'm sorry, but I cannot provide the information you are requesting as it may involve sensitive information. However, I'm here to help you with other topics. If you'd like, we can discuss topics such as nature, weather, or geography. Let me know how I can assist you further!"
     },
     "status_code": 200
 }

@@ -164,7 +164,7 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = "src/compose/templates/"
             if template_filter:
-                path = "src/compose/queryfilters_templates/"
+                path = "src/compose/filter_templates/"
             upload_object(storage_containers['workspace'], content, path + name + ".json")
 
         except Exception as ex:
@@ -207,7 +207,7 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = "src/compose/templates/"
             if template_filter:
-                path = "src/compose/queryfilters_templates/"
+                path = "src/compose/filter_templates/"
             delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:

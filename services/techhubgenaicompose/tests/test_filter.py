@@ -15,9 +15,9 @@ from datetime import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
 from aioresponses import aioresponses
 from copy import deepcopy
-import nest_asyncio
+# import nest_asyncio
 
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 
 class DummyFilter(FilterMethod):

@@ -59,7 +59,7 @@ class PersistManager(AbstractManager):
     def get_param(self, params:dict, param_name: str, param_type):
         return super().get_param(params, param_name, param_type, self.defaults_dict)
 
-    def run(self, template, session_id, PD, reformulated):
+    def run(self, template, session_id, PD, reformulated=False):
         """Executes the persistence logic based on the provided template and session data.
 
         Args:
@@ -115,7 +115,7 @@ class PersistDict():
         else:
             if max_persistence is not None: # When not defined, do not change it
                 self.PD[session_id].max_persistence = max_persistence
-            if persistence is not None:  # None is used for initialization purposes, do not add it
+            if persistence is not None and persistence != {}:  # None is used for initialization purposes, do not add it
                 self.PD[session_id].add(persistence)
 
         return session_id

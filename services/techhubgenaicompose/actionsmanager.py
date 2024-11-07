@@ -19,7 +19,7 @@ class ActionsManager(AbstractManager):
         self.params = params
         self.actions_confs = None
         self.query_actions_confs = []
-        self.QUERY_ACTIONS = ["expansion"]
+        self.QUERY_ACTIONS = ["expansion", "filter_query", "reformulate_query"]
 
     def parse_input(self, clear_quotes):
         """Parses params in the configuration for each action, spliting retrieve from the other actions.
