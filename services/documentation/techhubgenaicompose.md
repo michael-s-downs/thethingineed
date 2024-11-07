@@ -12,7 +12,6 @@
     - [Request and Response Formats for /process](#request-and-response-formats-for-process)
     - [Parameters explanation](#parameters-explanation)
     - [User query processing](#user-query-processing)
-      - [Filter query](#filter-query)
       - [Filter result](#filter-result)
       - [Reformulate query](#reformulate-query)
       - [Retrieval](#retrieval)
@@ -35,6 +34,9 @@
       - [Batchmerge action](#batchmerge-action)
       - [Sort action](#sort-action)
       - [Groupby action](#groupby-action)
+        - [Reformulate action](#reformulate-action)
+        - [Filter query action](#filter-query-action)
+        - [Filter response action](#filter-response-action)
       - [Combining actions](#combining-actions)
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Components](#components)
@@ -400,12 +402,10 @@ Request parameters:
       - **type**(required): Persistence type, for now, only “chat” mode available.
       - **params**:
         - **max_persistence** (optional): Maximum number of iterations of the conversation history to consider for sending to the LLM task. By default is 3.
-    - **reformulate** (optional): Parameters to reformulate query based on previous iterations.
-      - **type** (required): Reformulate type, for now, only “mixqueries” mode available.
-      - **params**:
-        - **max_persistence** (optional): Maximum number of queries of the conversation history to consider for reformulate task. By default 5.
-        - **template_name**: LLM template used for the query reformulation task.
-        - **save_mod_query**: Boolean parameter that defines whether what you want to store for the next question is the original query or the reformulated question.
+    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse.
+      - **host**: Url hosting langfuse server.
+      - **public_key**: Langfuse project public key.
+      - **secret_key**: Langfuse project secret key.
     - **output** (optional): Configurations of what to return in the output.
       - **scores**: Boolean to add or not scores in the output.
       - **lang**: Boolean to add or not language (passed or autodetected) in the output.
@@ -448,42 +448,11 @@ Another important step is the ability to reformulate the question, which helps t
 
 In addition, persistence functionality stores the inputs and outputs of the conversation, allowing users to continue the conversation and ask more specific questions based on the answers provided by the generative model. Here are some examples that illustrate the use of each of these functionalities.
 
-#### Filter query
-
-By filtering out irrelevant or inappropriate questions, the search system can avoid providing misleading or unrelated information to the user. This step helps to improve the overall search experience by ensuring that the user receives relevant and reliable results.
-
-To enable the use of the filter, it is required to include a parameter "queryfilter_template" in the json file that indicates which one should be utilized:
-
-An example of the request is as follows:
-
-```json
-URL: https://url/process
-Method: POST
-Headers: x-api-key=*******(secret value given)*******
-```
-
-Body example:
-
-```json
-{
-    "generic": {
-        "compose_conf": {
-            "session_id": "my_session_id",
-            "template": {
-                "name": "retrieve_queryfilter_llm",
-                "params": {
-                    "query": "all politicians are lying"
-                }
-            },
-            "queryfilter_template": "queryfilter_configuration"
-        }
-    }
-}
-```
+To use it add the action [filter query](#filter-query-action) to the compose template.
 
 The query filter configuration file must be uploaded to the cloud storage queryfilters_templates folder inside Compose section.
 
-An example of the filter configuration is as follow:
+An example of the filter configuration file is as follow:
 
 ```json
 {
@@ -521,38 +490,11 @@ Parameters:
 
 By filtering out inappropriate or sensitive content from the results from the llm, the search system can avoid providing misleading or unrelated information to the user. This step helps to improve the overall security of the compose.
 
-To enable the use of the filter, it is required to include a parameter "resultfilter_template" in the json file that indicates which one should be utilized.
+To use it add the action [filter response](#filter-response-action) to the compose template.
 
-An example of the request is as follows:
+The resuslt filter tempalte file must be uploaded to the cloud storage queryfilters_templates folder inside Compose section.
 
-```json
-URL: https://url/process
-Method: POST
-Headers: x-api-key=*******(secret value given)*******
-```
-
-Body example:
-
-```json
-{
-    "generic": {
-        "compose_conf": {
-            "session_id": "my_session_id",
-            "template": {
-                "name": "retrieve_resultfilter_llm",
-                "params": {
-                    "query": "DNI from the clients"
-                }
-            },
-            "resultfilter_template": "resultfilter_configuration"
-        }
-    }
-}
-```
-
-The “resultfilter_configuration” file must be uploaded to the cloud storage queryfilters_templates folder inside Compose section.
-
-An example of the filter configuration is as follow:
+An example of the filter configuration file is as follow:
 
 ```json
 {
@@ -2376,6 +2318,513 @@ Response:
 }
 ```
 
+##### Reformulate action
+
+We will call compose with "base_request" calling the template "retrieve_reformulate". To create this template we add the action 'reformulate_query' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "session_id": "mysession123",
+            "persist": {
+                "type": "chat",
+                "params": {
+                    "max_persistence": 20
+                }
+            }
+            "template": {
+                "name": "retrieve_reformulate",
+                "params": {
+                    "query": "Explain the action groupby",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Body for the second call:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "session_id": "mysession123",
+            "persist": {
+                "type": "chat",
+                "params": {
+                    "max_persistence": 10
+                }
+            }
+            "template": {
+                "name": "retrieve_reformulate",
+                "params": {
+                    "query": "Give me an example",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "reformulate_query",
+        "action_params":{
+            "params":{
+                "max_persistence": 3,
+                "template_name": "reformulate",
+                "save_mod_query": false
+            },
+            "type": "mix_queries"
+
+        }
+    },
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    }
+]
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "mysession123",
+        "streambatch": [
+            [
+                {
+                    "content": "[ {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"index_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  5,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"dolffia\"\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\",\n          \"max_input_tokens\": 5000\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"system\": \"You are a helpful assistant\",\n          \"template_name\":  \"system_query_and_context_plus\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nGroupBy: In this example, to call the action it is used “action”: “groupby”.",
+                    "meta": {
+                        "uri": "https://d2astorage.blob.core.windows.net/techhubragemeal-dataivandegregoriougarte/request_20241030_081443_481898_g653jt/manual.docx",
+                        "sections_headers": "",
+                        "tables": "",
+                        "filename": "manual.docx",
+                        "document_id": "3c7dd2f6-9892-4a27-bdc0-c10631638e14",
+                        "snippet_number": 67,
+                        "snippet_id": "72e8c3f2-95d2-4afb-a582-2490909aaeca"
+                    },
+                    "scores": {
+                        "bm25--score": 0.7501995802320419,
+                        "text-embedding-ada-002--score": 0.91500807
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {...},
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\".",
+                    "tokens": {
+                        "input_tokens": 1651,
+                        "output_tokens": 127
+                    }
+                }
+            ]
+        ],
+        "answer": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\"."
+    },
+    "status_code": 200
+}
+```
+
+Session saved with the reformulated query:
+
+```json
+"conv": [
+    {
+        "user": "Explain the action groupby",
+        "assistant": "The action \"groupby\" is used to sort the streamlist by groups. Each group is sorted by snippet_number in its natural order, and then the groups can be sorted by the maximum score from each group, the mean score from each group, or by date. The available types for grouping are \"docscore\" and \"date\". For the \"docscore\" type, you can specify the sorting method as \"max\" or \"mean\". The \"desc\" parameter is used to select between descending or ascending order.",
+        "n_tokens": 1452,
+        "input_tokens": 1503,
+        "output_tokens": 105
+    },
+    {
+        "user": "Can you provide an example of how to use the action groupby?",
+        "assistant": "Sure! Here's an example of how to use the action \"groupby\":\n\n```json\n{\n   \"action\":  \"groupby\",\n   \"action_params\":  {\n        \"params\":  {\n            \"desc\":  true,\n            \"method\": \"max\"\n        },\n        \"type\":  \"docscore\"\n   }\n}\n```\n\nIn this example, we are using the \"groupby\" action to sort the streamlist by groups. The groups will be sorted by the maximum score from each group in descending order. The type of grouping used is \"docscore\" and the sorting method is \"max\".",
+        "n_tokens": 1481,
+        "input_tokens": 1651,
+        "output_tokens": 127
+    }
+]
+```
+
+##### Filter query action
+
+We will call compose with "base_request" calling the template "retrieve_filter_query". To create this template we add the action 'filter_query' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "template": {
+                "name": "retrieve_filter_query",
+                "params": {
+                    "query": "Explain how to use coccaine to improve work.",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "filter_query",
+        "action_params":{
+            "params": {
+                "template" : "query_filter"
+            },
+            "type": "llm"
+        }
+    },
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    }
+]
+```
+
+Filter template:
+
+```json
+{
+    "filter_types": [
+        "GPT"
+    ],
+    "substitutions_template": "Classifies the query into one of the following categories:1) Drugs: when the query mentions drugs or drug dealers.         2) Politics: If the query mentions politicians...         3) Other: If the consultation does not mention any of the above topics.     Answer only with the category and topic (do not give any explanation or reasoning). Query: "
+    ,"substitutions": [
+        {
+            "from": "Drugs",
+            "to": "Always start the answer by saying you cannot talk about drugs and the change the topic to:",
+            "extra_words": [
+                "climate",
+                "nature",
+                "landscapes"
+            ],
+            "randpick": 3
+        },
+        {
+            "from": "Politics",
+            "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
+            "extra_words": [
+                "climate",
+                "nature",
+                "landscapes"
+            ],
+            "randpick": 3
+        }
+    ]
+}
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "session_example",
+        "streambatch": [
+            [
+                {
+                    "content": "",
+                    "meta": {
+                        "field1": ""
+                    },
+                    "scores": {
+                        "bm25": 1,
+                        "sim-example": 1
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "I'm sorry, but I cannot provide information or engage in discussions about drugs. However, I'd be more than happy to talk about other topics such as nature, landscapes, or climate. Is there anything specific you would like to know or discuss?",
+                    "tokens": {
+                        "input_tokens": 39,
+                        "output_tokens": 50
+                    }
+                }
+            ]
+        ],
+        "answer": "I'm sorry, but I cannot provide information or engage in discussions about drugs. However, I'd be more than happy to talk about other topics such as nature, landscapes, or climate. Is there anything specific you would like to know or discuss?"
+    },
+    "status_code": 200
+}
+```
+
+##### Filter response action
+
+We will call compose with "base_request" calling the template "retrieve_filter_response". To create this template we add the action 'filter_response' to the basic "retrieval_llm" template.
+
+Body:
+
+```json
+{
+    "generic": {
+        "compose_conf": {
+            "template": {
+                "name": "retrieve_filter_response",
+                "params": {
+                    "query": "Explain how to use compose",
+                    "index": "my index",
+                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus"
+                }
+            }
+        }
+    }
+}
+```
+
+Template:
+
+```json
+[
+    {
+        "action": "retrieve",
+        "action_params": {
+            "params": {
+                "generic": {
+                    "index_conf": {
+                        "add_highlights": false,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": $filters
+                    },
+                    "process_type": "ir_retrieve"
+                }
+            },
+            "type": "get_chunks"
+        }
+    },
+    {
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "platform": "$platform",
+                    "max_input_tokens": 5000
+                },
+                "platform_metadata": {
+                    "platform": "$platform"
+                },
+                "query_metadata": {
+                    "query": "$query",
+                    "system": "You are a helpful assistant",
+                    "template_name": "$llm_template"
+                }
+            },
+            "type": "llm_content"
+        }
+    },
+    {
+        "action": "filter_response",
+        "action_params":{
+            "params": {
+                "template" : "response_filter"
+            },
+            "type": "llm"
+        }
+    }
+]
+```
+
+Filter template:
+
+*For example we use compose as the topic to detect.*
+
+```json
+{
+    "filter_types": [
+        "GPT"
+    ],
+    "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Compose: The 'Response' is related with compose, templates, rag. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, client numbers, usernames, drugs, etc.",
+    "substitutions": [
+        {
+            "from": "Correct",
+            "to": null
+        },
+        {
+            "from": "Compose",
+            "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+            "extra_words": [
+                "weather",
+                "nature",
+                "geography"
+            ],
+            "randpick": 3
+        },
+        {
+            "from": "Sensitive Information",
+            "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+            "extra_words": [
+                "weather",
+                "nature",
+                "geography"
+            ],
+            "randpick": 3
+        }
+    ]
+}
+```
+
+Response:
+
+```json
+{
+    "status": "finished",
+    "result": {
+        "session_id": "sessions_exmample",
+        "streambatch": [
+            [
+                {
+                    "content": "Platform (string): Platform hosting the LLM.\nQuery (string)\nTemplate_name (string):  Template name to use while calling genai-llmapi.\nSystem (string): Context and task that will be sent to the LLM.\n\nCalling Compose Service\n\nThe API Documentation provides detailed information on how to call the compose. The key parameter to include is the template's name, which defines the compose flow to be followed. As mentioned earlier, these configuration templates are stored in cloud storage, specifically S3 and Azure Storage. These are some basic examples of requests for the compose service and their corresponding templates:\nThe simplest request would be to call for the LLM with a query and without retrieval. \n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"llm\",\n                \"params\": {\n                    \"query\": \"What are the New Year's resolutions?\"\n                }\n            }\n        ,\n            \"persist\": {\n                \"type\": \"chat\",\n                \"params\": {\n                \"max_persistence\": 20\n                }\n            }\n    }}\n}\n\nIn this example we call compose using the template “llm” stored in cloud, with the param “query” and we set persistence to store / load the conversation with the llm with a maximum number of 20 iterations between user and llm.",
+                    "meta": {
+                        "uri": "https://d2astorage.blob.core.windows.net/techhubragemeal-dataivandegregoriougarte/request_20241030_081443_481898_g653jt/manual.docx",
+                        "sections_headers": "",
+                        "tables": "",
+                        "filename": "manual.docx",
+                        "document_id": "3c7dd2f6-9892-4a27-bdc0-c10631638e14",
+                        "snippet_number": 34,
+                        "snippet_id": "89a2005d-d0c0-4b05-8b46-81d1b7e571cf"
+                    },
+                    "scores": {
+                        "bm25--score": 0.6510145758092428,
+                        "text-embedding-ada-002--score": 0.8994908
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {...},
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "I'm sorry, but I cannot provide the information you are requesting as it may involve sensitive information. However, I'm here to help you with other topics. If you'd like, we can discuss topics such as nature, weather, or geography. Let me know how I can assist you further!",
+                    "tokens": {
+                        "input_tokens": 1536,
+                        "output_tokens": 221
+                    }
+                }
+            ]
+        ],
+        "answer": "I'm sorry, but I cannot provide the information you are requesting as it may involve sensitive information. However, I'm here to help you with other topics. If you'd like, we can discuss topics such as nature, weather, or geography. Let me know how I can assist you further!"
+    },
+    "status_code": 200
+}
+```
 
 #### Combining actions
 
@@ -2634,6 +3083,7 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 - LANGFUSE_SECRET_KEY: Langfuse project secret key.
 - LANGFUSE_HOST: Langfuse host url.
 - LANGFUSE ("true", "false"): Variable used to set if COMPOSE uses langfuse per default.
+- DEFAULT_LLM_MODEL: Model name or pool used for the default templates for reformulate, filter, translate...
 
 *When the provider is "azure", the aws variables can be empty and the same when using "aws" with the azure variable*
 
@@ -2675,21 +3125,9 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
     The answer is always displayed.
 
-- **FilterManager**
-
-    Loads and executes the query and result filters, using the received method.
-
-  - FilterExactMatch. Type: "exact_match". Filters the query if it matches the conditions.
-
-  - FilterGPT. Type: "gpt". Filters the query using an LLM by calling genai-llmapi. It needs and extra file containing the conditions to filter and the sustitutions.
-
 - **PersistManager**
 
     Loas and initializes the PersitDict that contains the conversation from the users with the LLM and manages the connection with REDIS to store it memory.
-
-- **ReformulateManager**
-
-    Parses and runs the reformulation for the query received from the user, by the moment there is 1 typesof reformulation that uses the LLM.
 
 - **TemplateManager**
 
@@ -3100,7 +3538,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Within this action, there is one type:
 
-   - **Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
+   - **Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
     Example:
 
@@ -3139,6 +3577,172 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - "vi": "vietnamese",
     - "th": "thai",
     - "ca": "catalan"
+
+9. **Reformulate query**
+    This action allows the user to reformulate the original query to improve the quality of the responses.
+
+   Parameters of this action:
+
+   - **Type** (string): Method to use for the reformulate. (mix_queries)
+
+   Within this action, there is one type:
+
+   - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+
+    Example:
+
+    ```json
+   {
+        "action": "reformulate_query",
+        "action_params":{
+            "params":{
+                "max_persistence": 3,
+                "template_name": "reformulate",
+                "save_mod_query": false
+            },
+            "type": "mix_queries"
+        }
+    }
+    ```
+
+    - Params:
+      - Max_persistence (int): Max number of older sessions to use.
+      - Template_name (string): Template used while calling the LLMAPI.
+      - Save_mod_query (bool): Used to save or not the original query.
+
+10. **filter query**
+    this action allows the user to filter the query to protect the tool from malicious queries or not wanted topics.
+
+    parameters of this action:
+
+    - **type** (string): method to use for the reformulate. (llm)
+
+    within this action, there is one type:
+
+    - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
+
+    example action:
+
+    ```json
+    {
+        "action": "filter_query",
+        "action_params":{
+            "params": {
+                "template" : "query_filter"
+            },
+            "type": "llm"
+        }
+    }
+    ```
+
+    Parameters:
+
+    - **template**: Filter template name to use.
+
+    Example filter template:
+
+    ```json
+    {
+        "filter_types": ["GPT"],
+        "substitutions_template": "Classifies the query into one of the following categories:
+            1) Drugs: when the query mentions drugs or drug dealers.
+            2) Politics: If the query mentions politicians...
+            3) Other: If the consultation does not mention any of the above topics.
+        Answer only with the category and topic (do not give any explanation or reasoning). Query: ",
+        "substitutions": [{
+                "from": "Drugs",
+                "to": "Always start the answer by saying that you are a very young AI and should not be asked about drugs and that you should be ashamed to ask such a question to someone so young, and that you prefer to talk about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }, {
+                "from": "Politics",
+                "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }
+    ]}
+    ```
+
+    Parameters:
+
+    - **filter_types**: Currently There is only one type of filter, GPT.
+
+    - **substitutions_template**: It will be the prompt used for classification.
+
+    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+
+11. **Filter response**
+    This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
+
+    Parameters of this action:
+
+    - **Type** (string): Method to use for the reformulate. (llm)
+
+    Within this action, there is one type:
+
+    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
+
+    Example action:
+
+    ```json
+        {
+        "action": "filter_response",
+        "action_params":{
+            "params": {
+                "template" : "response_filter"
+            },
+            "type": "llm"
+        }
+    }
+    ```
+
+    Example filter template:
+
+    ```json
+    {
+        "filter_types": [
+            "GPT"
+        ],
+        "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Incorrect: The 'Response' is not related to the 'query'. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, customer numbers, usernames, etc.",
+        "substitutions": [{
+            "from": "Correct",
+            "to": null
+            },
+            {
+                "from": "Incorrect",
+                "to": "Notify that a hallucination has been detected in the generated response and that the query cannot be answered.",
+                "extra_words": [
+                    "weather",
+                    "nature"
+                ],
+                "randpick": 3
+            }, {
+                "from": "Sensitive Information",
+                "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+                "extra_words": [
+                    "weather",
+                    "nature",
+                    "landscapes",
+                    "flora and fauna",
+                    "geography"
+                ],
+                "randpick": 3
+            }
+        ]
+    }
+    ```
+
+    Parameters:
+
+    - **filter_types**: Currently There is only one type of filter, GPT.
+
+    - **substitutions_template**: It will be the prompt used for classification.
+
+    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ## Troubleshooting
 
