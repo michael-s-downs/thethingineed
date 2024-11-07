@@ -2,9 +2,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 from confmanager import ConfManager
-from common.errors.genaierrors import PrintableGenaiError
 
 
 @pytest.fixture
@@ -56,17 +54,13 @@ def test_init(conf_manager):
 
 
 @patch("confmanager.TemplateManager")
-@patch("confmanager.FilterManager")
-@patch("confmanager.ReformulateManager")
 @patch("confmanager.PersistManager")
 @patch("confmanager.LangFuseManager")
-def test_parse_conf_actions(mock_langfuse, mock_persist, mock_reformulate, mock_filter, mock_template, conf_manager, compose_config):
+def test_parse_conf_actions(mock_langfuse, mock_persist, mock_template, conf_manager, compose_config):
     """Test parsing of config actions"""
     conf_manager.parse_conf_actions(compose_config)
     
     mock_template().parse.assert_called_with(compose_config)
-    mock_filter().parse.assert_called_with(compose_config)
-    mock_reformulate().parse.assert_called_with(compose_config)
     mock_persist().parse.assert_called_with(compose_config)
     mock_langfuse().parse.assert_called_with(compose_config, conf_manager.session_id)
 
