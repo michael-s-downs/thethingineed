@@ -402,6 +402,35 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
+- List the Elasticsearch indices, grouping the models by each index (GET)
+  
+    Used to list Elasticsearch indices, grouping models under each index.
+
+    URL: http:///retrieve/list_indices
+
+    Response: 
+    ```json
+    {
+        "indices": [
+            {
+                "models": [
+                    "text-embedding-ada-002"
+                ],
+                "name": "index_1"
+            },
+            {
+                "models": [
+                    "text-embedding-ada-002",
+                    "text-embedding-large",
+                    "cohere.embed-multilingual-v3"
+                ],
+                "name": "index_2"
+            }
+        ],
+        "status": "ok",
+        "status_code": 200
+    }
+    ```
 
 ## Indexing Pipeline
 
