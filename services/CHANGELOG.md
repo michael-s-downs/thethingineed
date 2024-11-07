@@ -6,10 +6,11 @@
 ## vXX (XXXX-XX-XX)
 - genai-llmapi
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
+    - [Change] Prompt models deleted (from code and files)
+    - [Change] Param 'n' deleted as it was not used when parsing model response
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
-    - [Fix] Prompt models deleted from the config file
     - [Fix] Get response from bedrock when exception is raised manually
 - genai-inforetrieval
     - [New] Added usage of retriever_model parameter in config file when calling huggingface models
@@ -17,6 +18,8 @@
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
     - [Improvement] Endpoints logic separated into different file from main
+    - [Fix] Endpoints now return error_message in response instead of result when goes wrong
+    - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
 - genai-infoindexing:
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
@@ -24,6 +27,8 @@
     - [Improvement] Config model param for action expansion query by lang
     - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
     - [Fix] Fix models from default templates
+- ALL:
+  - [New] Add unit tests with pytest
 
 ## v05 (2014-09-23)
 - genai-infoindexing:
