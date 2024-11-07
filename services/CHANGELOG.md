@@ -30,7 +30,7 @@
 - ALL:
   - [New] Add unit tests with pytest
 
-## v05 (2014-09-23)
+## v05 (2024-09-23)
 - genai-infoindexing:
     - [New] Titan model added
     - [New] Cohere english and multilingual models added
