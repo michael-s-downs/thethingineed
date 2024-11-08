@@ -28,11 +28,11 @@
     - [New] Update and refactor filer response from param call to template action
     - [New] Update and refactor reformulate query from param call to template action
     - [New] Langfuse params host, public key and private key can be set in call params
-    - [New] Env var DEFAULT_LLM_MODEL to config default templates model
+    - [New] Added env var 'DEFAULT_LLM_MODEL' to config default templates model
     - [New] Filter templates folder renamed to "filter_templates" from "queryfilter_templates"
     - [Improvement] Config model param for action expansion query by lang
     - [Improvement] Query expansion works with multiple retrieval
-    - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
+    - [Fix] Make optional env var 'URL_ALLOWED_DOCUMENT' to avoid error if not used
     - [Fix] Fix models from default templates
     - [Fix] Query expansion list as copy instead of reference
     - [Fix] Raise PrintableErrors called wrong
