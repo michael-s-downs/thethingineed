@@ -48,11 +48,30 @@ class Connector(ABC):
         """
         pass
 
+    def assert_correct_chunking_method(self, index: str, chunking_method: str, models: list):
+        """Raises an error if you try to change the chunking method for an already created index
+
+        :param index: Index to check
+        :param chunking_method: Chunking mode used
+        :param models: Models to check
+        """
+        pass
 
     def exist_index(self, index: str):
         """ Method to check if an index exists
 
         :param index: Index to check
+        """
+        pass
+
+    def get_index(self, index: str, offset: int = 0, size: int = 25) -> list:
+        """ Method to get an index with all chunks
+
+        :param index: Index to get
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
         """
         pass
 
@@ -186,7 +205,40 @@ class ElasticSearchConnector(Connector):
         if not all([model in models_sent for model in models_used]) or len(models_sent) != len(models_used):
             raise PrintableGenaiError(400, f"Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'")
         # Just passed models because at this point, models used in first indexation are the same as the ones sent
-        self._assert_correct_chunking_method(index, chunking_method, models_sent)
+        self.assert_correct_chunking_method(index, chunking_method, models_sent)
+
+    def assert_correct_chunking_method(self, index: str, chunking_method: str, models: list):
+        """Raises an error if you try to change the chunking method for an already created index
+
+        :param index: Index to check
+        :param chunking_method: Chunking mode used
+        :param models: Models to check
+        """
+        for model in models:
+            # All models sent does exist
+            index_name = ELASTICSEARCH_INDEX(index, model)
+            # Get the node_type used in first indexation
+            try:
+                result = self.connection.search(index=index_name,
+                                                query={"bool": {"must": {"match_all": {}}}},
+                                                size=1, from_=0)
+                node_type = result["hits"]["hits"][0]["_source"]["metadata"]["_node_type"]
+            except RequestError as e:
+                return "error", (f"Error: {e.info['error']['reason']} caused by: "
+                                 f"{e.info['error']['caused_by']['reason']}"), 400
+            # Get the metadata used in first indexation
+            index_metadata = self.get_index_mapping(index_name)[index_name]['mappings']['properties']['metadata']['properties'].keys()
+            if (chunking_method == "surrounding_context_window" and (node_type != "TextNode" or
+                    not all(elem in index_metadata for elem in ['window', 'original_text']))):
+                raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+            else:
+                if chunking_method == "simple" and (node_type != "TextNode" or any(elem in index_metadata for elem in ['window', 'original_text'])):
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+                if chunking_method == "recursive" and node_type != "IndexNode":
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                                   f"with the chunking method '{chunking_method}' at first time.")
 
     def exist_index(self, index: str):
         """ Method to check if an index exists"""
@@ -211,6 +263,28 @@ class ElasticSearchConnector(Connector):
         if self.connection is None:
             raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.delete(index=index)
+
+    def get_index(self, index: str, offset: int = 0, size: int = 25) -> list:
+        """ Method to get an index with all chunks
+
+        :param index: Index to get
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
+        """
+        chunks = []
+        while True:
+            result = self.connection.search(index=index,
+                                            query={"bool": {"must": {"match_all":{}}}},
+                                            size=size, from_=offset)
+            if len(result.get('hits', {}).get('hits', [])) == 0:
+                break
+            chunks.extend([chunk for chunk in result["hits"]["hits"]])
+            offset += size
+        if len(chunks) == 0:
+            raise PrintableGenaiError(400, f"Error the index '{index}' is empty so retrieval cannot be done.")
+        return chunks
 
     def get_index_mapping(self, index: str):
         """ Async method to get the index mapping
@@ -350,34 +424,6 @@ class ElasticSearchConnector(Connector):
     #                                           PRIVATE METHODS                                                #
     #                                                                                                          #
     ############################################################################################################
-
-    def _assert_correct_chunking_method(self, index: str, chunking_method: str, models: list):
-        for model in models:
-            # All models sent does exist
-            index_name = ELASTICSEARCH_INDEX(index, model)
-            # Get the node_type used in first indexation
-            try:
-                result = self.connection.search(index=index_name,
-                                                query={"bool": {"must": {"match_all": {}}}},
-                                                size=1, from_=0)
-                node_type = result["hits"]["hits"][0]["_source"]["metadata"]["_node_type"]
-            except RequestError as e:
-                return "error", (f"Error: {e.info['error']['reason']} caused by: "
-                                 f"{e.info['error']['caused_by']['reason']}"), 400
-            # Get the metadata used in first indexation
-            index_metadata = self.get_index_mapping(index_name)[index_name]['mappings']['properties']['metadata']['properties'].keys()
-            if (chunking_method == "surrounding_context_window" and (node_type != "TextNode" or
-                    not all(elem in index_metadata for elem in ['window', 'original_text']))):
-                raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
-                                               f"with the chunking method '{chunking_method}' at first time.")
-            else:
-                if chunking_method == "simple" and (node_type != "TextNode" or any(elem in index_metadata for elem in ['window', 'original_text'])):
-                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
-                                               f"with the chunking method '{chunking_method}' at first time.")
-                if chunking_method == "recursive" and node_type != "IndexNode":
-                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
-                                                   f"with the chunking method '{chunking_method}' at first time.")
-
 
     @staticmethod
     def _generate_filters(filters: dict):

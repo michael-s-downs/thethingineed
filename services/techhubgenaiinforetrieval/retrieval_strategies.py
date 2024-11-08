@@ -4,7 +4,7 @@
 # Native imports
 from typing import List
 from abc import ABC, abstractmethod
-import os
+import os, json
 import logging
 
 
@@ -13,10 +13,10 @@ from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core import VectorStoreIndex
 from llama_index.core.llms.mock import MockLLM
 from llama_index.core.retrievers import QueryFusionRetriever
-from llama_index.core.schema import QueryBundle
+from llama_index.core.schema import QueryBundle, NodeWithScore, IndexNode, NodeRelationship
 from llama_index.core.vector_stores import MetadataFilter, MetadataFilters, FilterCondition
-from llama_index.core.schema import NodeWithScore
-
+from llama_index.core.postprocessor import MetadataReplacementPostProcessor
+from llama_index.core.retrievers import RecursiveRetriever
 
 # Custom imports
 from elasticsearch_adaption import \
@@ -26,6 +26,8 @@ from common.errors.genaierrors import PrintableGenaiError
 from common.logging_handler import LoggerHandler
 from common.services import RETRIEVAL_STRATEGIES
 from rescoring import rescore_documents
+from common.utils import ELASTICSEARCH_INDEX
+from common.indexing.connectors import Connector
 
 
 class SimpleStrategy(ABC):
@@ -123,7 +125,6 @@ class GenaiStrategy(SimpleStrategy):
 
         :return: List of documents
         """
-
         vector_store_index = VectorStoreIndex.from_vector_store(vector_store=vector_store, embed_model=embed_model)
         retriever = vector_store_index.as_retriever(similarity_top_k=top_k, filters=self.generate_llama_filters(filters))
 
@@ -202,20 +203,30 @@ class GenaiStrategy(SimpleStrategy):
 class GenaiRecursiveStrategy(GenaiStrategy):
     STRATEGY_FORMAT = "recursive_genai_retrieval"
 
-    def __init__(self):
+    def __init__(self, connector: Connector):
         super().__init__()
-
-    def retrieve(self):
-        vector_store_index = VectorStoreIndex.from_vector_store(vector_store=vector_store, embed_model=embed_model)
-        retriever = vector_store_index.as_retriever(similarity_top_k=top_k, filters=self.generate_llama_filters(filters))
+        self.connector = connector
 
     def do_retrieval_strategy(self, input_object, retrievers_arguments) -> List[NodeWithScore]:
+        """
+        Method to retrieve the chunks from the connector, using the genai_strategy
+
+        :param input_object: Object with the input data
+        :param retrievers_arguments: List of tuples with the arguments of the retrievers
+
+        :return: List of documents
+        """
         docs_by_retrieval = {}
         unique_docs = {}
         retrievers = [retriever_type for _, _, _, retriever_type in retrievers_arguments]
 
         for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
-            docs_tmp = self.retrieve()
+            # Retriever type is formed by embedding_model (same used to name index) so split by '--' (other part is score)
+            index_docs = self.connector.get_index(ELASTICSEARCH_INDEX(input_object.index, retriever_type.split('--')[0]))
+            nodes_dict = self.get_all_nodes_dict(index_docs)
+            docs_tmp = self.basic_genai_retrieval(vector_store, embed_model, retriever_type, input_object.filters,
+                                     input_object.top_k, unique_docs, embed_query, input_object.query)
+
             docs_by_retrieval[retriever_type] = docs_tmp
 
         self.complete_empty_scores(docs_by_retrieval, unique_docs, retrievers_arguments, input_object, retrievers)
@@ -227,12 +238,66 @@ class GenaiRecursiveStrategy(GenaiStrategy):
 
         return sorted_docs
 
+
+    def get_all_nodes_dict(self, nodes) -> dict:
+        """Get all nodes in a dictionary with the id as key
+
+        :param nodes: List of nodes
+
+        :return: Dictionary of nodes
+        """
+        for node in nodes:
+            node_content_dict = json.loads(node['_source']['metadata']['_node_content'])
+            embeddings = node['_source']['embedding']
+            text = node['_source']['content']
+            for type, content in node_content_dict['relationships'].items():
+                a = NodeRelationship(type)
+                if NodeRelationship(type) == NodeRelationship.SOURCE:
+                    print("a")
+                elif NodeRelationship(type) == NodeRelationship.PREVIOUS:
+                    print("b")
+                elif NodeRelationship(type) == NodeRelationship.NEXT:
+                    print("c")
+                elif NodeRelationship(type) == NodeRelationship.PARENT:
+                    print("d")
+                elif NodeRelationship(type) == NodeRelationship.CHILD:
+                    print("E")
 class GenaiSurroundingStrategy(GenaiStrategy):
     STRATEGY_FORMAT = "surrounding_genai_retrieval"
 
     def __init__(self):
         super().__init__()
 
+    def do_retrieval_strategy(self, input_object, retrievers_arguments) -> List[NodeWithScore]:
+        """
+        Method to retrieve the chunks from the connector, using the genai_strategy
+
+        :param input_object: Object with the input data
+        :param retrievers_arguments: List of tuples with the arguments of the retrievers
+
+        :return: List of documents
+        """
+        docs_by_retrieval = {}
+        unique_docs = {}
+        retrievers = [retriever_type for _, _, _, retriever_type in retrievers_arguments]
+
+        for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
+            docs_tmp = self.basic_genai_retrieval(vector_store, embed_model, retriever_type, input_object.filters,
+                                     input_object.top_k, unique_docs, embed_query, input_object.query)
+
+            # Replace the surrounding window (window metadata key) in the retrieved documents before store
+            MetadataReplacementPostProcessor(target_metadata_key="window").postprocess_nodes(docs_tmp)
+            docs_by_retrieval[retriever_type] = docs_tmp
+
+        # When completing, just scores metadata are modified
+        self.complete_empty_scores(docs_by_retrieval, unique_docs, retrievers_arguments, input_object, retrievers)
+
+        rescored_docs = rescore_documents(unique_docs, input_object.query, input_object.rescoring_function,
+                                          self.MODEL_FORMATS, retrievers)
+
+        sorted_docs = sorted(rescored_docs, key=lambda x: x.score, reverse=True)
+
+        return sorted_docs
 
 class LlamaIndexFusionStrategy(SimpleStrategy):
     STRATEGY_FORMAT = "llamaindex_fusion"

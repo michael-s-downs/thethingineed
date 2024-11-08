@@ -30,11 +30,18 @@ from common.errors.genaierrors import PrintableGenaiError
 
 from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
 
-class InfoRetrievalDeployment(BaseDeployment):
 
+class InfoRetrievalDeployment(BaseDeployment):
 
     TOKENIZER = {
         "bm25--score": None
+    }
+
+    STRATEGY_CHUNKING_METHOD_EQUIVALENCE = {
+        "genai_retrieval": "simple",
+        "recursive_genai_retrieval": "recursive",
+        "surrounding_genai_retrieval": "surrounding_context_window",
+        "llamaindex_fusion": "simple"
     }
 
     def __init__(self):
@@ -177,8 +184,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                                            http_auth=(connector.username, connector.password),
                                            verify_certs=False, timeout=30)
 
-            # Check if the strategy selected can be done with the index passed
-            #self.assert_correct_index_for_strategy()
 
             # If no models are passed, we will retrieve with bm25 and the models used in the indexation process
             if len(input_object.models) == 0:
@@ -186,10 +191,18 @@ class InfoRetrievalDeployment(BaseDeployment):
             else:
                 self.assert_correct_models(input_object.index, input_object.models, connector)
 
+            # Check if the strategy selected can be done with the index passed
+            chunking_method = self.STRATEGY_CHUNKING_METHOD_EQUIVALENCE[input_object.strategy]
+            models = [model['embedding_model'] for model in input_object.models if model['alias'] != "bm25"]
+            connector.assert_correct_chunking_method(input_object.index, chunking_method, models)
+
             retrievers_arguments = self.get_retrievers_arguments(input_object.models, input_object.index, es_client,
                                                                  connector, input_object.query)
-
-            retrieval_strategy = ManagerRetrievalStrategies.get_retrieval_strategy({"strategy": input_object.strategy})
+            conf = {"strategy": input_object.strategy}
+            if input_object.strategy == "recursive_genai_retrieval":
+                # Needed to get the hole index for every retriever
+                conf["connector"] = connector
+            retrieval_strategy = ManagerRetrievalStrategies.get_retrieval_strategy(conf)
             sorted_documents = retrieval_strategy.do_retrieval_strategy(input_object, retrievers_arguments)
 
             tokens_report = {}
