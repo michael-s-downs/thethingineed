@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ using techhubapigw.HostedServices;
 using techhubapigw.Middlewares;
 using techhubapigw.Models;
 using techhubapigw.Services;
+using techhubapigw.Cors;
 
 namespace techhubapigw
 {
@@ -63,13 +65,26 @@ namespace techhubapigw
             {
                 options.AddPolicy("default", builder =>
                 {
-                    builder.AllowAnyHeader();
-                    builder.AllowAnyMethod();
+                    var corsSettings = Configuration.GetSection("CorsSettings").Get<CorsSettings>();
 
-                    // TODO: Harden/check security here
-                    builder.AllowAnyOrigin();
-                    // builder.AllowCredentials();
+                    builder
+                        .WithOrigins(corsSettings.AllowedOrigins.ToArray())
+                        .WithMethods(corsSettings.AllowAnyMethod ? "GET, POST, PUT, DELETE, OPTIONS" : "")
+                        .WithHeaders(corsSettings.AllowAnyHeader ? "Content-Type, Authorization, X-Api-Key" : "")
+                        .AllowCredentials();
                 });
+            });
+
+            // Configure Kestrel to allow up to 30 MB requests
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
+            });
+
+            // Configure IIS (if applicable)
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
             });
 
             // AUTH

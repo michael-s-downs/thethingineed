@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace techhubapigw
 {
@@ -27,7 +28,12 @@ namespace techhubapigw
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder
+                        .UseStartup<Startup>()
+                        .ConfigureKestrel(options =>
+                        {
+                            options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
+                        });
                 });
     }
 }
