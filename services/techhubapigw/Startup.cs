@@ -67,8 +67,7 @@ namespace techhubapigw
                 {
                     var corsSettings = Configuration.GetSection("CorsSettings").Get<CorsSettings>();
 
-                    builder
-                        .WithOrigins(corsSettings.AllowedOrigins.ToArray())
+                    builder.WithOrigins(corsSettings.AllowedOrigins.ToArray())
                         .WithMethods(corsSettings.AllowAnyMethod ? "GET, POST, PUT, DELETE, OPTIONS" : "")
                         .WithHeaders(corsSettings.AllowAnyHeader ? "Content-Type, Authorization, X-Api-Key" : "")
                         .AllowCredentials();
