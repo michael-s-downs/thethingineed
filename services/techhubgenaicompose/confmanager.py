@@ -128,6 +128,7 @@ class ConfManager(AbstractManager):
         Returns:
             lang (string)
         """
+        query = str.lower(query)
         lang = ""
         if "lang" not in compose_config:
             self.logger.info("No lang provided, detecting default languages")

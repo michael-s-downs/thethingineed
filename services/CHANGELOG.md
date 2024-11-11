@@ -3,6 +3,10 @@
 
 # Changelog
 
+## vX.X
+- genai-compose:
+    - [Fix] Query to minus before langdetect
+
 ## v2.0 (2024-11-08)
 - genai-llmapi:
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
