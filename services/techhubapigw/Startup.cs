@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,7 @@ using techhubapigw.HostedServices;
 using techhubapigw.Middlewares;
 using techhubapigw.Models;
 using techhubapigw.Services;
+using techhubapigw.Cors;
 
 namespace techhubapigw
 {
@@ -47,6 +49,7 @@ namespace techhubapigw
 
             // Configuration
             services.Configure<UhisConfiguration>(Configuration.GetSection(UhisConfiguration.Section));
+            services.Configure<CorsSettings>(Configuration.GetSection("CorsSettings"));
 
             // States
             services.AddSingleton<ApiKeyServiceState>();
@@ -63,13 +66,41 @@ namespace techhubapigw
             {
                 options.AddPolicy("default", builder =>
                 {
-                    builder.AllowAnyHeader();
-                    builder.AllowAnyMethod();
+                    var corsSettings = Configuration.GetSection("CorsSettings").Get<CorsSettings>();
 
-                    // TODO: Harden/check security here
-                    builder.AllowAnyOrigin();
-                    // builder.AllowCredentials();
+                    if(corsSettings.AllowAnyOrigin && !corsSettings.AllowCredentials)
+                    {
+                        builder.AllowAnyOrigin();
+                    }
+                    else
+                    {
+                        builder.WithOrigins(corsSettings.AllowedOrigins.ToArray())
+                            .SetIsOriginAllowedToAllowWildcardSubdomains();
+                        
+                        if (corsSettings.AllowCredentials)
+                        {
+                            builder.AllowCredentials();
+                        }
+                    }
+
+                    builder.WithMethods(corsSettings.AllowedMethod.ToArray())
+                        .WithHeaders(corsSettings.AllowedHeader.ToArray());
                 });
+            });
+
+            // Get size by env var
+            var maxRequestSizeEnv = long.TryParse(Environment.GetEnvironmentVariable("MAX_REQUEST_SIZE") ?? "31457280", out var maxRequestSize) ? maxRequestSize : 31457280;
+
+            // Configure Kestrel to allow up to 30 MB requests
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = maxRequestSizeEnv;
+            });
+
+            // Configure IIS (if applicable)
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = maxRequestSizeEnv;
             });
 
             // AUTH
