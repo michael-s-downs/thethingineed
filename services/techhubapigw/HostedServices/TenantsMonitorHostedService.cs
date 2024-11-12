@@ -115,7 +115,7 @@ namespace techhubapigw.HostedServices
                                         AuthorizationPolicy = Auth.Policies.OnlyThirdParties,
                                         Match =
                                     {
-                                        Methods = new[] { "GET", "POST", "PUT", "DELETE" },
+                                        Methods = new[] { "GET", "POST", "PUT", "DELETE", "OPTIONS" },
                                         Path = $"/{t.TenantId}{segment}{{**catchall}}"
                                     },
                                         // TODO: remove when header routing is available (we will not modify the request path)

@@ -49,6 +49,7 @@ namespace techhubapigw
 
             // Configuration
             services.Configure<UhisConfiguration>(Configuration.GetSection(UhisConfiguration.Section));
+            services.Configure<CorsSettings>(Configuration.GetSection("CorsSettings"));
 
             // States
             services.AddSingleton<ApiKeyServiceState>();
@@ -67,23 +68,39 @@ namespace techhubapigw
                 {
                     var corsSettings = Configuration.GetSection("CorsSettings").Get<CorsSettings>();
 
-                    builder.WithOrigins(corsSettings.AllowedOrigins.ToArray())
-                        .WithMethods(corsSettings.AllowAnyMethod ? "GET, POST, PUT, DELETE, OPTIONS" : "")
-                        .WithHeaders(corsSettings.AllowAnyHeader ? "Content-Type, Authorization, X-Api-Key" : "")
-                        .AllowCredentials();
+                    if(corsSettings.AllowAnyOrigin && !corsSettings.AllowCredentials)
+                    {
+                        builder.AllowAnyOrigin();
+                    }
+                    else
+                    {
+                        builder.WithOrigins(corsSettings.AllowedOrigins.ToArray())
+                            .SetIsOriginAllowedToAllowWildcardSubdomains();
+                        
+                        if (corsSettings.AllowCredentials)
+                        {
+                            builder.AllowCredentials();
+                        }
+                    }
+
+                    builder.WithMethods(corsSettings.AllowedMethod.ToArray())
+                        .WithHeaders(corsSettings.AllowedHeader.ToArray());
                 });
             });
+
+            // Get size by env var
+            var maxRequestSizeEnv = long.TryParse(Environment.GetEnvironmentVariable("MAX_REQUEST_SIZE") ?? "31457280", out var maxRequestSize) ? maxRequestSize : 31457280;
 
             // Configure Kestrel to allow up to 30 MB requests
             services.Configure<KestrelServerOptions>(options =>
             {
-                options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
+                options.Limits.MaxRequestBodySize = maxRequestSizeEnv;
             });
 
             // Configure IIS (if applicable)
             services.Configure<IISServerOptions>(options =>
             {
-                options.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
+                options.MaxRequestBodySize = maxRequestSizeEnv;
             });
 
             // AUTH

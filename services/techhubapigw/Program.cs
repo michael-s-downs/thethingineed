@@ -32,7 +32,9 @@ namespace techhubapigw
                         .UseStartup<Startup>()
                         .ConfigureKestrel(options =>
                         {
-                            options.Limits.MaxRequestBodySize = 30 * 1024 * 1024; // 30 MB
+                            var maxRequestSizeEnv = long.TryParse(Environment.GetEnvironmentVariable("MAX_REQUEST_SIZE") ?? "31457280", out var maxRequestSize) ? maxRequestSize : 31457280;
+
+                            options.Limits.MaxRequestBodySize = maxRequestSizeEnv;
                         });
                 });
     }
