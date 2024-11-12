@@ -8,7 +8,7 @@ from flask import Flask, request
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file
+from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file, list_files
 from common.genai_json_parser import *
 from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_COMPOSE_SERVICE
@@ -219,6 +219,20 @@ class ComposeDeployment(BaseDeployment):
         resource = "compose/delete_template/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, {})
         return self.endpoint_response(status_code, "Request finished", error_message)
+    
+    def list_flows_compose(self):
+        str_path = "src/compose/templates/"
+        try:
+            flows_templates = list_files(storage_containers['workspace'], str_path)
+            flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        return self.endpoint_response(200, flows_templates, "")
+
+
 
 
 app = Flask(__name__)
@@ -316,6 +330,13 @@ def delete_template() -> Tuple[Dict, int]:
     dat.update({"project_conf": apigw_params})
 
     return deploy.delete_template(dat, template_filter=False)
+
+@app.route('/list_flows', methods=['GET'])
+def list_flows() -> Tuple[Dict, int]:
+    "List compose template flows"
+
+    return deploy.list_flows_compose()
+
 
 if __name__ == "__main__":
     #Process(target=run_redis_cleaner).start()
