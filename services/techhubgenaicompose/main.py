@@ -331,7 +331,7 @@ def delete_template() -> Tuple[Dict, int]:
 
     return deploy.delete_template(dat, template_filter=False)
 
-@app.route('/list_flows', methods=['GET'])
+@app.route('/list_templates', methods=['GET'])
 def list_flows() -> Tuple[Dict, int]:
     "List compose template flows"
 

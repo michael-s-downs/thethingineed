@@ -265,6 +265,8 @@ If the response looks like this, you are good to go.
 }
 ```
 
+- /list_templates (GET): Used to list all templates stored in cloud.
+
 - /upload_template (POST): Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
 ```json

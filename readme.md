@@ -143,6 +143,12 @@ The output can be changed passing in the requests some attribute values:
 
 ### Compose
 
+- List templates (GET)
+
+    Used to list all templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_templates  
+
 - Upload template (POST)
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
