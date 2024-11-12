@@ -143,6 +143,42 @@ The output can be changed passing in the requests some attribute values:
 
 ### Compose
 
+- List templates (GET)
+
+    Used to list all templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_templates  
+
+- List filter templates (GET)
+
+    Used to list all filter templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_filter_templates  
+
+- Get compose template (POST)
+
+    Used to get the content of a template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
+- Get compose filter template (POST)
+
+    Used to get the content of a filter template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_filter_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
 - Upload template (POST)
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
@@ -208,8 +244,33 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models 
-    
+- List prompt templates
+
+    Used to list all the prompt templates stored in cloud.
+
+    URL: http://<deploymentdomain>/llm/list_templates
+
+    Response:
+
+    ```json
+    {
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "system_query": {
+                "system": "$system",
+                "user": "$query"
+            },
+            "system_query_es": {
+                "system": "$system",
+                "user": "$query \n===\nRespuesta en Español:"
+            }
+        }
+    }
+    ```
+
+- Get_models
+
     URL: http://<deploymentdomain>/llm/get_models
 
     Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/llm/get_models?platform=azure
@@ -2042,7 +2103,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "Q_INFO_INDEXING": "" // Name of the queue for the indexing subcomponent
 ```
 
-After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"
@@ -2100,7 +2161,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "DEFAULT_LLM_MODEL": ""
 ```
 
-Create a python 3.8 environment and install the required libraries in with the "requirements.txt" file.
+Create a Python 3.11 environment and install the required libraries in with the "requirements.txt" file.
 
 ```sh
 pip install -r "**path to the requirement.txt file**"

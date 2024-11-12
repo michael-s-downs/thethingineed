@@ -5,6 +5,10 @@
 
 ## vX.X
 - genai-compose:
+    - [New] Endpoint to list templates
+    - [New] Endpoint to list filter templates
+    - [New] Endpoint to get the content of a template
+    - [New] Endpoint to get the content of a filter template
     - [Fix] Query to minus before langdetect
 
 ## v2.0 (2024-11-08)
@@ -16,6 +20,7 @@
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
     - [Fix] Get response from bedrock when exception is raised manually
+    - [Fix] Endpoint list templates shows file name
 - genai-inforetrieval:
     - [New] Added usage of retriever_model parameter in config file when calling huggingface models
     - [New] Added new endpoint of list indices from elasticsearch
