@@ -61,13 +61,13 @@ The RETRIEVAL module is designed to facilitate the extraction of documents or in
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - ElasticSearch
 
 #### Installation steps
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh

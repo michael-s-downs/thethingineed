@@ -68,13 +68,13 @@ The GENAI LLM API is an advanced solution designed to seamlessly integrate with 
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - LLM Model endpoint
 
 #### Installation steps
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh

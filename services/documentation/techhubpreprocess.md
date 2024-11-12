@@ -30,7 +30,7 @@ To use the preprocess component, you need to have the integration component, des
 
 The first step you need to take to use the preprocess component on your local machine is to set the [environment variables](#environment-variables).
 
-After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"

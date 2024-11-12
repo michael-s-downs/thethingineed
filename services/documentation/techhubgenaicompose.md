@@ -3048,14 +3048,14 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - [LLMAPI](#link al llmapi)
 - [Retrieval](#link al retrieval)
 
 #### Installation
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh

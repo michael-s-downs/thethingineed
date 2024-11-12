@@ -2103,7 +2103,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "Q_INFO_INDEXING": "" // Name of the queue for the indexing subcomponent
 ```
 
-After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"
@@ -2161,7 +2161,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "DEFAULT_LLM_MODEL": ""
 ```
 
-Create a python 3.8 environment and install the required libraries in with the "requirements.txt" file.
+Create a Python 3.11 environment and install the required libraries in with the "requirements.txt" file.
 
 ```sh
 pip install -r "**path to the requirement.txt file**"
