@@ -222,6 +222,7 @@ class ComposeDeployment(BaseDeployment):
     
     def list_flows_compose(self):
         str_path = "src/compose/templates/"
+        self.logger.info("List templates request received")
         try:
             flows_templates = list_files(storage_containers['workspace'], str_path)
             flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
@@ -231,8 +232,6 @@ class ComposeDeployment(BaseDeployment):
             return self.endpoint_response(500, "", str(ex))
 
         return self.endpoint_response(200, flows_templates, "")
-
-
 
 
 app = Flask(__name__)

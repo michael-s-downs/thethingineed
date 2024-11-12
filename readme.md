@@ -214,8 +214,33 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models 
-    
+- List prompt templates
+
+    Used to list all the prompt templates stored in cloud.
+
+    URL: http://<deploymentdomain>/llm/list_templates
+
+    Response:
+
+    ```json
+    {
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "system_query": {
+                "system": "$system",
+                "user": "$query"
+            },
+            "system_query_es": {
+                "system": "$system",
+                "user": "$query \n===\nRespuesta en Español:"
+            }
+        }
+    }
+    ```
+
+- Get_models
+
     URL: http://<deploymentdomain>/llm/get_models
 
     Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/llm/get_models?platform=azure
