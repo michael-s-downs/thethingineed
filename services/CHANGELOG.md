@@ -51,7 +51,7 @@
 - ALL:
     - [New] Add unit tests with pytest
 
-## v1.0.5 (2024-09-23)
+## v1.5.0 (2024-09-23)
 - genai-infoindexing:
     - [New] Titan model added
     - [New] Cohere english and multilingual models added
@@ -103,7 +103,7 @@
     - [Fix] Endpoint get model
     - [Fix] Query now not mandatory in templates
 
-## v1.0.4 (2024-08-26)
+## v1.4.0 (2024-08-26)
 - genai-infoindexing:
     - [New] Now indexation process done with llama_index library
         - Chunks split
@@ -142,7 +142,7 @@
 - ALL:
     - [Improvement] Change all 'dolffia' references to 'genai'
 
-## v1.0.3 (2024-06-24)
+## v1.3.0 (2024-06-24)
 - BUILD:
     - [New] Generate helm package to deploy 
     - [New] Rename library dolffia-sdk-services to genai-sdk-services
@@ -162,7 +162,7 @@
     - [Improvement] Change name of 'dolffia_controller' to 'genai_controller'
 
 
-## v1.0.2 (2024-05-23)
+## v1.2.0 (2024-05-23)
 - common:
     - [New] Function to get the word that caused an error when parsing a string to a json
     - [New] Add to services the different LLM classes
@@ -190,7 +190,7 @@
 - ALL:
     - [New] Add GGAO header to all files
 
-## v1.0.1 (2024-05-15)
+## v1.1.0 (2024-05-15)
 - common:
     - [New] Add generic function to send any message via queue or API
     - [New] Add optional logic to send tracking message if env var exists
