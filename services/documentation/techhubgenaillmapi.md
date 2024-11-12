@@ -15,7 +15,7 @@
     - [Core Concepts](#core-concepts)
     - [Architecture](#architecture)
   - [Calling LLMAPI](#calling-llmapi)
-    - [Simple prediction call: `url/process`](#simple-prediction-call-urlprocess)
+    - [Simple prediction call: `url/predict`](#simple-prediction-call-urlpredict)
       - [Query types](#query-types)
     - [Get models: `url/get_models`](#get-models-urlget_models)
       - [Method: GET](#method-get)
@@ -35,7 +35,6 @@
     - [Cloud setup](#cloud-setup)
       - [Secrets](#secrets)
       - [Configuration files](#configuration-files)
-    - [Models](#models)
     - [Environment Variables](#environment-variables)
     - [X-limits header](#x-limits-header)
   - [Code Overview](#code-overview)
@@ -167,7 +166,7 @@ This service receives the user's request and searches for the template in the da
 ## Calling LLMAPI
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
-### Simple prediction call: `url/process`
+### Simple prediction call: `url/predict`
 A **simple call for a non-vision model** using persistence would be:
 
 ```json
@@ -814,7 +813,7 @@ Response:
 
 ```json
 {
-  "name": "example_filter_template",
+  "name": "example_template",
   "content": "{\r\n    \"emptysystem_query\": {\r\n        \"system\": \"\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_query\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_context\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$context\"\r\n    },\r\n    \"fixed_system_query\": {\r\n        \"system\": \"You are a football player\",\r\n        \"user\": \"$query\"\r\n    }\r\n}"
 }
 ```
