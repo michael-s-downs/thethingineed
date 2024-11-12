@@ -149,6 +149,36 @@ The output can be changed passing in the requests some attribute values:
 
     URL: http://<deploymentdomain>/compose/list_templates  
 
+- List filter templates (GET)
+
+    Used to list all filter templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_filter_templates  
+
+- Get compose template (POST)
+
+    Used to get the content of a template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
+- Get compose filter template (POST)
+
+    Used to get the content of a filter template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_filter_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
 - Upload template (POST)
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
