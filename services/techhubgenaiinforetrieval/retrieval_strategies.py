@@ -12,8 +12,9 @@ import logging
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core import VectorStoreIndex
 from llama_index.core.llms.mock import MockLLM
+from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.retrievers import QueryFusionRetriever
-from llama_index.core.schema import QueryBundle, NodeWithScore, IndexNode, NodeRelationship
+from llama_index.core.schema import QueryBundle, NodeWithScore, IndexNode, NodeRelationship, TextNode, ObjectType, RelatedNodeInfo
 from llama_index.core.vector_stores import MetadataFilter, MetadataFilters, FilterCondition
 from llama_index.core.postprocessor import MetadataReplacementPostProcessor
 from llama_index.core.retrievers import RecursiveRetriever
@@ -207,6 +208,52 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         super().__init__()
         self.connector = connector
 
+    def recursive_retrieval(self, embed_model: BaseEmbedding, retriever_type: str, top_k: int,  docs: dict,
+                            embed_query: list, query: str, all_nodes_dict: dict, all_nodes: list) -> list:
+        """Retrieve documents from a retriever
+
+        :param embed_model: Embed model to use in retrieval
+        :param retriever_type: Type of retriever
+        :param query: Query to retrieve
+        :param top_k: Number of documents to retrieve
+        :param docs: Dictionary to store the retrieved documents
+        :param embed_query: Embedding of the query
+        :param all_nodes_dict: Dictionary with all the nodes
+
+        :return: List of documents
+        """
+        if retriever_type == "bm25--score":
+            #bm25 does not use embeddings
+            bm25_retriever = BM25Retriever.from_defaults(
+                nodes=all_nodes,
+                similarity_top_k=top_k,
+                # The default is english for Stemmer and Language
+            )
+            recursive_retriever = RecursiveRetriever(
+                "vector",
+                retriever_dict={"vector": bm25_retriever},
+                node_dict=all_nodes_dict,
+                verbose=True,
+            )
+            retrieved_docs = recursive_retriever.retrieve(QueryBundle(query_str=query))
+        else:
+            vector_store_index = VectorStoreIndex(nodes=all_nodes, embed_model=embed_model)
+            retriever = vector_store_index.as_retriever(similarity_top_k=top_k)
+            recursive_retriever = RecursiveRetriever(
+                "vector",
+                retriever_dict={"vector": retriever},
+                node_dict=all_nodes_dict,
+                verbose=True,
+            )
+            retrieved_docs = recursive_retriever.retrieve(QueryBundle(query_str=query, embedding=embed_query))
+
+        self.logger.debug(f"{retriever_type} retrieved {len(retrieved_docs)} documents")
+
+        for doc in retrieved_docs:
+            self.add_retrieved_document(docs, doc, retriever_type)
+
+        return retrieved_docs
+
     def do_retrieval_strategy(self, input_object, retrievers_arguments) -> List[NodeWithScore]:
         """
         Method to retrieve the chunks from the connector, using the genai_strategy
@@ -220,12 +267,22 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         unique_docs = {}
         retrievers = [retriever_type for _, _, _, retriever_type in retrievers_arguments]
 
-        for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
+        for i, (vector_store, embed_model, embed_query, retriever_type) in enumerate(retrievers_arguments):
             # Retriever type is formed by embedding_model (same used to name index) so split by '--' (other part is score)
-            index_docs = self.connector.get_index(ELASTICSEARCH_INDEX(input_object.index, retriever_type.split('--')[0]))
-            nodes_dict = self.get_all_nodes_dict(index_docs)
-            docs_tmp = self.basic_genai_retrieval(vector_store, embed_model, retriever_type, input_object.filters,
-                                     input_object.top_k, unique_docs, embed_query, input_object.query)
+            index_name = ELASTICSEARCH_INDEX(input_object.index, retriever_type.split('--')[0])
+            if retriever_type == "bm25--score":
+                # To search chunks for bm25 retrieval there is no index_name with bm25, always with an embedding_model
+                # One or both must exist (if not, index does not exist)
+                prev_retriever_type = retrievers_arguments[i - 1][3] if i > 0 else None
+                next_retriever_type = retrievers_arguments[i + 1][3] if i < len(retrievers_arguments) - 1 else None
+                if prev_retriever_type:
+                    index_name = ELASTICSEARCH_INDEX(input_object.index, prev_retriever_type.split('--')[0])
+                elif next_retriever_type:
+                    index_name = ELASTICSEARCH_INDEX(input_object.index, next_retriever_type.split('--')[0])
+            index_docs = self.connector.get_full_index(index_name, input_object.filters)
+            all_nodes_dict, all_nodes = self.get_all_nodes_parsed(index_docs)
+            docs_tmp = self.recursive_retrieval(embed_model, retriever_type, input_object.top_k, unique_docs,
+                                                embed_query, input_object.query, all_nodes_dict, all_nodes)
 
             docs_by_retrieval[retriever_type] = docs_tmp
 
@@ -239,29 +296,38 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         return sorted_docs
 
 
-    def get_all_nodes_dict(self, nodes) -> dict:
+    def get_all_nodes_parsed(self, nodes) -> tuple:
         """Get all nodes in a dictionary with the id as key
 
         :param nodes: List of nodes
 
         :return: Dictionary of nodes
         """
+        all_nodes_dict = {}
+        all_nodes = []
         for node in nodes:
             node_content_dict = json.loads(node['_source']['metadata']['_node_content'])
-            embeddings = node['_source']['embedding']
-            text = node['_source']['content']
+            relationships = {}
             for type, content in node_content_dict['relationships'].items():
-                a = NodeRelationship(type)
-                if NodeRelationship(type) == NodeRelationship.SOURCE:
-                    print("a")
-                elif NodeRelationship(type) == NodeRelationship.PREVIOUS:
-                    print("b")
-                elif NodeRelationship(type) == NodeRelationship.NEXT:
-                    print("c")
-                elif NodeRelationship(type) == NodeRelationship.PARENT:
-                    print("d")
-                elif NodeRelationship(type) == NodeRelationship.CHILD:
-                    print("E")
+                relationships[NodeRelationship(type)] = RelatedNodeInfo(hash=content['hash'], node_id=content['node_id'],
+                                                                        metadata=content['metadata'],
+                                                                        node_type=ObjectType(content['node_type']))
+
+            text_node = TextNode(text=node['_source']['content'], metadata=node_content_dict['metadata'],
+                                 embedding=node['_source']['embedding'],
+                                 excluded_embed_metadata_keys=node_content_dict['excluded_embed_metadata_keys'],
+                                 excluded_llm_metadata_keys=node_content_dict['excluded_llm_metadata_keys'],
+                                 end_char_idx=node_content_dict['end_char_idx'], relationships=relationships,
+                                 start_char_idx=node_content_dict['start_char_idx'],
+                                 metadata_seperator=node_content_dict['metadata_seperator'],
+                                 metadata_template=node_content_dict['metadata_template'],
+                                 text_template=node_content_dict['text_template'])
+            index_node = IndexNode.from_text_node(text_node, text_node.node_id)
+            all_nodes_dict[index_node.node_id] = index_node
+            all_nodes.append(index_node)
+        return all_nodes_dict, all_nodes
+
+
 class GenaiSurroundingStrategy(GenaiStrategy):
     STRATEGY_FORMAT = "surrounding_genai_retrieval"
 

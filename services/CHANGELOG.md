@@ -25,7 +25,7 @@
     - [Fix] Endpoints now return error_message in response instead of result when goes wrong
     - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
 - genai-infoindexing:
-  - [New] Refactor of the way to get the chnks (chunking_methods.py)
+  - [New] Refactor of the way to get the chunks (chunking_methods.py)
   - [New] New method to do the chunking: surrounding_context_window
   - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
   - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)

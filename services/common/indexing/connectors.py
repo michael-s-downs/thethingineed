@@ -64,7 +64,7 @@ class Connector(ABC):
         """
         pass
 
-    def get_index(self, index: str, offset: int = 0, size: int = 25) -> list:
+    def get_full_index(self, index: str, filters: list, offset: int = 0, size: int = 25) -> list:
         """ Method to get an index with all chunks
 
         :param index: Index to get
@@ -264,7 +264,7 @@ class ElasticSearchConnector(Connector):
             raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.delete(index=index)
 
-    def get_index(self, index: str, offset: int = 0, size: int = 25) -> list:
+    def get_full_index(self, index: str, filters: dict, offset: int = 0, size: int = 25) -> list:
         """ Method to get an index with all chunks
 
         :param index: Index to get
@@ -276,7 +276,7 @@ class ElasticSearchConnector(Connector):
         chunks = []
         while True:
             result = self.connection.search(index=index,
-                                            query={"bool": {"must": {"match_all":{}}}},
+                                            query={"bool": {"filter": self._generate_filters(filters), "must": {"match_all": {}}}},
                                             size=size, from_=offset)
             if len(result.get('hits', {}).get('hits', [])) == 0:
                 break
