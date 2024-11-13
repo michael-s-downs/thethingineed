@@ -10,6 +10,8 @@
     - [New] Endpoint to get the content of a template
     - [New] Endpoint to get the content of a filter template
     - [Fix] Query to minus before langdetect
+- genai-llmapi:
+    - [Fix] Endpoint list templates shows file name
 
 ## v2.0.0 (2024-11-08)
 - genai-llmapi:
@@ -21,7 +23,6 @@
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
     - [Fix] Get response from bedrock when exception is raised manually
-    - [Fix] Endpoint list templates shows file name
 - genai-inforetrieval:
     - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
