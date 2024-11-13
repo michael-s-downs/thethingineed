@@ -3,53 +3,63 @@
 
 # Changelog
 
-## vXX (XXXX-XX-XX)
-- all
-    - [New] Unit test
-
-- genai-llmapi
+## vX.X.X (XXXX-XX-XX)
+- genai-compose:
+    - [New] Endpoint to list templates
+    - [New] Endpoint to list filter templates
+    - [New] Endpoint to get the content of a template
+    - [New] Endpoint to get the content of a filter template
+    - [Fix] Query to minus before langdetect
+- genai-llmapi:
+    - [Fix] Endpoint list templates shows file name
+- genai-infoindexing:
+  - [New] Refactor of the way to get the chunks (chunking_methods.py)
+  - [New] New method to do the chunking: surrounding_context_window
+  - [Improvement] Check if the same chunking method is always used for the index
+  - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
+  
+## v2.0.0 (2024-11-08)
+- genai-llmapi:
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
     - [Change] Prompt models deleted (from code and files)
     - [Change] Param 'n' deleted as it was not used when parsing model response
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
     - [Fix] Get response from bedrock when exception is raised manually
     - [Fix] When lang template not found, use base template instead
-- genai-inforetrieval
-    - [New] Added usage of retriever_model parameter in config file when calling huggingface models
+- genai-inforetrieval:
     - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
     - [Improvement] Endpoints logic separated into different file from main
     - [Fix] Endpoints now return error_message in response instead of result when goes wrong
     - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
+    - [Fix] Added usage of retriever_model parameter in config file when calling huggingface models
 - genai-infoindexing:
-  - [New] Refactor of the way to get the chunks (chunking_methods.py)
-  - [New] New method to do the chunking: surrounding_context_window
-  - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
-  - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
-  - [Improvement] Check if the same chunking method is always used for the index
-  - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
+    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
 - genai-compose:
     - [New] Update and refactor filer query from param call to template action
     - [New] Update and refactor filer response from param call to template action
     - [New] Update and refactor reformulate query from param call to template action
     - [New] Langfuse params host, public key and private key can be set in call params
-    - [New] Env var DEFAULT_LLM_MODEL to config default templates model
+    - [New] Added env var 'DEFAULT_LLM_MODEL' to config default templates model
     - [New] Filter templates folder renamed to "filter_templates" from "queryfilter_templates"
-    - [New] Unit test
     - [Improvement] Config model param for action expansion query by lang
     - [Improvement] Query expansion works with multiple retrieval
-    - [Fix] URL_ALLOWED_DOCUMENT error when is not env var
+    - [Fix] Make optional env var 'URL_ALLOWED_DOCUMENT' to avoid error if not used
     - [Fix] Fix models from default templates
     - [Fix] Query expansion list as copy instead of reference
     - [Fix] Raise PrintableErrors called wrong
     - [Fix] Possible langs removed from langdetection
+- apigw:
+    - [New] Added a specific instance of API Gateway for each tenant
 - ALL:
-  - [New] Add unit tests with pytest
+    - [New] Add unit tests with pytest
 
-## v05 (2024-09-23)
+## v1.5.0 (2024-09-23)
 - genai-infoindexing:
     - [New] Titan model added
     - [New] Cohere english and multilingual models added
@@ -101,7 +111,7 @@
     - [Fix] Endpoint get model
     - [Fix] Query now not mandatory in templates
 
-## v04 (2024-08-26)
+## v1.4.0 (2024-08-26)
 - genai-infoindexing:
     - [New] Now indexation process done with llama_index library
         - Chunks split
@@ -140,7 +150,7 @@
 - ALL:
     - [Improvement] Change all 'dolffia' references to 'genai'
 
-## v03 (2024-06-24)
+## v1.3.0 (2024-06-24)
 - BUILD:
     - [New] Generate helm package to deploy 
     - [New] Rename library dolffia-sdk-services to genai-sdk-services
@@ -160,7 +170,7 @@
     - [Improvement] Change name of 'dolffia_controller' to 'genai_controller'
 
 
-## v02 (2024-05-23)
+## v1.2.0 (2024-05-23)
 - common:
     - [New] Function to get the word that caused an error when parsing a string to a json
     - [New] Add to services the different LLM classes
@@ -188,7 +198,7 @@
 - ALL:
     - [New] Add GGAO header to all files
 
-## v01 (2024-05-15)
+## v1.1.0 (2024-05-15)
 - common:
     - [New] Add generic function to send any message via queue or API
     - [New] Add optional logic to send tracking message if env var exists
@@ -241,7 +251,7 @@
 - BUILD:
     - [Improvement] Force branch 'develop' to use image base with tag 'dev'
 
-## v00 (2024-04-10)
+## v1.0.0 (2024-04-10)
 - common:
     - [New] Clean name services
     - [New] Add functions of uhis-sdk into new module 'preprocess_utils'
