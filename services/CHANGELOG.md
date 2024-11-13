@@ -23,6 +23,7 @@
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
     - [Fix] Get response from bedrock when exception is raised manually
+    - [Fix] When lang template not found, use base template instead
 - genai-inforetrieval:
     - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
