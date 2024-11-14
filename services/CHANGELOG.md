@@ -3,27 +3,35 @@
 
 # Changelog
 
-## vX.X
+## vX.X.X (XXXX-XX-XX)
 - genai-compose:
+    - [New] Endpoint to list templates
+    - [New] Endpoint to list filter templates
+    - [New] Endpoint to get the content of a template
+    - [New] Endpoint to get the content of a filter template
     - [Fix] Query to minus before langdetect
+- genai-llmapi:
+    - [Fix] Endpoint list templates shows file name
 
-## v2.0 (2024-11-08)
+## v2.0.0 (2024-11-08)
 - genai-llmapi:
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
     - [Change] Prompt models deleted (from code and files)
     - [Change] Param 'n' deleted as it was not used when parsing model response
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
     - [Improvement] Common function in utils to get models endpoint 
     - [Improvement] Add temperature range control by LLM
     - [Fix] Get response from bedrock when exception is raised manually
+    - [Fix] When lang template not found, use base template instead
 - genai-inforetrieval:
-    - [New] Added usage of retriever_model parameter in config file when calling huggingface models
     - [New] Added new endpoint of list indices from elasticsearch
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
     - [Improvement] Common function in utils to get models endpoint
     - [Improvement] Endpoints logic separated into different file from main
     - [Fix] Endpoints now return error_message in response instead of result when goes wrong
     - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
+    - [Fix] Added usage of retriever_model parameter in config file when calling huggingface models
 - genai-infoindexing:
     - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
     - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
@@ -46,7 +54,7 @@
 - ALL:
     - [New] Add unit tests with pytest
 
-## v1.5 (2024-09-23)
+## v1.5.0 (2024-09-23)
 - genai-infoindexing:
     - [New] Titan model added
     - [New] Cohere english and multilingual models added
@@ -98,7 +106,7 @@
     - [Fix] Endpoint get model
     - [Fix] Query now not mandatory in templates
 
-## v1.4 (2024-08-26)
+## v1.4.0 (2024-08-26)
 - genai-infoindexing:
     - [New] Now indexation process done with llama_index library
         - Chunks split
@@ -137,7 +145,7 @@
 - ALL:
     - [Improvement] Change all 'dolffia' references to 'genai'
 
-## v1.3 (2024-06-24)
+## v1.3.0 (2024-06-24)
 - BUILD:
     - [New] Generate helm package to deploy 
     - [New] Rename library dolffia-sdk-services to genai-sdk-services
@@ -157,7 +165,7 @@
     - [Improvement] Change name of 'dolffia_controller' to 'genai_controller'
 
 
-## v1.2 (2024-05-23)
+## v1.2.0 (2024-05-23)
 - common:
     - [New] Function to get the word that caused an error when parsing a string to a json
     - [New] Add to services the different LLM classes
@@ -185,7 +193,7 @@
 - ALL:
     - [New] Add GGAO header to all files
 
-## v1.1 (2024-05-15)
+## v1.1.0 (2024-05-15)
 - common:
     - [New] Add generic function to send any message via queue or API
     - [New] Add optional logic to send tracking message if env var exists
@@ -238,7 +246,7 @@
 - BUILD:
     - [Improvement] Force branch 'develop' to use image base with tag 'dev'
 
-## v1.0 (2024-04-10)
+## v1.0.0 (2024-04-10)
 - common:
     - [New] Clean name services
     - [New] Add functions of uhis-sdk into new module 'preprocess_utils'

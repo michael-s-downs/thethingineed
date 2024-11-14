@@ -1,8 +1,8 @@
-# Retrieval
+# InfoRetrieval Service Documentation
 
 ## Index
 
-- [Retrieval](#retrieval)
+- [InfoRetrieval Service Documentation](#inforetrieval-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -61,13 +61,13 @@ The RETRIEVAL module is designed to facilitate the extraction of documents or in
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - ElasticSearch
 
 #### Installation steps
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh
@@ -696,8 +696,6 @@ BM25 retriever not found (there is no index that matches the passed value) | BM2
 ## Configuration
 
 ### Cloud setup
-
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 The files/secrets architecture is:
 

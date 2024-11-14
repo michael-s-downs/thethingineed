@@ -1,8 +1,8 @@
-# Compose
+# Compose Service Documentation
 
 ## Index
 
-- [Compose](#compose)
+- [Compose Service Documentation](#compose-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -264,6 +264,26 @@ If the response looks like this, you are good to go.
     "max_persistence": 20
 }
 ```
+
+- /list_templates (GET): Used to list all templates stored in cloud.
+
+- /list_filter_templates (GET): Used to list all filter templates stored in cloud.
+
+- /get_template (POST): Used to get the content of a template json file stored in cloud.
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
+- /get_filter_template (POST): Used to get the content of a filter template json file stored in cloud.
+
+    ```json
+    {
+        "name": "filter_template_name"
+    }
+    ```
 
 - /upload_template (POST): Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
@@ -2989,7 +3009,6 @@ This service receives the user's request and searches for the template in the da
 
 ### Cloud setup
 
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 ### Configuration files
 
@@ -3028,14 +3047,14 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - [LLMAPI](#link al llmapi)
 - [Retrieval](#link al retrieval)
 
 #### Installation
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh

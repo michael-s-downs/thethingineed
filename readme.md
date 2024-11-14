@@ -1,5 +1,96 @@
 # GENAI GLOBAL RAG TOOLKIT
 
+## Index
+
+- [GENAI GLOBAL RAG TOOLKIT](#genai-global-rag-toolkit)
+     - [Index](#index)
+     - [Overview](#overview)
+        - [Key features](#key-features)
+        - [Component architecture](#component-architecture)
+     - [Get started](#get-started)
+        - [URLs](#urls)
+        - [Deployment on TechHub Sandbox](#deployment-on-techhub-sandbox)
+     - [API Specification](#api-specification)
+        - [Indexing API specification](#indexing-api-specification)
+        - [Compose API specification](#compose-api-specification)
+     - [Endpoints](#endpoints)
+        - [Compose](#compose)
+        - [LLMAPI](#llmapi)
+        - [INFORETRIEVAL](#inforetrieval)
+     - [Indexing Pipeline](#indexing-pipeline)
+        - [Indexing overview](#indexing-overview)
+        - [Indexing execution](#indexing-execution)
+     - [Compose Pipeline](#compose-pipeline)
+        - [Compose overview](#compose-overview)
+        - [Compose execution](#compose-execution)
+           - [RAG execution](#rag-execution)
+           - [LLM execution](#llm-execution)
+           - [Retrieval execution](#retrieval-execution)
+     - [Configuration](#configuration)
+        - [Compose Templates](#compose-templates)
+        - [Compose actions template](#compose-actions-template)
+        - [LLM Prompt Templates](#llm-prompt-templates)
+        - [Models embeddings](#models-embeddings)
+        - [Models LLM](#models-llm)
+     - [Examples](#examples)
+        - [Indexing Examples](#indexing-examples)
+        - [Compose Examples](#compose-examples)
+     - [Deployment](#deployment)
+        - [Files overview](#files-overview)
+        - [Requirements](#requirements)
+        - [Resources Azure Devops](#resources-azure-devops)
+           - [1. Variable groups (Library)](#1-variable-groups-library)
+           - [2. Pipelines](#2-pipelines)
+           - [3. Releases](#3-releases)
+        - [Stages to deploy](#stages-to-deploy)
+           - [1. Create library](#1-create-library)
+           - [2. Create images base](#2-create-images-base)
+           - [3. Create image microservice and artifact helm](#3-create-image-microservice-and-artifact-helm)
+           - [4. Create artifact IaC](#4-create-artifact-iac)
+           - [5. Create releases](#5-create-releases)
+        - [Running the bare application in a Python runtime environment](#running-the-bare-application-in-a-python-runtime-environment)
+           - [Indexing pipeline](#indexing-pipeline-1)
+           - [RAG pipeline](#rag-pipeline)
+           - [Config files](#config-files)
+              - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
+                 - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
+                 - [Templates/prompts `/prompts/**.json`](#templatesprompts-promptsjson)
+              - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
+              - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
+              - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval-infoindexing-config-files-srcir)
+                 - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
+                 - [Default embedding models `/conf/default_embedding_models.json`](#default-embedding-models-confdefault_embedding_modelsjson)
+                 - [Different vector storage for an index `/index/**.json`](#different-vector-storage-for-an-index-indexjson)
+              - [Compose config files `src/compose/`](#compose-config-files-srccompose)
+                 - [Compose templates `/templates/**.json`](#compose-templates-templatesjson)
+           - [Secrets](#secrets)
+     - [Advanced Examples](#advanced-examples)
+        - [Indexing Pipeline](#indexing-pipeline-2)
+           - [Call indexing with one document and default metadata](#call-indexing-with-one-document-and-default-metadata)
+           - [Call indexing with custom metadata](#call-indexing-with-custom-metadata)
+           - [Call indexing with custom parameters](#call-indexing-with-custom-parameters)
+           - [Call indexing with request_id and response_url](#call-indexing-with-request_id-and-response_url)
+           - [Update indexed documents](#update-indexed-documents)
+        - [RAG Pipeline](#rag-pipeline-1)
+           - [Retrieve document by metadata and call LLM](#retrieve-document-by-metadata-and-call-llm)
+           - [Retrieve full document](#retrieve-full-document)
+           - [Using actions](#using-actions)
+              - [Expand query action](#expand-query-action)
+              - [Filter action](#filter-action)
+              - [Merge action](#merge-action)
+              - [Batchmerge action](#batchmerge-action)
+              - [Sort action](#sort-action)
+              - [Groupby action](#groupby-action)
+              - [Reformulate action](#reformulate-action)
+              - [Filter query action](#filter-query-action)
+              - [Filter response action](#filter-response-action)
+              - [Combining actions](#combining-actions)
+           - [Output configuration](#output-configuration)
+     - [Documentation](#documentation)
+     - [Process Flow](#process-flow)
+        - [INDEXING Flow](#indexing-flow)
+        - [COMPOSE Flow](#compose-flow)
+
 ## Overview
 
 ### Key features
@@ -143,6 +234,42 @@ The output can be changed passing in the requests some attribute values:
 
 ### Compose
 
+- List templates (GET)
+
+    Used to list all templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_templates  
+
+- List filter templates (GET)
+
+    Used to list all filter templates stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/list_filter_templates  
+
+- Get compose template (POST)
+
+    Used to get the content of a template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
+- Get compose filter template (POST)
+
+    Used to get the content of a filter template json file stored in cloud.
+
+    URL: http://<deploymentdomain>/compose/get_filter_template  
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
 - Upload template (POST)
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
@@ -208,8 +335,33 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models 
-    
+- List prompt templates
+
+    Used to list all the prompt templates stored in cloud.
+
+    URL: http://<deploymentdomain>/llm/list_templates
+
+    Response:
+
+    ```json
+    {
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "system_query": {
+                "system": "$system",
+                "user": "$query"
+            },
+            "system_query_es": {
+                "system": "$system",
+                "user": "$query \n===\nRespuesta en Español:"
+            }
+        }
+    }
+    ```
+
+- Get_models
+
     URL: http://<deploymentdomain>/llm/get_models
 
     Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/llm/get_models?platform=azure
@@ -1500,6 +1652,7 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
 
 - Dev region
+  
 | Model Name | Pools | Platform |
 |--------|------|------|
 |techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|
@@ -2042,7 +2195,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "Q_INFO_INDEXING": "" // Name of the queue for the indexing subcomponent
 ```
 
-After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"
@@ -2100,7 +2253,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "DEFAULT_LLM_MODEL": ""
 ```
 
-Create a python 3.8 environment and install the required libraries in with the "requirements.txt" file.
+Create a Python 3.11 environment and install the required libraries in with the "requirements.txt" file.
 
 ```sh
 pip install -r "**path to the requirement.txt file**"

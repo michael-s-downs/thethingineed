@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace techhubapigw
 {
@@ -27,7 +28,14 @@ namespace techhubapigw
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder
+                        .UseStartup<Startup>()
+                        .ConfigureKestrel(options =>
+                        {
+                            var maxRequestSizeEnv = long.TryParse(Environment.GetEnvironmentVariable("MAX_REQUEST_SIZE") ?? "31457280", out var maxRequestSize) ? maxRequestSize : 31457280;
+
+                            options.Limits.MaxRequestBodySize = maxRequestSizeEnv;
+                        });
                 });
     }
 }

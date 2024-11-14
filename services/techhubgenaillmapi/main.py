@@ -250,7 +250,7 @@ def healthcheck() -> Dict:
 @app.route('/list_templates', methods=['GET'])
 def list_available_templates() -> Tuple[str, int]:
     deploy.logger.info("List templates request received")
-    return ResponseObject(**{"status": "finished", "result": {"templates": deploy.templates_names}, "status_code": 200}).get_response_base()
+    return ResponseObject(**{"status": "finished", "result": deploy.templates, "status_code": 200}).get_response_base()
 
 @app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[str, int]:

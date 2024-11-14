@@ -2,30 +2,30 @@
 
 ## Index
 
-- [Index](#index)
-- [Overview](#overview)
-  - [Key Features](#key-features)
-- [Getting started](#getting-started)
-- [Concepts and Definitions](#concepts-and-definitions)
-- [Component Reference](#component-reference)
-  - [Using with integration](#using-with-integration)
-  - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
-  - [Redis status](#redis-status)
-  - [Error Handling](#error-handling)
-- [Configuration](#configuration)
-  - [Cloud setup](#cloud-setup)
-  - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
-  - [Secrets](#secrets)
-  - [Configuration files](#configuration-files)
-  - [Models](#models)
-  - [Environment variables](#environment-variables)
-- [Code Overview](#code-overview)
-  - [Files and Classes](#files-and-classes)
-  - [Flow](#flow)
-- [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-  - [FAQ](#faq)
-- [Version History](#version-history)
+- [InfoIndexing Service Documentation](#infoindexing-service-documentation)
+  - [Index](#index)
+  - [Overview](#overview)
+    - [Key Features](#key-features)
+  - [Getting started](#getting-started)
+  - [Concepts and Definitions](#concepts-and-definitions)
+  - [Component Reference](#component-reference)
+    - [Using with integration](#using-with-integration)
+    - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
+    - [Redis status](#redis-status)
+    - [Error Handling](#error-handling)
+  - [Configuration](#configuration)
+    - [Cloud setup](#cloud-setup)
+    - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+    - [Secrets](#secrets)
+    - [Configuration files](#configuration-files)
+    - [Environment variables](#environment-variables)
+  - [Code Overview](#code-overview)
+    - [Files and Classes](#files-and-classes)
+    - [Flow](#flow)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
+    - [FAQ](#faq)
+  - [Version History](#version-history)
 
 ## Overview
 
@@ -46,7 +46,7 @@ To use the infoindexing component, you need to have the integration component, d
 
 The first step you need to take to use the infoindexing component on your local machine is to set the [environment variables](#environment-variables).
 
-After that, you need to create an environment with Python 3.8 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"
@@ -285,8 +285,6 @@ Some common error messages you may encounter:
 
 ## Configuration
 ### Cloud setup
-
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 The files/secrets architecture is:
 
