@@ -3,3 +3,6 @@ omit =
     config.py
     config-3.py
     *test*
+    *common*
+    C:\Users\idegrego\Documents\techhub\TechHubGlobalToolkit\services\common
+    C:\Users\idegrego\Documents\techhub\TechHubGlobalToolkit\services\common\*
