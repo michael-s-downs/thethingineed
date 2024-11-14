@@ -697,8 +697,6 @@ BM25 retriever not found (there is no index that matches the passed value) | BM2
 
 ### Cloud setup
 
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
-
 The files/secrets architecture is:
 
 ![alt text](imgs/techhubgenaiinforetrieval/genai-inforetrieval-v5-config.png)

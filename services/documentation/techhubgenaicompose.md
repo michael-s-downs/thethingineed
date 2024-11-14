@@ -3009,7 +3009,6 @@ This service receives the user's request and searches for the template in the da
 
 ### Cloud setup
 
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 ### Configuration files
 
