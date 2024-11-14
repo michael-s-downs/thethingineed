@@ -405,7 +405,7 @@ Response:
 ```
 
 It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?platform=azure
+https://**\<deploymentname\>**/retrieve/get_models?platform=azure
 
 The response would be a list of all the available models on the platform:
 ```json
@@ -450,7 +450,7 @@ The endpoint expects a get request with the following optional fields (one of th
 
 Filter by model pool:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?pool=ada-002-pool-world
+https://**\<deploymentname\>**/retrieve/get_models?pool=ada-002-pool-world
 - Response:
 ```json
 {
@@ -471,7 +471,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?pool=ada-002-poo
 
 Filter by embedding model:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?embedding_model=text-embedding-3-small
+https://**\<deploymentname\>**/retrieve/get_models?embedding_model=text-embedding-3-small
 
 - Response:
 ```json
@@ -491,7 +491,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?embedding_model=
 
 Filter by zone:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
+https://**\<deploymentname\>**/retrieve/get_models?zone=techhub
 
 - Response:
 ```json
@@ -517,7 +517,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 
 #### List indices: `url/list_indices`
 Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this: 
-https://techhubapigw.app.dev.techhubnttdata.com/retrieve/list_indices
+https://**\<deploymentname\>**/retrieve/list_indices
 
 The response would be a list of index names along with the models associated with each one:
 ```json
@@ -609,10 +609,10 @@ The response would be a list of index names along with the models associated wit
     ```
     
 - /get_models (GET): Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
-  Request: https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
+  Request: https://**\<deploymentname\>**/retrieve/get_models?zone=techhub
 
 - /list_indices (GET): Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
-  Request: https://techhubapigw.app.dev.techhubnttdata.com/retrieve/list_indices
+  Request: https://**\<deploymentname\>**/retrieve/list_indices
 Returns:
     ```json
     {

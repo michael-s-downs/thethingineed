@@ -3,93 +3,94 @@
 ## Index
 
 - [GENAI GLOBAL RAG TOOLKIT](#genai-global-rag-toolkit)
-     - [Index](#index)
-     - [Overview](#overview)
-        - [Key features](#key-features)
-        - [Component architecture](#component-architecture)
-     - [Get started](#get-started)
-        - [URLs](#urls)
-        - [Deployment on TechHub Sandbox](#deployment-on-techhub-sandbox)
-     - [API Specification](#api-specification)
-        - [Indexing API specification](#indexing-api-specification)
-        - [Compose API specification](#compose-api-specification)
-     - [Endpoints](#endpoints)
-        - [Compose](#compose)
-        - [LLMAPI](#llmapi)
-        - [INFORETRIEVAL](#inforetrieval)
-     - [Indexing Pipeline](#indexing-pipeline)
-        - [Indexing overview](#indexing-overview)
-        - [Indexing execution](#indexing-execution)
-     - [Compose Pipeline](#compose-pipeline)
-        - [Compose overview](#compose-overview)
-        - [Compose execution](#compose-execution)
-           - [RAG execution](#rag-execution)
-           - [LLM execution](#llm-execution)
-           - [Retrieval execution](#retrieval-execution)
-     - [Configuration](#configuration)
-        - [Compose Templates](#compose-templates)
-        - [Compose actions template](#compose-actions-template)
-        - [LLM Prompt Templates](#llm-prompt-templates)
-        - [Models embeddings](#models-embeddings)
-        - [Models LLM](#models-llm)
-     - [Examples](#examples)
-        - [Indexing Examples](#indexing-examples)
-        - [Compose Examples](#compose-examples)
-     - [Deployment](#deployment)
-        - [Files overview](#files-overview)
-        - [Requirements](#requirements)
-        - [Resources Azure Devops](#resources-azure-devops)
-           - [1. Variable groups (Library)](#1-variable-groups-library)
-           - [2. Pipelines](#2-pipelines)
-           - [3. Releases](#3-releases)
-        - [Stages to deploy](#stages-to-deploy)
-           - [1. Create library](#1-create-library)
-           - [2. Create images base](#2-create-images-base)
-           - [3. Create image microservice and artifact helm](#3-create-image-microservice-and-artifact-helm)
-           - [4. Create artifact IaC](#4-create-artifact-iac)
-           - [5. Create releases](#5-create-releases)
-        - [Running the bare application in a Python runtime environment](#running-the-bare-application-in-a-python-runtime-environment)
-           - [Indexing pipeline](#indexing-pipeline-1)
-           - [RAG pipeline](#rag-pipeline)
-           - [Config files](#config-files)
-              - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
-                 - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
-                 - [Templates/prompts `/prompts/**.json`](#templatesprompts-promptsjson)
-              - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
-              - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
-              - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval-infoindexing-config-files-srcir)
-                 - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
-                 - [Default embedding models `/conf/default_embedding_models.json`](#default-embedding-models-confdefault_embedding_modelsjson)
-                 - [Different vector storage for an index `/index/**.json`](#different-vector-storage-for-an-index-indexjson)
-              - [Compose config files `src/compose/`](#compose-config-files-srccompose)
-                 - [Compose templates `/templates/**.json`](#compose-templates-templatesjson)
-           - [Secrets](#secrets)
-     - [Advanced Examples](#advanced-examples)
-        - [Indexing Pipeline](#indexing-pipeline-2)
-           - [Call indexing with one document and default metadata](#call-indexing-with-one-document-and-default-metadata)
-           - [Call indexing with custom metadata](#call-indexing-with-custom-metadata)
-           - [Call indexing with custom parameters](#call-indexing-with-custom-parameters)
-           - [Call indexing with request_id and response_url](#call-indexing-with-request_id-and-response_url)
-           - [Update indexed documents](#update-indexed-documents)
-        - [RAG Pipeline](#rag-pipeline-1)
-           - [Retrieve document by metadata and call LLM](#retrieve-document-by-metadata-and-call-llm)
-           - [Retrieve full document](#retrieve-full-document)
-           - [Using actions](#using-actions)
-              - [Expand query action](#expand-query-action)
-              - [Filter action](#filter-action)
-              - [Merge action](#merge-action)
-              - [Batchmerge action](#batchmerge-action)
-              - [Sort action](#sort-action)
-              - [Groupby action](#groupby-action)
-              - [Reformulate action](#reformulate-action)
-              - [Filter query action](#filter-query-action)
-              - [Filter response action](#filter-response-action)
-              - [Combining actions](#combining-actions)
-           - [Output configuration](#output-configuration)
-     - [Documentation](#documentation)
-     - [Process Flow](#process-flow)
-        - [INDEXING Flow](#indexing-flow)
-        - [COMPOSE Flow](#compose-flow)
+  - [Index](#index)
+  - [Overview](#overview)
+    - [Key features](#key-features)
+    - [Component architecture](#component-architecture)
+  - [Get started](#get-started)
+    - [URLs](#urls)
+    - [Deployment on TechHub Sandbox](#deployment-on-techhub-sandbox)
+  - [API Specification](#api-specification)
+    - [Indexing API specification](#indexing-api-specification)
+    - [Compose API specification](#compose-api-specification)
+  - [Endpoints](#endpoints)
+    - [Compose](#compose)
+    - [LLMAPI](#llmapi)
+    - [INFORETRIEVAL](#inforetrieval)
+  - [Indexing Pipeline](#indexing-pipeline)
+    - [Indexing overview](#indexing-overview)
+    - [Indexing execution](#indexing-execution)
+  - [Compose Pipeline](#compose-pipeline)
+    - [Compose overview](#compose-overview)
+    - [Compose execution](#compose-execution)
+      - [RAG execution](#rag-execution)
+      - [LLM execution](#llm-execution)
+      - [Retrieval execution](#retrieval-execution)
+  - [Configuration](#configuration)
+    - [Compose Templates](#compose-templates)
+      - [Compose Template Expected parameters:](#compose-template-expected-parameters)
+    - [Compose actions template](#compose-actions-template)
+    - [LLM Prompt Templates](#llm-prompt-templates)
+    - [Models embeddings](#models-embeddings)
+    - [Models LLM](#models-llm)
+  - [Examples](#examples)
+    - [Indexing Examples](#indexing-examples)
+    - [Compose Examples](#compose-examples)
+  - [Deployment](#deployment)
+    - [Files overview](#files-overview)
+    - [Requirements](#requirements)
+    - [Resources Azure Devops](#resources-azure-devops)
+      - [1. Variable groups (Library)](#1-variable-groups-library)
+      - [2. Pipelines](#2-pipelines)
+      - [3. Releases](#3-releases)
+    - [Stages to deploy](#stages-to-deploy)
+      - [1. Create library](#1-create-library)
+      - [2. Create images base](#2-create-images-base)
+      - [3. Create image microservice and artifact helm](#3-create-image-microservice-and-artifact-helm)
+      - [4. Create artifact IaC](#4-create-artifact-iac)
+      - [5. Create releases](#5-create-releases)
+    - [Running the bare application in a Python runtime environment](#running-the-bare-application-in-a-python-runtime-environment)
+      - [Indexing pipeline](#indexing-pipeline-1)
+      - [RAG pipeline](#rag-pipeline)
+      - [Config files](#config-files)
+        - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
+          - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
+          - [Templates/prompts `/prompts/**.json`](#templatesprompts-promptsjson)
+        - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
+        - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
+        - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval--infoindexing-config-files-srcir)
+          - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
+          - [Default embedding models `/conf/default_embedding_models.json`](#default-embedding-models-confdefault_embedding_modelsjson)
+          - [Different vector storage for an index `/index/**.json`](#different-vector-storage-for-an-index-indexjson)
+        - [Compose config files `src/compose/`](#compose-config-files-srccompose)
+          - [Compose templates `/templates/**.json`](#compose-templates-templatesjson)
+      - [Secrets](#secrets)
+  - [Advanced Examples](#advanced-examples)
+    - [Indexing Pipeline](#indexing-pipeline-2)
+      - [Call indexing with one document and default metadata](#call-indexing-with-one-document-and-default-metadata)
+      - [Call indexing with custom metadata](#call-indexing-with-custom-metadata)
+      - [Call indexing with custom parameters](#call-indexing-with-custom-parameters)
+      - [Call indexing with request\_id and response\_url](#call-indexing-with-request_id-and-response_url)
+      - [Update indexed documents](#update-indexed-documents)
+    - [RAG Pipeline](#rag-pipeline-1)
+      - [Retrieve document by metadata and call LLM](#retrieve-document-by-metadata-and-call-llm)
+      - [Retrieve full document](#retrieve-full-document)
+      - [Using actions](#using-actions)
+        - [Expand query action](#expand-query-action)
+        - [Filter action](#filter-action)
+        - [Merge action](#merge-action)
+        - [Batchmerge action](#batchmerge-action)
+        - [Sort action](#sort-action)
+        - [Groupby action](#groupby-action)
+        - [Reformulate action](#reformulate-action)
+        - [Filter query action](#filter-query-action)
+        - [Filter response action](#filter-response-action)
+        - [Combining actions](#combining-actions)
+      - [Output configuration](#output-configuration)
+  - [Documentation](#documentation)
+  - [Process Flow](#process-flow)
+    - [INDEXING Flow](#indexing-flow)
+    - [COMPOSE Flow](#compose-flow)
 
 ## Overview
 
@@ -119,7 +120,7 @@ The RAG toolkit is composed of several components that are divided into 2 pipeli
 These are the endpoints for each one of the components from the RAG toolkit
 
 ```python
-DEPLOYMENT_URL =  "https://#deploymentdomain#"
+DEPLOYMENT_URL =  "https://<deploymentdomain>"
 
 URL_INTEGRATION_INDEXING = f"{DEPLOYMENT_URL}/integrationasync/process"
 URL_DELETE_INDEX_DOCUMENT = f"{DEPLOYMENT_URL}/retrieve/delete-documents"
@@ -238,19 +239,19 @@ The output can be changed passing in the requests some attribute values:
 
     Used to list all templates stored in cloud.
 
-    URL: http://<deploymentdomain>/compose/list_templates  
+    URL: https://**\<deploymentdomain\>**/compose/list_templates  
 
 - List filter templates (GET)
 
     Used to list all filter templates stored in cloud.
 
-    URL: http://<deploymentdomain>/compose/list_filter_templates  
+    URL: https://**\<deploymentdomain\>**/compose/list_filter_templates  
 
 - Get compose template (POST)
 
     Used to get the content of a template json file stored in cloud.
 
-    URL: http://<deploymentdomain>/compose/get_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_template  
 
     ```json
     {
@@ -262,7 +263,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to get the content of a filter template json file stored in cloud.
 
-    URL: http://<deploymentdomain>/compose/get_filter_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_filter_template  
 
     ```json
     {
@@ -274,7 +275,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
-    URL: http://<deploymentdomain>/compose/upload_template  
+    URL: https://**\<deploymentdomain\>**/compose/upload_template  
 
     ```json
     {
@@ -287,7 +288,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to upload a filter template json file to the cloud storage the content value must be a json converted to string.
 
-    URL: http://<deploymentdomain>/compose/upload_filter_template 
+    URL: https://**\<deploymentdomain\>**/compose/upload_filter_template 
 
     ```json
     {
@@ -300,7 +301,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to delete a template json file from cloud storage.
 
-    URL: http://<deploymentdomain>/compose/delete_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_template 
 
     ```json
     {
@@ -312,7 +313,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to delete a filter template json file from cloud storage.
 
-    URL: http://<deploymentdomain>/compose/delete_filter_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template 
 
     ```json
     {
@@ -326,7 +327,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
 
-    URL: http://<deploymentdomain>/llm/reloadconfig
+    URL: https://**\<deploymentdomain\>**/llm/reloadconfig
 
     ```json
     {
@@ -339,7 +340,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to list all the prompt templates stored in cloud.
 
-    URL: http://<deploymentdomain>/llm/list_templates
+    URL: https://**\<deploymentdomain\>**/llm/list_templates
 
     Response:
 
@@ -362,7 +363,7 @@ The output can be changed passing in the requests some attribute values:
 
 - Get_models
 
-    URL: http://<deploymentdomain>/llm/get_models
+    URL: https://**\<deploymentdomain\>**/llm/get_models
 
     Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/llm/get_models?platform=azure
 
@@ -401,7 +402,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
 
-    URL: http://<deploymentdomain>/llm/upload_prompt_template 
+    URL: https://**\<deploymentdomain\>**/llm/upload_prompt_template 
 
     ```json
     {
@@ -414,7 +415,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to delete a prompt template json file from cloud storage.
 
-    URL: http://<deploymentdomain>/llm/delete_prompt_template
+    URL: https://**\<deploymentdomain\>**/llm/delete_prompt_template
 
     ```json
     {
@@ -425,7 +426,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to get the list the available prompt templates.
 
-    URL: http://<deploymentdomain>/llm/list_templates
+    URL: https://**\<deploymentdomain\>**/llm/list_templates
 
     Response:
 
@@ -443,7 +444,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to get the content of a prompt template. In the url, we have to send the template_name
 
-    URL: http://<deploymentdomain>/llm/get_template?template_name=example_template
+    URL: https://**\<deploymentdomain\>**/llm/get_template?template_name=example_template
 
     Response:
 
@@ -459,7 +460,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to delete document/s from an index. 
    
-    URL: http://<deploymentdomain>/retrieve/delete-documents
+    URL: https://**\<deploymentdomain\>**/retrieve/delete-documents
 
     ```json
     {
@@ -473,7 +474,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to delete an index from vector storage
 
-    URL: http://<deploymentdomain>/retrieve/delete_index
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_index
 
     ```json
     {
@@ -482,7 +483,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 - Check if the component is available (GET)
     
-    URL: http://<deploymentdomain>/retrieve/healthcheck
+    URL: https://**\<deploymentdomain\>**/retrieve/healthcheck
 
     Returns:
     ```json
@@ -495,7 +496,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to retrieve the full document from an index.
 
-    URL: http://<deploymentdomain>/retrieve/delete_index
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_index
     ```json
         {
             "index": "myindex",
@@ -510,7 +511,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to retrieve the documents filenames from an index.
     
-    URL: http://<deploymentdomain>/retrieve/get_documents_filenames
+    URL: https://**\<deploymentdomain\>**/retrieve/get_documents_filenames
 
     ```json
     {
@@ -520,7 +521,7 @@ The output can be changed passing in the requests some attribute values:
 
 - Get_models 
     
-    URL: http://<deploymentdomain>/retrieve/get_models
+    URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
     Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/retrieve/get_models?platform=azure
 
@@ -554,7 +555,7 @@ The output can be changed passing in the requests some attribute values:
   
     Used to list Elasticsearch indices, grouping models under each index.
 
-    URL: http:///retrieve/list_indices
+    URL: https://**<\deploymentdomain\>**/retrieve/list_indices
 
     Response: 
     ```json
@@ -610,7 +611,7 @@ Below is an example of the full code for the request to the indexing pipeline. I
 import requests
 import json
 
-URL_INTEGRATION_INDEXING = "http://<deploymentdomain>/integrationasync/process"
+URL_INTEGRATION_INDEXING = "https://<deploymentdomain>/integrationasync/process"
 
 payload = {
   "index": "myindex",
@@ -693,7 +694,7 @@ import requests
 import json
 
 
-URL_COMPOSE = "http://<deploymentdomain>/compose/process""
+URL_COMPOSE = "https://<deploymentdomain>/compose/process""
 
 payload =  {
     "generic": {
@@ -2235,8 +2236,8 @@ The example template we are using is called "retrieval_llm". This compose templa
 The first step you need to take to run the indexing pipeline on your local machine is to set the following environment variables:
 
 ```json
-"URL_LLM": "http://url_llm/predict",
-"URL_RETRIEVE": "http://url_retrieve/process",
+"URL_LLM": "https://<deploymentdomain>/llm/predict",
+"URL_RETRIEVE": "https://<deploymentdomain>/retrieve/process",
 "PROVIDER": "azure",
 "STORAGE_BACKEND": "tenant-backend",
 "AZ_CONN_STR_STORAGE": "",
