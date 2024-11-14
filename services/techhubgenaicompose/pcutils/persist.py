@@ -115,8 +115,8 @@ class PersistDict():
         else:
             if max_persistence is not None: # When not defined, do not change it
                 self.PD[session_id].max_persistence = max_persistence
-            if persistence is not None and persistence != {}:  # None is used for initialization purposes, do not add it
-                self.PD[session_id].add(persistence)
+            # if persistence is not None and persistence != {}:  # None is used for initialization purposes, do not add it
+            self.PD[session_id].add(persistence)
 
         return session_id
 
