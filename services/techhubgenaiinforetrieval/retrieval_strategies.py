@@ -224,28 +224,24 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         """
         if retriever_type == "bm25--score":
             #bm25 does not use embeddings
-            bm25_retriever = BM25Retriever.from_defaults(
+            retriever = BM25Retriever.from_defaults(
                 nodes=all_nodes,
                 similarity_top_k=top_k,
                 # The default is english for Stemmer and Language
             )
-            recursive_retriever = RecursiveRetriever(
-                "vector",
-                retriever_dict={"vector": bm25_retriever},
-                node_dict=all_nodes_dict,
-                verbose=True,
-            )
-            retrieved_docs = recursive_retriever.retrieve(QueryBundle(query_str=query))
+            query_bundle = QueryBundle(query_str=query)
         else:
             vector_store_index = VectorStoreIndex(nodes=all_nodes, embed_model=embed_model)
             retriever = vector_store_index.as_retriever(similarity_top_k=top_k)
-            recursive_retriever = RecursiveRetriever(
-                "vector",
-                retriever_dict={"vector": retriever},
-                node_dict=all_nodes_dict,
-                verbose=True,
-            )
-            retrieved_docs = recursive_retriever.retrieve(QueryBundle(query_str=query, embedding=embed_query))
+            query_bundle = QueryBundle(query_str=query, embedding=embed_query)
+
+        recursive_retriever = RecursiveRetriever(
+            "vector",
+            retriever_dict={"vector": retriever},
+            node_dict=all_nodes_dict,
+            verbose=True,
+        )
+        retrieved_docs = recursive_retriever.retrieve(query_bundle)
 
         self.logger.debug(f"{retriever_type} retrieved {len(retrieved_docs)} documents")
 
@@ -273,12 +269,12 @@ class GenaiRecursiveStrategy(GenaiStrategy):
             if retriever_type == "bm25--score":
                 # To search chunks for bm25 retrieval there is no index_name with bm25, always with an embedding_model
                 # One or both must exist (if not, index does not exist)
-                prev_retriever_type = retrievers_arguments[i - 1][3] if i > 0 else None
-                next_retriever_type = retrievers_arguments[i + 1][3] if i < len(retrievers_arguments) - 1 else None
-                if prev_retriever_type:
-                    index_name = ELASTICSEARCH_INDEX(input_object.index, prev_retriever_type.split('--')[0])
-                elif next_retriever_type:
-                    index_name = ELASTICSEARCH_INDEX(input_object.index, next_retriever_type.split('--')[0])
+                neighbor_retriever_type = (retrievers_arguments[i - 1][3] if i > 0 else 
+                                    retrievers_arguments[i + 1][3] if i < len(retrievers_arguments) - 1 
+                                    else None)
+                if neighbor_retriever_type:
+                    index_name = ELASTICSEARCH_INDEX(input_object.index, neighbor_retriever_type.split('--')[0])
+                    
             index_docs = self.connector.get_full_index(index_name, input_object.filters)
             all_nodes_dict, all_nodes = self.get_all_nodes_parsed(index_docs)
             docs_tmp = self.recursive_retrieval(embed_model, retriever_type, input_object.top_k, unique_docs,
