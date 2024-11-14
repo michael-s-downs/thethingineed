@@ -365,7 +365,7 @@ The output can be changed passing in the requests some attribute values:
 
     URL: https://**\<deploymentdomain\>**/llm/get_models
 
-    Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://\<deploymentdomain\>/llm/get_models?platform=azure
+    Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
     Response:
 
