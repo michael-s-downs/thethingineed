@@ -587,7 +587,7 @@ The following would be an example of a query containing the three types:
 
 It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
 
-https://**\<deploymentname\>**/llm/get_models?platform=azure
+https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
 The response would be a list of all the available models on the platform:
 ```json
@@ -633,7 +633,7 @@ The endpoint expects a get request with the following optional fields (one of th
 
 Filter by model pool:
 - Request:
-https://**\<deploymentname\>**/llm/get_models?pool=gpt-3.5-pool-europe
+https://**\<deploymentdomain\>**/llm/get_models?pool=gpt-3.5-pool-europe
 - Response:
 ```json
 {
@@ -648,7 +648,7 @@ https://**\<deploymentname\>**/llm/get_models?pool=gpt-3.5-pool-europe
 
 Filter by model type:
 - Request:
-https://**\<deploymentname\>**/llm/get_models?model_type=gpt-4-32k
+https://**\<deploymentdomain\>**/llm/get_models?model_type=gpt-4-32k
 
 - Response:
 ```json
@@ -678,7 +678,7 @@ https://**\<deploymentname\>**/llm/get_models?model_type=gpt-4-32k
 
 Filter by zone:
 - Request:
-https://**\<deploymentname\>**/llm/get_models?zone=techhub-australiaeast
+https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 - Response:
 ```json
@@ -724,7 +724,7 @@ https://**\<deploymentname\>**/llm/get_models?zone=techhub-australiaeast
 }
 ```
 
-- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<deploymentname\>**/llm/get_models?platform=azure
+- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
 
 Response:
@@ -794,7 +794,7 @@ Response:
 }
 ```
 
-- /get_template (GET): Used to get how is a template/prompt: https://**\<deploymentname\>**/llm/get_template?template_name=system_query
+- /get_template (GET): Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
 ```json
 {
     "template": {

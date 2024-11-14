@@ -523,7 +523,7 @@ The output can be changed passing in the requests some attribute values:
     
     URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
-    Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://<deploymentdomain>/retrieve/get_models?platform=azure
+    Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/retrieve/get_models?platform=azure
 
     Response:
 
@@ -555,7 +555,7 @@ The output can be changed passing in the requests some attribute values:
   
     Used to list Elasticsearch indices, grouping models under each index.
 
-    URL: https://**<\deploymentdomain\>**/retrieve/list_indices
+    URL: https://**\<deploymentdomain\>**/retrieve/list_indices
 
     Response: 
     ```json
@@ -3286,7 +3286,7 @@ Response
                 {...},
                 {...},
                 {
-                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://api.dev.dolffia.com/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
+                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://api.com/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-dataivandegregoriougarte/request_20240916_101923_083524_x2pm4n/manual.docx",
                         "sections_headers": "",
