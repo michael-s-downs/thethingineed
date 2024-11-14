@@ -4,11 +4,12 @@ omit =
         *test*
         config-3.py
         config.py
-        *common*
+        */common/*
+        
         
 [report]
 omit = 
-        *common*
+        */common/*
 
 exclude_lines =
     if __name__ == .__main__.:

@@ -66,8 +66,7 @@ class MixQueries(ReformulateMethod):
         
         session = PD.get_conversation(session_id)
         if session and len(session) > 0 and session[0]:
-
-            session.add({"user": self.query})
+            session.update_last({"user": self.query})
             
             template['query_metadata']['query'] = "\\n".join([f"{s['user']}" for i, s in enumerate(session.get_n_last(max_persistence)) if s is not None])
             template['query_metadata']['template_name'] = template_name
