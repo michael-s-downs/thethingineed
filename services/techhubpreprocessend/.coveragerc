@@ -5,7 +5,7 @@ omit =
         config-3.py
         config.py
         c:\users\idegrego\documents\techhub\techhubglobaltoolkit\services\common
-        *common*
+        */common/*
         C:\Users\idegrego\Documents\techhub\TechHubGlobalToolkit\services\common\*
 [report]
 

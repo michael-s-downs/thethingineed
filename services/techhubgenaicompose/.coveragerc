@@ -4,5 +4,5 @@ omit =
         *test*
         config-3.py
         config.py
-        *common*
+        */common/*
         
