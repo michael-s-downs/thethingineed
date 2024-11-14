@@ -1652,6 +1652,7 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
 
 - Dev region
+  
 | Model Name | Pools | Platform |
 |--------|------|------|
 |techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|

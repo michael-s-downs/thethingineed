@@ -15,10 +15,9 @@
     - [Core Concepts](#core-concepts)
     - [Architecture](#architecture)
   - [Calling LLMAPI](#calling-llmapi)
-    - [Simple prediction call: `url/predict`](#simple-prediction-call-urlpredict)
+    - [Simple prediction call:](#simple-prediction-call)
       - [Query types](#query-types)
-    - [Get models: `url/get_models`](#get-models-urlget_models)
-      - [Method: GET](#method-get)
+    - [Get models:](#get-models)
       - [Parameters](#parameters)
       - [Examples](#examples)
   - [API Reference](#api-reference)
@@ -107,7 +106,7 @@ Calling LLM Service needs 3 keys: query_metadata, llm_metadata and platform_meta
     "llm_metadata":{
         "model": "gpt-3.5-pool-techhub-europe"
     },
-    "platform_metadata ":{
+    "platform_metadata":{
         "platform": "azure"
     }
 }
@@ -159,14 +158,17 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 ### Architecture
 
-![alt text](imgs/techhubgenaillmapi/LLMAPIpipeline.drawio.png)
+![alt text](imgs/techhubgenaillmapi/LLMAPIpipeline.png)
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
 ## Calling LLMAPI
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
-### Simple prediction call: `url/predict`
+### Simple prediction call:
+
+/predict (POST) 
+
 A **simple call for a non-vision model** using persistence would be:
 
 ```json
@@ -304,7 +306,7 @@ A **Dalle request** to the LLM Service would be:
 
     },
     "llm_metadata": {
-        "model": "genai-dalle3-sweden",
+        "model": "techhub-dalle3-sweden",
         "response_format": "url"
     },
     "platform_metadata": {
@@ -379,7 +381,7 @@ A **non-vision** request with personalized **system, context, persistence and la
             [{"role": "user", "content": "What is NTT Data?"}, 
             {"role": "assistant", "content": "NTT Data is a major Japanese IT services and consulting company."}]
         ],
-        "template_name": "system_query_and_context",
+        "template_name": "system_query_and_context_plus",
         "lang":"en"
     },
     "llm_metadata": {
@@ -405,62 +407,6 @@ Response:
         "query_tokens": 63,
         "input_tokens": 145,
         "output_tokens": 38
-    },
-    "status_code": 200
-}
-```
-
-In the following example we will make use of the ability of Azure OpenAI models to return the result in json format using functions. This section has the following parameters:
-
-- name: the function name.
-- description: definition of the detail that the function has to perform.
-- parameters: key to return function with its data type and key description
-
-```json
-{
-    "query_metadata": {
-        "system": "You are the NTT Data assistant.",
-        "query": "John is 23 years old. His son Albert is 12 years old and he uses the app. His daughter is 9.",
-        "template_name": "system_query"
-    },
-    "llm_metadata": {
-        "model": "gpt-3.5-pool-techhub-europe",
-        "functions": [
-            {
-                "name": "get_age",
-                "description": "Get the age of the user that use the app.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "age": {
-                            "type": "string",
-                            "description": "user age"
-                        }
-                    }
-                }
-            }
-        ],
-        "function_call": "auto"
-    },
-    "platform_metadata": {
-        "platform": "azure",
-        "timeout": 30
-    }
-}
-```
-
-Response:
-
-```json
-{
-    "status": "finished",
-    "result": {
-        "answer": "{\n  \"age\": \"12\"\n}",
-        "logprobs": [],
-        "n_tokens": 104,
-        "query_tokens": 27,
-        "input_tokens": 89,
-        "output_tokens": 15
     },
     "status_code": 200
 }
@@ -635,15 +581,18 @@ The following would be an example of a query containing the three types:
 
     The parameter 'query' (in this example "Google Cloud") will be replaced in the template "$query".
 
-### Get models: `url/get_models`
-#### Method: GET
+### Get models:
+
+/get_models (GET) 
+
 It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
-https://techhubapigw.app.techhubnttdata.com/llm/get_models?platform=azure
+
+https://**\<hostname\>**/llm/get_models?platform=azure
 
 The response would be a list of all the available models on the platform:
 ```json
 {
-    "status": "ok",
+    "status": "finished",
     "result": {
         "models": [
 
@@ -684,7 +633,7 @@ The endpoint expects a get request with the following optional fields (one of th
 
 Filter by model pool:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/llm/get_models?pool=gpt-3.5-pool-europe
+https://**\<hostname\>**/llm/get_models?pool=gpt-3.5-pool-europe
 - Response:
 ```json
 {
@@ -699,12 +648,12 @@ https://techhubapigw.app.techhubnttdata.com/llm/get_models?pool=gpt-3.5-pool-eur
 
 Filter by model type:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/llm/get_models?model_type=gpt-4-32k
+https://**\<hostname\>**/llm/get_models?model_type=gpt-4-32k
 
 - Response:
 ```json
 {
-    "status": "ok",
+    "status": "finished",
     "result": {
         "models": [
             "techhub-text-gpt-4-32k-AustraliaEast",
@@ -729,12 +678,12 @@ https://techhubapigw.app.techhubnttdata.com/llm/get_models?model_type=gpt-4-32k
 
 Filter by zone:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/llm/get_models?zone=techhub-australiaeast
+https://**\<hostname\>**/llm/get_models?zone=techhub-australiaeast
 
 - Response:
 ```json
 {
-    "status": "ok",
+    "status": "finished",
     "result": {
         "models": [
             "techhub-text-gpt35turboAustraliaEast",
@@ -775,7 +724,7 @@ https://techhubapigw.app.techhubnttdata.com/llm/get_models?zone=techhub-australi
 }
 ```
 
-- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://techhubapigw.app.techhubnttdata.com/llm/get_models?platform=azure
+- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<hostname\>**/llm/get_models?platform=azure
 
 
 Response:
@@ -845,13 +794,12 @@ Response:
 }
 ```
 
-- /get_template (GET): Used to get how is a template/prompt: https://techhubapigw.app.techhubnttdata.com/llm/get_template?template_name=system_query_and_context_summary
-
+- /get_template (GET): Used to get how is a template/prompt: https://**\<hostname\>**/llm/get_template?template_name=system_query
 ```json
 {
     "template": {
         "system": "$system",
-        "user": "Answer the following task based on the following 'context' or the history of the conversation.'. \nTask: '$query' \n\n######\n\nContext:\n$context \n\n######\n\nAnswer:"
+        "user": "$query"
     },
 }
 ```
@@ -922,8 +870,8 @@ Response structure must be as follows
   - max_tokens (optional): Maximum number of tokens to generate in the response.
   - temperature (optional): Temperature to use. Value between 0 and 2 (in Bedrock 0-1). Higher values like 0.8 make the output more random. Lower values like 0.2 make it more deterministic. By default 0.
   - stop (optional): Up to 4 strings where the API will stop generating more tokens.
-  - functions (optional): List of functions the model may generate JSON inputs for. Only in OpenAI and Azure.
-  - function_call (required if functions is sent): Possible values: “auto”, “none”, or {"name": "my_function"}. For full information: <https://platform.openai.com/docs/api-reference/chat/create#chat-create-function_call>
+  - **functions (*Warning!*):** Deprecated by OpenAI but still working. List of functions the model may generate JSON inputs for. Only in OpenAI and Azure.
+  - **function_call (*Warning!*):**  Deprecated by OpenAI but still working. Required if functions is sent. Possible values: “auto”, “none”, or {"name": "my_function"}. For full information: <https://platform.openai.com/docs/api-reference/chat/create#chat-create-function_call>
   - seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
   - response_format (optional): The values available to manage the output format of the image generation models are [url, bs64_json] and for text generation models (only avaliable in selected ones by Azure OpenAI) is [json_object].
   - For image generation:
@@ -1049,7 +997,7 @@ For use cases in which we want a question-answering functionality in which we de
         "template_name": "system_query_and_context"
     },
     "llm_metadata": {
-        "model": "gpt-3.5-16k-pool-techhub-europe"
+        "model": "gpt-3.5-pool-techhub-europe"
     
     },
     "platform_metadata": {
@@ -1198,10 +1146,7 @@ Some instructions to create templates to obtain better results from the LLM:
 
 ## Configuration
 
-
 ### Cloud setup
-
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 The files-secrets architecture is:
 
@@ -1336,6 +1281,14 @@ LLMAPI needs 2 config files to run.
                         "gpt-3.5-pool-ew-europe",
                         "gpt-3.5-pool-techhub-europe"
                     ]
+                }, {
+                    "model": "techhub-dalle3-sweden",
+                    "model_type": "dalle3",
+                    "max_input_tokens": 4000,
+                    "zone": "genAI-Sweden",
+                    "message": "dalle",
+                    "api_version": "2023-12-01-preview",
+                    "model_pool": ["dalle3-pool-techhub-world"]
                 }
             ]
         }

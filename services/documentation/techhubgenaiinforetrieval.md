@@ -1,8 +1,8 @@
-# Retrieval
+# InfoRetrieval Service Documentation
 
 ## Index
 
-- [Retrieval](#retrieval)
+- [InfoRetrieval Service Documentation](#inforetrieval-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -696,8 +696,6 @@ BM25 retriever not found (there is no index that matches the passed value) | BM2
 ## Configuration
 
 ### Cloud setup
-
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 The files/secrets architecture is:
 
