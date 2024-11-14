@@ -157,7 +157,7 @@ Example using python requests:
 import requests
 import json
 
-url = "http://apiurl/compose/process"
+url = "https://<deploymentname>/compose/process"
 
 payload =  {
     "generic": {
@@ -572,7 +572,7 @@ The user has the option to enable conversation storage by adding a new parameter
 An example of the request is as follows:
 
 ```json
-URL: https://url/process
+URL: https://<deploymentname>/compose/process
 Method: POST
 Headers: x-api-key=*******(secret value given)*******
 ```
