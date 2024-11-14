@@ -1,8 +1,8 @@
-# Compose
+# Compose Service Documentation
 
 ## Index
 
-- [Compose](#compose)
+- [Compose Service Documentation](#compose-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)

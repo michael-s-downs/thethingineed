@@ -1,8 +1,8 @@
-# Retrieval
+# InfoRetrieval Service Documentation
 
 ## Index
 
-- [Retrieval](#retrieval)
+- [InfoRetrieval Service Documentation](#inforetrieval-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
