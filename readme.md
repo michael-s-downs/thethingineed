@@ -349,13 +349,27 @@ The output can be changed passing in the requests some attribute values:
         "status": "finished",
         "status_code": 200,
         "result": {
-            "system_query": {
-                "system": "$system",
-                "user": "$query"
+            "genai_create_query_v.json": {
+                "system_query_v": {
+                    "system": "$system",
+                    "user": [
+                        "$query"
+                    ]
+                }
             },
-            "system_query_es": {
-                "system": "$system",
-                "user": "$query \n===\nRespuesta en Español:"
+            "genai_lan_create_query.json": {
+                "emptysystem_query": {
+                    "system": "$system",
+                    "user": "$query"
+                },
+                "emptysystem_query_es": {
+                    "system": "$system",
+                    "user": "$query"
+                },
+                "emptysystem_query_en": {
+                    "system": "$system",
+                    "user": "$query"
+                }
             }
         }
     }
