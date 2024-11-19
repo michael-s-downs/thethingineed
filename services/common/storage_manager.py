@@ -155,7 +155,10 @@ class LLMStorageManager(BaseStorageManager):
                 except:
                     self.logger.warning(f"Malformed json file not loaded: {file}")
 
-        return templates, list(templates.keys()), templates_with_file
+        if return_files:
+            return templates, list(templates.keys()), templates_with_file
+
+        return templates, list(templates.keys())
 
     def upload_template(self, dat: dict):
         try:
