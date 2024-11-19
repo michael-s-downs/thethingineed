@@ -148,7 +148,7 @@ class LLMStorageManager(BaseStorageManager):
                         if key in ".json":
                             raise KeyError(f"Two create query jsons cannot have the same key {key}.")
                     if return_files:
-                        templates_with_file[file.split("/")[-1]] = aux_dict
+                        templates_with_file[file.split("/")[-1]] = list(aux_dict.keys())
 
                     templates.update(aux_dict)
                         
