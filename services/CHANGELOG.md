@@ -11,7 +11,7 @@
     - [New] Endpoint to get the content of a filter template
     - [Fix] Query to minus before langdetect
 - genai-llmapi:
-    - [Fix] Endpoint list templates shows file name
+    - [Fix] Endpoint list templates shows file name with its templates
 
 ## v2.0.0 (2024-11-08)
 - genai-llmapi:

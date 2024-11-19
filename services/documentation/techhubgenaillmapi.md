@@ -778,19 +778,19 @@ Response:
 - /list_templates (GET): Used to get all the available templates
 ```json
 {
-    "templates": [
-        "emptysystem_query",
-        "system_query",
-        "system_context",
-        "fixed_system_query",
-        "system_query_and_context",
-        "system_query_and_context_plus",
-        "system_query_and_context_summary",
-        "system_query_and_context_plus_v1",
-        "system_query_and_context_plus_v0",
-        "query_and_context_es",
-        "system_query_and_botcontext_es"
-    ]
+    "status": "finished",
+    "status_code": 200,
+    "result": {
+        "genai_create_query_v.json": [
+            "system_query_v"
+        ],
+        "genai_lan_create_query.json": [
+            "emptysystem_query",
+            "emptysystem_query_es",
+            "emptysystem_query_en",
+            "system_query"
+        ]
+    }
 }
 ```
 

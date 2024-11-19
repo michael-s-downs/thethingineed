@@ -136,9 +136,10 @@ class LLMStorageManager(BaseStorageManager):
                 available_pools[key] = list(value)
             return available_pools
 
-    def get_templates(self):
+    def get_templates(self, return_files=False):
         """ Load templates from LLMStorage """
         templates = {}
+        templates_with_file = {}
         for file in list_files(self.workspace, self.prompts_path):
             if file.endswith(".json"):
                 try:
@@ -146,9 +147,16 @@ class LLMStorageManager(BaseStorageManager):
                     for key in templates:
                         if key in ".json":
                             raise KeyError(f"Two create query jsons cannot have the same key {key}.")
+                    if return_files:
+                        templates_with_file[file.split("/")[-1]] = list(aux_dict.keys())
+
                     templates.update(aux_dict)
+                        
                 except:
                     self.logger.warning(f"Malformed json file not loaded: {file}")
+
+        if return_files:
+            return templates, list(templates.keys()), templates_with_file
 
         return templates, list(templates.keys())
 

@@ -39,7 +39,7 @@ class LLMDeployment(BaseDeployment):
         self.available_models = self.storage_manager.get_available_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
 
-        self.templates, self.templates_names = self.storage_manager.get_templates()
+        self.templates, self.templates_names, self.display_templates_with_files = self.storage_manager.get_templates(return_files=True)
 
         # Check if default templates are in the templates
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
@@ -250,7 +250,7 @@ def healthcheck() -> Dict:
 @app.route('/list_templates', methods=['GET'])
 def list_available_templates() -> Tuple[str, int]:
     deploy.logger.info("List templates request received")
-    return ResponseObject(**{"status": "finished", "result": deploy.templates, "status_code": 200}).get_response_base()
+    return ResponseObject(**{"status": "finished", "result": deploy.display_templates_with_files, "status_code": 200}).get_response_base()
 
 @app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[str, int]:
