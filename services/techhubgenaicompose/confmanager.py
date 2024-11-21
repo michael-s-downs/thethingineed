@@ -90,7 +90,7 @@ class ConfManager(AbstractManager):
             match = re.search(pattern_llm_action, template)
             if match:
                 template = template[match.end():]
-                pattern_model = r'"model":\s*"([^"]+)"'
+                pattern_model = r'"model":\s*"([^']+)"'
                 models_in_template = re.findall(pattern_model, template)
                 model_template = models_in_template[0]
             else:
@@ -155,11 +155,11 @@ class ConfManager(AbstractManager):
         return lang
 
     def clean_model(self, model: str):
-        remove_strings = ["genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
+        remove_strings = ['genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
                           "-NorthVirginiaEast", "-FranckfurtCentral", "-ParisWest", "-AustraliaEast", "AustraliaEast",
                           "-CanadaEast", "CanadaEast", "-EastUs", "EastUs", "-EastUs2", "EastUs2", "Francia",
                           "JapanEast", "-NorthCentralUs", "NorthCentralUS", "-sweden", "-SouthCentralUs", "-france",
-                          "-westeurope", "WestUS", "-UKSouth", "UKSouth", "-SwitzerlandNorth", "SwitzerlandNorth"]
+                          "-westeurope", "WestUS", "-UKSouth", "UKSouth", "-SwitzerlandNorth", "SwitzerlandNorth']
         for substring in remove_strings:
             model = model.replace(substring, "")
         return model
@@ -172,13 +172,14 @@ class ConfManager(AbstractManager):
         if default_model is None:
             return
         
-        from compose.utils.defaults import SUM_TEMPLATE, FILTER_TEMPLATE, REFORMULATE_TEMPLATE, TRANSLATE_TEMPLATE, FILTERED_ACTIONS
+        from compose.utils.defaults import SUM_TEMPLATE, FILTER_TEMPLATE, REFORMULATE_TEMPLATE, TRANSLATE_TEMPLATE, FILTERED_ACTIONS, STEP_TEMPLATE
 
-        SUM_TEMPLATE["llm_metadata"]["model"] = default_model
-        FILTER_TEMPLATE["llm_metadata"]["model"] = default_model
-        REFORMULATE_TEMPLATE["llm_metadata"]["model"] = default_model
-        TRANSLATE_TEMPLATE["llm_metadata"]["model"] = default_model
-        FILTERED_ACTIONS[1]["action_params"]["params"]["llm_metadata"]["model"] = default_model
+        SUM_TEMPLATE['llm_metadata']['model'] = default_model
+        FILTER_TEMPLATE['llm_metadata']['model'] = default_model
+        REFORMULATE_TEMPLATE['llm_metadata']['model'] = default_model
+        TRANSLATE_TEMPLATE['llm_metadata']['model'] = default_model
+        STEP_TEMPLATE['llm_metadata']['model'] = default_model
+        FILTERED_ACTIONS[1]['action_params']['params']['llm_metadata']['model'] = default_model
     
     def set_detector(self):
        langs = os.environ.get("DEFAULT_LANGS") 
