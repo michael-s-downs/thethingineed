@@ -53,24 +53,22 @@ class ChunkingMethod(ABC):
 
     def _add_nodes_metadata(self, nodes, origin):
         final_nodes = []
-        counter = 0
         sections = ""
-        for node in nodes:
-            ids_node, counter = self._add_ids(node, counter)
+        for counter, node in enumerate(nodes):
+            ids_node = self._add_ids(node, counter)
             titles_tables_node, sections = self._add_titles_and_tables(ids_node, sections, origin)
             titles_tables_node.id_ = "{:02x}".format(mmh3.hash128(str(titles_tables_node.text), signed=False))
             # Exclude when embedding generation
             titles_tables_node.excluded_embed_metadata_keys = list(titles_tables_node.metadata.keys())
             titles_tables_node.excluded_llm_metadata_keys = list(titles_tables_node.metadata.keys())
             final_nodes.append(titles_tables_node)
-            counter += 1
-        return nodes
+        return final_nodes
 
     @staticmethod
     def _add_ids(node, counter: int):
         node.metadata['snippet_number'] = counter
-        node.metadata['snippet_id'] = str(uuid.uuid4())
-        return node, counter
+        node.metadata['snippet_id'] = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        return node
 
     def _add_titles_and_tables(self, node, sections: str, origin):
         text = node.text
@@ -144,6 +142,23 @@ class Recursive(ChunkingMethod):
         self.sub_window_length = sub_window_length
         self.sub_window_overlap = sub_window_overlap
 
+    @staticmethod
+    def _add_ids(node, counter: int):
+        node.metadata['snippet_number'] = counter
+        id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        node.metadata['snippet_id'] = id
+        # This one is the reference to parent chunk (extended while children created)
+        node.metadata['index_id'] = id
+        return node
+    
+    @staticmethod
+    def _add_subnode_metadata(node, parent_node, id, counter):
+        node.metadata['index_id'] = parent_node.node_id
+        node.metadata['snippet_number'] = float(f"{parent_node.metadata['snippet_number']}.{counter+1}")
+        node.metadata['snippet_id'] = id
+        return node
+
+
     def get_chunks(self, docs: list, encoding) -> list:
         """Get nodes from documents
 
@@ -162,27 +177,30 @@ class Recursive(ChunkingMethod):
 
             base_nodes = SentenceSplitter(chunk_size=self.window_length, chunk_overlap=self.window_overlap,
                                                  tokenizer=encoding.encode, paragraph_separator="\\n\\n").get_nodes_from_documents([doc], show_progress=True)
+            
+            # The metadata and configurations are passed when splitting recursively
+            if eval(os.getenv('TESTING', "False")):
+                base_nodes = self._add_nodes_metadata(base_nodes, self.origin)
+            else:
+                base_nodes = self._add_nodes_metadata(base_nodes, self.workspace)
+            
             sub_node_splitter = SentenceSplitter(chunk_size=self.sub_window_length, chunk_overlap=self.sub_window_overlap,
                                                  tokenizer=encoding.encode, paragraph_separator="\\n\\n")
             nodes = []
             for i, base_node in enumerate(base_nodes):
                 self.logger.debug(f"Doing recursive children of node {i}")
-                base_doc = Document(text=base_node.text, metadata=base_node.metadata)
-                base_doc.excluded_llm_metadata_keys = list(doc.metadata.keys())
-                base_doc.excluded_embed_metadata_keys = list(doc.metadata.keys())
-                sub_nodes = sub_node_splitter.get_nodes_from_documents([base_doc])
+                sub_nodes = sub_node_splitter.get_nodes_from_documents([base_node])
+                for child_number, sub_node in enumerate(sub_nodes):
+                    # Manage ids from sub_nodes (id=hashed content and index_id must be parent_node id)
+                    id = "{:02x}".format(mmh3.hash128(str(sub_node.text), signed=False))
+                    sub_node.id_ = id
+                    sub_inode = IndexNode.from_text_node(sub_node, base_node.node_id)
+                    nodes.append(self._add_subnode_metadata(sub_inode, base_node, id, child_number))
 
-                # add subnodes to all nodes (IndexNode format mandatory)
-                nodes.extend([IndexNode.from_text_node(sn, base_node.node_id) for sn in sub_nodes])
-                # also add original node to node (IndexNode format mandatory)
+                # add original node to node (IndexNode format mandatory)
                 nodes.append(IndexNode.from_text_node(base_node, base_node.node_id))
 
-
-            if eval(os.getenv('TESTING', "False")):
-                final_nodes = self._add_nodes_metadata(nodes, self.origin)
-            else:
-                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
-            nodes_per_doc.append(final_nodes)
+            nodes_per_doc.append(nodes)
         return nodes_per_doc
 
 class SurroundingContextWindow(ChunkingMethod):

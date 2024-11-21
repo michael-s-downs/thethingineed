@@ -263,7 +263,7 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         unique_docs = {}
         retrievers = [retriever_type for _, _, _, retriever_type in retrievers_arguments]
 
-        for i, (vector_store, embed_model, embed_query, retriever_type) in enumerate(retrievers_arguments):
+        for i, (_, embed_model, embed_query, retriever_type) in enumerate(retrievers_arguments):
             # Retriever type is formed by embedding_model (same used to name index) so split by '--' (other part is score)
             index_name = ELASTICSEARCH_INDEX(input_object.index, retriever_type.split('--')[0])
             if retriever_type == "bm25--score":
@@ -317,8 +317,8 @@ class GenaiRecursiveStrategy(GenaiStrategy):
                                  start_char_idx=node_content_dict['start_char_idx'],
                                  metadata_seperator=node_content_dict['metadata_seperator'],
                                  metadata_template=node_content_dict['metadata_template'],
-                                 text_template=node_content_dict['text_template'])
-            index_node = IndexNode.from_text_node(text_node, text_node.node_id)
+                                 text_template=node_content_dict['text_template'], id_=node['_id'])
+            index_node = IndexNode.from_text_node(text_node, node['_source']['metadata']['index_id'])
             all_nodes_dict[index_node.node_id] = index_node
             all_nodes.append(index_node)
         return all_nodes_dict, all_nodes
