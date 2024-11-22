@@ -59,9 +59,9 @@ stages:
           configMode: 'manual'
           cliProjectKey: $(System.DefinitionName)
           cliSources: |
-                $(System.DefaultWorkingDirectory)/services/common/',
-                $(System.DefaultWorkingDirectory)/services/techhubapigw/',
-                $(System.DefaultWorkingDirectory)/helm/'
+                $(System.DefaultWorkingDirectory)/services/common/,
+                $(System.DefaultWorkingDirectory)/services/techhubapigw/,
+                $(System.DefaultWorkingDirectory)/helm/
           # removes sonar.branch.name variable as this is not supported by community edition
       - task: PowerShell@2
         inputs:
