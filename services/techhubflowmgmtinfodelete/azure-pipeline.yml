@@ -48,6 +48,34 @@ variables:
   value: '$(feed_genai)'
 
 stages:
+- stage: SonarAnalysis
+  jobs:
+    - job: test
+      continueOnError: false
+      steps:       
+      - task: SonarQubePrepare@7
+        inputs:
+          SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
+          scannerMode: 'cli'
+          configMode: 'manual'
+          cliProjectKey: $(System.DefinitionName)
+          cliSources: |
+                $(System.DefaultWorkingDirectory)/services/techhubflowmgmtinfodelete/,
+                $(System.DefaultWorkingDirectory)/helm/
+          # removes sonar.branch.name variable as this is not supported by community edition
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w,/,-]*"\,?'
+                Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"      
+      - task: SonarQubeAnalyze@7
+        inputs:
+          jdkversion: 'JAVA_HOME_17_X64'
+
+      - task: SonarQubePublish@7
+        inputs:
+          pollingTimeoutSec: '300'
 - stage: Building
   displayName: Build image
   jobs:
