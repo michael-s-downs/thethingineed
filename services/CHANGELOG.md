@@ -9,6 +9,7 @@
     - [New] Endpoint to list filter templates
     - [New] Endpoint to get the content of a template
     - [New] Endpoint to get the content of a filter template
+    - [New] Try Lingua instead of langdetect to improve language detection
     - [Fix] Query to minus before langdetect
 - genai-llmapi:
     - [Fix] Endpoint list templates shows file name with its templates
