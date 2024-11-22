@@ -160,7 +160,7 @@ steps:
   displayName: Login with ACR
 
 # Create image docker
-- bash: docker build -f '${{ parameters.defaultWorkingDirectory }}/uhis_docker/Dockerfile' --build-arg 'BASE_IMAGE=${{ parameters.registryServerName }}/${{ parameters.baseImage }}:$(baseTag)' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
+- bash: docker build -f '${{ parameters.defaultWorkingDirectory }}/uhis_docker/Dockerfile' --build-arg 'BASE_IMAGE=${{ parameters.registryServerName }}/${{ parameters.baseImage }}:${baseTag}' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
   displayName: Build image
 
 # Push image docker with tag numeric
