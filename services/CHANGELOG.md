@@ -13,8 +13,10 @@
 - genai-llmapi:
     - [Fix] Endpoint list templates shows file name
 - genai-infoindexing:
+  - [New] New methods to do the chunking: 
+    - Recursive: each node extracted in the basic way
+    - Surrounding context window:
   - [New] Refactor of the way to get the chunks (chunking_methods.py)
-  - [New] New method to do the chunking: surrounding_context_window
   - [Improvement] Check if the same chunking method is always used for the index
   - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
   

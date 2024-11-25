@@ -25,16 +25,17 @@ from httpx import TimeoutException
 from openai import RateLimitError
 
 # Custom imports
-from common.ir import modify_index_documents, get_embed_model
+from common.ir.utils import modify_index_documents, get_embed_model
 from common.genai_controllers import provider
 from common.logging_handler import LoggerHandler
-from common.indexing.parsers import Parser
+from common.ir.parsers import Parser
 from common.services import VECTOR_DB_SERVICE
-from common.indexing.connectors import Connector
+from common.ir.connectors import Connector
 from common.genai_json_parser import get_exc_info
 from common.utils import ELASTICSEARCH_INDEX
 from common.errors.genaierrors import PrintableGenaiError
-from common.indexing.chunking_methods import ManagerChunkingMethods
+
+from chunking_methods import ManagerChunkingMethods
 
 
 class VectorDB(ABC):

@@ -26,9 +26,10 @@ ElasticsearchStoreAdaption  # Custom class that adapts the elasticsearch store t
 from common.errors.genaierrors import PrintableGenaiError
 from common.logging_handler import LoggerHandler
 from common.services import RETRIEVAL_STRATEGIES
-from rescoring import rescore_documents
 from common.utils import ELASTICSEARCH_INDEX
-from common.indexing.connectors import Connector
+from common.ir.connectors import Connector
+
+from rescoring import rescore_documents
 
 
 class SimpleStrategy(ABC):
@@ -276,6 +277,8 @@ class GenaiRecursiveStrategy(GenaiStrategy):
                     index_name = ELASTICSEARCH_INDEX(input_object.index, neighbor_retriever_type.split('--')[0])
                     
             index_docs = self.connector.get_full_index(index_name, input_object.filters)
+            if len(index_docs) < input_object.top_k:
+                raise ValueError(f"Error, in 'recursive_genai_strategy' the top_k value '{input_object.top_k}' can not be higher than the chunks in the index '{len(index_docs)}'")
             all_nodes_dict, all_nodes = self.get_all_nodes_parsed(index_docs)
             docs_tmp = self.recursive_retrieval(embed_model, retriever_type, input_object.top_k, unique_docs,
                                                 embed_query, input_object.query, all_nodes_dict, all_nodes)

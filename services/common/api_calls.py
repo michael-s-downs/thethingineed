@@ -677,13 +677,8 @@ def indexing(request_json: dict) -> dict:
                 'ocr': request_json['client_profile']['default_ocr'],
                 'force_ocr': request_json.get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
                 'timeout': round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0),
-                'index': request_json['index_conf']['index'],
-                'metadata': request_json['index_conf']['metadata'],
-                'window_overlap': request_json['index_conf']['window_overlap'],
-                'window_length': request_json['index_conf']['window_length'],
                 'models': [models_map[model] for model in models],
-                'modify_index': request_json['index_conf']['modify_index'],
-                'vector_storage': request_json['index_conf']['vector_storage'],
+                'index_conf': request_json['index_conf'],
                 'layout_conf': request_json['preprocess_conf']['layout_conf'],
                 'integration': request_json,
                 'process_id': f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}",
@@ -692,10 +687,10 @@ def indexing(request_json: dict) -> dict:
 
             if os.getenv('API_QUEUE_PROCESS_URL', ""):
                 api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {api_response}")
+                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index_conf']['vector_storage_conf']['index']}' {api_response}")
             else:
                 api_response = core_api.async_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['index']}' {api_response}")
+                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['index_conf']['vector_storage_conf']['index']}' {api_response}")
 
             process_id = api_response.get('process_id', "")
             process_ids = request_json.setdefault('process_ids', {})

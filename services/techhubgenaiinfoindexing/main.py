@@ -16,10 +16,11 @@ from common.utils import load_secrets
 from common.genai_json_parser import get_exc_info, get_specific, get_dataset_status_key
 from common.genai_status_control import update_full_status
 from common.status_codes import PROCESS_FINISHED, ERROR
-from common.indexing.connectors import ManagerConnector
+from common.ir.connectors import ManagerConnector
 from common.storage_manager import ManagerStorage
-from common.indexing.vector_storages import ManagerVectorDB
-from common.indexing.parsers import ManagerParser
+from common.ir.parsers import ManagerParser
+
+from vector_storages import ManagerVectorDB
 
 
 class InfoIndexationDeployment(BaseDeployment):

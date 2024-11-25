@@ -31,11 +31,16 @@
         }
     },
     "index_conf": {
-		"index": "",
-		"windows_overlap": 10,
-		"windows_length": 300,
-		"modify_index_docs": {},
-		"models":[],
-		"vector_storage": ""
+        "vector_storage_conf": {
+            "index": "",
+            "vector_storage": "",
+            "modify_index_docs": {}
+        },
+        "chunking_method": {
+            "method": "simple",
+            "window_overlap": 10,
+            "window_length": 300
+        },
+        "models": []
 	}
 }

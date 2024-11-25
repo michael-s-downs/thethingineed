@@ -130,8 +130,8 @@ class TestInfoIndexationDeployment():
 
     def test_file_storage_testing(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            with patch('common.indexing.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
-                with patch('common.indexing.connectors.ManagerConnector.get_connector') as mock_get_connector:
+            with patch('common.ir.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
+                with patch('common.ir.connectors.ManagerConnector.get_connector') as mock_get_connector:
                     with patch('os.getenv') as mock_getenv:
                         with patch('main.update_full_status',
                                    side_effect=lambda redis_status, dataset_status_key, status_code, message:
@@ -154,7 +154,7 @@ class TestInfoIndexationDeployment():
                             assert indexation_response[1] == 200
                             assert indexation_response[2] == "Indexing finished"
     def test_exception_process(self):
-        with patch('common.indexing.parsers.ManagerParser.get_parsed_object') as mock_parsers:
+        with patch('common.ir.parsers.ManagerParser.get_parsed_object') as mock_parsers:
             with patch('main.update_full_status',
                        side_effect=lambda redis_status, dataset_status_key, status_code, message:
                        (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
@@ -167,8 +167,8 @@ class TestInfoIndexationDeployment():
 
     def test_process(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            with patch('common.indexing.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
-                with patch('common.indexing.connectors.ManagerConnector.get_connector') as mock_get_connector:
+            with patch('common.ir.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
+                with patch('common.ir.connectors.ManagerConnector.get_connector') as mock_get_connector:
                     with patch('main.update_full_status', side_effect=lambda redis_status, dataset_status_key, status_code, message:
                       (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
                         storage_manager = MagicMock()

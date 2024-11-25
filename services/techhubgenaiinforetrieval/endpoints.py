@@ -3,7 +3,7 @@
 
 from flask import request
 from typing import Tuple, Dict
-from common.ir import get_connector
+from common.ir.utils import get_connector
 from common.utils import ELASTICSEARCH_INDEX
 from common.genai_json_parser import get_exc_info
 import elasticsearch.exceptions 

@@ -21,11 +21,11 @@ from common.genai_controllers import storage_containers, set_storage
 from common.genai_json_parser import *
 from retrieval_strategies import ManagerRetrievalStrategies
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
-from common.ir import get_connector, get_embed_model
+from common.ir.utils import get_connector, get_embed_model 
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
 from common.storage_manager import ManagerStorage
-from common.indexing.parsers import ManagerParser, ParserInforetrieval
-from common.indexing.connectors import Connector
+from common.ir.parsers import ManagerParser, ParserInforetrieval
+from common.ir.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
 
 from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
@@ -103,7 +103,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                 # Add bm25 retriever (with one index that matches is enough, all indexes in elastic can do this retrieval)
                 vector_store = ElasticsearchStoreAdaption(index_name=index_name, es_client=es_client,
                                                           retrieval_strategy=AsyncBM25Strategy())
-                return vector_store
+                return vector_store, model
 
         raise PrintableGenaiError(400, "There is no index that matches the passed value")
 
@@ -119,7 +119,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         retrievers = []
         for model in models:
             if model.get('embedding_model') == "bm25":
-                vector_store = self.get_bm25_vector_store(index, connector, es_client)
+                vector_store, _ = self.get_bm25_vector_store(index, connector, es_client)
                 # MockEmbedding used to avoid errors in the bm25 retriever (OPENAI_API_KEY mandatory)
                 embed_model = MockEmbedding(embed_dim=256)
                 embed_query = query #BM25 does not use embeddings
@@ -193,7 +193,12 @@ class InfoRetrievalDeployment(BaseDeployment):
 
             # Check if the strategy selected can be done with the index passed
             chunking_method = self.STRATEGY_CHUNKING_METHOD_EQUIVALENCE[input_object.strategy]
-            models = [model['embedding_model'] for model in input_object.models if model['alias'] != "bm25"]
+            if len(input_object.models) == 1 and input_object.models[0]['alias'] == "bm25":
+            # In the case that only bm25 is passed, the index with the model used must be searched
+                _, model = self.get_bm25_vector_store(input_object.index, connector, es_client)
+                models = [model]
+            else:
+                models = [model['embedding_model'] for model in input_object.models if model['alias'] != "bm25"]
             connector.assert_correct_chunking_method(input_object.index, chunking_method, models)
 
             retrievers_arguments = self.get_retrievers_arguments(input_object.models, input_object.index, es_client,
