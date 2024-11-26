@@ -52,7 +52,13 @@ stages:
   jobs:
     - job: test
       continueOnError: false
-      steps:       
+      steps:      
+      - script: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install pytest pytest-cov
+          pytest --cov=your_package_name --cov-report=xml
+        displayName: 'Run Tests and Generate Coverage' 
       - task: SonarQubePrepare@7
         inputs:
           SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
@@ -62,6 +68,11 @@ stages:
           cliSources: |
                 $(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/,
                 $(System.DefaultWorkingDirectory)/helm/
+          extraProperties: |
+              sonar.projectVersion=1.0
+              sonar.sources=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/
+              sonar.python.coverage.reportPaths=coverage.xml
+
           # removes sonar.branch.name variable as this is not supported by community edition
       - task: PowerShell@2
         inputs:
