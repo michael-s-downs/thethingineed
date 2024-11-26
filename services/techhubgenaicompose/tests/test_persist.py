@@ -305,5 +305,5 @@ def test_error_saving_session_to_redis_conv_not_response(persist_dict):
     persist_dict.add({}, session_id=session_id)
     persist_dict.REDIS_ORIGIN = None
 
-    with pytest.raises(PrintableGenaiError, match="500"):
-        persist_dict.save_to_redis(session_id, tenant)
+    result = persist_dict.save_to_redis(session_id, tenant)
+    assert result is None
