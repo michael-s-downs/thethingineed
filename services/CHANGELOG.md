@@ -10,6 +10,7 @@
     - [New] Endpoint to get the content of a template
     - [New] Endpoint to get the content of a filter template
     - [New] Try Lingua instead of langdetect to improve language detection
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
     - [Fix] Query to minus before langdetect
 - genai-llmapi:
     - [Fix] Endpoint list templates shows file name with its templates
