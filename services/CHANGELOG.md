@@ -11,6 +11,8 @@
     - [New] Endpoint to get the content of a filter template
     - [New] Try Lingua instead of langdetect to improve language detection
     - [Fix] Query to minus before langdetect
+    - [Fix] Perist dict not adding new entries
+    - [Fix] Documentation examples
 - genai-llmapi:
     - [Fix] Endpoint list templates shows file name with its templates
 
