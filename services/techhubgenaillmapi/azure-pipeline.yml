@@ -57,7 +57,7 @@ stages:
           python -m venv .venv
           source .venv/bin/activate
           pip install pytest pytest-cov
-          pytest --cov=your_package_name --cov-report=xml
+          pytest --cov=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/ --cov-report=xml
         displayName: 'Run Tests and Generate Coverage' 
       - task: SonarQubePrepare@7
         inputs:
