@@ -90,7 +90,7 @@ class ConfManager(AbstractManager):
             match = re.search(pattern_llm_action, template)
             if match:
                 template = template[match.end():]
-                pattern_model = r'"model":\s*"([^']+)"'
+                pattern_model = r'"model":\s*"([^"]+)"'
                 models_in_template = re.findall(pattern_model, template)
                 model_template = models_in_template[0]
             else:
@@ -155,11 +155,11 @@ class ConfManager(AbstractManager):
         return lang
 
     def clean_model(self, model: str):
-        remove_strings = ['genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
+        remove_strings = ["genai-", "-pool", "-america", "-europe", "-world", "-australia", "-japan", "-uk", "-ew",
                           "-NorthVirginiaEast", "-FranckfurtCentral", "-ParisWest", "-AustraliaEast", "AustraliaEast",
                           "-CanadaEast", "CanadaEast", "-EastUs", "EastUs", "-EastUs2", "EastUs2", "Francia",
                           "JapanEast", "-NorthCentralUs", "NorthCentralUS", "-sweden", "-SouthCentralUs", "-france",
-                          "-westeurope", "WestUS", "-UKSouth", "UKSouth", "-SwitzerlandNorth", "SwitzerlandNorth']
+                          "-westeurope", "WestUS", "-UKSouth", "UKSouth", "-SwitzerlandNorth", "SwitzerlandNorth"]
         for substring in remove_strings:
             model = model.replace(substring, "")
         return model
@@ -191,7 +191,10 @@ class ConfManager(AbstractManager):
                 "fr": Language.FRENCH,
                 "de": Language.GERMAN,
                 "it": Language.ITALIAN,
-                "pt": Language.PORTUGUESE
+                "pt": Language.PORTUGUESE,
+                "ca": Language.CATALAN,
+                "ko": Language.KOREAN,
+                "zh": Language.CHINESE
             }
             langs = [*map(langs_map.get, langs)]
             self.detector = LanguageDetectorBuilder.from_languages(langs).with_preloaded_language_models().build()

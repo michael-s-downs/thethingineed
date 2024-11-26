@@ -93,7 +93,7 @@ class StepSplitExpansion(ExpansionMethod):
         retriever_result = []
         for retriever in retrieve_action:
             query = retriever['action_params']['params']['generic']['index_conf']['query']
-            STEP_QUERY = f"Input Query: {query} \n Response: [List of simpler queries here]"
+            STEP_QUERY = f"Input Query: {query}, K queries or lower: {k_steps} \n Response: [List of simpler queries here]"
             if context:
                 STEP_QUERY = f"Context: {context}, {STEP_QUERY}"
             STEP_TEMPLATE['query_metadata']['query'] = STEP_QUERY
@@ -105,7 +105,11 @@ class StepSplitExpansion(ExpansionMethod):
 
         queries = []
         for retriever, result in zip(retrieve_action, retriever_result):
+            n_q = 0
             for r in result['answer'].split("\n"):
+                n_q += 1
+                if n_q > 10:
+                    break
                 queries.append(r)
                 retriever['action_params']['params']['generic']['index_conf']['query'] = r
                 actions_confs.insert(0, deepcopy(retriever))
