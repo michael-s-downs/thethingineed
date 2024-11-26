@@ -57,7 +57,7 @@ stages:
           python -m venv .venv
           source .venv/bin/activate
           pip install pytest pytest-cov
-          pytest services/techhubgenaillmapi/test --cov=services/techhubgenaillmapi --cov-report=xml
+          pytest services/techhubgenaillmapi/test --cov=services/techhubgenaillmapi --cov-report=xml:services/techhubgenaillmapi/test/coverage.xml
         displayName: 'Run Tests and Generate Coverage' 
       - task: SonarQubePrepare@7
         inputs:
