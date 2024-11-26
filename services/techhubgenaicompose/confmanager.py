@@ -132,7 +132,6 @@ class ConfManager(AbstractManager):
             lang (string)
         """
         query = str.lower(query)
-        query = " ".join(re.findall("[a-zA-Z]+", query))
         lang = ""
         if "lang" not in compose_config:
             self.logger.info("No lang provided, detecting default languages")
