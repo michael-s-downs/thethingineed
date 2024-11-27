@@ -69,7 +69,7 @@ stages:
           cd /home/vsts/work/1/s/services/techhubgenaillmapi/
           pwd
           echo installing packages
-          pip install pytest pytest-cov boto3
+          pip install pytest pytest-cov boto3 pillow flask
           pip install -r requirements_info.txt
           pip install -r requirements.txt
           
