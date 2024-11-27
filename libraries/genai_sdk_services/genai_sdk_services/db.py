@@ -8,12 +8,12 @@ from typing import Union
 
 # Custom imports
 from genai_sdk_services.resources.import_user_functions import import_user_functions
-from genai_sdk_services.services.db import BaseDBService, MysqlService, RedisService, AthenaService
+from genai_sdk_services.services.db import BaseDBService, MysqlService, RedisService, AthenaService, PostgreSQLService
 
 
 class DBController(object):
 
-    services = [MysqlService, RedisService, AthenaService]
+    services = [MysqlService, RedisService, AthenaService, PostgreSQLService]
     user_functions_services = []
     origins = {}
 

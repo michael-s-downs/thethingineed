@@ -3,7 +3,7 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## v2.1.0 (2024-11-29)
 - genai-compose:
     - [New] Endpoint to list templates
     - [New] Endpoint to list filter templates
