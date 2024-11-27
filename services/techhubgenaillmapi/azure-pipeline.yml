@@ -54,6 +54,7 @@ stages:
       continueOnError: false
       steps:      
       - script: |
+          python --version
           echo pwd
           pwd
 
