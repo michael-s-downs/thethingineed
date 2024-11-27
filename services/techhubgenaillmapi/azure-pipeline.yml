@@ -56,10 +56,22 @@ stages:
       - script: |
           echo pwd
           pwd
+
           python -m venv .venv
           source .venv/bin/activate
+
+          echo installing genai_sdk_services
+          cd libraries/genai_sdk_services
+          pwd
+          python setup.py install
+
+          cd services/techhubgenaillmapi/
+          pwd
           echo installing packages
           pip install pytest pytest-cov boto3
+          pip install -r requirements_info.txt
+          pip install -r requirements.txt
+          
           echo running coverage
           coverage run -m pytest -s
         displayName: 'Run Tests and Generate Coverage' 
