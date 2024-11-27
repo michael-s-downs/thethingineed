@@ -10,9 +10,10 @@ from statistics import mean
 # Installed import
 import cv2
 import numpy as np
-from google.cloud import vision
-from google.cloud.vision import types
-from google.oauth2 import service_account
+#ToDo
+# from google.cloud import vision
+# from google.cloud.vision_v1 import types
+# from google.oauth2 import service_account
 
 
 # compute the most common value in a list (it takes the smallest of the two most commons)
@@ -964,6 +965,6 @@ def box_vision_features(interest_box: list, words_features: list) -> list:
 
     count_rows = np.array(count_rows)
 
-    features = reatures + list(np.mean(words_features[7:7+38], axis=1))
+    features = features + list(np.mean(words_features[7:7+38], axis=1))
 
     return features

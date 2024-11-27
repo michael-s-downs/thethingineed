@@ -66,7 +66,8 @@ class LangExpansion(ExpansionMethod):
         "el": "greek",
         "he": "hebrew",
         "vi": "vietnamese",
-        "th": "thai"
+        "th": "thai",
+        "ca": "catalan"
         }
 
     async def async_call_llm(self, template, headers, session):
@@ -79,7 +80,7 @@ class LangExpansion(ExpansionMethod):
         Returns:
             dict: In this case the output will be the response of LLM
         """
-        async with session.post(self.URL, json=template, headers=headers, verify_ssl=False) as response:
+        async with session.post(self.URL, json=template, headers=headers, verify_ssl=True) as response:
             LLMP.control_errors(response, async_bool=True)
             return (await response.json(content_type='text/html'))['result']
 
@@ -123,39 +124,48 @@ class LangExpansion(ExpansionMethod):
         """
         headers = params.pop("headers")
         
-        retrieve_action = None
+        retrieve_action = []
         for action in actions_confs:
             if action["action"] == "retrieve":
-                retrieve_action = action
+                retrieve_action.append(deepcopy(action))
         
-        if retrieve_action is None:
+        if len(retrieve_action) == 0:
             raise PrintableGenaiError(404, "Action retrieve not found for query expansion")
 
         langs = params.get("langs")
         if langs is None or len(langs) == 0:
-            langs = ["en", "es"]
+            raise PrintableGenaiError(404, "Langs to expand not provided")
+        
+        translate_model = params.get("model")
         
         if not isinstance(langs, list):
             raise PrintableGenaiError(500, "Param <langs> is not a list")
 
-        templates = []
-        for lang in langs:
-            lang = self.parse_lang(lang)
-            TRANSLATE_QUERY = f"Sentence: {self.query} \n Language: {lang}"
-            TRANSLATE_TEMPLATE["query_metadata"]["query"] = TRANSLATE_QUERY
-            templates.append(deepcopy(TRANSLATE_TEMPLATE))
+        retriever_result = []
+        for retriever in retrieve_action:
+            templates = []
+            query = retriever['action_params']['params']['generic']['index_conf']['query']
+            for lang in langs:
+                lang = self.parse_lang(lang)
+                TRANSLATE_QUERY = f"Sentence: <{query}> \n Language: {lang}"
+                TRANSLATE_TEMPLATE["query_metadata"]["query"] = TRANSLATE_QUERY
+                if translate_model is not None:
+                    TRANSLATE_TEMPLATE["llm_metadata"]["model"] = translate_model
+                templates.append(deepcopy(TRANSLATE_TEMPLATE))
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(self.parallel_calls(templates, headers))
-        loop.close()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result =  loop.run_until_complete(self.parallel_calls(templates, headers))
+            loop.close()
+            retriever_result.append(result)
 
         queries = []
-        for r in result:
-            translated_query = r["answer"]
-            queries.append(translated_query)
-            retrieve_action["action_params"]["params"]["generic"]["index_conf"]["query"] = translated_query
-            actions_confs.insert(0, deepcopy(retrieve_action))
+        for retriever, result in zip(retrieve_action, retriever_result):
+            for r in result:
+                translated_query = r["answer"]
+                queries.append(translated_query)
+                retriever["action_params"]["params"]["generic"]["index_conf"]["query"] = translated_query
+                actions_confs.insert(0, deepcopy(retriever))
         
         return queries
         

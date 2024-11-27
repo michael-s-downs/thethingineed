@@ -51,7 +51,7 @@ class LoggerHandler:
             logging.getLogger('openai').disabled = True
             logging.getLogger('httpcore').disabled = True
             logging.getLogger('pdfminer').disabled = True
-            os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+            os.environ['WERKZEUG_RUN_MAIN'] = 'false'
             logging.getLogger('PIL').setLevel(logging.CRITICAL)
             logging.getLogger('boto').setLevel(logging.CRITICAL)
             logging.getLogger('boto3').setLevel(logging.CRITICAL)

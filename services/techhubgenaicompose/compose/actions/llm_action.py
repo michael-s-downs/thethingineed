@@ -2,7 +2,6 @@
 
 
 import os
-import json
 import logging
 import asyncio
 import aiohttp
@@ -43,7 +42,7 @@ class LLMMethod(ABC):
     TYPE: str = None
     URL: str = None
     TEMPLATE: dict = None
-    HEADERS = {'Content-type': 'application/json'}
+    HEADERS = {"Content-type": "application/json"}
 
     def __init__(self, streamlist: list) -> None:
         """Instantiate the LLMMethod object.
@@ -95,20 +94,16 @@ class LLMMethod(ABC):
         try:
             r = requests.post(self.URL, json=template, headers=headers, verify=True)
         except Exception as ex:
-            raise PrintableGenaiError(status_code=500, message=f"Error calling GENAI-LLMAPI: {ex}")
+            raise PrintableGenaiError(
+                status_code=500, message=f"Error calling GENAI-LLMAPI: {ex}"
+            )
 
         if r.status_code != 200:
-            raise PrintableGenaiError(status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}")
+            raise PrintableGenaiError(
+                status_code=r.status_code, message=f"Error from GENAI-LLMAPI: {r.text}"
+            )
 
         return LLMP.parse_response(r)
-
-    def get_example(self):
-        """Get an example of the LLM method.
-
-        Returns:
-            str: The example of the LLM method.
-        """
-        return json.dumps(self._get_example())
 
     def _get_example(self) -> dict:
         """Get an example dictionary to generate compose dict.
@@ -116,66 +111,61 @@ class LLMMethod(ABC):
         Returns:
             dict: The example dictionary.
         """
-        return {
-            'type': self.TYPE, 
-            'params': self.TEMPLATE
-        }
-    
+        return {"type": self.TYPE, "params": self.TEMPLATE}
+
     def adapt_query_for_model(self, llm_action, query_type, template):
         query = []
         if len(llm_action) > 0:
             for action in llm_action:
-                if action['query_type'] == "image_url":
-                    query.append({
-                        "type": "image_url",
-                        "image": {
-                            "url": action['query'],
-                            "detail": "high"
+                if action["query_type"] == "image_url":
+                    query.append(
+                        {
+                            "type": "image_url",
+                            "image": {"url": action["query"], "detail": "high"},
                         }
-                    })
+                    )
 
-                if action['query_type'] == "image_b64":
-                    query.append({
-                        "type": "image_b64",
-                        "image": {
-                            "base64": action['query'],
-                            "detail": "high"
+                if action["query_type"] == "image_b64":
+                    query.append(
+                        {
+                            "type": "image_b64",
+                            "image": {"base64": action["query"], "detail": "high"},
                         }
-                    })
-                
-                if action['query_type'] == "text":
-                    query.append({
-                        "type": "text",
-                        "text": action['query']
-                    })
+                    )
+
+                if action["query_type"] == "text":
+                    query.append({"type": "text", "text": action["query"]})
 
         if query_type in ["image_url"]:
-            query.append({
-                "type": query_type,
-                "image": {
-                    "url": template['query_metadata']['query'],
-                    "detail": "high"
+            query.append(
+                {
+                    "type": query_type,
+                    "image": {
+                        "url": template["query_metadata"]["query"],
+                        "detail": "high",
+                    },
                 }
-            })
+            )
 
         if query_type == "image_b64":
-            query.append({
-                "type": "image_b64",
-                "image": {
-                    "base64": template['query_metadata']['query'],
-                    "detail": "high"
+            query.append(
+                {
+                    "type": "image_b64",
+                    "image": {
+                        "base64": template["query_metadata"]["query"],
+                        "detail": "high",
+                    },
                 }
-            })
-        
+            )
+
         if query_type == "text":
-            query.append({
-                "type": query_type,
-                "text": template['query_metadata']['query']
-            })
+            query.append(
+                {"type": query_type, "text": template["query_metadata"]["query"]}
+            )
 
         if query != []:
-            template['query_metadata']['query'] = query
-    
+            template["query_metadata"]["query"] = query
+
         return template
 
 
@@ -186,40 +176,41 @@ class LLMSummarize(LLMMethod):
 
     TYPE = "llm"
 
-    URL = os.environ['URL_LLM']
+    URL = os.environ["URL_LLM"]
     TEMPLATE = SUM_TEMPLATE
     TEXT_KEY = "content"
 
     def clear_output(self):
-        """Deletes all the answers used to make a global summary. Not needed in this case
-        """
+        """Deletes all the answers used to make a global summary. Not needed in this case"""
 
     def add_hystoric(self, session_id, template, PD):
-        """ Adds persistence to compose summaries 
-        """
+        """Adds persistence to compose summaries"""
         hystoric = PD.get_conversation(session_id)
         persistence = []
         for h in hystoric:
             if isinstance(h, dict):
-                if 'user' in h:
-                    persistence.append({'role': "user", 'content': h['user']})
-                if 'system' in h:
-                    persistence.append({'role': "system", 'content': h['system']})
-                if 'assistant' in h:
-                    persistence.append({'role': "assistant", 'content': h['assistant']})
+                if "user" in h:
+                    persistence.append({"role": "user", "content": h["user"]})
+                if "system" in h:
+                    persistence.append({"role": "system", "content": h["system"]})
+                if "assistant" in h:
+                    persistence.append({"role": "assistant", "content": h["assistant"]})
 
         if persistence:
-            template['query_metadata']['persistence'] = [(persistence[i], persistence[i+1]) for i in range(0, len(persistence) - 1, 2)]
+            template["query_metadata"]["persistence"] = [
+                (persistence[i], persistence[i + 1])
+                for i in range(0, len(persistence) - 1, 2)
+            ]
         return template
 
     def process(self, params):
-        """Main function to process each streamlist, make a summary of the full text. 
-            Take into account that some text can be ignored by llm to make the summary
+        """Main function to process each streamlist, make a summary of the full text.
+        Take into account that some text can be ignored by llm to make the summary
         """
         headers, template, session_id = self.update_params(params)
-        PD = template.pop('PD')
-        query_type = template.pop('query_type')
-        llm_action = template.pop('llm_action')
+        PD = template.pop("PD")
+        query_type = template.pop("query_type")
+        llm_action = template.pop("llm_action")
 
         texts = []
         for sl in self.streamlist:
@@ -234,38 +225,47 @@ class LLMSummarize(LLMMethod):
 
         if texts:
             context = "\n".join(texts)
-            template['query_metadata']['context'] = context
+            template["query_metadata"]["context"] = context
             if session_id:
                 template = self.add_hystoric(session_id, template, PD)
-            
+
             template = self.adapt_query_for_model(llm_action, query_type, template)
 
             result = self.call_llm(template, headers)
 
             if session_id:
-                persistence = {"user": template['query_metadata']['query']}
+                persistence = {"user": template["query_metadata"]["query"]}
                 if "answer" in result:
                     if not result["answer"]:
                         result["answer"] = "Answer not found"
-                    persistence.update({"assistant": result['answer']})
-                    if isinstance(result['query_tokens'], list):
-                        for i, q in enumerate(persistence['user']):
-                            q['n_tokens'] = result['query_tokens'][i]
+                    persistence.update({"assistant": result["answer"]})
+                    if isinstance(result["query_tokens"], list):
+                        for i, q in enumerate(persistence["user"]):
+                            q["n_tokens"] = result["query_tokens"][i]
                     else:
-                        persistence['n_tokens'] = result['query_tokens'] 
+                        persistence["n_tokens"] = result["query_tokens"]
 
-                    persistence['input_tokens'] = result['input_tokens']
-                    persistence['output_tokens'] = result['output_tokens']
+                    persistence["input_tokens"] = result["input_tokens"]
+                    persistence["output_tokens"] = result["output_tokens"]
 
                 PD.update_last(persistence, session_id)
                 PD.update_context(session_id, context)
-                
 
             self.clear_output()
-            self.streamlist.append(StreamChunk({"content":"", "meta": {"title": "Summary"}, "scores":1, 
-                                                "answer": result['answer'], 
-                                               "tokens": {"input_tokens": result['input_tokens'], "output_tokens": result['output_tokens']}
-                                               }))
+            self.streamlist.append(
+                StreamChunk(
+                    {
+                        "content": "",
+                        "meta": {"title": "Summary"},
+                        "scores": 1,
+                        "answer": result["answer"],
+                        "tokens": {
+                            "input_tokens": result["input_tokens"],
+                            "output_tokens": result["output_tokens"],
+                        },
+                    }
+                )
+            )
 
         return self.streamlist
 
@@ -280,8 +280,7 @@ class LLMSummarizeAnswer(LLMSummarize):
     TEXT_KEY = "answer"
 
     def clear_output(self):
-        """Deletes all the answers used to make a global summary
-        """
+        """Deletes all the answers used to make a global summary"""
         for sl in self.streamlist:
             sl.pop("answer", None)
 
@@ -293,7 +292,7 @@ class LLMSummarizeSegments(LLMMethod):
 
     TYPE = "llm_segments"
 
-    URL = os.environ['URL_LLM']
+    URL = os.environ["URL_LLM"]
     TEMPLATE = SUM_TEMPLATE
 
     def parse_streamlists(self):
@@ -314,9 +313,11 @@ class LLMSummarizeSegments(LLMMethod):
         Returns:
             dict: The response from LLM.
         """
-        async with session.post(self.URL, json=template, headers=headers, verify_ssl=False) as response:
+        async with session.post(
+            self.URL, json=template, headers=headers, verify_ssl=False
+        ) as response:
             LLMP.control_errors(response, async_bool=True)
-            return (await response.json(content_type='text/html'))['result']
+            return (await response.json(content_type="text/html"))["result"]
 
     async def parallel_calls(self, templates, headers):
         """
@@ -332,7 +333,9 @@ class LLMSummarizeSegments(LLMMethod):
         async with aiohttp.ClientSession() as session:
             tasks = []
             for template in templates:
-                task = asyncio.ensure_future(self.async_call_llm(template, headers, session))
+                task = asyncio.ensure_future(
+                    self.async_call_llm(template, headers, session)
+                )
                 tasks.append(task)
             responses = await asyncio.gather(*tasks)
             return responses
@@ -361,7 +364,7 @@ class LLMSummarizeSegments(LLMMethod):
 
         templates = []
         for sl in self.streamlist[:top_qa]:
-            template['query_metadata']['context'] = sl.content
+            template["query_metadata"]["context"] = sl.content
             template = self.adapt_query_for_model(llm_action, query_type, template)
             templates.append(deepcopy(template))
 
@@ -372,14 +375,16 @@ class LLMSummarizeSegments(LLMMethod):
 
         for i, r in enumerate(result):
             if "answer" in r:
-                self.streamlist[i].answer = r['answer']
-                self.streamlist[i].tokens = {"input_tokens": r['input_tokens'], "output_tokens": r['output_tokens']} 
+                self.streamlist[i].answer = r["answer"]
+                self.streamlist[i].tokens = {
+                    "input_tokens": r["input_tokens"],
+                    "output_tokens": r["output_tokens"],
+                }
 
         return self.streamlist
 
 
 class LLMFactory:
-
     SUMMARIES = [LLMSummarizeContent, LLMSummarizeSegments, LLMSummarizeAnswer]
 
     def __init__(self, llm_type: str) -> None:
@@ -396,9 +401,11 @@ class LLMFactory:
                 break
 
         if self.llm_method is None:
-            raise PrintableGenaiError(status_code=404, message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}")
+            raise PrintableGenaiError(
+                status_code=404,
+                message=f"Provided llm_action does not match any of the possible ones: {', '.join(f.TYPE for f in self.SUMMARIES)}",
+            )
 
     def process(self, streamlist: list, params):
-        """Process the streamlist with the given method
-        """
+        """Process the streamlist with the given method"""
         return self.llm_method(streamlist).process(params)

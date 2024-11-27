@@ -73,8 +73,7 @@ class TopKFilter(FilterMethod):
 class PermissionFilter(FilterMethod):
     TYPE = "permission"
     TEMPLATE = FILTER_TEMPLATE
-    URL = os.environ['URL_ALLOWED_DOCUMENTS_KNOWLER']
-    # URI_PREFIX = os.environ['URI_PREFIX_KNOWLER']  # TODO delete if not needed
+    URL = os.environ.get('URL_ALLOWED_DOCUMENTS_KNOWLER')
     HEADERS = {'Content-type': 'application/json'}
     BODY = {}
 
@@ -92,6 +91,8 @@ class PermissionFilter(FilterMethod):
         self.HEADERS["Authorization"] = headers.get("user-token", "")
         url = self.URL
         self.URL = params.get("url_allowed_documents", url)
+        if self.URL is None:
+            raise PrintableGenaiError(400, "Variable URL_ALLOWED_DOCUMENT not found")
         # Check permissions for documents
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

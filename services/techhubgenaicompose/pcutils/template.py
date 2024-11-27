@@ -6,7 +6,6 @@ import random
 from common.genai_controllers import load_file, storage_containers
 from basemanager import AbstractManager
 
-S3_QUERYFILTERSPATH = "src/compose/queryfilters_templates"
 S3_TEMPLATEPATH = "src/compose/templates"
 
 

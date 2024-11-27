@@ -21,5 +21,4 @@ URL_ALLOWED_DOCUMENTS_KNOWLER=2
 URL_LLM=http://llmapi/predict
 URL_RETRIEVE=http://inforetrieval/process
 CRON_TIME=3600
-#TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
-#TRACKING_OUTPUT_URL=uhis-cdac-develop--q-all-tracking
+DEFAULT_LLM_MODEL=model name or pool

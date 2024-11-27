@@ -1,0 +1,17 @@
+### This code is property of the GGAO ###
+
+
+boto3==1.35.32
+flask==3.0.3
+gunicorn==23.0.0
+itsdangerous==2.2.0
+Jinja2==3.1.4
+MarkupSafe==2.1.5
+flask-restx==1.3.0
+Werkzeug==3.0.4
+numpy==2.0.2
+pandas==2.2.3
+Pillow==10.4.0
+rapidfuzz==3.10.0
+requests==2.32.3
+regex==2024.9.11

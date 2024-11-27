@@ -1,12 +1,11 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.2.4.5
+genai-sdk-services==0.4.3
 elasticsearch==8.13.2
 langdetect==1.0.9
 python-magic-bin==0.4.14
 pydantic==1.10.8
-requests==2.22.0
 
 llama-index-embeddings-azure-openai==0.1.9
 llama-index-embeddings-bedrock==0.2.0

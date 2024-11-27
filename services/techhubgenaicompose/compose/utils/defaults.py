@@ -17,7 +17,7 @@ SUM_TEMPLATE = {
     },
     "llm_metadata": {
         "max_tokens": 10000,
-        "model": "gpt-3.5-turbo"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -31,7 +31,7 @@ FILTER_TEMPLATE = {
         "template_name": "emptysystem_query"
     },
     "llm_metadata": {
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -46,7 +46,7 @@ REFORMULATE_TEMPLATE = {
     },
     "llm_metadata": {
         # "max_tokens": 10000,
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -60,10 +60,57 @@ TRANSLATE_TEMPLATE = {
         "template": "{\"system\": \"You are a profesional translator and only answer with the translated sentence.\",\"user\": \"$query\"}"
     },
     "llm_metadata": {
-        "model": "gpt-3.5-16k-pool-europe"
+        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure", 
         "timeout": TIMEOUT
     }
 }
+
+FILTERED_ACTIONS = [
+    {
+		"action": "retrieve",
+		"action_params": {
+			"type": "streamlist",		
+            "params": {
+				"streamlist":[
+					{
+						"content": "",
+						"meta": {
+							"field1": ""
+						},
+						"scores": {
+							"bm25": 1,
+							"sim-example": 1
+						}
+					}
+				],
+                "generic": {
+                    "index_conf": {
+                        "query": ""
+                    }
+                }		
+            }	
+		}
+	}
+    ,{
+        "action": "llm_action",
+        "action_params": {
+            "params": {
+                "llm_metadata": {
+                    "model": "techhubinc-pool-world-gpt-3.5-turbo-16k",
+					"max_input_tokens":5000
+                },
+                "platform_metadata": {
+                    "platform": "azure"
+                },
+                "query_metadata": {
+                    "query": "",
+					"system":"You are a helpful assistant",
+                    "template_name": "system_query"
+                }
+            },
+            "type": "llm_content"
+        }
+    }]

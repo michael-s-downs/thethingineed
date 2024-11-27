@@ -18,7 +18,7 @@ class BatchSortMethod:
             streambatch (list): StreamBatch
         """
         streambatch.append(streambatch[0])
-        if len(streambatch) <= 1:
+        if len(streambatch) <= 2:
             raise GenaiError(status_code=500, message="Cant sort 1 or less streambatch")
         self.streambatch = streambatch
 
@@ -44,7 +44,7 @@ class BatchSortScore(BatchSortMethod):
                 streamlist_scores.append(chunk.get_mean_score())
             scores.append(mean(streamlist_scores))
 
-        return [x for _, x in sorted(zip(scores, self.streamlist), key=lambda pair: pair[0], reverse=desc)]
+        return [x for _, x in sorted(zip(scores, self.streambatch), key=lambda pair: pair[0], reverse=desc)]
 
 
 class BatchSortLength(BatchSortMethod):
@@ -63,7 +63,7 @@ class BatchSortLength(BatchSortMethod):
                 streamlist_scores.append(len(chunk.content))
             scores.append(sum(streamlist_scores))
 
-        return [x for _, x in sorted(zip(scores, self.streamlist), key=lambda pair: pair[0], reverse=desc)]
+        return [x for _, x in sorted(zip(scores, self.streambatch), key=lambda pair: pair[0], reverse=desc)]
 
 
 class BatchSortFactory:
@@ -84,7 +84,7 @@ class BatchSortFactory:
 
         if self.batchsortmethod is None:
             raise GenaiError(status_code=404,
-                             message=f"Provided batchsort does not match any of the possible ones: {', '.join(f.type for f in self.MERGEBATCHES)}")
+                             message=f"Provided batchsort does not match any of the possible ones: {', '.join(f.TYPE for f in self.SORTBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

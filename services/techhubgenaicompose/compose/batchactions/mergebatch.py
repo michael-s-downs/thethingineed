@@ -2,9 +2,8 @@
 
 
 from typing import List
-from copy import deepcopy
+from abc import abstractmethod
 
-from ..utils.defaults import EMPTY_STREAM
 from ..streamlist import StreamList
 from common.errors.genaierrors import GenaiError
 
@@ -20,6 +19,7 @@ class MergeBatchMethod:
         """
         self.streambatch = streambatch
 
+    @abstractmethod
     def process(self) -> List:
         """Process the streambatch given the method
         """
@@ -29,7 +29,7 @@ class MergeBatchMethod:
 class AddMergeBatch(MergeBatchMethod):
     TYPE = "add"
 
-    def process(self, SEQ:str = "\n"):
+    def process(self):
         """Process the streambatch transforming it into one streamlist with no-repeated chunks
         """
         sl_add = StreamList()
@@ -61,7 +61,7 @@ class MergeBatchFactory:
                 break
 
         if self.mergebatchmethod is None:
-            raise GenaiError(status_code=404, message=f"Provided mergebatch does not match any of the possible ones: {', '.join(f.type for f in self.MERGEBATCHES)}")
+            raise GenaiError(status_code=404, message=f"Provided mergebatch does not match any of the possible ones: {', '.join(f.TYPE for f in self.MERGEBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

@@ -13,8 +13,8 @@ from functools import partial
 import boto3
 import imageio
 import numpy as np
-from google.oauth2 import service_account
-from genai_sdk_services.resources.vision.ocr2visionfeatures import runOCR, get_blocks_cells
+# from google.oauth2 import service_account
+# from genai_sdk_services.resources.vision.ocr2visionfeatures import runOCR, get_blocks_cells
 from genai_sdk_services.resources.vision.utils_vision import translate
 from genai_sdk_services.storage import StorageController
 from pytesseract import Output, image_to_data
@@ -40,59 +40,59 @@ class BaseOCR(ABC):
         return origin_type == cls.ORIGIN_TYPE
 
 
-class CloudVision(BaseOCR):
-    ORIGIN_TYPE = "google-ocr"
-    credentials = {}
-    secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "google", "google_ocr.json")
-    env_vars = ["GOOGLE_OCR_PATH"]
+# class CloudVision(BaseOCR):
+#     ORIGIN_TYPE = "google-ocr"
+#     credentials = {}
+#     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "google", "google_ocr.json")
+#     env_vars = ["GOOGLE_OCR_PATH"]
 
-    def _set_credentials(self, credentials: dict):
-        """ Set the credentials for the OCR
+#     def _set_credentials(self, credentials: dict):
+#         """ Set the credentials for the OCR
 
-        :param credentials: (dict) Credentials to set
-        """
-        if not self.credentials:
-            if not credentials:
-                if os.path.exists(self.secret_path):
-                    with open(self.secret_path, "r") as file:
-                        credentials = json.load(file)
-                elif os.getenv(self.env_vars[0], ""):
-                    with open(os.getenv(self.env_vars[0]), "r") as file:
-                        credentials = json.load(file)
-                else:
-                    raise Exception("Credentials not found")
+#         :param credentials: (dict) Credentials to set
+#         """
+#         if not self.credentials:
+#             if not credentials:
+#                 if os.path.exists(self.secret_path):
+#                     with open(self.secret_path, "r") as file:
+#                         credentials = json.load(file)
+#                 elif os.getenv(self.env_vars[0], ""):
+#                     with open(os.getenv(self.env_vars[0]), "r") as file:
+#                         credentials = json.load(file)
+#                 else:
+#                     raise Exception("Credentials not found")
 
-            self.credentials = credentials
+#             self.credentials = credentials
 
-    def run_ocr(self, credentials: dict, files: list, **kwargs: dict) -> Tuple[list, list, list, list, list, list]:
-        """ Run the OCR
+#     def run_ocr(self, credentials: dict, files: list, **kwargs: dict) -> Tuple[list, list, list, list, list, list]:
+#         """ Run the OCR
 
-        :param credentials: (dict) Credentials to use
-        :param files: (list) List of files to run the OCR
-        :param kwargs: (dict) Extra parameters
-        :return: (tuple) Lists with several files with information of file
-        """
-        self._set_credentials(credentials)
+#         :param credentials: (dict) Credentials to use
+#         :param files: (list) List of files to run the OCR
+#         :param kwargs: (dict) Extra parameters
+#         :return: (tuple) Lists with several files with information of file
+#         """
+#         self._set_credentials(credentials)
 
-        ocr_credential = service_account.Credentials.from_service_account_info(self.credentials)
+#         ocr_credential = service_account.Credentials.from_service_account_info(self.credentials)
 
-        # Running the OCR
-        ocr_infos = runOCR(ocr_credential, files)
+#         # Running the OCR
+#         ocr_infos = runOCR(ocr_credential, files)
 
-        documents_blocks = []
-        documents_paragraphs = []
-        documents_words = []
-        documents_lines = []
-        documents_tables = []
-        if kwargs.get('do_cells', True):
-            documents_blocks, documents_paragraphs, documents_words, documents_lines = get_blocks_cells(ocr_infos)
+#         documents_blocks = []
+#         documents_paragraphs = []
+#         documents_words = []
+#         documents_lines = []
+#         documents_tables = []
+#         if kwargs.get('do_cells', True):
+#             documents_blocks, documents_paragraphs, documents_words, documents_lines = get_blocks_cells(ocr_infos)
 
-        returning_texts = []
-        for ocr_info in ocr_infos:
-            text = ocr_info[0].text
-            returning_texts.append(text)
+#         returning_texts = []
+#         for ocr_info in ocr_infos:
+#             text = ocr_info[0].text
+#             returning_texts.append(text)
 
-        return returning_texts, documents_blocks, documents_paragraphs, documents_words, documents_tables, documents_lines
+#         return returning_texts, documents_blocks, documents_paragraphs, documents_words, documents_tables, documents_lines
 
 
 class Textract(BaseOCR):
