@@ -54,10 +54,13 @@ stages:
       continueOnError: false
       steps:      
       - script: |
+          echo pwd
           pwd
           python -m venv .venv
           source .venv/bin/activate
-          pip install pytest pytest-cov
+          echo installing packages
+          pip install pytest pytest-cov boto3
+          echo running coverage
           coverage run -m pytest -s
         displayName: 'Run Tests and Generate Coverage' 
       - task: SonarQubePrepare@7
