@@ -73,6 +73,7 @@ stages:
           pip install -r requirements_info.txt
           pip install -r requirements.txt
           
+          export PYTHONPATH=/home/vsts/work/1/s/services/common/
           echo running coverage
           coverage run -m pytest -s
         displayName: 'Run Tests and Generate Coverage' 
