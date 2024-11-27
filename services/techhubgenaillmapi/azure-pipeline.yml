@@ -65,7 +65,8 @@ stages:
           pwd
           python setup.py install
 
-          cd services/techhubgenaillmapi/
+          echo techhubgenaillmapi
+          cd /home/vsts/work/1/s/services/techhubgenaillmapi/
           pwd
           echo installing packages
           pip install pytest pytest-cov boto3
