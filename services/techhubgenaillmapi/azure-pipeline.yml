@@ -57,13 +57,22 @@ stages:
           echo pwd
           pwd
 
+          echo install magic 
+          sudo apt-get install libmagic1
+
           python -m venv .venv
           source .venv/bin/activate
 
           echo installing genai_sdk_services
           cd libraries/genai_sdk_services
           pwd
+          pip install --upgrade pip
+          python -m pip install -U setuptools wheel twine
           python setup.py install
+
+          echo build package 
+          python setup.py build_ext --inplace
+          python setup.py bdist_wheel --python-tag=cp$(python_version)
 
           echo techhubgenaillmapi
           cd /home/vsts/work/1/s/services/techhubgenaillmapi/
