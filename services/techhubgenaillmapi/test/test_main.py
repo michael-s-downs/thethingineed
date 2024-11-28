@@ -2,16 +2,16 @@
 
 
 # Native imports
-import re, copy, json
+import os
+import re
+import copy
+import json
 
 # Installed imports
 import pytest
 from unittest.mock import MagicMock, patch
-from unittest import mock
 
 # Local imports
-from main import (LLMDeployment, reloadconfig, sync_deployment, healthcheck, list_available_templates, get_template,
-                  get_available_models, upload_prompt_template, delete_prompt_template, app)
 from common.errors.genaierrors import PrintableGenaiError
 from generatives import ChatGPTvModel
 
@@ -167,8 +167,17 @@ default_templates = {"system_query": {
 
 default_templates_names = ["system_query", "system_query_v"]
 
+default_templates_file_names = {
+    "genai_lan_create_query.json": [
+        "emptysystem_query",
+        "emptysystem_query_es",
+        "emptysystem_query_en",
+        "system_query"
+    ]
+}
+
 def get_llm_deployment():
-    with (patch('main.load_secrets') as mock_load_secrets,
+    with (patch('common.utils.load_secrets') as mock_load_secrets,
           patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
         mock_load_secrets.return_value = {"URLs": {
             "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
@@ -177,13 +186,14 @@ def get_llm_deployment():
                 "techhubinc-GermanyWestCentral": "test_key",
                 "techhubinc-AustraliaEast": "test_key"}}}, {"access_key": "346545", "secret_key": "87968"}
         storage_mock_object = MagicMock()
-        storage_mock_object.get_templates.return_value = (default_templates, default_templates_names)
+        storage_mock_object.get_templates.return_value = (default_templates, default_templates_names, default_templates_file_names)
         storage_mock_object.upload_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
         storage_mock_object.delete_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
         storage_mock_object.get_available_pools.return_value = available_pools
         storage_mock_object.get_available_models.return_value = available_models
 
         mock_get_file_storage.return_value = storage_mock_object
+        from main import LLMDeployment
         return LLMDeployment()
 
 class TestMain:
@@ -198,9 +208,10 @@ class TestMain:
 
 
     def test_queue_mode_init(self):
+        os.environ['Q_GENAI_LLMQUEUE_INPUT'] = "test_q"
         with patch('main.QUEUE_MODE', True):
             deploy = get_llm_deployment()
-            assert deploy.Q_IN == ('azure', 'techhubragemeal--q-llmapi-local-alberto')
+            assert deploy.Q_IN == ('azure', 'test_q')
             assert len(deploy.templates_names) > 0
 
     def test_x_limits_passed(self):
@@ -231,10 +242,27 @@ class TestMain:
                 assert result['answer'] == "asdf"
 
     def test_not_default_templates(self):
+        with (patch('common.utils.load_secrets') as mock_load_secrets,
+            patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
+            mock_load_secrets.return_value = {"URLs": {
+                "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
+                "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API"},
+                "api-keys": {"azure": {
+                    "techhubinc-GermanyWestCentral": "test_key",
+                    "techhubinc-AustraliaEast": "test_key"}}}, {"access_key": "346545", "secret_key": "87968"}
+            storage_mock_object = MagicMock()
+            storage_mock_object.get_templates.return_value = ([], [], [])
+            storage_mock_object.upload_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
+            storage_mock_object.delete_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
+            storage_mock_object.get_available_pools.return_value = available_pools
+            storage_mock_object.get_available_models.return_value = available_models
+
+            mock_get_file_storage.return_value = storage_mock_object
+            from main import LLMDeployment
         with patch('common.storage_manager.LLMStorageManager.get_templates') as mock_func:
             with pytest.raises(PrintableGenaiError, match=re.compile(r"Error 400: Default templates not found: \{.*\}")):
 
-                mock_func.return_value = {}, []
+                mock_func.return_value = {}, [], []
                 LLMDeployment()
 
     def test_must_continue(self):
@@ -283,6 +311,8 @@ class TestMain:
                                            "in parameter '['max_input_tokens']' for value 'ss'")
 
     def test_reloadconfig(self):
+        with patch("main.load_secrets"):
+            from main import reloadconfig
         _, status_code = reloadconfig()
         assert status_code == 200
 
@@ -292,6 +322,7 @@ class TestMain:
 @pytest.fixture
 def client():
     with patch('main.deploy', get_llm_deployment()):
+        from main import app
         with app.test_client() as client:
             yield client
 
@@ -304,7 +335,7 @@ def test_list_templates(client):
     response = client.get("/list_templates")
     result = json.loads(response.text).get('result')
     assert response.status_code == 200
-    assert len(result.get('templates')) > 0
+    assert len(result) > 0
 
 
 def test_upload_prompt_template(client):
