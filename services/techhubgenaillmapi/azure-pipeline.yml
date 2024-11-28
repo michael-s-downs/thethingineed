@@ -91,6 +91,8 @@ stages:
           export PYTHONPATH=/home/vsts/work/1/s/services/
           echo running coverage
           coverage run -m pytest -s
+          coverage report
+          coverage xml
         displayName: 'Run Tests and Generate Coverage' 
         continueOnError: true
         
