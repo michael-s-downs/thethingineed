@@ -52,7 +52,48 @@ stages:
   jobs:
     - job: test
       continueOnError: false
-      steps:       
+      steps:      
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.11'
+          addToPath: true
+          architecture: 'x64'
+      - script: |
+          python --version
+          echo pwd
+          pwd
+
+          echo install magic 
+          sudo apt-get install libmagic1
+
+          python -m venv .venv
+          source .venv/bin/activate
+
+          echo installing genai_sdk_services
+          cd libraries/genai_sdk_services
+          pwd
+          pip install --upgrade pip
+          python -m pip install -U setuptools wheel twine
+          python setup.py install
+
+          echo build package 
+          python setup.py build_ext --inplace
+          python setup.py bdist_wheel --python-tag=cp$(python_version)
+
+          echo techhubgenaillmapi
+          cd /home/vsts/work/1/s/services/techhubgenaillmapi/
+          pwd
+          echo installing packages
+          pip install pytest pytest-cov boto3 pillow flask pandas
+          pip install -r requirements_info.txt
+          pip install -r requirements.txt
+          
+          export PYTHONPATH=/home/vsts/work/1/s/services/
+          echo running coverage
+          coverage run -m pytest -s
+        displayName: 'Run Tests and Generate Coverage' 
+
+        
       - task: SonarQubePrepare@7
         inputs:
           SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
