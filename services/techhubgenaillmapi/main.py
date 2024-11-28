@@ -233,7 +233,7 @@ def sync_deployment() -> Tuple[str, int]:
 @app.route('/reloadconfig', methods=['GET'])
 def reloadconfig() -> Tuple[str, int]:
     deploy.logger.info("Reload config request received")
-    deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+    deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     result = json.dumps({
         'status': "ok",
         'status_code': 200
@@ -281,7 +281,7 @@ def upload_prompt_template() -> Tuple[str, int]:
     response = deploy.storage_manager.upload_template(dat)
     if response.get('status_code') == 200:
         # Update the templates modification in the llmapi component
-        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+        deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
 
 
@@ -292,7 +292,7 @@ def delete_prompt_template() -> Tuple[str, int]:
     response = deploy.storage_manager.delete_template(dat)
     if response.get('status_code') == 200:
         # Update the templates modification in the llmapi component
-        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+        deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
 
 

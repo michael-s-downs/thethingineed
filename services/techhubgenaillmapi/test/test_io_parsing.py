@@ -12,8 +12,6 @@ from pydantic import ValidationError
 
 # Local imports
 from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue
-from common.errors.genaierrors import PrintableGenaiError
-from generatives import ChatGPTvModel
 
 
 gpt_v_model = {
@@ -143,6 +141,7 @@ class TestResponseObject():
             ResponseObject(**{"status_code": 200, "status": "finished"}).get_response_base()
 
         response_object = ResponseObject(**{"status_code": 200, "status": "finished", "result": "result"})
+        os.environ['Q_GENAI_LLMQUEUE_OUTPUT'] = "techhubragemeal--q-local-output" 
         with mock.patch("io_parsing.QUEUE_MODE", True):
             must_continue, output, next_service = response_object.get_response_predict()
             assert must_continue
