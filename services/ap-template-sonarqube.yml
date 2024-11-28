@@ -45,16 +45,14 @@ steps:
       pip install pytest pytest-cov pillow flask
       pip install -r requirements_info.txt
       pip install -r requirements.txt
-  displayName: Install dependencies
- 
-- script: |    
-      source .venv/bin/activate 
+
       export PYTHONPATH=/home/vsts/work/1/s/services/
       echo running coverage
       coverage run --source=/home/vsts/work/1/s/services/${{ parameters.serviceName }}/ -m pytest -s
       coverage report
       coverage xml 
-  displayName: Generate coverage report
+      cat coverage.xml
+  displayName: Install dependencies & Generate coverage report
 
 
 - task: SonarQubePrepare@7
