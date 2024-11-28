@@ -93,6 +93,8 @@ stages:
           coverage run -m pytest -s
           coverage report
           coverage xml
+          pwd
+          ls
         displayName: 'Run Tests and Generate Coverage' 
         continueOnError: true
         
