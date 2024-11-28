@@ -92,9 +92,10 @@ stages:
           echo running coverage
           coverage run -m pytest -s
           coverage report
-          coverage xml -i
+          coverage xml 
           pwd
           ls
+          cat coverage.xml
         displayName: 'Run Tests and Generate Coverage' 
         continueOnError: true
         
@@ -111,6 +112,7 @@ stages:
               sonar.projectVersion=1.0
               sonar.sources=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/coverage.xml
+              sonar.verbose=true
 
           # removes sonar.branch.name variable as this is not supported by community edition
       - task: PowerShell@2
