@@ -56,14 +56,29 @@ stages:
       vmImage: $(vmImageName)
     steps:
       - script: |
+            echo install magic 
+            sudo apt-get install libmagic1
+
             python -m venv .venv
             source .venv/bin/activate
 
+            echo installing genai_sdk_services
+            cd libraries/genai_sdk_services
+          
+            pip install --upgrade pip
+            python -m pip install -U setuptools wheel twine
+            python setup.py install
+
+            echo build package 
+            python setup.py build_ext --inplace
+            python setup.py bdist_wheel --python-tag=cp$(python_version)
+
             echo $(serviceName)
             cd /home/vsts/work/1/s/services/$(serviceName)/
-
+        
             echo installing packages
-            pip install pytest pytest-cov pillow flask
+            # pip install pytest pytest-cov boto3 pillow flask pandas
+            pip install pytest pytest-cov
             pip install -r requirements_info.txt
             pip install -r requirements.txt
 
