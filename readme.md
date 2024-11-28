@@ -235,42 +235,6 @@ The output can be changed passing in the requests some attribute values:
 
 ### Compose
 
-- List templates (GET)
-
-    Used to list all templates stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/compose/list_templates  
-
-- List filter templates (GET)
-
-    Used to list all filter templates stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/compose/list_filter_templates  
-
-- Get compose template (POST)
-
-    Used to get the content of a template json file stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/compose/get_template  
-
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
-- Get compose filter template (POST)
-
-    Used to get the content of a filter template json file stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/compose/get_filter_template  
-
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
 - Upload template (POST)
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
@@ -333,32 +297,6 @@ The output can be changed passing in the requests some attribute values:
     {
         "status": "ok",
         "status_code": 200
-    }
-    ```
-
-- List prompt templates
-
-    Used to list all the prompt templates stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/llm/list_templates
-
-    Response:
-
-    ```json
-    {
-        "status": "finished",
-        "status_code": 200,
-        "result": {
-            "genai_create_query_v.json": [
-                "system_query_v"
-            ],
-            "genai_lan_create_query.json": [
-                "emptysystem_query",
-                "emptysystem_query_es",
-                "emptysystem_query_en",
-                "system_query"
-            ]
-        }
     }
     ```
 
