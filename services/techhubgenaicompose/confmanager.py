@@ -15,6 +15,8 @@ from langfusemanager import LangFuseManager
 from common.preprocess.preprocess_utils import get_language
 from common.genai_controllers import load_file, storage_containers
 
+from lingua import Language, LanguageDetectorBuilder
+
 IRStorage_TEMPLATEPATH = "src/compose/templates"
 
 
@@ -42,6 +44,7 @@ class ConfManager(AbstractManager):
         self.reformulate_m = None
         self.langfuse_m = None
         self.update_model_from_defaults()
+        self.set_detector()
         self.parse_conf_actions(compose_config)
 
     def parse_conf_actions(self, compose_config):
@@ -134,23 +137,15 @@ class ConfManager(AbstractManager):
             self.logger.info("No lang provided, detecting default languages")
             if query.startswith("http") or query.startswith("data:image"):
                 return ""
-            lang, prob = get_language(query, return_acc=True, possible_langs=["es", "en", "ja"])
-            self.logger.debug(f"Detected lang: <{lang}>")
-            if prob > 0.8:
-                return lang
-            self.logger.debug(f"Detected <{lang}>, not enough prob")
-            return ""
+            
+            lang = self.detector.detect_language_of(query)
+            return str.lower(lang.iso_code_639_1.name)
 
         else:
             lang = compose_config['lang']
             if isinstance(lang, str):
                 lang = lang.lower()
                 self.logger.debug(f"Parsed lang: <{lang}>")
-
-            elif isinstance(lang, list):
-                if query.startswith("http") or query.startswith("data:image"):
-                    return ""
-                return get_language(query, return_acc=False, possible_langs=lang)
 
             else:
                 self.logger.error(f"Lang <{lang}> found not valid")
@@ -183,6 +178,24 @@ class ConfManager(AbstractManager):
         REFORMULATE_TEMPLATE["llm_metadata"]["model"] = default_model
         TRANSLATE_TEMPLATE["llm_metadata"]["model"] = default_model
         FILTERED_ACTIONS[1]["action_params"]["params"]["llm_metadata"]["model"] = default_model
+    
+    def set_detector(self):
+       langs = os.environ.get("DEFAULT_LANGS") 
+       if langs and isinstance(langs, list):
+            langs_map = {
+                "en": Language.ENGLISH,
+                "es": Language.SPANISH,
+                "ja": Language.JAPANESE,
+                "fr": Language.FRENCH,
+                "de": Language.GERMAN,
+                "it": Language.ITALIAN,
+                "pt": Language.PORTUGUESE
+            }
+            langs = [*map(langs_map.get, langs)]
+            self.detector = LanguageDetectorBuilder.from_languages(langs).with_preloaded_language_models().build()
+
+       else:
+            self.detector = LanguageDetectorBuilder.from_all_languages().with_preloaded_language_models().build()
         
         
 

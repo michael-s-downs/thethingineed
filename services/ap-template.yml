@@ -130,7 +130,7 @@ steps:
 # Create variable to tag services by branch
 - script: echo "##vso[task.setvariable variable=baseTag]$(echo 'latest' | tr -d '.')"
   displayName: Set baseTag to latest
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), ne(variables['Build.SourceBranch'], 'refs/heads/develop'))
 
 # Create folder to move files of services
 - script: mkdir ${{ parameters.defaultWorkingDirectory }}/uhis_docker
