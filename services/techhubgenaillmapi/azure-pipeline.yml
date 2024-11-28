@@ -77,8 +77,7 @@ stages:
             cd /home/vsts/work/1/s/services/$(serviceName)/
         
             echo installing packages
-            # pip install pytest pytest-cov boto3 pillow flask pandas
-            pip install pytest pytest-cov
+            pip install pytest pytest-cov boto3 pillow flask pandas
             pip install -r requirements_info.txt
             pip install -r requirements.txt
 
