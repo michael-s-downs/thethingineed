@@ -112,7 +112,7 @@ stages:
               sonar.projectVersion=1.0
               sonar.sources=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/techhubgenaillmapi/coverage.xml
-              sonar.verbose=true
+              sonar.exclusions=**/test/**
 
           # removes sonar.branch.name variable as this is not supported by community edition
       - task: PowerShell@2
