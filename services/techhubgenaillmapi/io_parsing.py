@@ -196,7 +196,7 @@ class LLMMetadata(BaseModel):
     size: Literal['1024x1024', '1792x1024', '1024x1792'] = None
     style: Literal['vivid', 'natural'] = None
     user: Optional[str] = None
-    model: str
+    model: str = Field(default='techhub-pool-world-gpt-4o')
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
