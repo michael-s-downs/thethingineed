@@ -55,7 +55,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-      step:
       - script: |
             python -m venv .venv
             source .venv/bin/activate
