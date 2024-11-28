@@ -46,11 +46,9 @@ variables:
   value: 'Microservice to genai. API based in languages models'
 - name: feedGenai
   value: '$(feed_genai)'
-- name: sonarCliProjectKey
-  value: '$(System.DefinitionName)'
 
 stages:
-- stage: Sonar Analysis
+- stage: SonarAnalysis
   jobs:
   - job:
     continueOnError: false
@@ -59,8 +57,10 @@ stages:
     steps:
     - template: ../ap-template-sonarqube.yml
       parameters:
+        sonarCliProjectKey: '$(System.DefinitionName)'
         serviceName: '$(serviceName)'
         pythonVersion: '$(pythonVersion)'
+        libraryFeed: '$(feedGenai)'
 
 
 - stage: Building
