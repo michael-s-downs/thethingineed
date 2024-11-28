@@ -55,17 +55,17 @@ steps:
 
 
 - task: SonarQubePrepare@7
-        inputs:
-          SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
-          scannerMode: 'cli'
-          configMode: 'manual'
-          cliProjectKey: $(System.DefinitionName)
-          cliSources: '$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/'
-          extraProperties: |
-              sonar.projectVersion=1.0
-              sonar.sources=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/
-              sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/coverage.xml
-              sonar.exclusions=**/test/**
+  inputs:
+    SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
+    scannerMode: 'cli'
+    configMode: 'manual'
+    cliProjectKey: $(System.DefinitionName)
+    cliSources: '$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/'
+    extraProperties: |
+        sonar.projectVersion=1.0
+        sonar.sources=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/
+        sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/coverage.xml
+        sonar.exclusions=**/test/**
 
 # removes sonar.branch.name variable as this is not supported by community edition
 - task: PowerShell@2
