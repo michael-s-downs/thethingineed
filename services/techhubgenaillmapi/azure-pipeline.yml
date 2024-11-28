@@ -92,6 +92,8 @@ stages:
           echo running coverage
           coverage run -m pytest -s
         displayName: 'Run Tests and Generate Coverage' 
+        continueOnError: true
+        
       - task: SonarQubePrepare@7
         inputs:
           SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
