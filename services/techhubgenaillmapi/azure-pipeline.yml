@@ -69,7 +69,7 @@ stages:
               python -m venv .venv
               source .venv/bin/activate
 
-              cd $(System.DefaultWorkingDirectory)/imagebase/$(baseImage)
+              cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
               echo "installing requirements from $pwd"
               pip install -r requirements.txt
 
