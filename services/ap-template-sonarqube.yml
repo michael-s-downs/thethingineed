@@ -50,9 +50,9 @@ steps:
       pip install -r requirements_info.txt
       pip install -r requirements.txt
 
-      export PYTHONPATH=/home/vsts/work/1/s/services/
+      export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
       echo running coverage
-      coverage run --source=/home/vsts/work/1/s/services/${{ parameters.serviceName }}/ -m pytest -s
+      coverage run --source=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/ -m pytest -s
       coverage report
       coverage xml 
       cat coverage.xml
