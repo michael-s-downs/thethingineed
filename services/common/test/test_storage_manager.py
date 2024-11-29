@@ -48,8 +48,8 @@ class TestBaseStorageManager:
 class TestIRStorageManager:
     execution_path = os.path.abspath(os.getcwd())
     separator = "\\" if platform.system() == "Windows" else "/"
-    default_models_path = execution_path + separator + "src" + separator + "ir" + separator + "conf" + separator + "default_embedding_models.json"
-    models_config_path = execution_path + separator + "src" + separator + "ir" + separator + "conf" + separator + "models_config.json"
+    default_models_path = execution_path + separator + "test" + separator + "src" + separator + "ir" + separator + "conf" + separator + "default_embedding_models.json"
+    models_config_path = execution_path + separator + "test" + separator + "src" + separator + "ir" + separator + "conf" + separator + "models_config.json"
 
     def test_embedding_equivalences(self):
         with patch('common.storage_manager.IRStorageManager.load_file') as mock_load_file:
@@ -151,7 +151,7 @@ class TestIRStorageManager:
 class TestLLMStorageManager:
     execution_path = os.path.abspath(os.getcwd())
     separator = "\\" if platform.system() == "Windows" else "/"
-    models_config_path = execution_path + separator + "src" + separator + "LLM" + separator + "conf" + separator + "models_config.json"
+    models_config_path = execution_path + separator + "test" + separator + "src" + separator + "ir" + separator + "conf" + separator + "models_config.json"
 
 
     def test_get_available_pools(self):
