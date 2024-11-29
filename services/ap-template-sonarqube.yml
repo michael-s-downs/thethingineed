@@ -52,7 +52,7 @@ steps:
 
       export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
       echo "PYTHONPATH"
-      echo PYTHONPATH
+      echo $PYTHONPATH
       echo running coverage
       coverage run --source=$(System.DefaultWorkingDirectory)/services/${{ parameters.serviceName }}/ -m pytest -s
       coverage report
