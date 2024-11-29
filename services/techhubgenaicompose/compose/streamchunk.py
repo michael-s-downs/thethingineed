@@ -40,7 +40,7 @@ class StreamChunk:
         Returns:
             str: The string representation of the StreamChunk object.
         """
-        return str(self)
+        return f"StreamChunk(content={self.content}, meta={self.meta}, scores={self.scores}, answer={self.answer})"
 
     def __repr__(self) -> str:
         """

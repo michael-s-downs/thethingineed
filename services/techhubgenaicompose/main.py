@@ -1,6 +1,5 @@
 ### This code is property of the GGAO ###
 
-
 # Native imports
 import json
 
@@ -9,7 +8,7 @@ from flask import Flask, request
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
-from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file
+from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file, list_files, load_file
 from common.genai_json_parser import *
 from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_COMPOSE_SERVICE
@@ -126,7 +125,7 @@ class ComposeDeployment(BaseDeployment):
         except Exception as ex:
             error_message = "Error saving session to redis"
             status_code = 500
-            self.logger.error(error_message + ex)
+            self.logger.error(error_message + str(ex))
             return self.endpoint_response(status_code, "", error_message)
 
         resource = "compose/load_session/"
@@ -137,6 +136,15 @@ class ComposeDeployment(BaseDeployment):
 
     
     def upload_template(self, json_input, template_filter = False):
+        """Uploads a compose template to cloud storage.
+
+        Args:
+            json_input (dict): Json input call
+            filters (bool, optional): Use template of filter_template. Defaults to False.
+
+        Returns:
+            endpoint response
+        """
         self.logger.info("Upload template request received")
         name = ""
         content = {}
@@ -165,7 +173,7 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = "src/compose/templates/"
             if template_filter:
-                path = "src/compose/queryfilters_templates/"
+                path = "src/compose/filter_templates/"
             upload_object(storage_containers['workspace'], content, path + name + ".json")
 
         except Exception as ex:
@@ -181,6 +189,15 @@ class ComposeDeployment(BaseDeployment):
 
 
     def delete_template(self, json_input, template_filter = False):
+        """Deletes a compose template from cloud.
+
+        Args:
+            json_input (dict): Json input call.
+            filters (bool, optional): Use template of filter_template. Defaults to False.
+
+        Returns:
+            endpoint response
+        """
         self.logger.info("Delete template request received")
         name = ""
         try:
@@ -208,7 +225,7 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = "src/compose/templates/"
             if template_filter:
-                path = "src/compose/queryfilters_templates/"
+                path = "src/compose/filter_templates/"
             delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:
@@ -220,6 +237,64 @@ class ComposeDeployment(BaseDeployment):
         resource = "compose/delete_template/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, {})
         return self.endpoint_response(status_code, "Request finished", error_message)
+    
+    def list_flows_compose(self, filters=False):
+        """Lists all the templates stored
+
+        Args:
+            filters (bool, optional): Use template of filter_template. Defaults to False.
+
+        Returns:
+            endpoint_response
+        """
+        if filters:
+            str_path = "src/compose/filter_templates/"
+        else:
+            str_path = "src/compose/templates/"
+        self.logger.info("List templates request received")
+        try:
+            flows_templates = list_files(storage_containers['workspace'], str_path)
+            flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        return self.endpoint_response(200, flows_templates, "")
+
+    def get_compose_template(self, json_input, filters=False):
+        """Gets the content of a compose template
+
+        Args:
+            json_input (dict): Json input call
+            filters (bool, optional): Use template of filter_template. Defaults to False.
+
+        Returns:
+            endpoint_response
+        """
+        if filters:
+            str_path = "src/compose/filter_templates/"
+        else:
+            str_path = "src/compose/templates/"
+        self.logger.info("List templates request received")
+        try:
+            template_name = json_input['name']
+
+        except KeyError as ex:
+            error_message = f"Error parsing JSON, Key: <{ex.args[0]}> not found"
+            self.logger.error(error_message)
+            return self.endpoint_response(404, "", error_message)
+
+        try:
+            template_content = load_file(storage_containers['workspace'], f"{str_path}{template_name}.json").decode()
+            template_content = template_content.replace("\r", "")
+            template_content = template_content.replace("\n", "")
+
+        except Exception as ex:
+            self.logger.error(ex)
+            return self.endpoint_response(500, "", str(ex))
+
+        return self.endpoint_response(200, template_content, "")
 
 
 app = Flask(__name__)
@@ -318,6 +393,29 @@ def delete_template() -> Tuple[Dict, int]:
 
     return deploy.delete_template(dat, template_filter=False)
 
+@app.route('/list_templates', methods=['GET'])
+def list_templates() -> Tuple[Dict, int]:
+    "List compose template flows"
+    return deploy.list_flows_compose()
+
+@app.route('/list_filter_templates', methods=['GET'])
+def list_filter_templates() -> Tuple[Dict, int]:
+    "List compose filter template flows"
+    return deploy.list_flows_compose(filters=True)
+
+@app.route('/get_template', methods=['POST'])
+def get_template() -> Tuple[Dict, int]:
+    "List compose filter template flows"
+    dat = request.get_json(force=True)
+    return deploy.get_compose_template(dat, filters=False)
+
+@app.route('/get_filter_template', methods=['POST'])
+def get_filter_template() -> Tuple[Dict, int]:
+    "List compose filter template flows"
+    dat = request.get_json(force=True)
+    return deploy.get_compose_template(dat, filters=True)
+
+
 if __name__ == "__main__":
     #Process(target=run_redis_cleaner).start()
-    app.run(host="0.0.0.0", debug=False, port=8888)
+    app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

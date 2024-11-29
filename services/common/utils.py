@@ -9,7 +9,8 @@ import os, re
 import json
 from shutil import rmtree
 
-ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}")
+SECRETS_ROOT_PATH = '/secrets'
+ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
 
 
 def convert_service_to_queue(service_name: str, provider: str = "aws") -> str:
@@ -55,10 +56,10 @@ def convert_to_queue_extractor(extractor_name: str) -> str:
 def load_secrets(vector_storage_needed: bool = True, aws_credentials_needed: bool = True) -> (dict, dict, dict):
     """ Load sensitive content from the secrets
     """
-    models_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "models", "models.json")
-    vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "vector-storage",
+    models_keys_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "models", "models.json")
+    vector_storages_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "vector-storage",
                                         "vector_storage_config.json")
-    aws_keys_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "aws", "aws.json")
+    aws_keys_path = os.path.join(os.getenv('SECRETS_PATH', SECRETS_ROOT_PATH), "aws", "aws.json")
     aws_env_vars = ["AWS_ACCESS_KEY", "AWS_SECRET_KEY"]
 
     # Load AWS credentials
@@ -113,3 +114,37 @@ def get_error_word_from_exception(ex, json_string) -> str:
         error_param.append(json_string[i])
     error_param = "".join(error_param)
     return error_param
+
+def get_models(available_models, available_pools, key, value):
+    """ Get the LLM or embedding models filtered by key from the available models
+
+    :param available_models: Available models
+    :param available_pools: Available pools
+    :param key: Key to get the models from
+    :return: dict - Models
+    """
+
+    if isinstance(available_models, dict):
+        aux_available_models = available_models.copy()
+        available_models = []
+        for platform, models in aux_available_models.items():
+            for model in models:
+                available_models.append({**model, 'platform': platform})
+    if key == "pool":
+        models = []
+        for model in available_pools.get(value, []):
+            if isinstance(model, dict):
+                models.append(model.get("model"))
+            else:
+                models.append(model)
+        return models, None
+    elif key in ["embedding_model", "platform", "zone", "model_type"]:
+        models = []
+        pools = []
+        for model in available_models:
+            if model.get(key) == value:
+                models.append(model.get("model") if model.get('model') else model.get('embedding_model_name'))
+                pools.extend(model.get("model_pool", []))
+        return models, pools
+    else:
+        raise ValueError(f"Key {key} not supported.")

@@ -38,6 +38,14 @@ class LangFuseManager(AbstractManager):
                 "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
                 "host": os.getenv("LANGFUSE_HOST", None)
             }
+            langfuse_params = compose_config.get("langfuse")
+            if isinstance(langfuse_params, dict):
+                langfuse_config = {
+                    "secret_key": langfuse_params['secret_key'],
+                    "public_key": langfuse_params['public_key'],
+                    "host": langfuse_params['host']
+                }
+                
             self.langfuse = Langfuse(**langfuse_config)
             self.trace = self.langfuse.trace(
                 session_id=session_id

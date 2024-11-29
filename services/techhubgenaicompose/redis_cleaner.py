@@ -4,7 +4,6 @@
 # Native imports
 import os
 import json
-from typing import Tuple
 from datetime import datetime
 
 # Custom imports

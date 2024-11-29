@@ -13,6 +13,8 @@ from common.logging_handler import LoggerHandler
 from common.errors.genaierrors import PrintableGenaiError
 from adapters import ManagerAdapters
 
+DEFAULT_SYSTEM_MSG = 'You are a helpful assistant'
+
 
 class Message(ABC):
     MODEL_FORMAT = "Message"
@@ -21,80 +23,6 @@ class Message(ABC):
         """Message object"""
         logger_handler = LoggerHandler(GENAI_LLM_MESSAGES, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
-
-    @staticmethod
-    def _is_query_ok(query: [str, list], is_vision: bool = True) -> [str, list]:
-        """Given a query it will check if the format is correct.
-
-        :param query: Question made.
-        :param is_vision: Boolean to check if the query is a vision model or not.
-        :return: Query if its format is correct
-        """
-        if isinstance(query, str):
-            return query
-        if not isinstance(query, list) and is_vision:
-            raise PrintableGenaiError(400, "query must be a list")
-        if not is_vision:
-            raise PrintableGenaiError(400, "query and persistence user content must be a string for non vision models")
-        for el in query:
-            if isinstance(el, dict):
-                additional_keys = set(el.keys()) - {'type', 'text', 'image', 'n_tokens'}
-                if additional_keys:
-                    raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}")
-                type = el.get('type')
-                if type not in ['text', 'image_url', 'image_b64']:
-                    raise PrintableGenaiError(400, "Type must be one in ['text', 'image_url', 'image_b64']")
-                if type == 'text':
-                    if not el.get('text') or not isinstance(el.get('text'), str):
-                        raise PrintableGenaiError(400, "For type 'text' there must be a key 'text' containing a string")
-                elif type in ['image_url', 'image_b64']:
-                    image = el.get('image')
-                    if not image or not isinstance(image, dict):
-                        raise PrintableGenaiError(400, "'image' param must be a dict")
-                    if not isinstance(image.get('url'), str) and not isinstance(image.get('base64'), str):
-                        raise PrintableGenaiError(400, "Type 'image' must contain a 'url' key with a string or a 'base64' key with "
-                                         "a string")
-                    if image.get('detail') and image.get('detail') not in ["high", "low", "auto"]:
-                        raise PrintableGenaiError(400, "Detail parameter must be one in ['high', 'low', 'auto']")
-                    additional_keys = set(image.keys()) - {'url', 'detail', 'base64'}
-                    if additional_keys:
-                        raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}")
-                else:
-                    raise PrintableGenaiError(400, "Key must be 'type' and its value must be one in ['text', 'image']")
-            else:
-                raise PrintableGenaiError(400, "Elements of the content must be dict {}")
-        return query
-
-    def _is_persistence_ok(self, persistence: list, is_vision: bool = False) -> List:
-        """Given a persistence it will check if the format is correct.
-
-        :param persistence: Persistence list containing the conversation history
-        :param is_vision: Boolean to check if the query is a vision model or not.
-        :return: Persistence if its format is correct
-        """
-        for pair in persistence:
-            if not isinstance(pair, list):
-                raise PrintableGenaiError(400, "Persistence must be a list containing lists")
-            if len(pair) != 2:
-                raise PrintableGenaiError(400, "Content must contain pairs of ['user', 'assistant']")
-            additional_keys = [key for el in pair for key in el.keys() if key not in {'role', 'content', 'n_tokens'}]
-            if additional_keys:
-                raise PrintableGenaiError(400, f"Incorrect keys: {additional_keys}. Accepted keys: {'role', 'content', 'n_tokens'}")
-            roles = [el.get('role') for el in pair]
-            if roles[0] != "user" or roles[1] != "assistant":
-                raise PrintableGenaiError(400, "In persistence, first role must be 'user' and second role must be 'assistant'")
-            for el in pair:
-                if el.get('role') == "user":
-                    if not el.get('content'):
-                        raise PrintableGenaiError(400, "'User' role must have a content key")
-                    if not isinstance(el.get('content'), str) and not isinstance(el.get('content'), list):
-                        raise PrintableGenaiError(400, "'User' role content must be a string for non-vision models or a list for "
-                                         "vision models")
-                    self._is_query_ok(el.get('content'), is_vision)
-                if el.get('role') == "assistant":
-                    if not el.get('content') or not isinstance(el.get('content'), str):
-                        raise PrintableGenaiError(400, "'assistant' role must have a content key containing a string")
-        return persistence
 
     @staticmethod
     def _get_user_query_tokens(query: list) -> [int, List]:
@@ -129,7 +57,6 @@ class Message(ABC):
     def preprocess(self):
         """Given a query and a context it will return the text in the GPT model format. 
         """
-        pass
 
     @classmethod
     def is_message_type(cls, message_type: str):
@@ -142,40 +69,6 @@ class Message(ABC):
                f'context:{self.context}, ' \
                f'template_name:{self.template_name}, ' \
                f'template:{self.template}}}'
-
-
-class PromptGPT3Message(Message):
-    MODEL_FORMAT = "promptGPT"
-
-    def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system: str = ""):
-        """Prompt object. It is used for text-only models such as gpt3-turbo instuct
-
-        :param query: Question made.
-        :param template: Template used to build the prompt.
-        :param template_name: Template Name used to build the prompt.
-        :param context: Context used to answer the question.
-        :param system: Not used in this version
-
-        """
-        super().__init__()
-        if isinstance(query, list):
-            raise PrintableGenaiError(400, "query must be a string for non vision models")
-        self.query = query
-        self.context = context
-        self.template_name = template_name
-        self.template = template
-        self.multiprompt = False
-
-    def preprocess(self) -> str:
-        """Given a query and a context it will return the text in the GPT model format.
-
-        :return: List with the messages in the correct format for the model
-        """
-
-        user_prompt = Template(self.template["user"])
-        return user_prompt.safe_substitute(query=self.query, context=self.context)
-
 
 class DalleMessage(Message):
     MODEL_FORMAT = "dalle"
@@ -193,10 +86,10 @@ class DalleMessage(Message):
         :param user: A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
         """
         super().__init__()
-        self.query = self._is_query_ok(query, False)
+        self.query = query
         self.template = template
         self.template_name = template_name
-        self.persistence = self._is_persistence_ok(persistence) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.system = system
         self.context = context
@@ -243,7 +136,7 @@ class ChatGPTMessage(Message):
     MODEL_FORMAT = "chatGPT"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -257,7 +150,7 @@ class ChatGPTMessage(Message):
 
         """
         super().__init__()
-        self.query = self._is_query_ok(query, False)
+        self.query = query
         self.context = context
         if functions is None:
             functions = []
@@ -266,7 +159,7 @@ class ChatGPTMessage(Message):
         self.system = system
         self.functions = functions
         self.function_call = function_call
-        self.persistence = self._is_persistence_ok(persistence) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
         adapter = ManagerAdapters.get_adapter({'adapter': "base", 'message': self})
@@ -294,7 +187,7 @@ class ChatGPTvMessage(Message):
     MODEL_FORMAT = "chatGPT-v"
 
     def __init__(self, query: list, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -307,7 +200,7 @@ class ChatGPTvMessage(Message):
         :param persistence: List containing the conversation history
         """
         super().__init__()
-        self.query = super()._is_query_ok(query)
+        self.query = query
         if context != "" and isinstance(self.query, list):
             raise PrintableGenaiError(400, "Context param not allowed in vision models")
         self.context = context
@@ -318,7 +211,7 @@ class ChatGPTvMessage(Message):
         self.system = system
         self.functions = functions
         self.function_call = function_call
-        self.persistence = self._is_persistence_ok(persistence, True) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
         adapter = ManagerAdapters.get_adapter({'adapter': "gpt4v", 'message': self})
@@ -354,7 +247,7 @@ class ClaudeMessage(Message):
     MODEL_FORMAT = "chatClaude"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -365,12 +258,12 @@ class ClaudeMessage(Message):
         :param persistence: List containing the conversation history
         """
         super().__init__()
-        self.query = self._is_query_ok(query, False)
+        self.query = query
         self.context = context
         self.template_name = template_name
         self.template = template
         self.system = system
-        self.persistence = self._is_persistence_ok(persistence) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
         adapter = ManagerAdapters.get_adapter({'adapter': "claude", 'message': self})
@@ -410,33 +303,19 @@ class Claude3Message(Message):
         :param persistence: List containing the conversation history
         """
         super().__init__()
-        self.query = self._is_vision_query_ok(query)
+        self.query = query
         if context != "" and isinstance(self.query, list):
             raise PrintableGenaiError(400, "Context param not allowed in vision models")
         self.context = context
         self.template_name = template_name
         self.template = template
         self.system = system
-        self.persistence = self._is_persistence_ok(persistence, True) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
         adapter = ManagerAdapters.get_adapter({'adapter': "claude", 'message': self})
         adapter.adapt_query_and_persistence()
         self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
-
-    def _is_vision_query_ok(self, query):
-        """Given a query it will check if the format is correct.
-
-        :param query: Question made.
-        :return: Query if its format is correct
-        """
-        super()._is_query_ok(query)
-        if isinstance(query, list):
-            for el in query:
-                if el.get('type') == 'image':
-                    if el.get('detail'):
-                        raise PrintableGenaiError(400, "Detail parameter not allowed in Claude vision models")
-        return query
 
     def preprocess(self):
         """Given a query and a context it will return the text in the Bedrock model format.
@@ -469,7 +348,7 @@ class Llama3Message(Message):
     MODEL_FORMAT = "chatLlama3"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
-                 system='You are a helpful assistant', functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -483,7 +362,7 @@ class Llama3Message(Message):
 
         """
         super().__init__()
-        self.query = self._is_query_ok(query, False)
+        self.query = query
         self.context = context
         if functions is None:
             functions = []
@@ -492,7 +371,7 @@ class Llama3Message(Message):
         self.system = system
         self.functions = functions
         self.function_call = function_call
-        self.persistence = self._is_persistence_ok(persistence) if isinstance(persistence, list) else []
+        self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
         adapter = ManagerAdapters.get_adapter({'adapter': "base", 'message': self})
@@ -517,11 +396,11 @@ class Llama3Message(Message):
 
 
 class ManagerMessages(object):
-    MESSAGE_TYPES = [PromptGPT3Message, ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message]
+    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message]
 
     @staticmethod
     def get_message(conf: dict) -> Message:
-        """ Method to instantiate the message class: [promptGPT, chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: message object
@@ -532,11 +411,11 @@ class ManagerMessages(object):
                 conf.pop('message')
                 return message(**conf)
         raise PrintableGenaiError(400, f"Message type doesnt exist {conf}. "
-                         f"Possible values: {ManagerMessages.get_possible_platforms()}")
+                         f"Possible values: {ManagerMessages.get_possible_messages()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
-        """ Method to list the messages: [promptGPT, chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+    def get_possible_messages() -> List:
+        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: available messages

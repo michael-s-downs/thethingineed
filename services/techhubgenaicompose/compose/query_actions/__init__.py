@@ -3,3 +3,5 @@
 
 
 from .expansion import ExpansionFactory
+from .filter_q import FilterFactory
+from .reformulate import ReformulateFactory

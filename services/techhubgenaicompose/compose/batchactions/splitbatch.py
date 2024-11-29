@@ -21,7 +21,7 @@ class SplitBatchMethod:
         """
         for streamlist in streambatch:
             if len(streamlist) > 1:
-                raise GenaiError(status_code=500, message=f"All the streamlists must be of length one. Try a filter or Split method first")
+                raise GenaiError(status_code=500, message="All the streamlists must be of length one. Try a filter or Split method first")
 
         self.streambatch = streambatch
 
@@ -43,7 +43,10 @@ class PhraseSplitBatch(SplitBatchMethod):
                 for phrase in split_phrase(streamlist.content, split_length, split_overlap)[0]:
                     es['content'] = phrase
                     streams.append(es)
-        return StreamList().retrieve("streamlist", {"streamlist": streams})
+
+        sls = StreamList()
+        sls.retrieve("streamlist", {"streamlist": streams})
+        return sls
 
 
 class SplitBatchFactory:
@@ -64,7 +67,7 @@ class SplitBatchFactory:
                 break
 
         if self.splitbatchmethod is None:
-            raise GenaiError(status_code=404, message=f"Provided Splitbatch does not match any of the possible ones: {', '.join(f.type for f in self.SPLITBATCHES)}")
+            raise GenaiError(status_code=404, message=f"Provided Splitbatch does not match any of the possible ones: {', '.join(f.TYPE for f in self.SPLITBATCHES)}")
 
     def process(self, streambatch: list, params: dict):
         """Process the streambatch with the given method

@@ -1,0 +1,285 @@
+{
+	"embeddings": {
+		"azure": [{
+			"embedding_model_name": "techhubinc-ada-002-australiaeast",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-AustraliaEast-Ada-002",
+			"zone": "techhubinc-AustraliaEast",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-brazilsouth",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-BrazilSouth-Ada-002",
+			"zone": "techhubinc-BrazilSouth",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-canadaeast",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-CanadaEast-Ada-3-large",
+			"zone": "techhubinc-CanadaEast",
+			"model_pool": ["techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-small-canadaeast",
+			"embedding_model": "text-embedding-3-small",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-CanadaEast-Ada-3-small",
+			"zone": "techhubinc-CanadaEast",
+			"model_pool": ["techhub-pool-world-ada-3-small"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-eastus",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-EastUS-Ada-002",
+			"zone": "techhubinc-EastUS",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-eastus",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-EastUS-Ada-3-large",
+			"zone": "techhubinc-EastUS",
+			"model_pool": ["techhub-pool-us-ada-3-large",
+			"techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-small-eastus",
+			"embedding_model": "text-embedding-3-small",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-EastUS-Ada-3-small",
+			"zone": "techhubinc-EastUS",
+			"model_pool": ["techhub-pool-us-ada-3-small",
+			"techhub-pool-world-ada-3-small"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-eastus2",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-EastUS2-Ada-002",
+			"zone": "techhubinc-EastUS2",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-eastus2",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-EastUS2-Ada-3-large",
+			"zone": "techhubinc-EastUS2",
+			"model_pool": ["techhub-pool-us-ada-3-large",
+			"techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-small-eastus2",
+			"embedding_model": "text-embedding-3-small",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-EastUS2-Ada-3-small",
+			"zone": "techhubinc-EastUS2",
+			"model_pool": ["techhub-pool-us-ada-3-small",
+			"techhub-pool-world-ada-3-small"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-francecentral",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-FranceCentral-Ada-002",
+			"zone": "techhubinc-FranceCentral",
+			"model_pool": ["techhub-pool-eu-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-francecentral",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-FranceCentral-Ada-3-large",
+			"zone": "techhubinc-FranceCentral",
+			"model_pool": ["techhub-pool-eu-ada-3-large",
+			"techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-japaneast",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-JapanEast-Ada-002",
+			"zone": "techhubinc-JapanEast",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-japaneast",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-JapanEast-Ada-3-large",
+			"zone": "techhubinc-JapanEast",
+			"model_pool": ["techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-northcentralus",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-NorthCentralUS-Ada-002",
+			"zone": "techhubinc-NorthCentralUS",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-norwayeast",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-NorwayEast-Ada-002",
+			"zone": "techhubinc-NorwayEast",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-norwayeast",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-NorwayEast-Ada-3-large",
+			"zone": "techhubinc-NorwayEast",
+			"model_pool": ["techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-southafricanorth",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-SouthAfricaNorth-Ada-002",
+			"zone": "techhubinc-SouthAfricaNorth",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-southcentralus",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-SouthCentralUS-Ada-002",
+			"zone": "techhubinc-SouthCentralUS",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-southindia",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-SouthIndia-Ada-002",
+			"zone": "techhubinc-SouthIndia",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-swedencentral",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-SwedenCentral-Ada-002",
+			"zone": "techhubinc-SwedenCentral",
+			"model_pool": ["techhub-pool-eu-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-swedencentral",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-SwedenCentral-Ada-3-large",
+			"zone": "techhubinc-SwedenCentral",
+			"model_pool": ["techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-switzerlandnorth",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-SwitzerlandNorth-Ada-002",
+			"zone": "techhubinc-SwitzerlandNorth",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-uksouth",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-UKSouth-Ada-002",
+			"zone": "techhubinc-UKSouth",
+			"model_pool": ["techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-uksouth",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-UKSouth-Ada-3-large",
+			"zone": "techhubinc-UKSouth",
+			"model_pool": ["techhub-pool-world-ada-3-large"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-westeurope",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-WestEurope-Ada-002",
+			"zone": "techhubinc-WestEurope",
+			"model_pool": ["techhub-pool-eu-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-westus",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-WestUS-Ada-002",
+			"zone": "techhubinc-WestUS",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-002-westus3",
+			"embedding_model": "text-embedding-ada-002",
+			"azure_api_version": "2022-12-01",
+			"azure_deployment_name": "techhubinc-WestUS3-Ada-002",
+			"zone": "techhubinc-WestUS3",
+			"model_pool": ["techhub-pool-us-ada-002",
+			"techhub-pool-world-ada-002"]
+		},
+		{
+			"embedding_model_name": "techhubinc-ada-3-large-westus3",
+			"embedding_model": "text-embedding-3-large",
+			"azure_api_version": "2024-04-01-preview",
+			"azure_deployment_name": "techhubinc-WestUS3-Ada-3-large",
+			"zone": "techhubinc-WestUS3",
+			"model_pool": ["techhub-pool-us-ada-3-large",
+			"techhub-pool-world-ada-3-large"]
+		}],
+		"bedrock": [{
+			"embedding_model_name": "cohere-english-eastus",
+			"embedding_model": "cohere.embed-english-v3",
+			"zone": "us-east-1",
+			"model_pool": ["cohere-english-v3-pool-world"]
+		},
+		{
+			"embedding_model_name": "cohere-multilingual-eastus",
+			"embedding_model": "cohere.embed-multilingual-v3",
+			"zone": "us-east-1",
+			"model_pool": ["cohere-multilingual-v3-pool-world"]
+		},
+		{
+			"embedding_model_name": "titan-v1-eastus",
+			"embedding_model": "amazon.titan-embed-text-v1",
+			"zone": "us-east-1",
+			"model_pool": ["titan-v1-pool-world"]
+		},
+		{
+			"embedding_model_name": "titan-v2-eastus",
+			"embedding_model": "amazon.titan-embed-text-v2:0",
+			"zone": "us-east-1",
+			"model_pool": ["titan-v2-pool-world"]
+		}],
+		"huggingface": [{
+			"embedding_model_name": "dpr-encoder",
+			"embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
+			"retriever_model": "sentence-transformers/facebook-dpr-question_encoder-single-nq-base"
+		},{
+			"embedding_model_name": "dunzhang-stella-1.5B-v5",
+			"embedding_model": "dunzhang/stella_en_1.5B_v5",
+			"retriever_model": "dunzhang/stella_en_1.5B_v5"
+		}
+	]
+	}
+}

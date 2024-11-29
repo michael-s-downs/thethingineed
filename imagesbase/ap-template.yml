@@ -39,10 +39,10 @@ parameters:
 steps:
 
 # Add versioning of git
-- task: gitversion/setup@0
-  inputs:
-    versionSpec: '5.3.x'
-  displayName: Install GitTools
+#- task: gitversion/setup@0
+#  inputs:
+#    versionSpec: '5.3.x'
+#  displayName: Install GitTools
 
 # Clean disk space
 - script: df -h
@@ -98,4 +98,4 @@ steps:
     docker tag '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}' '${{ parameters.registryServerName }}/${{ parameters.imageName }}:latest'
     docker push '${{ parameters.registryServerName }}/${{ parameters.imageName }}:latest'
   displayName: Tag and Push image (latest)
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))

@@ -30,11 +30,13 @@ from common.genai_json_parser import *
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir import get_connector, get_embed_model
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
-from common.indexing.loaders import ManagerLoader
+from common.storage_manager import ManagerStorage
 from common.indexing.parsers import ManagerParser, ParserInforetrieval
 from common.indexing.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
+from common.utils import get_models
 
+from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
 
 class InfoRetrievalDeployment(BaseDeployment):
     MODEL_FORMATS = {
@@ -53,7 +55,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         try:
             self.origin = storage_containers.get('origin')
             self.workspace = storage_containers.get('workspace')
-            file_loader = ManagerLoader().get_file_storage(
+            file_loader = ManagerStorage().get_file_storage(
                 {"type": "IRStorage", "workspace": self.workspace, "origin": self.origin})
 
             self.available_pools = file_loader.get_available_pools()
@@ -221,7 +223,7 @@ class InfoRetrievalDeployment(BaseDeployment):
 
         # Complete the scores that have not been obtained till this point
         ids_incompleted_docs = self.get_ids_empty_scores(docs_by_retrieval, set(unique_docs.keys()))
-        if len(ids_incompleted_docs) > 0:
+        if sum([len(docs) for docs in docs_by_retrieval.values()]) > 0:
             self.logger.debug(f"Re-scoring with {', '.join(list(zip(*retrievers_arguments))[3])} retrievers")
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
                 input_object.filters['snippet_id'] = ids_incompleted_docs[retriever_type]
@@ -325,8 +327,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                 sorted_documents = self.rrf_retrieval_strategy(retrievers_arguments, input_object)
             elif input_object.strategy == "genai_retrieval":
                 sorted_documents = self.genai_retrieval_strategy(retrievers_arguments, input_object)
-            else:
-                raise PrintableGenaiError(400, f"Strategy '{input_object.strategy}' not implemented")
 
             tokens_report = {}
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
@@ -373,190 +373,33 @@ def sync_deployment() -> Tuple[Dict, int]:
     dat.update({"project_conf": apigw_params})
     return deploy.sync_deployment(dat)
 
-
 @app.route('/delete-documents', methods=['POST'])
 def delete_documents() -> Tuple[str, int]:
-    """Delete documents that meet certain conditions"""
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request recieved with data: {json_input}")
-
-    index = json_input.get('index', "")
-    connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    response, status_code = manage_actions_delete_elasticsearch(index, "delete-documents", json_input.get('delete', {}), connector)
-    connector.close()
-    return response, status_code
+    return delete_documents_handler(deploy, request)
 
 @app.route('/delete_index', methods=['POST'])
 def delete_index() -> Tuple[str, int]:
-    """Delete documents that meet certain conditions"""
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request recieved with data: {json_input}")
-
-    index = json_input.get('index', "")
-    connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    response, status_code = manage_actions_delete_elasticsearch(index, "delete_index", {}, connector)
-    connector.close()
-    return response, status_code
+    return delete_index_handler(deploy, request)
 
 @app.route('/healthcheck', methods=['GET'])
 def healthcheck() -> Dict:
     return {"status": "Service available"}
 
-
 @app.route('/retrieve_documents', methods=['POST'])
 def retrieve_documents() -> Tuple[Dict, int]:
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request recieved with data: {json_input}")
-
-    index = json_input.get('index', "")
-    filters = json_input.get('filters', {})
-    if len(filters) < 1:
-        response = {'status': "error", 'result': "There must at least one filter", 'status_code': 400}
-        return response, 400
-
-    connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-
-    response, status_code = manage_actions_get_elasticsearch(index, "retrieve_documents", filters, connector)
-    connector.close()
-    return response, status_code
+    return retrieve_documents_handler(deploy, request)
 
 @app.route('/get_documents_filenames', methods=['POST'])
 def get_documents_filenames() -> Tuple[Dict, int]:
-    json_input = request.get_json(force=True)
-
-    if not json_input or 'index' not in json_input or not json_input['index'].strip():
-        return {'status': "error", 'result': "Missing parameter: index", 'status_code': 400}, 400
-
-    index = json_input.get('index', "")
-
-    connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-
-    response, status_code = manage_actions_get_elasticsearch(index, "get_documents_filenames", {}, connector)
-    connector.close()
-    return response, status_code
-
+    return get_documents_filenames_handler(deploy, request)
 
 @app.route('/get_models', methods=['GET'])
-def get_available_models() -> Tuple[str, int]:
-    dat = request.args
-    if len(dat) > 1:
-        return json.dumps({"status": "error", "error_message":
-            "You must provide only one parameter between 'platform', 'pool', 'zone' and 'embedding_model' param", "status_code": 400}), 400
-    if dat.get("platform"):
-        models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get("platform") == dat["platform"]:
-                models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": models, "pools": list(set(pools))}, "status_code": 200}), 200
-    elif dat.get("pool"):
-        return json.dumps({"status": "ok", "models": deploy.available_pools.get(dat["pool"], []), "status_code": 200}), 200
-    elif dat.get("embedding_model") or dat.get("zone"):
-        key = "embedding_model" if dat.get("embedding_model") else "zone"
-        response_models = []
-        pools = []
-        for model in deploy.available_models:
-            if model.get(key) == dat[key]:
-                response_models.append(model.get("embedding_model_name"))
-                pools.extend(model.get("model_pool", []))
-        return json.dumps({"status": "ok", "result": {"models": response_models, "pools": list(set(pools))}, "status_code": 200}), 200
-    else:
-        return json.dumps({"status": "error", "error_message": "You must provide a 'platform', 'pool', 'zone' or 'embedding_model' param", "status_code": 400}), 400
+def get_available_models() -> Tuple[Dict, int]:
+    return get_models_handler(deploy)
 
-
-
-
-def manage_actions_get_elasticsearch(index: str, operation: str, filters: dict, connector: Connector):
-    """
-    Wrapper to perform an action in all the indexes that match the given index
-
-    :param index: name of the index to perform the action
-    :param operation: operation to perform
-    :param filters: filters to apply
-    :param connector: connector to use
-
-    :return: response and status code
-    """
-    for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
-        try:
-            if operation == "get_documents_filenames":
-                # first one is valid as all indexes must have the same documents
-                status, result, status_code = connector.get_documents_filenames(index_name)
-                response = {'status': status, 'result': {"status_code": status_code, "docs": result, "status": status}}
-                return response, status_code
-            elif operation == "retrieve_documents":
-                # first one is valid as all indexes must have the same documents
-                status, result, status_code = connector.get_documents(index_name, filters)
-                response = {'status': status, 'result': {"status_code": status_code, "docs": result, "status": status}}
-                return response, status_code
-            else:
-                return {'status': "error", 'result': "Unsupported operation", 'status_code': 400}, 400
-        except elasticsearch.NotFoundError:
-            deploy.logger.debug(f"Index '{index_name}' not found")
-        except Exception as ex:
-            deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}",
-                    'status_code': 400}, 400
-
-    return {'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}, 400
-
-def manage_actions_delete_elasticsearch(index: str, operation: str, filters: dict, connector: Connector):
-    """
-    Wrapper to perform an action in all the indexes that match the given index
-
-    :param index: name of the index to perform the action
-    :param operation: operation to perform
-    :param filters: filters to apply
-    :param connector: connector to use
-
-    :return: response and status code
-    """
-    results = []
-    for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
-        try:
-            # must delete the from all indexes (embeddings models)
-            if operation == "delete-documents":
-                result = connector.delete_documents(index_name, filters)
-                if len(result.body.get('failures', [])) > 0:
-                    deploy.logger.debug(f"Error deleting documents in index '{index_name}': {result} ")
-                elif result.body.get('deleted', 0) == 0:
-                    deploy.logger.debug(
-                        f"Documents not found for filters: '{filters}' in index '{index_name}'")
-                else:
-                    deploy.logger.debug(f"{result.body['deleted']} chunks deleted for '{index_name}'")
-            elif operation == "delete_index":
-                result = connector.delete_index(index_name)
-            else:
-                return {'status': "error", 'result': "Unsupported operation", 'status_code': 400}, 400
-            results.append(result)
-        except elasticsearch.NotFoundError:
-            deploy.logger.debug(f"Index '{index_name}' not found")
-        except Exception as ex:
-            deploy.logger.error(f"Error processing operation '{operation}': {str(ex)}", exc_info=get_exc_info())
-            return {'status': "error", 'result': f"Error processing operation '{operation}': {str(ex)}",
-                    'status_code': 400}, 400
-    if operation == "delete-documents":
-        deleted = sum(result.get('deleted', 0) for result in results)
-        if deleted == 0:
-            return json.dumps({'status': "error",
-                               'result': f"Documents not found for filters: {filters}",
-                               'status_code': 400}), 400
-        elif deleted > 0:
-            return json.dumps(
-                {'status': "finished", 'result': f"Documents that matched the filters were deleted for '{index}'",
-                 'status_code': 200}), 200
-        else:
-            return json.dumps(
-                {'status': "error", 'result': f"Error deleting documents: {results}", 'status_code': 400}), 400
-    elif operation == "delete_index":
-        if len(results) == 0:
-            return json.dumps({'status': "error", 'result': f"Index '{index}' not found", 'status_code': 400}), 400
-        else:
-            return json.dumps(
-                {'status': "finished", 'result': f"Index '{index}' deleted for '{len(results)}' models", 'status_code': 200}), 200
+@app.route('/list_indices', methods=['GET'])
+def list_indices() -> Tuple[Dict, int]:
+    return list_indices_handler(deploy)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=8888)
+    app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

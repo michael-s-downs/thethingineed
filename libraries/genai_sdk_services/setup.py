@@ -3,8 +3,8 @@ import sys
 from setuptools import setup, find_packages
 
 requirements = []
-if (3, 8) <= sys.version_info < (3, 9):
-    with open('requirements_38.txt') as f:
+if (3, 11) <= sys.version_info < (3, 12):
+    with open('requirements_311.txt') as f:
         requirements = f.read().splitlines()
 
 setup(

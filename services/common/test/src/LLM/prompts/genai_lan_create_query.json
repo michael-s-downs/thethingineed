@@ -1,0 +1,78 @@
+{
+    "system_query": {
+        "system": "$system",
+        "user": "$query"
+    },
+    "system_query_es": {
+        "system": "$system",
+        "user": "$query \n===\nRespuesta en Español:"
+    },
+    "system_query_en":{
+        "system": "$system",
+        "user": "$query \n===\nAnswer in English:"
+    },
+    "system_query_ja": {
+        "system": "$system",
+        "user": "$query \n===\n日本語での回答:"
+    },
+    "system_query_and_context": {
+        "system": "You are an assistant. You must answer questions in English (translating the context to English if neccesary), regardless of the input language or whether another language is indicated in the question.",
+        "user": "Answer the following task based on the following 'context'.\nTask: '$query' \n\n######\n\nContext:\n$context \n\n######\n\nAnswer:"
+    },
+    "system_query_and_context_en": {
+        "system": "You are an assistant. You must answer questions in English (translating the context to English if neccesary), regardless of the input language or whether another language is indicated in the question.",
+        "user": "Answer the following task based on the following 'context'.\nTask: '$query' \n\n######\n\nContext:\n$context \n\n######\n\nAnswer:"
+    },
+    "system_query_and_context_es": {
+        "system": "Eres un asistente ayudante, que tiene que responder las tareas en Español (traduciendo el contexto a Español si es necesario) independientemente del idioma de entrada o de si se indica otro en la pregunta",
+        "user": "Responde la siguiente tarea basándonte en el 'contexto'.\nTarea: '$query' \n\n######\n\nContexto:\n$context \n\n######\n\nRespuesta en Español:"
+    },
+    "system_query_and_context_plus": {
+        "system": "You are an assistant. You must answer questions in English (translating the context to English if neccesary), regardless of the input language or whether another language is indicated in the question.",
+        "user": "Answer the following task based on the following 'context' or the history of the conversation. if the information is not in the context provided, responds 'I can not answer your question'. \nTask: '$query' \n\n######\n\nContext:\n$context \n\n######\n\nAnswer:"
+    },
+    "system_query_and_context_plus_es": {
+        "system": "Eres un asistente ayudante, que tiene que responder las tareas en Español (traduciendo el contexto a Español si es necesario) independientemente del idioma de entrada o de si se indica otro en la pregunta",
+        "user": "Responde la siguiente tarea basándonte en el 'contexto' o el historial de la conversación. si la información no está en el contexto proporcionado, responde 'No puedo responder a tu pregunta'. \nTarea: '$query' \n\n######\n\nContexto:\n$context \n\n######\n\nRespuesta en Español:"
+    },
+    "system_query_and_context_plus_en": {
+        "system": "You are an assistant. You must answer questions in English (translating the context to English if neccesary), regardless of the input language or whether another language is indicated in the question.",
+        "user": "Answer the following task based on the following 'context' or the history of the conversation. if the information is not in the context provided, responds 'I can not answer your question'. \nTask: '$query' \n\n######\n\nContext:\n$context \n\n######\n\nAnswer in English:"
+    },
+    "system_query_and_context_plus_ja": {
+        "system": "You are an assistant. You must answer questions in Japanese (translating the context to Japenese if neccesary), regardless of the input language or whether another language is indicated in the question.",
+        "user": "以下の「文脈」または会話の履歴に基づいて、以下のタスクに答える。提供された文脈にない情報は、「質問に答えられません」と答える。 \nタスク： '$query' \n\n######\n\nコンテキスト：\n$context \n\n######\n\n日本語で答えなさい："
+    },
+    "reformulate": {
+		"system": "You must propose a single clear and concise query. Do not add information that is not necessary to the rephrased question. You should be brief and concise in the rephrased question.",
+		"user": "Given the following user queries: '''\n $query \n ''' Propose a new query for the last one, so that it is clearer to understand (use the text of the previous queries to make it clearer). You should not join queries. Do not add information that is not necessary to the rephrased question. You should be brief and concise in the rephrased question."
+	},
+    "reformulate_es": {
+		"system": "Escribe en Español.Debes proponer una sola consulta clara y concisa. No añadas información que no es necesaria a la pregunta reformulada. Debes ser breve y conciso en la pregunta reformulada.",
+		"user": "Dadas la siguientes consultas de usuario: '''\n $query \n ''' Propon una nueva consulta para la última de ellas, de forma que sea más clara clara de entender (utiliza el texto de las consultas anteriores para hacerla más clara). No debes juntar consultas. No añadas información que no es necesaria a la pregunta reformulada. Debes ser breve y conciso en la pregunta reformulada."
+	},
+    "reformulate_en": {
+		"system": "Write in English. You must propose a single clear and concise query. Do not add information that is not necessary to the rephrased question. You should be brief and concise in the rephrased question.",
+		"user": "Given the following user queries: '''\n $query \n ''' Propose a new query for the last one, so that it is clearer to understand (use the text of the previous queries to make it clearer). You should not join queries. Do not add information that is not necessary to the rephrased question. You should be brief and concise in the rephrased question."
+	},
+    "reformulate_ja": {
+		"system": "Write in Japanese. You must propose a single clear and concise query. Do not add information that is not necessary to the rephrased question. You should be brief and concise in the rephrased question.",
+		"user": "次のようなユーザーからの問い合わせがある： '''\n $query \n ''' 最後のクエリをよりわかりやすくするために、新しいクエリを提案する（わかりやすくするために、前のクエリのテキストを使用する）。クエリを連結してはいけません。言い直した質問に必要のない情報を付け加えないこと。言い直した質問は簡潔かつ簡潔に書くこと。"
+	},
+    "summarize": {
+		"system": "You must propose a single clear and concise summary. You should be brief and concise in the summary. Do not add extra information that is not necessary",
+		"user": "Given the following user text: '''\n $query \n ''' Propose a summarized version of the query, so that it is clearer to understand (use the text of the query to make it clearer). Do not add information that is not necessary to the summary."
+	},
+    "summarize_es": {
+		"system": "Propón un resumen claro y conciso en Español. Debes hacer el resumen de forma breve, sin añadir información extra que no sea necesaria",
+		"user": "Dado este texto: '''\n $query \n ''' Propón una versión resumida en Español del mismo para que sea más fácil de entender (usando el texto de la query para que sea más claro), sin añadir información innecesaria al resumen"
+	},
+    "summarize_en": {
+		"system": "You must propose a single clear and concise summary in English. You should be brief and concise in the summary. Do not add extra information that is not necessary",
+		"user": "Given the following user text: '''\n $query \n ''' Propose a summarized English version of the query, so that it is clearer to understand (use the text of the query to make it clearer). Do not add information that is not necessary to the summary."
+	},
+    "summarize_ja": {
+		"system": "You must propose a single clear and concise summary in Japanese. You should be brief and concise in the summary. Do not add extra information that is not necessary",
+		"user": "次のようなユーザーテキストがある： '''\n $query \n ''' クエリをよりわかりやすく要約した日本語版を提案する（よりわかりやすくするためにクエリのテキストを使用する）。要約に必要のない情報を加えないこと。"
+	}
+}

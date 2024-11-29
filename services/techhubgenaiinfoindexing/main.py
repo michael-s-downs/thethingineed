@@ -17,7 +17,7 @@ from common.genai_json_parser import get_exc_info, get_specific, get_dataset_sta
 from common.genai_status_control import update_full_status
 from common.status_codes import PROCESS_FINISHED, ERROR
 from common.indexing.connectors import ManagerConnector
-from common.indexing.loaders import ManagerLoader
+from common.storage_manager import ManagerStorage
 from common.indexing.vector_storages import ManagerVectorDB
 from common.indexing.parsers import ManagerParser
 
@@ -34,7 +34,7 @@ class InfoIndexationDeployment(BaseDeployment):
             self.origin = storage_containers.get('origin')
             self.workspace = storage_containers.get('workspace')
             self.redis_status = db_dbs.get('status')
-            file_loader = ManagerLoader().get_file_storage(
+            file_loader = ManagerStorage().get_file_storage(
                 {'type': "IRStorage", 'workspace': self.workspace, 'origin': self.origin})
             self.available_pools = file_loader.get_pools_per_embedding_model()
             self.available_models = file_loader.get_available_embedding_models()
@@ -75,10 +75,10 @@ class InfoIndexationDeployment(BaseDeployment):
             self.logger.info(f"Input parsed for index {input_object.index}")
 
             if eval(os.getenv('TESTING', "False")):
-                file_loader = ManagerLoader().get_file_storage(
+                file_loader = ManagerStorage().get_file_storage(
                     {'type': "IRStorage", 'workspace': self.origin, 'origin': self.origin})
             else:
-                file_loader = ManagerLoader().get_file_storage(
+                file_loader = ManagerStorage().get_file_storage(
                     {'type': "IRStorage", 'workspace': self.workspace, 'origin': self.origin})
 
             self.connector = ManagerConnector().get_connector(input_object.vector_storage)

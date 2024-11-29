@@ -22,7 +22,7 @@ from common.errors.genaierrors import PrintableGenaiError
 
 
 class Parser(ABC):
-    MODEL_FORMAT = "Connector"
+    MODEL_FORMAT = "Parser"
 
     def __init__(self):
         logger_handler = LoggerHandler(PARSERS_SERVICE, level=os.environ.get('LOG_LEVEL', "INFO"))
@@ -312,8 +312,6 @@ class ParserInforetrieval(Parser):
         if self.rescoring_function not in self.AVAILABLE_RESCORING_FUNCTIONS:
             raise PrintableGenaiError(400, f"Rescoring function '{self.rescoring_function}' not supported, the available ones are {self.AVAILABLE_RESCORING_FUNCTIONS}")
 
-    def get_project_config(self, json_input):
-        self.project_config = json_input.get("project_conf")
 
     def get_x_reporting(self, project_conf):
         self.x_reporting = project_conf['x-reporting']
