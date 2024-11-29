@@ -68,8 +68,11 @@ stages:
           python -m venv .venv
           source .venv/bin/activate
 
+          cd $(System.DefaultWorkingDirectory)/imagebase/$(baseImage)
+          pip install -r requirements.txt
+
           echo installing genai_sdk_services
-          cd libraries/genai_sdk_services
+          cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
   
           pip install --upgrade pip
           python -m pip install -U setuptools wheel twine
@@ -80,16 +83,16 @@ stages:
           python setup.py bdist_wheel --python-tag=cp$(python_version)
 
           echo $(serviceName)
-          cd /home/vsts/work/1/s/services/$(serviceName)/
+          cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
         
           echo installing packages
           # pip install pytest pytest-cov boto3 pillow flask pandas
-          pip install pytest pytest-cov flask pillow elasticsearch langdetect mmh3 tiktoken
+          pip install pytest pytest-cov flask pillow dotenv
           pip install -r requirements_info.txt
     
-          export PYTHONPATH=/home/vsts/work/1/s/services/
+          export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
           echo running coverage
-          coverage run --source=/home/vsts/work/1/s/services/$(serviceName)/ -m pytest -s
+          coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
           coverage report
           coverage xml 
         displayName: Coverage report
