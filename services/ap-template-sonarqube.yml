@@ -35,6 +35,7 @@ steps:
   displayName: Use Python ${{ parameters.pythonVersion }}
 
 - script: |
+      sudo apt-get install libmagic1
       python -m venv .venv
       source .venv/bin/activate
       touch pip.conf
