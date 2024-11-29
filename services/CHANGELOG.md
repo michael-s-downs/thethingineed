@@ -3,7 +3,7 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## v2.1.0 (2024-11-28)
 - genai-compose:
     - [New] Endpoint to list templates
     - [New] Endpoint to list filter templates
@@ -12,7 +12,10 @@
     - [New] Try Lingua instead of langdetect to improve language detection
     - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
     - [Fix] Query to minus before langdetect
+    - [Fix] Perist dict not adding new entries
+    - [Fix] Documentation examples
 - genai-llmapi:
+    - [Improvement] Set default model to 'techhub-pool-world-gpt-4o'
     - [Fix] Endpoint list templates shows file name with its templates
 
 ## v2.0.0 (2024-11-08)

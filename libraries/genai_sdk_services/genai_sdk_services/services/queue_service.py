@@ -117,6 +117,8 @@ class AWSQueueService(BaseQueueService):
                         'secret_key': os.getenv(self.env_vars[1]),
                         'region_name': os.getenv(self.env_vars[2])
                     }
+                elif eval(os.getenv("AWS_ROLE", "False")):
+                    credentials = {}
                 else:
                     raise Exception("Credentials not found")
 
@@ -135,7 +137,11 @@ class AWSQueueService(BaseQueueService):
         self.logger.debug("Connection created")
         region_name = self.credentials[origin].get('region_name', "eu-west-1")
 
-        session = boto3.Session(aws_access_key_id=self.credentials[origin]['access_key'], aws_secret_access_key=self.credentials[origin]['secret_key'], region_name=region_name)
+        if eval(os.getenv("AWS_ROLE", "False")):
+            session = boto3.Session(region_name=region_name)
+        else:
+            session = boto3.Session(aws_access_key_id=self.credentials[origin]['access_key'], aws_secret_access_key=self.credentials[origin]['secret_key'], region_name=region_name)
+
         sqs_client = session.client("sqs")
 
         self.clients[origin] = sqs_client
@@ -280,7 +286,6 @@ class AzureServiceBusService(BaseQueueService):
         self.logger.debug("Connection created")
 
         queue_client = ServiceBusClient.from_connection_string(conn_str=self.credentials[origin]['conn_str'], logging_enable=True)
-        self.clients[origin] = queue_client
 
         return queue_client
 
@@ -322,10 +327,10 @@ class AzureServiceBusService(BaseQueueService):
                 data.append(json.loads(format(msg)))
                 if delete:
                     receiver.complete_message(msg)
-                    receiver.close()
         if len(data) == 0:
             data = None
 
+        receiver.close()
         queue_client.close()
 
         return data, resp
@@ -345,12 +350,13 @@ class AzureServiceBusService(BaseQueueService):
         try:
             message = ServiceBusMessage(json.dumps(data))
             sender.send_messages(message)
-            sender.close()
-            queue_client.close()
         except Exception as ex:
             raise ex
         else:
             return True
+        finally:
+            sender.close()
+            queue_client.close()
 
     def delete_messages(self, origin: str, entries: list) -> bool:
         """ Delete messages from the queue
@@ -359,22 +365,17 @@ class AzureServiceBusService(BaseQueueService):
         :param entries: (list) List of ServiceBusReceivedMessage
         :return: (bool) True if all messages have been deleted successfully
         """
-        receiver = self.receiver[origin]
+        queue_client = self.get_session(origin)
+        receiver = queue_client.get_queue_receiver(origin)
         response = True
 
         try:
             for msg in entries:
                 receiver.complete_message(msg)
-                receiver.close()
         except Exception:
-            try:
-                entries = receiver.receive_messages(max_message_count=len(entries))
-                for msg in entries:
-                    receiver.complete_message(msg)
-                    receiver.close()
-            except:
-                self.logger.debug("Error, the message has not been deleted")
-                response = False
+            raise RuntimeError("Failed to delete some messages")
+        finally:
+            receiver.close()
 
         return response
 
@@ -393,7 +394,7 @@ class AzureStorageQueueService(BaseQueueService):
     clients = {}
     credentials = {}
     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "azure", "azure.json")
-    env_vars = ["AZ_CONN_STR_QUEUE"]
+    env_vars = ["AZ_CONN_STR_STORAGE"]
 
     def __init__(self):
         """ Initializes the service """
@@ -411,9 +412,9 @@ class AzureStorageQueueService(BaseQueueService):
                 if os.path.exists(self.secret_path):
                     with open(self.secret_path, "r") as file:
                         conn_str = json.load(file).get('conn_str_queue', "")
-                        credentials = {'conn_str': conn_str}
+                        credentials = {'conn_str': conn_str, 'queue_name': url}
                 elif os.getenv(self.env_vars[0], ""):
-                    credentials = {'conn_str': os.getenv(self.env_vars[0])}
+                    credentials = {'conn_str': os.getenv(self.env_vars[0]), 'queue_name': url}
                 else:
                     raise Exception("Credentials not found")
 
@@ -425,14 +426,10 @@ class AzureStorageQueueService(BaseQueueService):
         :param origin: (str) with the type of the queue and the name of the queue
         :return: Client of the service
         """
-        if origin and origin in self.clients:
-            return self.clients[origin]
 
         self.logger.debug("Connection created")
 
-        queue_client = QueueClient.from_connection_string(conn_str=self.credentials[origin]['connect_str'], queue_name=self.credentials[origin]['queue_name'])
-
-        self.clients[origin] = queue_client
+        queue_client = QueueClient.from_connection_string(conn_str=self.credentials[origin]['conn_str'], queue_name=self.credentials[origin]['queue_name'])
 
         return queue_client
 
@@ -445,7 +442,7 @@ class AzureStorageQueueService(BaseQueueService):
         queue_client = self.get_session(origin)
         properties = queue_client.get_queue_properties()
         count = properties.approximate_message_count
-
+        queue_client.close()
         return count
 
     def read(self, origin: str, max_num: int = 1, delete: bool = True) -> Tuple[list, list]:
@@ -468,20 +465,21 @@ class AzureStorageQueueService(BaseQueueService):
             self.logger.debug("Number of messages in queue greater than 10. Setting 10 as max")
 
         data = []
-        entries = None
+        entries = []
         self.logger.debug("Receiving messages")
-        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=20)
-        if len(resp) != 0:
-            for msg in resp:
-                data.append(json.loads(msg.content))
+        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5)
 
-            entries = [{'Id': msg['id'], 'pop_receipt': msg['pop_receipt']} for msg in resp]
+        for msg in resp:
+            data.append(json.loads(msg.content))
+            entries.append({'Id': msg['id'], 'pop_receipt': msg['pop_receipt']})
 
-            if delete:
-                self.delete_messages(origin, entries)
+        if delete:
+            self.delete_messages(origin, entries)
 
         if len(data) == 0:
             data = None
+
+        queue_client.close()
 
         return data, entries
 
@@ -502,6 +500,10 @@ class AzureStorageQueueService(BaseQueueService):
             raise ex
         else:
             return True
+        finally:
+            queue_client.close()
+
+
 
     def delete_messages(self, origin: str, entries: list) -> bool:
         """ Delete messages from the queue
@@ -510,23 +512,29 @@ class AzureStorageQueueService(BaseQueueService):
         :param entries: (list) Ids of the messages to delete
         :return: (bool) True if all messages have been deleted successfully
         """
-        num_before = self.get_num_in_queue(origin)
-        total = len(entries)
-        
+
         queue_client = self.get_session(origin)
 
         self.logger.debug(f"Deleting messages from queue: {entries}")
-        for msg in entries:
-            queue_client.delete_message(message=msg['Id'], pop_receipt=msg['pop_receipt'])
 
-        num_after = self.get_num_in_queue(origin)
+        try:
+            num_before = self.get_num_in_queue(origin)
 
-        if num_before != num_after:
-            if num_before-num_after != total:
-                raise RuntimeError("Failed to delete some messages")
-            response = True
-        else:
-            response = False
+            for msg in entries:
+                queue_client.delete_message(message=msg['Id'], pop_receipt=msg['pop_receipt'])
+
+            num_after = self.get_num_in_queue(origin)
+
+            if num_before != num_after:
+                if num_before-num_after != len(entries):
+                    raise RuntimeError("Failed to delete some messages")
+                response = True
+            else:
+                response = False
+        except Exception as ex:
+            raise RuntimeError("Failed to delete some messages")
+        finally:
+            queue_client.close()
 
         return response
 
@@ -539,3 +547,4 @@ class AzureStorageQueueService(BaseQueueService):
 
         self.logger.debug("Purging queue...")
         queue_client.clear_messages()
+        queue_client.close()
