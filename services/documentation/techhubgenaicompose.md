@@ -3650,7 +3650,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
       - Template_name (string): Template used while calling the LLMAPI.
       - Save_mod_query (bool): Used to save or not the original query.
 
-2.  **filter query**
+10.  **filter query**
     this action allows the user to filter the query to protect the tool from malicious queries or not wanted topics.
 
     parameters of this action:
@@ -3713,7 +3713,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
-3.  **Filter response**
+11.  **Filter response**
     This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
 
     Parameters of this action:
