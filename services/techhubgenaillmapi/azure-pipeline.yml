@@ -70,10 +70,10 @@ stages:
               source .venv/bin/activate
 
               cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
-              echo "installing requirements from $pwd"
+              echo "installing requirements from $(pwd)"
               pip install -r requirements.txt
 
-              echo "installing requirements from $pwd"
+              echo "installing requirements from $(pwd)"
               cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
 
               pip install --upgrade pip
@@ -87,9 +87,8 @@ stages:
               echo $(serviceName)
               cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
 
-              echo "installing requirements from $pwd"
+              echo "installing requirements from $(pwd)"
               pip install -r requirements_info.txt
-              pip install -r requirements.txt
               pip install pytest pytest-cov 
 
               export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
