@@ -37,7 +37,9 @@ steps:
 - script: |
       python -m venv .venv
       source .venv/bin/activate
-
+      touch pip.conf
+      echo "[global]
+      index-url=https://pkgs.dev.azure.com/GAOTechHub/TechHub/_packaging/TechHub/TechHub/pypi/simple/"> pip.conf
       echo ${{ parameters.serviceName }}
       cd /home/vsts/work/1/s/services/${{ parameters.serviceName }}/
 
