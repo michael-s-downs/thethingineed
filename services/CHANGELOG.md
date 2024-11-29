@@ -3,6 +3,10 @@
 
 # Changelog
 
+## vX.X.X (x)
+-genai-compose:
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+
 ## v2.1.0 (2024-11-28)
 - genai-compose:
     - [New] Endpoint to list templates
