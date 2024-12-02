@@ -1,8 +1,8 @@
-# Retrieval
+# InfoRetrieval Service Documentation
 
 ## Index
 
-- [Retrieval](#retrieval)
+- [InfoRetrieval Service Documentation](#inforetrieval-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -22,8 +22,10 @@
       - [Delete documents: `url/delete-documents`](#delete-documents-urldelete-documents)
       - [Delete index: `url/delete_index`](#delete-index-urldelete_index)
       - [Filenames retrieval: `url/get_documents_filenames`](#filenames-retrieval-urlget_documents_filenames)
+      - [List indices: `url/get_models`](#list-indices-urlget_models)
       - [Parameters](#parameters)
       - [Examples](#examples-1)
+      - [List indices: `url/list_indices`](#list-indices-urllist_indices)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
     - [Request and Response Formats for /process](#request-and-response-formats-for-process)
@@ -59,13 +61,13 @@ The RETRIEVAL module is designed to facilitate the extraction of documents or in
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - ElasticSearch
 
 #### Installation steps
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh
@@ -403,7 +405,7 @@ Response:
 ```
 
 It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?platform=azure
+https://**\<deploymentdomain\>**/retrieve/get_models?platform=azure
 
 The response would be a list of all the available models on the platform:
 ```json
@@ -434,7 +436,7 @@ The response would be a list of all the available models on the platform:
     "status_code": 200
 }
 ```
-
+#### List indices: `url/get_models`
 #### Parameters
 
 The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
@@ -448,7 +450,7 @@ The endpoint expects a get request with the following optional fields (one of th
 
 Filter by model pool:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?pool=ada-002-pool-world
+https://**\<deploymentdomain\>**/retrieve/get_models?pool=ada-002-pool-world
 - Response:
 ```json
 {
@@ -469,7 +471,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?pool=ada-002-poo
 
 Filter by embedding model:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?embedding_model=text-embedding-3-small
+https://**\<deploymentdomain\>**/retrieve/get_models?embedding_model=text-embedding-3-small
 
 - Response:
 ```json
@@ -489,7 +491,7 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?embedding_model=
 
 Filter by zone:
 - Request:
-https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
+https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
 - Response:
 ```json
@@ -513,6 +515,45 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
 }
 ```
 
+#### List indices: `url/list_indices`
+Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this: 
+https://**\<deploymentdomain\>**/retrieve/list_indices
+
+The response would be a list of index names along with the models associated with each one:
+```json
+{
+    "indices": [
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_1"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002",
+                "text-embedding-large",
+                "cohere.embed-multilingual-v3"
+            ],
+            "name": "index_2"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_3"
+        },
+        {
+            "models": [
+                "text-embedding-large"
+            ],
+            "name": "index_4"
+        }
+    ],
+    "status": "ok",
+    "status_code": 200
+}
+```
 
 ## API Reference
 
@@ -568,8 +609,33 @@ https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
     ```
     
 - /get_models (GET): Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
-  Request: https://techhubapigw.app.techhubnttdata.com/retrieve/get_models?zone=techhub
+  Request: https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
+- /list_indices (GET): Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
+  Request: https://**\<deploymentdomain\>**/retrieve/list_indices
+Returns:
+    ```json
+    {
+    "indices": [
+        {
+            "models": [
+                "text-embedding-ada-002"
+            ],
+            "name": "index_1"
+        },
+        {
+            "models": [
+                "text-embedding-ada-002",
+                "text-embedding-large",
+                "cohere.embed-multilingual-v3"
+            ],
+            "name": "index_2"
+        }
+    ],
+    "status": "ok",
+    "status_code": 200
+    }
+    ```
 ### Request and Response Formats for /process
 
 ### Parameters explanation
@@ -630,8 +696,6 @@ BM25 retriever not found (there is no index that matches the passed value) | BM2
 ## Configuration
 
 ### Cloud setup
-
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 The files/secrets architecture is:
 

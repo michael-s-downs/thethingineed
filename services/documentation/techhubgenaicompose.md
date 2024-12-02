@@ -1,8 +1,8 @@
-# Compose
+# Compose Service Documentation
 
 ## Index
 
-- [Compose](#compose)
+- [Compose Service Documentation](#compose-service-documentation)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -157,7 +157,7 @@ Example using python requests:
 import requests
 import json
 
-url = "http://apiurl/compose/process"
+url = "https://<deploymentdomain>/compose/process"
 
 payload =  {
     "generic": {
@@ -264,6 +264,26 @@ If the response looks like this, you are good to go.
     "max_persistence": 20
 }
 ```
+
+- /list_templates (GET): Used to list all templates stored in cloud.
+
+- /list_filter_templates (GET): Used to list all filter templates stored in cloud.
+
+- /get_template (POST): Used to get the content of a template json file stored in cloud.
+
+    ```json
+    {
+        "name": "template_name"
+    }
+    ```
+
+- /get_filter_template (POST): Used to get the content of a filter template json file stored in cloud.
+
+    ```json
+    {
+        "name": "filter_template_name"
+    }
+    ```
 
 - /upload_template (POST): Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
@@ -552,7 +572,7 @@ The user has the option to enable conversation storage by adding a new parameter
 An example of the request is as follows:
 
 ```json
-URL: https://url/process
+URL: https://<deploymentdomain>/compose/process
 Method: POST
 Headers: x-api-key=*******(secret value given)*******
 ```
@@ -1613,7 +1633,7 @@ Response
                 {...},
                 {...},
                 {
-                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://api.dev.dolffia.com/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
+                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://<deploymentdomain>/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-dataivandegregoriougarte/request_20240916_101923_083524_x2pm4n/manual.docx",
                         "sections_headers": "",
@@ -2136,7 +2156,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "Compose pipeline for base template.\nA example request for base_template is as follows:\nURL: https://api.com/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"my_template\",\n                \"params\": {\n                    \"query\": \"What is NTT Data?",
+                    "content": "Compose pipeline for base template.\nA example request for base_template is as follows:\nURL: https://<deploymentdomain>/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"my_template\",\n                \"params\": {\n                    \"query\": \"What is NTT Data?",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
@@ -2154,7 +2174,7 @@ Response:
                     "tokens": null
                 },
                 {
-                    "content": "This time of expiration, can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.\n\nURL: https://api..com/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"session_id\": \"test_session\",\n            \"template\": {\n                \"name\": \"knowler_llm\",\n                \"params\": {\n                    \"query\": \"what is ntt\"\n                }\n            },\n            \"persist\": {\n                    \"type\": \"chat\",\n                    \"params\": {\n                        \"max_persistence\": 20\n                    }\n                },\n            \"reformulate\":{\n                    \"type\": \"mixqueries\",\n                    \"params\": {\n                            \"max_persistence\": 20,\n                            \"template_name\": \"reformulate\",\n                            \"add_answer\": false,\n                            \"save_mod_query\": true\n                        }\n                \n            }\n        }\n    }\n}\n\nAn example in the Employee Workplace is as follows:\n\nFigure 4.",
+                    "content": "This time of expiration, can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.\n\nURL: https://<deploymentdomain>/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"session_id\": \"test_session\",\n            \"template\": {\n                \"name\": \"knowler_llm\",\n                \"params\": {\n                    \"query\": \"what is ntt\"\n                }\n            },\n            \"persist\": {\n                    \"type\": \"chat\",\n                    \"params\": {\n                        \"max_persistence\": 20\n                    }\n                },\n            \"reformulate\":{\n                    \"type\": \"mixqueries\",\n                    \"params\": {\n                            \"max_persistence\": 20,\n                            \"template_name\": \"reformulate\",\n                            \"add_answer\": false,\n                            \"save_mod_query\": true\n                        }\n                \n            }\n        }\n    }\n}\n\nAn example in the Employee Workplace is as follows:\n\nFigure 4.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
@@ -2989,7 +3009,6 @@ This service receives the user's request and searches for the template in the da
 
 ### Cloud setup
 
-To configure the component on your own cloud use [this guide](#deploy-guide-link).
 
 ### Configuration files
 
@@ -3028,14 +3047,14 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 #### System requirements
 
-- Python 3.8
+- Python 3.11
 - Cloud storage
 - [LLMAPI](#link al llmapi)
 - [Retrieval](#link al retrieval)
 
 #### Installation
 
-- Create a new Python 3.8 environment
+- Create a new Python 3.11 environment
 - Install the required libraries with the "requirements.txt" file.
 
     ```sh
@@ -3532,13 +3551,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Parameters of this action:
 
-   - **Type** (string): Method to use for the expansion. (langs)
+   - **Type** (string): Method to use for the expansion. (langs, steps)
+   - **Params** (dict): Params for the action.
+
+    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
    - **Langs** (string, list): Languages to translate the query while using the langs type.
-
-   Within this action, there is one type:
-
-   - **Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
+   - **Model** (string, optional): Model to use for the translation.
 
     Example:
 
@@ -3578,6 +3597,27 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - "th": "thai",
     - "ca": "catalan"
 
+    **2. Step Expansion**: This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
+
+   - **K_steps** (int): Max number of query to create. The max number of queries is 10.
+   - **Context** (string, optional): Context for the template to use while calling llmapi.
+   - **Model** (string, optional): Model to use for the translation.
+
+    Example:
+
+    ```json
+   {
+        "action": "expansion",
+        "action_params":{
+            "params": {
+                "k_steps": 2,
+                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
+            },
+            "type": "steps"
+        }
+    }
+    ```
+
 9. **Reformulate query**
     This action allows the user to reformulate the original query to improve the quality of the responses.
 
@@ -3610,7 +3650,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
       - Template_name (string): Template used while calling the LLMAPI.
       - Save_mod_query (bool): Used to save or not the original query.
 
-10. **filter query**
+10.  **filter query**
     this action allows the user to filter the query to protect the tool from malicious queries or not wanted topics.
 
     parameters of this action:
@@ -3673,7 +3713,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
-11. **Filter response**
+11.  **Filter response**
     This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
 
     Parameters of this action:
