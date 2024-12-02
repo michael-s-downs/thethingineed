@@ -22,7 +22,8 @@ class TestPreprocessExtractDeployment:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Fixture for setting up deployment instance"""
-        self.deployment = PreprocessExtractDeployment()
+        with patch("main.set_queue"):
+            self.deployment = PreprocessExtractDeployment()
 
     def test_init_sets_proper_attributes(self):
         """Test if the init method correctly sets up attributes"""

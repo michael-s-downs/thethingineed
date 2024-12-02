@@ -1,10 +1,14 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from compose.streamlist import StreamList, StreamChunk
 from compose.utils.defaults import EMPTY_STREAM
 from common.errors.genaierrors import GenaiError
 from compose.batchactions.combinebatch import JoinCombine2, CombineJoin2, CombineBatchFactory, CombineBatchMethod
+
 
 @pytest.fixture
 def stream_list_1():

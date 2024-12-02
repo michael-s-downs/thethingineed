@@ -114,7 +114,7 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            update_status(db_dbs['session'], f"session:{apigw_params['x-tenant']}:{session_id}",
+                update_status(db_dbs['session'], f"session:{apigw_params['x-tenant']}:{session_id}",
                           json.dumps({
                               "conv": json_input['conv'],
                               "max_persistence": json_input.get("max_persistence", 5),

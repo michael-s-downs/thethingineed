@@ -1,5 +1,8 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 
 from compose.utils.split_sentences import _split_sentences, split_by_word_respecting_sent_boundary
