@@ -69,7 +69,8 @@ def get_indexing_deployment():
 
 
             mock_get_file_storage.return_value = storage_mock_object
-            return InfoIndexationDeployment()
+            with patch("main.set_queue"):
+                return InfoIndexationDeployment()
 
 def get_connector():
     connector = MagicMock(scheme="https", host="localhost", port=9200, username="test", password="test", MODEL_FORMAT="elastic")
@@ -125,8 +126,9 @@ class TestInfoIndexationDeployment():
 
     def test_exception_init(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            mock_get_file_storage.side_effect = Exception("Error")
-            assert not hasattr(InfoIndexationDeployment(), "available_pools")
+            with patch("main.set_queue"):
+                mock_get_file_storage.side_effect = Exception("Error")
+                assert not hasattr(InfoIndexationDeployment(), "available_pools")
 
     def test_file_storage_testing(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
