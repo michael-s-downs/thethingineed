@@ -8,7 +8,8 @@ from main import FlowMgmtInfoDeleteDeployment  # Adjust based on actual file/mod
 @pytest.fixture
 def deployment():
     """Fixture to create the deployment instance."""
-    return FlowMgmtInfoDeleteDeployment()
+    with patch("main.set_queue"):
+        return FlowMgmtInfoDeleteDeployment()
 
 
 @patch('main.get_dataset_status_key', return_value='1234:5678')
