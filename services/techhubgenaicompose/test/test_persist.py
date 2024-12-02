@@ -1,8 +1,10 @@
 ### This code is property of the GGAO ###
 
 
-import pytest
 import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
+import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 from pcutils.persist import PersistManager, PersistDict, Conversation
 from common.errors.genaierrors import PrintableGenaiError
