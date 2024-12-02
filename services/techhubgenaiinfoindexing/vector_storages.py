@@ -61,7 +61,7 @@ class VectorDB(ABC):
 
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_vector_database_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -106,11 +106,11 @@ class LlamaIndex(VectorDB):
 
         n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
 
-        indexing_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
+        chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
                                                                       "workspace": self.workspace})
 
         # The last docs is used to get the nodes, because all the documents in the indexes must be indentical
-        nodes_per_doc = indexing_method.get_chunks(docs, self.encoding)
+        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding)
 
         # Indexation with the embeddings generation
         for model in io.models:
@@ -268,14 +268,14 @@ class ManagerVectorDB(object):
         """
         for store in ManagerVectorDB.MODEL_TYPES:
             store_type = conf.get('type')
-            if store.is_platform_type(store_type):
+            if store.is_vector_database_type(store_type):
                 conf.pop('type')
                 return store(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerVectorDB.get_possible_platforms()}")
+                         f"Possible values: {ManagerVectorDB.get_possible_vector_databases()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_vector_databases() -> List:
         """ Method to list the endpoints: [azure, openai]
 
         :param conf: Model configuration. Example:  {"platform":"openai"}

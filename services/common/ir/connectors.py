@@ -128,7 +128,7 @@ class Connector(ABC):
         """
         pass
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_connector_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -470,13 +470,13 @@ class ManagerConnector(object):
         """
         for connector in ManagerConnector.MODEL_TYPES:
             connection_type = conf.get('vector_storage_type')
-            if connector.is_platform_type(connection_type):
+            if connector.is_connector_type(connection_type):
                 return connector(conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerConnector.get_possible_platforms()}")
+                         f"Possible values: {ManagerConnector.get_possible_connectors()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_connectors() -> List:
         """ Method to list the endpoints: [azure, openai]
 
         :param conf: Model configuration. Example:  {"platform":"openai"}

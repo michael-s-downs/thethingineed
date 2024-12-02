@@ -29,7 +29,7 @@ class Parser(ABC):
         self.logger = logger_handler.logger
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_parser_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -42,7 +42,7 @@ class Parser(ABC):
             template = Template(models_credentials.get('URLs').get('AZURE_EMBEDDINGS_URL'))
             return {
                 "alias": alias,
-                "platform": platform,
+                "platform": platform,   
                 "embedding_model": model_selected.get('embedding_model'),
                 "api_key": models_credentials['api-keys'][platform][model_selected.get('zone')],
                 "azure_api_version": model_selected.get("azure_api_version"),
@@ -362,14 +362,14 @@ class ManagerParser(object):
         """
         for parser in ManagerParser.MODEL_TYPES:
             parser_type = conf.get('type')
-            if parser.is_platform_type(parser_type):
+            if parser.is_parser_type(parser_type):
                 conf.pop('type')
                 return parser(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerParser.get_possible_platforms()}")
+                         f"Possible values: {ManagerParser.get_possible_parsers()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_parsers() -> List:
         """ Method to list the parser types: [infoindexing, inforetrieval]
 
         :param conf: Model configuration. Example:  {"type":"infoindexing","platform":{...}}
