@@ -62,37 +62,39 @@ stages:
           architecture: 'x64'
 
       - script: |
-          echo install magic 
-          sudo apt-get install libmagic1
+              echo install magic 
+              sudo apt-get install libmagic1
 
-          python -m venv .venv
-          source .venv/bin/activate
+              python -m venv .venv
+              source .venv/bin/activate
 
-          echo installing genai_sdk_services
-          cd libraries/genai_sdk_services
-  
-          pip install --upgrade pip
-          python -m pip install -U setuptools wheel twine
-          python setup.py install
+              cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
+              echo "installing requirements from $(pwd)"
+              pip install -r requirements.txt
 
-          echo build package 
-          python setup.py build_ext --inplace
-          python setup.py bdist_wheel --python-tag=cp$(python_version)
+              echo "installing requirements from $(pwd)"
+              cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
 
-          echo $(serviceName)
-          cd /home/vsts/work/1/s/services/$(serviceName)/
-        
-          echo installing packages
-          # pip install pytest pytest-cov boto3 pillow flask pandas
-          pip install pytest pytest-cov flask pillow
-          pip install -r requirements_info.txt
-          # pip install -r requirements.txt
-          
-          export PYTHONPATH=/home/vsts/work/1/s/services/
-          echo running coverage
-          coverage run --source=/home/vsts/work/1/s/services/$(serviceName)/ -m pytest -s
-          coverage report
-          coverage xml 
+              pip install --upgrade pip
+              python -m pip install -U setuptools wheel twine
+              python setup.py install
+
+              echo build package 
+              python setup.py build_ext --inplace
+              python setup.py bdist_wheel --python-tag=cp$(python_version)
+
+              echo $(serviceName)
+              cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
+
+              echo "installing requirements from $(pwd)"
+              pip install -r requirements_info.txt
+              pip install pytest pytest-cov flask pillow
+
+              export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
+              echo running coverage
+              coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
+              coverage report
+              coverage xml
         displayName: Coverage report
 
 
