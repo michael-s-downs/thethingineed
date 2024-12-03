@@ -95,7 +95,7 @@ stages:
               coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
               coverage report
               coverage xml
-              displayName: Coverage report
+        displayName: Coverage report
 
 
 
