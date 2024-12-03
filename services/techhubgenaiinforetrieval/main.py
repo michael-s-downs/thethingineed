@@ -205,7 +205,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                                                                  connector, input_object.query)
             conf = {"strategy": input_object.strategy}
             if input_object.strategy == "recursive_genai_retrieval":
-                # Needed to get the hole index for every retriever
+                # Needed to get the whole index for every retriever
                 conf["connector"] = connector
             retrieval_strategy = ManagerRetrievalStrategies.get_retrieval_strategy(conf)
             sorted_documents = retrieval_strategy.do_retrieval_strategy(input_object, retrievers_arguments)

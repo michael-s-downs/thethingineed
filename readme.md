@@ -46,7 +46,7 @@
     - [Stages to deploy](#stages-to-deploy)
       - [1. Create library](#1-create-library)
       - [2. Create images base](#2-create-images-base)
-      - [3. Create image microservice and artifact helm](#3-create-image-microservice-and-artifact-helm)
+      - [3. Create microservice image and artifact helm](#3-create-microservice-image-and-artifact-helm)
       - [4. Create artifact IaC](#4-create-artifact-iac)
       - [5. Create releases](#5-create-releases)
     - [Running the bare application in a Python runtime environment](#running-the-bare-application-in-a-python-runtime-environment)
@@ -55,7 +55,7 @@
       - [Config files](#config-files)
         - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
           - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
-          - [Templates/prompts `/prompts/**.json`](#templatesprompts-promptsjson)
+          - [Templates `/prompts/**.json`](#templates-promptsjson)
         - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
         - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
         - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval--infoindexing-config-files-srcir)
@@ -148,7 +148,7 @@ Below is a list of all the parameters that can be included in the request body, 
 - **index** (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
 - **operation** (required): Operation to perform. It must always have the value "indexing".
 - **documents_metadata** (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent.
-- **models** (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the */integration/search/models_map.json* file explained in [models map explanation](#configuration)
+- **models** (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the */integration/search/models_map.json* file explained in [models map explanation](#models-map-searchmodels_mapjson)
 - **response_url** (required): Accessible endpoint to receive asynchronous response as callback when indexing process finishes. The service will send a POST message with these parameters:
   - **status**: Indicates if the final status of the indexing process, the value can be “Finished” or “Error”.
   - **error**: Description of the error; this parameter is only sent when an error occurs.
@@ -234,6 +234,34 @@ The output can be changed passing in the requests some attribute values:
 ## Endpoints
 
 ### Compose
+
+- Process (POST)
+
+    This is the main endpoint, used to call the Compose Service.
+
+    URL: https://**\<deploymentdomain\>**/compose/process 
+
+    ```json
+    {
+        "generic": {
+            "compose_conf": {
+                "template": {
+                    "name": "retrieval_llm",
+                    "params": {
+                        "query": "What are the New Year's resolutions?",
+                        "index": "myindex"
+                    }
+                }
+            ,
+                "persist": {
+                    "type": "chat",
+                    "params": {
+                    "max_persistence": 20
+                    }
+                }
+        }}
+    }
+    ```
 
 - List templates (GET)
 
@@ -321,7 +349,60 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
+- Load session (POST)
+    
+    Used to load a session by possibly inserting a conversation:
+    
+    URL: https://**\<deploymentdomain\>**/compose/load_session 
+
+    ```json
+    {    
+        "session_id": "session_example_1",    
+        "conv": [        
+            {            
+                "user": "What are the New Year's resolutions?",            
+                "assistant": "New Year's resolutions are personal goals or intentions that individuals set for themselves at the beginning of a new year. These resolutions are often aimed at improving oneself, such as adopting healthier habits, learning new skills, or achieving specific goals.",            
+                "n_tokens": 16,            
+                "input_tokens": 54,            
+                "output_tokens": 46        
+            }    
+        ],    
+        "max_persistence": 20
+    }
+    ```
+
+- healthcheck (GET)
+  
+  Used to check if the component is available. Returns:
+
+    URL: https://**\<deploymentdomain\>**/llm/healthcheck 
+
+    ```json
+    {
+        "status": "Service available"
+    }
+    ```
 ### LLMAPI
+
+- Predict (POST)
+  
+    This is the main endpoint to call the LLM
+
+    URL: https://**\<deploymentdomain\>**/llm/predict
+
+    ```json
+    {
+        "query_metadata": {
+            "query": "Where is Paris?"
+        },
+        "llm_metadata":{
+            "model": "techhubdev-pool-world-gpt-3.5-turbo-16k"
+        },
+        "platform_metadata":{
+            "platform": "azure"
+        }
+    }
+    ```
 
 - Reload config (GET)
 
@@ -336,7 +417,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models
+- Get_models (GET)
 
     URL: https://**\<deploymentdomain\>**/llm/get_models
 
@@ -398,7 +479,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- List prompt templates
+- List prompt templates (GET)
 
     Used to list all the prompt templates stored in cloud.
 
@@ -436,8 +517,42 @@ The output can be changed passing in the requests some attribute values:
       "template": {"system": "$system", "user": "$query"}
     }
     ```
+- healthcheck (GET)
+  
+    Used to check if the component is available. Returns:
+
+    URL: https://**\<deploymentdomain\>**/llm/healthcheck 
+
+
+    ```json
+    {
+        "status": "Service available"
+    }
+    ```
 
 ### INFORETRIEVAL
+
+- Process (POST)
+  
+    This is the main endpoint.
+
+    URL: https://**\<deploymentdomain\>**/retrieve/process
+
+    ```json
+    {
+        "index_conf": {
+            "index": "myindex",
+            "rescoring_function": "loglength",
+            "query": "What is the function of retrieval?",
+            "top_k": 2,
+            "filters": {
+                "filename": ["manual.docx"]
+            },
+            "models": [
+            ]
+        }
+    }
+    ```
 
 - Deletes document from index (POST)
 
@@ -571,15 +686,15 @@ The GENAI INFOINDEXING service provides a comprehensive solution to streamline t
 
 ### Indexing execution
 To index a document, the request must include the document encoded as base64 and the name of the document. The name of the index where you want to index documents must also be specified. If the index does not exist yet, it will create a new one.
-The parameters that can be included are described in [indexing configuration](#indexing-configuration).
-You can also see more examples in  the [examples section](#examples-indexing-pipeline).
+The parameters that can be included are described in [indexing configuration](#integration-config-files-srcintegration).
+You can also see more examples in  the [examples section](#indexing-examples).
 
 ```python
 
 payload = {
   "index": "myindex",
   "operation": "indexing",
-  "models": "techhubinc-ada-002-eastus2"
+  "models": "techhub-pool-world-ada-002"
   "documents_metadata": {
     "<filename>": {"content_binary": "<doc encoded as base64>"}
   },
