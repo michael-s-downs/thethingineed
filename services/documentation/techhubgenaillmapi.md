@@ -54,12 +54,12 @@ The GENAI LLM API is an advanced solution designed to seamlessly integrate with 
 
 ### Key features
 
-- Multi-platform Support: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
-- Comprehensive Query Handling: Efficiently process queries in various formats, including text and images, to deliver accurate and contextually relevant responses tailored to your business needs.
-- Customizable Parameters: Fine-tune model behavior with adjustable parameters such as token limits, temperature, and response formatting to meet specific organizational requirements.
-- Persistence and Context Management: Maintain conversation context and history to enable more coherent and context-aware interactions, ensuring continuity and improving user experience.
-- Versatile Model Selection: Access a wide range of models across different platforms, optimized for various use cases and geographical regions to support global operations.
-- Image Generation: Leverage DALL-E to generate high-quality images based on textual descriptions, with customizable options for style and resolution to fit diverse visual content needs.
+- **Multi-platform Support**: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
+- **Comprehensive Query Handling**: Efficiently process queries in several formats, including text and images, to deliver accurate and contextually relevant responses tailored to your business needs.
+- **Customizable Parameters**: Fine-tune the model's behavior with adjustable parameters such as token limits, temperature, and response formatting to meet specific organizational requirements.
+- **Persistence and Context Management**: Maintain conversation context and history to enable more coherent and context-aware interactions, ensuring continuity and improving user experience.
+- **Versatile Model Selection**: Access a wide range of models across different platforms, optimized for various use cases and geographical regions to support global operations.
+- **Image Generation**: Leverage DALL-E to generate high-quality images based on textual descriptions, with customizable options for style and resolution to fit diverse visual content needs.
 
 ## Getting Started
 
@@ -96,7 +96,7 @@ To get more information go to [Environment variables](#environment-variables)
 
 ### Quick Start Guide
 
-Calling LLM Service needs 3 keys: query_metadata, llm_metadata and platform_metadata. The most simple use case would be sending a single question as follows:
+Calling LLM Service needs 3 keys: *query_metadata, llm_metadata* and *platform_metadata*. The simplest use case would be sending a single question as follows:
 
 ```json
 {
@@ -104,7 +104,7 @@ Calling LLM Service needs 3 keys: query_metadata, llm_metadata and platform_meta
         "query": "Where is Paris?"
     },
     "llm_metadata":{
-        "model": "gpt-3.5-pool-techhub-europe"
+        "model": "techhubdev-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata":{
         "platform": "azure"
@@ -121,9 +121,9 @@ and headers if you are running on your local machine:
 "x-limits": ""
 ```
 
-As you can see is an extra header (x-limits) that is not necessary to run the component, but adds a feature to not use a LLM if its cuota has been surpassed. See [X-limits header](#x-limits-header) for more details.
+As you can see, there is an extra header (x-limits) that is not necessary to run the component, but adds a feature to not use a LLM if its cuota has been exceeded. See [X-limits header](#x-limits-header) for more details.
 
-If you are calling the pod use:
+If you are calling the pod you need to use the API key:
 
 ```json
 "x-api-key": "apikey123example"
@@ -143,7 +143,7 @@ If the response looks like this, you are good to go.
         "output_tokens": 29
     },
     "status_code": 200}
-```
+```  
 
 ## Concepts and Definitions
 
@@ -152,7 +152,7 @@ If the response looks like this, you are good to go.
 To understand the LLM module, there are a few concepts that we need to define beforehand:
 
 - **System**: This is a parameter that is sent to the LLM that explains to the model the aim of the task that it must do. For example: "You are an expert. Answer the question if the information is in the context, otherwise answer ‘Not found’".
-- **User**: This is a parameter that contains the query or queries that will be sent to the LLM.
+- **User**: This is a parameter that contains the query or queries that will be sent to the LLM. This parameter is used into templates.
 - **Query**: This is the question or task we want the LLM to answer or perform. For example: “What is the capital of France?” or “Describe this image”.
 - **Context**: This optional parameter contains the additional information we give to the LLM to enhance its performance.
 
@@ -162,12 +162,12 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
-## Calling LLMAPI
+## Calling LLM API
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
 ### Simple prediction call:
 
-/predict (POST) 
+Now, we are going to use the */predict (POST)* method from the LLM API.
 
 A **simple call for a non-vision model** using persistence would be:
 
@@ -182,7 +182,7 @@ A **simple call for a non-vision model** using persistence would be:
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "gpt-3.5-pool-techhub-europe"
+        "model": "techhubdev-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure"
@@ -190,7 +190,7 @@ A **simple call for a non-vision model** using persistence would be:
 }
 ```
 
-As we are not using a “template_name” and we are calling a non-vision model (gpt3.5) the default template would be:
+As we are not using a “template_name” parameter and we are calling a non-vision model (gpt3.5), the default template would be **system_query**:
 
 ```json
 "system_query": {
@@ -199,7 +199,7 @@ As we are not using a “template_name” and we are calling a non-vision model 
 }
 ```
 
-We don’t need to include the param “system” in our request even if it’s needed in the template because there is a default value set as “You are a helpful assistant”.
+We don’t need to include the “system” paramenter in our request even if it’s needed in the template because there is a default value set as “You are a helpful assistant”.
 
 The response received is:
 
@@ -218,7 +218,7 @@ The response received is:
 }
 ```
 
-Let’s see how the same example would look for a **vision model** and let’s add the image of a cat in the query and another image in the persistence. A vision request is similar to a normal call as it only changes the type and format of the query (because vision models accepts normal and vision persistence). Let's take into account that if a vision model has a normal query and persistence, his behavior will be like a normal model (gpt4 or gpt4o). This queries are in a list format with the text (order given to the LLM) and the image associated to the task. Finally in vision models is mandatory to select the maximum tokens for the output (1000 by default):
+Let’s see how the same example would look for a **vision model** and let’s add the image of a cat in the query and another image in the persistence. A vision request is similar to a normal call as it only changes the type and format of the query (because vision models accept normal and vision persistence). Let's take into account that if a vision model has a normal query and persistence, its behavior will be like a normal model (gpt4 or gpt4o). These queries are in a list format with the text (order given to the LLM) and the image associated with the task. Finally in vision models it is mandatory to select the maximum tokens for the output (1000 by default):
 
 ```json
 {
@@ -262,7 +262,7 @@ Let’s see how the same example would look for a **vision model** and let’s a
 
 The content’s format of the user role in the persistence is exactly as the query format.
 
-Again, we haven’t included an specific template_name but in this case as we are calling a vision model with a vision query the default template_name would be:
+Again, we haven’t included an specific template_name but in this case as we are calling a vision model with a vision query the default template_name would be **system_query_v**:
 
 ```json
 "system_query_v": {
@@ -271,7 +271,7 @@ Again, we haven’t included an specific template_name but in this case as we ar
 }
 ```
 
-You can see that the difference between the templates is that for non-vision models the user query is a string while in vision models it is inside a list. This is important because if we are using a string query in a vision template (list query) or vice versa we will receive an error saying that the template query structure does not match the request query structure.
+You can see that the difference between the templates is that for non-vision models the user query is a string while in vision models it is inside a list. This is important because if we use a string query in a vision template (list query) or vice versa we will receive an error saying that the template query structure does not match the request query structure.
 
 The response for the last request looks like:
 
@@ -316,7 +316,7 @@ A **Dalle request** to the LLM Service would be:
 }
 ```
 
-In dall-e persistence, we always send the user role, because the assistant role is always the response of the LLM (b64 or url) and it´s not a meaningful content. In this case, the model will draw a house with a river close. The response would be:
+In dall-e persistence, we always send the user role, because the assistant role is always the response of the LLM (b64 or url) and it's not meaningful content. In this case, the model will draw a house with a river close. The response would be:
 
 ```json
 {
@@ -431,17 +431,17 @@ Vision query:
 ]
 ```
 
-A vision query is a list containing dictionaries with individual queries. This means that, unlike for non-vision models, a single request can contain several queries.
+A vision query is a list containing dictionaries with individual queries. This means that, unlike non-vision models, a single request can contain several queries.
 
 Parameters for vision queries:
 
-- Type (mandatory): The type of query we are going to send. This can be just text or an image in format url or base64. The options for this key are: text/image_url/image_b64
-  - Text: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the llm.
-  - Url: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
-  - Base64: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
-- Text (mandatory when type = text): The text to send to the llm.
-- Image (mandatory when type = image_url or image_b64): Dictionary with the image content ('url' for image_url and 'base64' for image_b64) and another optional parameters:
-  - detail (optional for gpt vision models): The quality of the image analysis. Possible values: 'low', 'high' and 'auto'. Default is 'auto'.
+* **Type** (mandatory): The type of query we are going to send. This can be just text or an image in format url or base64. The options for this key are: *text*, *image_url* or *image_b64*:
+  - *Text*: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the LLM.
+  - *Url*: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
+  - *Base64*: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
+- **Text** (mandatory when type = text): The text to send to the LLM.
+- **Image** (mandatory when type = image_url or image_b64): Dictionary with the image content ('url' for image_url and 'base64' for image_b64) and another optional parameters:
+  - **Detail** (optional for gpt vision models): The quality of the image analysis. Possible values: *'low', 'high'* and *'auto'*. Default is *'auto'*.
 
 The following would be an example of a query containing the three types:
 
@@ -454,7 +454,7 @@ The following would be an example of a query containing the three types:
    {
      "type": "image_url",
      "image": {
-        "url": "https://imagelink.jpg"
+        "url": "https://cdn.britannica.com/16/75616-050-14C369D3/dolphins-mammals-fish-water.jpg"
      }
    },
    {
@@ -466,13 +466,13 @@ The following would be an example of a query containing the three types:
 ]
 ```
 
-*Images formats allowed: jpeg, png, gif and webp*
+Images formats allowed: *jpeg, png, gif* and *webp*.
 
 **Examples**
 
-- Non-vision model requests
+- Non-vision model requests.
 
-    A simple non-vision request with persistence and using the default system and template is:
+    A simple non-vision request with persistence. We are using the default values for system and template:
 
     ```json
     {
@@ -480,7 +480,7 @@ The following would be an example of a query containing the three types:
             "query": "What can I visit there?",
             "persistence": [
                 [{"role": "user", "content": "Where is the capital of France?"},
-                {"role": "assistant", "content": "Paris is located in the northern central part of France."}]
+                {"role": "assistant", "content": "Paris is located in the north-central part of France."}]
             ]
         },
         "llm_metadata": {
@@ -494,7 +494,7 @@ The following would be an example of a query containing the three types:
 
 - Vision model requests
 
-    Now let's recreate the former non-vision request but for a vision model and adding an image.
+    Now let's recreate the former non-vision request but for a vision model and adding an image:
 
     ```json
     {
@@ -583,9 +583,9 @@ The following would be an example of a query containing the three types:
 
 ### Get models:
 
-/get_models (GET) 
+Now, we are going to use the */get_models (GET)* method from the LLM API. 
 
-It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
+It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'Azure' platform would be like this:
 
 https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
@@ -622,18 +622,17 @@ The response would be a list of all the available models on the platform:
 
 #### Parameters
 
-The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
+The endpoint expects a GET request with the following optional fields (one of them is mandatory to make the call propertly) passed by parameters in the URL:
 
-- model_type (optional): A string or list of strings representing the model type to filter.
-- pool (optional): A string or list of strings representing the model pools to filter.
-- platform (optional): A string or list of strings representing the platform to filter.
-- zone (optional): A string or list of strings representing the zone to filter.
+- **model_type** (optional): A string or list of strings representing the model type to filter.
+- **pool** (optional): A string or list of strings representing the model pools to filter.
+- **platform** (optional): A string or list of strings representing the platform to filter.
+- **zone** (optional): A string or list of strings representing the zone to filter.
 
 #### Examples
 
 Filter by model pool:
-- Request:
-https://**\<deploymentdomain\>**/llm/get_models?pool=gpt-3.5-pool-europe
+- Request: https://**\<deploymentdomain\>**/llm/get_models?pool=gpt-3.5-pool-europe
 - Response:
 ```json
 {
@@ -706,8 +705,8 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 ### Endpoints
 
-- /predict (POST): This is the main endpoint, used to call the LLM.
-- /reloadconfig (GET): Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
+- **/predict (POST)**: This is the main endpoint used to call the LLM.
+- **/reloadconfig (GET)**: Used to reload the configuration read from the files like the models and prompt templates available. Returns the following JSON:
 
 ```json
 {
@@ -716,7 +715,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 }
 ```
 
-- /healthcheck (GET): Used to check if the component is available. Returns:
+- **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
 ```json
 {
@@ -724,7 +723,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 }
 ```
 
-- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
+- **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
 
 Response:
@@ -758,7 +757,7 @@ Response:
 }
 ```
 
-- /upload_prompt_template (POST): Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
+- **/upload_prompt_template (POST)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
 
 ```json
 {
@@ -767,7 +766,7 @@ Response:
 }
 ```
 
-- /delete_prompt_template (POST): Used to delete a prompt template json file from cloud storage.
+- **/delete_prompt_template (POST)**: Used to delete a prompt template JSON file from cloud storage.
 
 ```json
 {
@@ -775,7 +774,7 @@ Response:
 }
 ```
 
-- /list_templates (GET): Used to get all the available templates
+- **/list_templates (GET)**: Used to get all the available templates.
 ```json
 {
     "status": "finished",
@@ -794,7 +793,7 @@ Response:
 }
 ```
 
-- /get_template (GET): Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
+- **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
 ```json
 {
     "template": {
@@ -804,9 +803,9 @@ Response:
 }
 ```
 
-### Request and Response Formats for /predict
+### Request and Response Formats for */predict*
 
-Requests structure must be as follows.
+The requests structure must be as follows:
 
 ```json
 {
@@ -836,7 +835,7 @@ Requests structure must be as follows.
 }
 ```
 
-Response structure must be as follows
+The response structure must be as follows:
 
 ```json
 {
@@ -1323,7 +1322,7 @@ In the case that there is no template name, each generative model has a default 
 - STORAGE_BACKEND: Tenant backend name. Example: "dev-backend".
 - SECRETS_PATH: Path to the secrets folder in the pod,
 
-*When the provider is "azure", the aws variables can be empty and the same when using "aws" with the azure variable*
+*When the provider is **Azure**, the AWS variables can be empty, and the same applies when using **AWS** with the Azure variables.*
 
 ### X-limits header
 This header is for LLM control purposes, but can be use as a good feature for debugging. Like has been explained above, you can limit the tokens usage of a model just by passing this header with the following structure:

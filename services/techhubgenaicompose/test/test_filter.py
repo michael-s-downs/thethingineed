@@ -1,5 +1,8 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from compose.actions.filter import (
     FilterMethod,
@@ -15,9 +18,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
 from aioresponses import aioresponses
 from copy import deepcopy
-# import nest_asyncio
-
-# nest_asyncio.apply()
 
 
 class DummyFilter(FilterMethod):

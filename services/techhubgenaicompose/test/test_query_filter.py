@@ -1,5 +1,9 @@
 ### This code is property of the GGAO ###
 
+
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from unittest.mock import patch, MagicMock
 from compose.query_actions.filter_q import FilterExactMatch, FilterGPT, FilterFactory, FilterMethod

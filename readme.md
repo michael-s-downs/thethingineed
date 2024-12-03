@@ -280,7 +280,7 @@ The output can be changed passing in the requests some attribute values:
     ```json
     {
     "name": "example_template",
-    "content": "[\r\n    {\r\n        \"action\": \"summarize\",\r\n        \"action_params\": {\r\n            \"params\": {\r\n                \"llm_metadata\": {\r\n                    \"model\": \"techhubinc-pool-us-gpt-3.5-turbo-16k\"\r\n                },\r\n                \"platform_metadata\": {\r\n                    \"platform\": \"azure\"\r\n                },\r\n                \"query_metadata\": {\r\n                    \"query\": \"$query\",\r\n                    \"template_name\": \"system_query\"\r\n                }\r\n            },\r\n            \"type\": \"llm_content\"\r\n        }\r\n    }\r\n]"
+    "content": "[\r\n    {\r\n        \"action\": \"summarize\",\r\n        \"action_params\": {\r\n            \"params\": {\r\n                \"llm_metadata\": {\r\n                    \"model\": \"techhub-pool-world-gpt-3.5-turbo-16k\"\r\n                },\r\n                \"platform_metadata\": {\r\n                    \"platform\": \"azure\"\r\n                },\r\n                \"query_metadata\": {\r\n                    \"query\": \"$query\",\r\n                    \"template_name\": \"system_query\"\r\n                }\r\n            },\r\n            \"type\": \"llm_content\"\r\n        }\r\n    }\r\n]"
     }
     ```
 
@@ -333,32 +333,6 @@ The output can be changed passing in the requests some attribute values:
     {
         "status": "ok",
         "status_code": 200
-    }
-    ```
-
-- List prompt templates
-
-    Used to list all the prompt templates stored in cloud.
-
-    URL: https://**\<deploymentdomain\>**/llm/list_templates
-
-    Response:
-
-    ```json
-    {
-        "status": "finished",
-        "status_code": 200,
-        "result": {
-            "genai_create_query_v.json": [
-                "system_query_v"
-            ],
-            "genai_lan_create_query.json": [
-                "emptysystem_query",
-                "emptysystem_query_es",
-                "emptysystem_query_en",
-                "system_query"
-            ]
-        }
     }
     ```
 
@@ -423,9 +397,10 @@ The output can be changed passing in the requests some attribute values:
     "name": "example_template"
     }
     ```
-- Get prompt templates names (GET)
 
-    Used to get the list the available prompt templates.
+- List prompt templates
+
+    Used to list all the prompt templates stored in cloud.
 
     URL: https://**\<deploymentdomain\>**/llm/list_templates
 
@@ -433,19 +408,26 @@ The output can be changed passing in the requests some attribute values:
 
     ```json
     {
-        "templates": [
-            "emptysystem_query",
-            "system_query",
-            "system_context",
-            "fixed_system_query"
-        ]
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "genai_create_query_v.json": [
+                "system_query_v"
+            ],
+            "genai_lan_create_query.json": [
+                "emptysystem_query",
+                "emptysystem_query_es",
+                "emptysystem_query_en",
+                "system_query"
+            ]
+        }
     }
     ```
 - Get prompt template (GET)
 
     Used to get the content of a prompt template. In the url, we have to send the template_name
 
-    URL: https://**\<deploymentdomain\>**/llm/get_template?template_name=example_template
+    URL: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
 
     Response:
 
@@ -497,7 +479,7 @@ The output can be changed passing in the requests some attribute values:
 
     Used to retrieve the full document from an index.
 
-    URL: https://**\<deploymentdomain\>**/retrieve/delete_index
+    URL: https://**\<deploymentdomain\>**/retrieve/retrieve_documents
     ```json
         {
             "index": "myindex",
@@ -520,7 +502,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models 
+- Get_models (GET)
     
     URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
@@ -531,13 +513,13 @@ The output can be changed passing in the requests some attribute values:
     ```json
     {
       "models": [
-            "techhubinc-ada-002-australiaeast",
-            "techhubinc-ada-002-brazilsouth",
-            "techhubinc-ada-3-large-canadaeast",
-            "techhubinc-ada-3-small-canadaeast",
-            "techhubinc-ada-002-eastus",
-            "techhubinc-ada-3-large-eastus",
-            "techhubinc-ada-3-small-eastus",
+            "techhub-ada-002-australiaeast",
+            "techhub-ada-002-brazilsouth",
+            "techhub-ada-3-large-canadaeast",
+            "techhub-ada-3-small-canadaeast",
+            "techhub-ada-002-eastus",
+            "techhub-ada-3-large-eastus",
+            "techhub-ada-3-small-eastus",
         ],
         "pools": [
             "techhub-pool-world-ada-3-small",
@@ -552,9 +534,9 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- List the Elasticsearch indices, grouping the models by each index (GET)
+- list_indices (GET)
   
-    Used to list Elasticsearch indices, grouping models under each index.
+    This endpoint is used to list Elasticsearch indices, grouping models under each index.
 
     URL: https://**\<deploymentdomain\>**/retrieve/list_indices
 
@@ -612,14 +594,20 @@ Below is an example of the full code for the request to the indexing pipeline. I
 import requests
 import json
 
-URL_INTEGRATION_INDEXING = "https://<deploymentdomain>/integrationasync/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+encoded_file = "JVBERi0xLjcNCiW1XB..." #document encoded as base64
+
+# Request to the API configuration
+URL_INTEGRATION_INDEXING = f"{url}/integrationasync/process"
 
 payload = {
   "index": "myindex",
   "operation": "indexing",
-  "models": "techhubinc-ada-002-eastus2"
+  "models": ["techhub-pool-world-ada-002"],
   "documents_metadata": {
-    "doc1.pdf": {"content_binary": "doc encoded as base64"}
+    "doc1.pdf": {"content_binary": f"{encoded_file}"}
   },
   "window_length": 300,
   "window_overlap": 20,
@@ -628,19 +616,21 @@ payload = {
 }
 
 headers = {
-  "x-api-key": "$APIKEY",
-    'Content-Type': 'application/json'
+    "x-api-key": f"{api_key}",
+    "Content-Type": "application/json"
 }
 
-response = requests.request("POST", URL_INTEGRATION_INDEXING, headers=headers, data=payload)
+response = requests.request("POST", URL_INTEGRATION_INDEXING, headers=headers, json=payload)
+print("Response: " + response.text)
+
 ```
 
 If everything goes smoothly, the response must look like this:
 
 ```json
 {
-  "status": "processing",
-  "request_id": "request_20240627_134044_348410"
+    "status": "processing",
+    "request_id": "fixqmfvnwdyx3ayb2xbr/request_20241129_093422_591977_0pyz5s"
 }
 ```
 
@@ -651,20 +641,20 @@ COMPOSE is an AI framework that leverages Retrieval-Augmented Generation (RAG) t
 
 The compose flows configured to be used in the sandbox are the following:
 
-* techhub_retrieval_reference: to retrieve documents and generate content with a LLM
-* techhub_llm_model: to use a LLM directly, without a retrieval
-* techhub_retrieval: to only retrieve chunks / documents, without content generation. This template does not use a LLM.
+* <i>techhub_retrieval_reference</i>: to retrieve documents and generate content with a LLM.
+* <i>techhub_llm_model</i>: to use a LLM directly, without a retrieval.
+* <i>techhub_retrieval</i>: to only retrieve chunks / documents, without content generation. This template does not use a LLM.
 
 ### Compose execution
 To execute the RAG toolkit, there are two main things that you will need:
- * Query: This is the query that will be used to retrieve the documents and be sent to the LLM to generate content.
- * Compose conf - template: This is the template that contains the actions that the RAG pipeline will carry out. Depending on the template, the system will behave differently and will need the "params" specified within said template. Check the available [compose templates](#templates-compose)
+ * <i>Query</i>: This is the query that will be used to retrieve the documents and be sent to the LLM to generate content.
+ * <i>Compose conf - template</i>: This is the template that contains the actions that the RAG pipeline will carry out. Depending on the template, the system will behave differently and will need the "params" specified within said template. Check the available [compose templates](#Compose-Templates).
 
 
 #### RAG execution
 
-The api endpoint must be called with the following body and headers. 
-Please note that the compose template being used is: **techhub_retrieval_reference**. This templates performs a number of actions that consist of retrieving the documents (using the parameter "query") from the "index" (where documents have been indexed) and then use the LLM component. The LLM component calls the specified "model" from the specified "platform" (model must be available in platform). The prompt sent to the LLM is defined by the parameter "template_name". In this case, we use the template: rag_with_references. This templates integrates the "query" and the retrieved context from documents and send it to the LLM. The available LLM templates are described in [here](#ltemplates-llm)
+The API endpoint must be called with the following body and headers. 
+Please note that the compose template being used is: **techhub_retrieval_reference**. This templates performs a number of actions that consist of retrieving the documents (using the parameter "query") from the "index" (where documents have been indexed) and then use the LLM component. The LLM component calls the specified "model" from the specified "platform" (model must be available in platform). The prompt sent to the LLM is defined by the parameter "template_name". In this case, we use the template: rag_with_references. This templates integrates the "query" and the retrieved context from documents and send it to the LLM. The available LLM templates are described in [LLM prompt templates](#LLM-Prompt-Templates) section.
 
 
 ```json
@@ -677,10 +667,10 @@ Please note that the compose template being used is: **techhub_retrieval_referen
                     "query": "summarize the content",
                     "system": "You are an AI assistant",
                     "index": "myindex",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
-                    "template_name": "rag_with_references"
-
+                    "template_name": "rag_with_references",
+                    "llm_template": "system_query"
                 }
             }
         }
@@ -694,8 +684,13 @@ Example using python requests:
 import requests
 import json
 
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
 
-URL_COMPOSE = "https://<deploymentdomain>/compose/process""
+
+# Request to the API configuration
+URL_COMPOSE = f"{url}/compose/process"
 
 payload =  {
     "generic": {
@@ -706,9 +701,10 @@ payload =  {
                     "query": "summarize the content",
                     "system": "You are an AI assistant",
                     "index": "myindex",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
-                    "template_name": "rag_with_references"
+                    "template_name": "rag_with_references",
+                    "llm_template": "system_query"
                 }
             }
         }
@@ -716,13 +712,13 @@ payload =  {
 }
 
 headers = {
-    "x-api-key": "apikey123example",
-    'Content-Type': 'application/json'
+    "x-api-key": f"{api_key}",
+    "Content-Type": "application/json"
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(f"Response: {response.text}")
 
-print(response.text)
 ```
 
 If the response looks like this, you are good to go.
@@ -775,7 +771,7 @@ If the response looks like this, you are good to go.
 
 #### LLM execution
 To use the LLM without using the retrieval component, you just have to change the compose template used.
-As before, you have to specify the query, the model and the platform. Here, you can use the "system_query" template. This template will take the parameter "system" and "query" and will send them to the LLM directly:
+As before, you have to specify the query, the model and the platform. Here, you can use the <i>system_query</i> template. This template will take the parameter <i>system</i> and <i>query</i> and will send them to the LLM directly:
 
 ```json
     messages= [
@@ -794,12 +790,11 @@ The request would like like below
             "template": {
                 "name": "techhub_llm_model",
                 "params": {
-                    "query": "What is the capital of France?",
                     "system": "You are an AI assistant",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
-                    "template_name": "rag_with_references"
-
+                    "query":"What is the capital of France?",
+                    "llm_template": "system_query"
                 }
             }
         }
@@ -838,48 +833,48 @@ The request would like like below
 
 A compose template is a JSON file detailing all the action steps the orchestrator needs to execute. These actions define the orchestrator flow; the main two actions are 'retrieve' and 'llm_action', but there are other actions that apply to the result of the 'retrieve' action: filter, merge, batchmerge, sort and groupby.
 
-These are the following compose templates currently available
- * retrieve: to only retrieve documents, without content generation. This  template does not use a LLM.
- * retrieve_llm: to retrieve documents and content generation.
- * retrieve_reference: to retrieve documents and generate content with a LLM
- * llm_model: to use a LLM directly, without a retrieval
- * multiple_retrieval: to perform several retrievals, without content generation. This template does not use a LLM.
- * multiple_retrieval_llm: to perform several retrievals, with content generation.
- * retrieve_embeddings: to do a retrieval selecting an embedding model, without content generation. This template does not use a LLM.
- * retrieve_embeddings_llm: to do a retrieval selecting an embedding model, with content generation.
- * retrieve_hybrid_scoring: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), without content generation. This template does not use a LLM.
- * retrieve_hybrid_scoring_llm: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), with content generation.
- * retrieve_hybrid_scoring_rrf: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), without content generation. This template does not use a LLM.
- * retrieve_hybrid_scoring_rrf_llm: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), with content generation.
- * retrieve_sort_llm: to do retrieval and sorting chunks, with content generation.
- * retrieve_merge_llm: to merge the content of chunks with metadata filename, with content generation.
- * retrieve_fulldocument: to retrieve a full document, without content generation. This  template does not use a LLM.
- * retrieve_fulldoc_llm: to retrieve a full document, with content generation.
- * retrieve_batchmerge_llm: to perform several retrievals, with content generation.
- * expand_query_lang_llm: to do a retrieval translating the queries in different languages, with content generation.
- * dalle: for calling DALL-E model.
+These are the following compose templates currently available.
+ * **retrieve**: to only retrieve documents, without content generation. This  template does not use a LLM.
+ * **retrieve_llm**: to retrieve documents and content generation.
+ * **retrieve_reference**: to retrieve documents and generate content with a LLM.
+ * **llm_model**: to use a LLM directly, without a retrieval.
+ * **multiple_retrieval**: to perform several retrievals, without content generation. This template does not use a LLM.
+ * **multiple_retrieval_llm**: to perform several retrievals, with content generation.
+ * **retrieve_embeddings**: to do a retrieval selecting an embedding model, without content generation. This template does not use a LLM.
+ * **retrieve_embeddings_llm**: to do a retrieval selecting an embedding model, with content generation.
+ * **retrieve_hybrid_scoring**: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), without content generation. This template does not use a LLM.
+ * **retrieve_hybrid_scoring_llm**: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), with content generation.
+ * **retrieve_hybrid_scoring_rrf**: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), without content generation. This template does not use a LLM.
+ * **retrieve_hybrid_scoring_rrf_llm**: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), with content generation.
+ * **retrieve_sort_llm**: to do retrieval and sorting chunks, with content generation.
+ * **retrieve_merge_llm**: to merge the content of chunks with metadata filename, with content generation.
+ * **retrieve_fulldocument**: to retrieve a full document, without content generation. This  template does not use a LLM.
+ * **retrieve_fulldoc_llm**: to retrieve a full document, with content generation.
+ * **retrieve_batchmerge_llm**: to perform several retrievals, with content generation.
+ * **expand_query_lang_llm**: to do a retrieval translating the queries in different languages, with content generation.
+ * **dalle**: for calling DALL-E model.
  
  #### Compose Template Expected parameters:
  
- * retrieve: index, query, top_k, filters
- * retrieve_llm: index, query, top_k, filters, model, platform, query, system, llm_template
- * retrieve_reference: index, query, top_k, filters, model, platform, query, system, llm_template
- * multiple_retrieval: index, query, top_k, filters
- * llm_model:  model, platform, query, system, llm_template
- * multiple_retrieval_llm: index, query, top_k, filters, model, platform, query, system, llm_template
- * retrieve_embeddings: index, query, top_k, filters, embedding_model (a single one)
- * retrieve_embeddings_llm: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template
- * retrieve_hybrid_scoring: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom
- * retrieve_hybrid_scoring_llm:index, query, top_k, filters, embedding_model (a single one), rescoring_function , model, platform, query, system, llm_template
- * retrieve_hybrid_scoring_rrf: index, query, top_k, filters, embedding_model (a single one), strategy_mode
- * retrieve_hybrid_scoring_rrf_llm:index, query, top_k, filters, embedding_model (a single one), strategy_mode , model, platform, query, system, llm_template
- * retrieve_sort_llm:index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template
- * retrieve_merge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
- * retrieve_fulldocument:index, query, top_k, filters
- * retrieve_fulldoc_llm: index, query, top_k, filters, model, platform, query, system, llm_template
- * retrieve_batchmerge_llm: index, query, top_k, filters, model, platform, query, system, llm_template
- * expand_query_lang_llm: langs (list of languages to expand), index, query, model, platform, llm_template
- * dalle: style, size, quality, model, query
+ * **retrieve**: index, query, top_k, filters
+ * **retrieve_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **retrieve_reference**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **multiple_retrieval**: index, query, top_k, filters
+ * **llm_model**:  model, platform, query, system, llm_template
+ * **multiple_retrieval_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **retrieve_embeddings**: index, query, top_k, filters, embedding_model (a single one)
+ * **retrieve_embeddings_llm**: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template
+ * **retrieve_hybrid_scoring**: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom
+ * **retrieve_hybrid_scoring_llm**: index, query, top_k, filters, embedding_model (a single one), rescoring_function , model, platform, query, system, llm_template
+ * **retrieve_hybrid_scoring_rrf**: index, query, top_k, filters, embedding_model (a single one), strategy_mode
+ * **retrieve_hybrid_scoring_rrf_llm**: index, query, top_k, filters, embedding_model (a single one), strategy_mode , model, platform, query, system, llm_template
+ * **retrieve_sort_llm**: index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template
+ * **retrieve_merge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **retrieve_fulldocument**: index, query, top_k, filters
+ * **retrieve_fulldoc_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **retrieve_batchmerge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
+ * **expand_query_lang_llm**: langs (list of languages to expand), index, query, model, platform, llm_template
+ * **dalle**: style, size, quality, model, query
 
 
 ### Compose actions template
@@ -891,7 +886,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     This is to retrieve indexed documents based on a query. This is the most important action, and it is the one that will define our entry. In most cases, there should always be a retrieval that will usually be the first step of the flow. Once the search results are obtained in the format defined by the data model: By defauld, 1 streamlist with several streamchunk segments, other actions can be applied to them. It is also possible to store the chunks in different streamlists within the streambatch.
 
-    Example json template:
+    Example JSON template:
 
     ```json
     {
@@ -934,10 +929,10 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    - **Type** (string): Retrieve type. The available types are:
 
-      1. "get_chunks": Calls genai-inforetrieval to get the K number of chunks from the specified index.
-      2. "get_document": Calls genai-inforetrieval to get the entire document content specified.
+      1. <i>get_chunks</i>: Calls genai-inforetrieval to get the K number of chunks from the specified index.
+      2. <i>get_document</i>: Calls genai-inforetrieval to get the entire document content specified.
 
-    With the same action in the template json file, we can execute multiple retrieval to obtain different streamlist with different queries using the "retrieve" action name in the json api call.
+    With the same action in the template JSON file, we can execute multiple retrieval to obtain different streamlist with different queries using the "retrieve" action name in the JSON API call.
 
     ```json
     "retrieve": [
@@ -987,7 +982,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "type":  "related_to",
             "params":  {
                 "llm_metadata":  {
-                    "model":  "gpt-3.5-16k-pool-techhub-europe"
+                    "model":  "techhub-pool-world-gpt-3.5-turbo-16k"
                 },
                 "platform_metadata":  {
                     "platform":  "azure"
@@ -1028,33 +1023,31 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     |Allowed date types|
     | - |
-    |Yyyy-mm-dd|
-    |Yyyy/mm/dd|
-    |Yyyy/mm|
+    |yyyy-mm-dd|
+    |yyyy/mm/dd|
+    |yyyy/mm|
     |yyyy|
-    |Yyyymmdd|
-    |Mmddyy|
-    |Mmddyyyy|
-    |Mm/dd/yy|
-    |Mm/dd/yyyy|
-    |Mm-dd-yy|
-    |Mm-dd-yyyy|
+    |yyyymmdd|
+    |mmddyy|
+    |mmddyyyy|
+    |mm/dd/yy|
+    |mm/dd/yyyy|
+    |mm-dd-yy|
+    |mm-dd-yyyy|
 
 3. **Merge**
 
    This action merges the different streamchunks in a streamlist into a single streamchunk. Starts with 1 streambatch containing 1 streamlist with multiple streamchunks and it ends with a streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
-   The result chunk will have the merged information in the content field and in the metadata common to all the chunks merged will be saved in the new chunk.
+   The result chunk will have the merged information in the content field, and the metadata common to all the merged chunks will be saved in the new chunk:  
+    * **Type** (string): Merge type to execute. (meta)
 
+    * **Template** (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
 
-    - **Type** (string): Merge type to execute. (meta)
+    * **Sep** (string): Value to use to separate each content chunk.
 
-    - **Template** (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
+    * **Grouping_key** (string): Value to group the results.
 
-    - **Sep** (string): Value to use to separate each content chunk.
-
-    - **Grouping_key** (string): Value to group the results.
-
-    Example for action 'merge' in template:
+    Example for action <i>merge</i> in template:
 
     ```json
     {          
@@ -1090,15 +1083,15 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Can be executed for the streambatch or for streamlist. It can sort the streamlist based on the score, content length, document id or snippet number and the streambatch based on the mean score or the overall content. It can also sort based on other specified metadata or date. The usable date formats are the same as for the 'filter' action.
 
-   - **Type** (string): Sorting type to execute.
+   * **Type** (string): Sorting type to execute.
         - **Score**: Sorts by the mean score of each chunk.
         - **Length**: Sorts by the length of each chunk.
         - **Doc_id**: Sort by the document id of each chunk.
         - **Sn_number**: Sort by the snippet number of each chunk.
         - **Date**: Sort by metadata named “date” with date type values.
         - **Meta**: Sort by the metadata value, date values don’t work in this type.
-   - **Desc** (bool): Sort descendant or ascendant.
-   - **Value**: Metadata to use while sorting the streamlist.
+   * **Desc** (bool): Sort descendant or ascendant.
+   * **Value**: Metadata to use while sorting the streamlist.
 
    Example of action 'sort' with type **"length"**:
 
@@ -1123,7 +1116,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "type":  "meta",
             "params":  {
                 "desc":  true,
-                "value": $metadata_name
+                "value": "$metadata_name"
             }
         }
     }
@@ -1133,13 +1126,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     This action sorts the streamlist by groups. Each group will be sorted by snippet_number, like its natural order and then the groups can be sorted by the maximum score from each group, the mean score from each group and by date.
 
-   - **Type** (string): Groupby type to use. (docscore, date).
+   * **Type** (string): Groupby type to use. (docscore, date).
 
-   - **Method** (string): Method to use in the docscore sorting (max, mean).
+   * **Method** (string): Method to use in the docscore sorting (max, mean).
 
-   - **Desc** (bool): Sort descendant or ascendant.
+   * **Desc** (bool): Sort descendant or ascendant.
 
-    Example for 'groupby' action with type "docscore":
+    Example for <i>groupby</i> action with type **docscore**:
 
     ```json
     {
@@ -1154,7 +1147,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    Example for 'groupby' action with type **"date"**:
+    Example for 'groupby' action with type **date**:
 
     ```json
     {
@@ -1174,23 +1167,23 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Parameters of this action:
 
-   - **Type** (string): Method to user while calling genai-llmapi. (llm_content, llm_segments)
+   * **Type** (string): Method to user while calling genai-llmapi. (llm_content, llm_segments)
 
-   - **Model** (string): LLM model to use.
+   * **Model** (string): LLM model to use.
 
-   - **Platform** (string): Platform hosting the LLM.
+   * **Platform** (string): Platform hosting the LLM.
 
-   - **Query** (string)
+   * **Query** (string)
 
-   - **Template_name** (string):  Template name to use while calling genai-llmapi.
+   * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
-   - **System** (string): Context and task that will be sent to the LLM.
+   * **System** (string): Context and task that will be sent to the LLM.
 
    Within this action, there are two types:
 
-   - **Llm_content**: This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved and the and the last element of the streamlist will be the answer generated by the LLM.
+   * **Llm_content**: This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved and the and the last element of the streamlist will be the answer generated by the LLM.
 
-    Example for 'llm_action' action with type "llm_content":
+    Example for <i>llm_action</i> action with type "llm_content":
 
     ```json
         {   
@@ -1198,7 +1191,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "action_params": {
                 "params": {
                     "llm_metadata": {
-                        "model": "gpt-3.5-16k-pool-techhub-europe",
+                        "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                         "max_input_tokens":5000
                     },
                     "platform_metadata": {
@@ -1218,7 +1211,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
    - **Llm_segments**: This takes each one of the document fragments and sends them individually to the LLM. Therefore, you will get as many responses as document fragments you sent. The response will contain a streambatch of one streamlist containing the chunks retrieved with each answer.
 
 
-    Example for 'llm_action' action with type "llm_segment":
+    Example for <i>llm_action</i> action with type "llm_segment":
 
     ```json
     {   
@@ -1226,7 +1219,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -1244,17 +1237,15 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ```
 
 8. **Query expansion**
-    This action allows the user to expand the original query in multiple queries in order to improve the LLM response or the chunks retrieved.
+    This action allows the user to expand the original query into multiple queries in order to improve the LLM response or the chunks retrieved.
 
-   Parameters of this action:
+   - **Type** (string): Method to use for the expansion. (langs, steps)
+   - **Params** (dict): Params for the action.
 
-   - **Type** (string): Method to use for the expansion. (langs)
+    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
    - **Langs** (string, list): Languages to translate the query while using the langs type.
-
-   Within this action, there is one type:
-
-   - **Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
+   - **Model** (string, optional): Model to use for the translation.
 
     Example:
 
@@ -1264,7 +1255,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action_params":{
             "params": {
                 "langs" : ["es", "ja", "chinese"],
-                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
+                "model": "techhub-pool-world-gpt-3.5-turbo-16k"
             },
             "type": "lang"
         }
@@ -1294,16 +1285,37 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - "th": "thai",
     - "ca": "catalan"
 
+    **2. Step Expansion**: This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
+
+   - **K_steps** (int): Max number of query to create. The max number of queries is 10.
+   - **Context** (string, optional): Context for the template to use while calling llmapi.
+   - **Model** (string, optional): Model to use for the translation.
+
+    Example:
+
+    ```json
+   {
+        "action": "expansion",
+        "action_params":{
+            "params": {
+                "k_steps": 2,
+                "model": "techhub-pool-world-gpt-3.5-turbo-16k"
+            },
+            "type": "steps"
+        }
+    }
+    ```
+
 9. **Reformulate query**
     This action allows the user to reformulate the original query to improve the quality of the responses.
 
    Parameters of this action:
 
-   - **Type** (string): Method to use for the reformulate. (mix_queries)
+   * **Type** (string): Method to use for the reformulate. (mix_queries)
 
    Within this action, there is one type:
 
-   - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+   * **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
 
     Example:
 
@@ -1321,7 +1333,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    - Params:
+    * Parameters:
       - Max_persistence (int): Max number of older sessions to use.
       - Template_name (string): Template used while calling the LLMAPI.
       - Save_mod_query (bool): Used to save or not the original query.
@@ -1335,7 +1347,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     within this action, there is one type:
 
-    - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
+    - **llm**: this type filters the query using the llmapi and a template with the different categories. The template must be stored in the following folder: <i>src/compose/filter_templates</i>.
 
     example action:
 
@@ -1353,7 +1365,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters:
 
-    - **template**: Filter template name to use.
+    * **template**: Filter template name to use.
 
     Example filter template:
 
@@ -1381,24 +1393,24 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters:
 
-    - **filter_types**: Currently There is only one type of filter, GPT.
+    * **filter_types**: Currently There is only one type of filter, GPT.
 
-    - **substitutions_template**: It will be the prompt used for classification.
+    * **substitutions_template**: It will be the prompt used for classification.
 
-    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
 
-    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 11. **Filter response**
-    This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
+    This action allows the user to filter the response to double-check if the answer is correct or if the topic of the answer is not desired.
 
     Parameters of this action:
 
-    - **Type** (string): Method to use for the reformulate. (llm)
+    * **Type** (string): Method to use for the reformulate. (llm)
 
     Within this action, there is one type:
 
-    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
+    * **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
 
     Example action:
 
@@ -1452,13 +1464,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters:
 
-    - **filter_types**: Currently There is only one type of filter, GPT.
+    * **filter_types**: Currently There is only one type of filter, GPT.
 
-    - **substitutions_template**: It will be the prompt used for classification.
+    * **substitutions_template**: It will be the prompt used for classification.
 
-    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
 
-    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ### LLM Prompt Templates
 
@@ -1494,78 +1506,111 @@ The available models depend on the region where the suscription is deployed. Mak
 
 | Model Name            | Pools                                                  | Platform |
 |-----------------------|--------------------------------------------------------|------|
-| ada-002-pro-japaneast | ada-002-pool-techhub-japan, ada-002-pool-techhub-world |azure|
-| ada-002-inc-japaneast | ada-002-pool-techhub-japan, ada-002-pool-techhub-world |azure|
+|techhub-AustraliaEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-BrazilSouth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-CanadaEast-Ada-002|techhub-pool-world-ada-002-large|azure|
+|techhub-CanadaEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhub-CanadaEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
+|techhub-EastUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-EastUS-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhub-EastUS-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhub-EastUS2-Ada-3-large|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-EastUS2-Ada-3-small|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhub-EastUS2-Ada-002|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhub-FranceCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-FranceCentral-Ada-3-large|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|text-embedding-ada-002|techhub-pool-world-ada-002|azure|
+|text-embedding-3-large|techhub-pool-world-ada-3-large|azure|
+|techhub-NorthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-NorwayEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-SouthAfricaNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-SouthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-SouthIndia-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-SouthIndia-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhub-SwedenCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-SwedenCentral-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhub-SwitzerlandNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-UKSouth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhub-UKSouth-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhub-WestEurope-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-WestUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-WestUS3-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhub-WestUS3-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
 - Inc region
 
 | Model Name | Pools | Platform |
 |--------|------|------|
-|techhubinc-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
-|techhubinc-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-eastus|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-3-small-eastus|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubinc-ada-002-eastus2|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-eastus2|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-3-small-eastus2|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubinc-ada-002-francecentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-francecentral|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-002-japaneast|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-japaneast|techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-002-northcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-norwayeast|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-norwayeast|techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-southindia|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-uksouth|techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-uksouth|techhub-pool-world-ada-3-large|azure|
-|techhubinc-ada-002-westeurope|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-AustraliaEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-BrazilSouth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-CanadaEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-CanadaEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
+|techhubinc-CanadaEast-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-EastUS-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-EastUS-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubinc-EastUS-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-EastUS2-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-EastUS2-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-EastUS2-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubinc-FranceCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-FranceCentral-Ada-3-large|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-JapanEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-JapanEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-NorthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-NorwayEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-NorwayEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-SouthAfricaNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-SouthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-SouthIndia-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-SouthIndia-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-SwedenCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-SwedenCentral-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-SwitzerlandNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubinc-UKSouth-Ada-002 |techhub-pool-world-ada-002|azure|
+|techhubinc-UKSouth-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubinc-WestEurope-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-WestUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-WestUS3-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubinc-WestUS3-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
 - Dev region
+
 | Model Name | Pools | Platform |
 |--------|------|------|
-|techhubdev-ada-002-australiaeast|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-brazilsouth|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-canadaeast|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-canadaeast|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-3-small-canadaeast|techhub-pool-world-ada-3-small|azure|
-|techhubdev-ada-002-eastus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-eastus|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-3-small-eastus|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubdev-ada-002-eastus2|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-eastus2|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-3-small-eastus2|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubdev-ada-002-francecentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-francecentral|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-002-japaneast|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-japaneast|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-3-small-japaneast|techhub-pool-world-ada-3-small|azure|
-|techhubdev-ada-002-norwayeast|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-norwayeast|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-002-southafricanorth|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-southcentralus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-southindia|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-southindia|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-002-swedencentral|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-swedencentral|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-002-switzerlandnorth|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-uksouth|techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-uksouth|techhub-pool-world-ada-3-large|azure|
-|techhubdev-ada-002-westeurope|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-westus|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-002-westus3|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-ada-3-large-westus3|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-AustraliaEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-BrazilSouth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-CanadaEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-CanadaEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-CanadaEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
+|techhubdev-EastUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-EastUS-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-EastUS-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-EastUS2-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-EastUS2-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-EastUS2-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
+|techhubdev-FranceCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-FranceCentral-Ada-3-large|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-JapanEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-JapanEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-JapanEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
+|techhubdev-NorthCentralUS-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-NorwayEast-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-NorwayEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-SouthAfricaNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-SouthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-SouthIndia-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-SouthIndia-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-SwedenCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-SwedenCentral-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-SwitzerlandNorth-Ada-002|techhub-pool-world-ada-002|azure|
+|techhubdev-UKSouth-Ada-002 |techhub-pool-world-ada-002|azure|
+|techhubdev-UKSouth-Ada-3-large|techhub-pool-world-ada-3-large|azure|
+|techhubdev-WestEurope-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-WestUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-WestUS3-Ada-3-large|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
+|techhubdev-WestUS3-Ada-002|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 |dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
 
@@ -1580,10 +1625,47 @@ The available models depend on the region where the suscription is deployed. Mak
 
 | Model Name                    | Pools                                               | Platform |
 |-------------------------------|-----------------------------------------------------|------|
-|gpt-4o-judge|gpt-4o-pool-techhub-japan, gpt-4o-pool-techhub-world|azure|
-|techhubinc-JapanEast-gpt-4o-2024-05-13|gpt-4o-pool-techhub-japan, gpt-4o-pool-techhub-world|azure|
-|gpt-35-turbo-16k|gpt-3.5-16k-pool-techhub-japan, gpt-3.5-16k-pool-techhub-world|azure|
-|techhubinc-JapanEast-gpt-35-turbo-16k-0613|gpt-3.5-16k-pool-techhub-japan, gpt-3.5-16k-pool-techhub-world|azure|
+techhub-AustraliaEast-DallE-3|techhub-pool-world-dalle3|azure|
+techhub-AustraliaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-AustraliaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-AustraliaEast-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+techhub-BrazilSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-CanadaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-CanadaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-EastUS-DallE-3|techhub-pool-us-dalle3, techhub-pool-world-dalle3|azure|
+techhub-EastUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-EastUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-EastUS2-gpt-35-turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-EastUS2-gpt-4-turbo-2024-04-09|techhub-pool-us-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+techhub-EastUS2-gpt-4o-2024-05-13|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-FranceCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-FranceCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-GermanyWestCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+gpt-4o-judge|techhub-pool-world-gpt-4o|azure|
+gpt-35-turbo-16k|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+gpt-4o-mini|techhub-pool-world-gpt-4v|azure|
+techhub-KoreaCentral-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-NorthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-NorthCentralUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-NorwayEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-PolandCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-SouthAfricaNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-SouthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-SouthIndia-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-SouthIndia-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-SwedenCentral-DallE-3|techhub-pool-world-dalle3|azure|
+techhub-SwedenCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-SwedenCentral-GPT4-Turbo-202400409|techhub-pool-eu-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+techhub-SwedenCentral-GPT4-Vision|techhub-pool-eu-gpt-4v, techhub-pool-world-gpt-4v|azure|
+techhub-SwitzerlandNorth-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+techhub-SwitzerlandNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-UKSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+techhub-UKSouth-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-WestEurope-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-WestUS-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+techhub-WestUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+techhub-WestUS-GPT4-Vision|techhub-pool-us-gpt-4v, techhub-pool-world-gpt-4v|azure|
+techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
 
 
 - Inc region
@@ -1591,7 +1673,7 @@ The available models depend on the region where the suscription is deployed. Mak
 | Model Name | Pools | Platform |
 |--------|------|------|
 |techhubinc-AustraliaEast-dall-e-3|techhubinc-pool-world-dalle3|azure|
-|techhubinc-AustraliaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-AustraliaEast-gpt-35-turbo-16k-1106|techhubinc-pool-world-gpt-3.5-turbo-16k|azure|
 |techhubinc-AustraliaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo|azure|
 |techhubinc-AustraliaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o|azure|
 |techhubinc-AustraliaEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v|azure|
@@ -1658,7 +1740,7 @@ The available models depend on the region where the suscription is deployed. Mak
 | Model Name | Pools | Platform |
 |--------|------|------|
 |techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|
-|techhubdev-AustraliaEast-gpt-35-turbo-16k-0613|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubdev-AustraliaEast-gpt-35-turbo-16k-1106|techhubdev-pool-world-gpt-3.5-turbo-16k|azure|
 |techhubdev-AustraliaEast-gpt-4-turbo-2024-04-09|techhubdev-pool-world-gpt-4-turbo|azure|
 |techhubdev-AustraliaEast-gpt-4o-2024-05-13|techhubdev-pool-world-gpt-4o|azure|
 |techhubdev-AustraliaEast-gpt-4-vision-preview|techhubdev-pool-world-gpt-4v|azure|
@@ -1724,14 +1806,19 @@ The available models depend on the region where the suscription is deployed. Mak
 
 ### Indexing Examples
 
-Example of a request to the Global RAG indexing service:
-
-~~~
+Example of a request to the Global RAG indexing service:  
+```python
 import requests
 import json
 import base64
 
-url =  "https://<deploymentdomain>/integrationasync/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+filename = "example_banking.pdf"
+
+# Request to the API configuration
+URL_INTEGRATION =  f"{url}/integrationasync/process"
 
 ############### PDF content ############### 
 # The Bank of England paved the way for a summer interest rate cut yesterday after inflation fell to its 2 per cent target.
@@ -1747,13 +1834,12 @@ def read_pdf_to_base64(file_path):
     base64_content = base64.b64encode(content).decode('utf-8')
     return base64_content
 
-filename = "example_banking.pdf"
 base64_pdf_content = read_pdf_to_base64(filename)
 
 payload = {
   "index": "tech_hub_test",
   "operation": "indexing",
-  "models": "techhubinc-ada-002-eastus2",
+  "models": ["techhub-pool-world-ada-002"],
   "documents_metadata": {filename: {"content_binary": base64_pdf_content}},
   "window_length": 300,
   "window_overlap": 20,
@@ -1763,48 +1849,53 @@ payload = {
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
-response = requests.request("POST", url, headers=headers, json=payload)
-~~~
+response = requests.request("POST", URL_INTEGRATION, headers=headers, json=payload)
+print(response.text)
+```
 
 Response from the indexing service:
 
-~~~
+```JSON
 {
   "status": "processing",
   "request_id": "request_20240627_134044_348410"
 }
-~~~
+```
 
 Once the process completes, the accessible endpoint provided by the user as callbak in the "response_url" parameter will receive a POST request with the following body:
 
-~~~
+```JSON
 {
   "status": "Finished",
   "request_id": "request_20240627_104218_291084",
   "index": "tech_hub_test",
   "docs": "filename.pdf"
 }
-~~~
+```
 
 ### Compose Examples
 
 Example of a request to the Global RAG compose service:
 
-~~~
+```python
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+
+# Request to the API configuration
+URL_COMPOSE =  f"{url}/compose/process"
 
 query = "Why did the Bank of England consider cutting interest rates after inflation fell to its 2 per cent target?"
-
-index = "tech_hub_test"
+index = "myindex"
 top_k = 5
 platform = "azure"
-model = "gpt-3.5-16k-pool-techhub-japan"
+model = "techhub-pool-world-gpt-3.5-turbo-16k"
 system = "You are an assistant"
 template_llm = "rag_with_references"
 
@@ -1815,14 +1906,15 @@ payload = {
       "template": {
         "name": "techhub_retrieval_reference",
         "params": {
-          "index": index,
-          "query": query,
-          "top_k": top_k,
-          "platform": platform,
-          "system": system,
-          "model": model,   
-          "filters": {},
-          "template_llm": template_llm      
+            "query": query,
+            "system": system,
+            "index": index,
+            "top_k": top_k,
+            "model": model,
+            "platform": platform,
+            "template_name": "rag_with_references",
+            "llm_template": template_llm,
+            "filters": {},
         }
       }
     }
@@ -1831,15 +1923,17 @@ payload = {
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
-~~~
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(response.text)
+
+```
 
 Response from the compose service:
 
-~~~
+```JSON
 {
    "status":"finished",
    "result":{
@@ -1883,20 +1977,24 @@ Response from the compose service:
    },
    "status_code":200
 }
-~~~
+```
 
 
 * Simple retrieval
 
-~~~
+```python
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+
+# Request to the API configuration
+URL_COMPOSE =  f"{url}/compose/process"
 
 query = "Why did the Bank of England consider cutting interest rates after inflation fell to its 2 per cent target?"
-
-index = "tech_hub_test"
+index = "myindex"
 top_k = 5
 
 payload = {
@@ -1918,27 +2016,32 @@ payload = {
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
-~~~
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(response.text)
+```
 
 
 * Multiple retrieval
 
 If we want to retrieve information from multiple queries we can do a multiple retrieval. The request will include a key 'retrieve' as a list containing a dictionary for each query we want to retrieve information from our index.
 
-~~~
+```python
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+
+# Request to the API configuration
+URL_COMPOSE =  f"{url}/compose/process"
 
 query_1 = "inflation fell"
 query_2 = "Monetary Policy Committee"
-
-index = "tech_hub_test"
+index = "myindex"
 top_k = 5
 
 payload = {
@@ -1968,25 +2071,31 @@ payload = {
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
-~~~
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(response.text)
+```
 
 * Only LLM without retrieval
 
-~~~
+```python
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+
+# Request to the API configuration
+URL_COMPOSE =  f"{url}/compose/process"
 
 system = "You are an expert assistant"
 query = "what is the france capital ?"
 template_name = "system_query"
 platform = "azure"
-model = "gpt-3.5-16k-pool-techhub-japan"
+model = "techhub-pool-world-gpt-3.5-turbo-16k"
 
 payload = {
   "generic": {
@@ -1999,7 +2108,7 @@ payload = {
           "query_llm": query,
           "platform": platform,
           "model": model,
-          "template_name": template_name          
+          "llm_template": template_name          
         }
       }
     }
@@ -2008,29 +2117,36 @@ payload = {
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
-response = requests.request("POST", url, headers=headers, json=payload)
-~~~
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(response.text)
+```
 
 * Chatbot mode with persistence
 
-~~~
+```python
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+# Mandatory input data by user
+url = "https://<deployment_domain>"
+api_key = "XXXXXXXXXXXXXXXXXXXX"
+
+# Request to the API configuration
+URL_COMPOSE =  f"{url}/compose/process"
 
 headers = {
   "Content-type": "application/json",
-  "x-api-key": "### ADD HERE API KEY"
+  "x-api-key": f"{api_key}"
 }
 
 system = "You are an expert assistant"
 query = "What time of year is it best to go to Galicia?"
 platform = "azure"
-model = "gpt-3.5-16k-pool-techhub-japan"
+model = "techhub-pool-world-gpt-3.5-turbo-16k"
+template_name = "system_query"
 
 payload = {
   "generic": {
@@ -2043,7 +2159,7 @@ payload = {
           "query_llm": query,
           "platform": platform,
           "model": model,
-          "template_name": template_name 
+          "llm_template": template_name   
         }
       },
     "persist": {
@@ -2056,7 +2172,7 @@ payload = {
   }
 }
 
-response = requests.request("POST", url, headers=headers, json=payload)
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
 
 query = "How can I travel there?"
 payload = {
@@ -2070,7 +2186,7 @@ payload = {
           "query_llm": query,
           "platform": platform,
           "model": model,
-          "template_name": template_name 
+          "llm_template": template_name 
         }
       },
     "persist": {
@@ -2083,9 +2199,9 @@ payload = {
   }
 }
 
-response = requests.request("POST", url, headers=headers, json=payload)
-response.text
-~~~
+response = requests.request("POST", URL_COMPOSE, headers=headers, json=payload)
+print(response.text)
+```
 
 
 ## Deployment
@@ -2147,11 +2263,11 @@ You have to create the pipeline with its corresponding yml within of folder **im
 
 Before you have to create the *Library* necesary with the correct values. You can check the name of library and values in yml.
 
-#### 3. Create image microservice and artifact helm
+#### 3. Create microservice image and artifact helm
 
-Each microservices GenAI have own docker image.
+Each GenAI microservices have own Docker image.
 
-To create image, in the folder **services** there is azure-pipeline.yml with configuration of pipeline to create and storage this image.
+To create an image, in the folder **services** there is azure-pipeline.yml file with configuration of pipeline to create and store this image.
 
 Before you have to create the *Library* necesary with the correct values.
 
@@ -2169,24 +2285,24 @@ Before you have to create the *Library* necesary with the correct values.
 
 Finally, to create cloud resources and deploy services you have to create two releases. These releases can have one or more stages.
 
-1. Release IaC: This release is in charge of creating cloud and kubernetes resources. In IaC release you have two stages:
+1. <u>Release IaC</u>: This release is in charge of creating cloud and kubernetes resources. In IaC release you have two stages:
 
-   - Terraform: Create all resources cloud in Azure and finally it create namespace and secrets of kubernetes recover of creation resources cloud.
-   - Scripts: Copy configuration files, if this resource need load files of configuration, of the one storage of administration.
+   - <i>Terraform</i>: Create all resources cloud in Azure and finally it create namespace and secrets of kubernetes recover of creation resources cloud.
+   - <i>Scripts</i>: Copy configuration files, if this resource need load files of configuration, of the one storage of administration.
 
-2. Release Service: This release is in charge of creating the services by docker images and deploy in cluster as microservices. This steep create all resources necesary, this resources can to be elasticsearch, microservices genAI, Keda objects...
+2. <u>Release Service</u>: This release is in charge of creating the services by docker images and deploy in cluster as microservices. This steep create all resources necesary, this resources can to be elasticsearch, microservices genAI, Keda objects...
 
 The configuration of these releases ara attached to the release folder within of repository.
 
 
 ### Running the bare application in a Python runtime environment
-if you deploy the repository in your local computer, these are several steps that you need to take
+If you deploy the repository on your local computer, these are several steps that you need to take.
 
 #### Indexing pipeline
-The first step you need to take to run the indexing pipeline on your local machine is to set the following environment variables:
+The first step you need to take (before running the indexing pipeline) is to set the following environment variables:
 
-```json
-"PROVIDER": "azure/aws", //Cloud storage and queue service provider
+```sh
+"PROVIDER": "[azure | aws]", //Cloud storage and queue service provider
 "STORAGE_DATA": "tenant-data", //Cloud storage bucket or blob to store datasets
 "STORAGE_BACKEND": "tenant-backend", //Cloud storage bucket or blob to store process results
 "SECRETS_PATH": "path to secrets", //Path to the secrets file
@@ -2197,52 +2313,60 @@ The first step you need to take to run the indexing pipeline on your local machi
 "Q_INFO_INDEXING": "" // Name of the queue for the indexing subcomponent
 ```
 
-After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
+After that, you need to create an environment with <i>Python 3.11</i> and install the required packages listed in the "requirements.txt" file:
 
 ```sh
 pip install -r "**path to the requirements.txt file**"
 ```
 
-Once everything above is configured, you need to run the main.py file from the integration-receiver subcomponent, and call the /process endpoint with body and headers similar to the following example:
+Once everything above is configured, you need to run the <i>main.py</i> file from the integration-receiver subcomponent, and call the <i>/process</i> endpoint with body and headers similar to the following example:
 
 
 ```python
 import requests
 import json
 
+# Mandatory input data by user
+encoded_file = "JVBERi0xLjcNCi..." # Set document encoded as base64
+
+# Request to the API configuration
 url = "http://localhost:8888/process"
 
 payload = {
-  "index": "index_name",
+  "index": "myindex",
   "operation": "indexing",
   "documents_metadata": {
-    "doc1.pdf": {"content_binary": "doc encoded as base64"}
+    "doc1.pdf": {"content_binary": f"{encoded_file}"}
   },
   "response_url": "http://"
 }
 
 headers = {
-  "x-api-key": "secret api key"
+    'x-tenant': 'develop',
+    'x-department': 'main',
+    'x-reporting': '',
+    'Content-Type': 'application/json'
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
+response = requests.request("POST", url, headers=headers, json=payload, verify=False)
 ```
+<br>
 
 #### RAG pipeline
 
-To get started with the service on your local machine, you need to have Retrieval, Compose and LLMAPI services running and a template stored in azure blob storage in the path "src/compose/templates".
+To get started with the service on your local machine, you need to have the Retrieval, Compose and LLMAPI services running and a template stored in azure blob storage at the path "src/compose/templates".
 
 The example template we are using is called "retrieval_llm". This compose template defines the flow of actions. In this case, we will call retrieval and llm.
 
 The first step you need to take to run the indexing pipeline on your local machine is to set the following environment variables:
 
-```json
-"URL_LLM": "https://<deploymentdomain>/llm/predict",
-"URL_RETRIEVE": "https://<deploymentdomain>/retrieve/process",
+```sh
+"URL_LLM": "https://<deployment_domain>/llm/predict",
+"URL_RETRIEVE": "https://<deployment:domain>/retrieve/process",
 "PROVIDER": "azure",
 "STORAGE_BACKEND": "tenant-backend",
 "AZ_CONN_STR_STORAGE": "",
-"SECRETS_PATH": "path to secrets",
+"SECRETS_PATH": "path to the secrets",
 "AWS_ACCESS_KEY": "",
 "AWS_SECRET_KEY": "",
 "REDIS_DB_SESSION" : "4",
@@ -2255,7 +2379,7 @@ The first step you need to take to run the indexing pipeline on your local machi
 "DEFAULT_LLM_MODEL": ""
 ```
 
-Create a Python 3.11 environment and install the required libraries in with the "requirements.txt" file.
+Create a <i>Python 3.11</i> environment and install the required libraries in with the <i>requirements.txt</i> file.
 
 ```sh
 pip install -r "**path to the requirement.txt file**"
@@ -2266,17 +2390,16 @@ Then execute the compose main.py file:
 ```sh
 python compose/main.py"
 ```
-To then call the /process endpoint, you will just have to change the <deployment_url> to localhost and include these parameters in the headers:
+To call the <i>/process</i> endpoint, you just need to change the <deployment_url> to localhost and include these parameters in the headers:
 
 ```json
-
 "headers": {
     "x-tenant": "",
     "x-department": "",
     "x-reporting": ""
 }
 ```
-
+<br>
 
 #### Config files
 This files will be stored in the backend storage instead of the data one (some components needs two storages backend and data)
@@ -2288,37 +2411,45 @@ This file is the most important one because it stores information about the diff
     "LLMs": {
         "azure": [ 
             {
-                "model": "genai-text-gpt35turbo",
-                "model_type": "gpt-3.5-turbo",
+                "model": "techhub-AustraliaEast-gpt-4o-2024-05-13",
+                "model_type": "gpt-4o",
                 "max_input_tokens": 4096,
-                "zone": "genai",
-                "message": "chatGPT",
+                "zone": "techhub-AustraliaEast",
+                "message": "chatGPT-v",
                 "api_version": "2024-02-15-preview",
                 "model_pool":[
-                    "gpt-3.5-pool-europe",
-                    "gpt-3.5-pool-ew-europe"           
+                    "techhub-pool-world-gpt-4o"           
                 ]
-            }
+            },
+            {
+			"model": "techhub-AustraliaEast-dall-e-3",
+			"model_type": "dalle3",
+			"max_input_tokens": 4000,
+			"zone": "techhub-AustraliaEast",
+			"message": "dalle",
+			"api_version": "2023-12-01-preview",
+			"model_pool": ["techhub-pool-world-dalle3"]
+		    }
         ]  
     }
 }
 ```
 Each parameter for a model configuration is:
-- **model**: name of the model. In azure platform will be the deployment name of the model
-- **model_type**: defined by the user (same models must have the same model_type)
-- **max_input_tokens**: maximum number of tokens accepted by the model as input
-- **zone**: place where the model has been deployed (used to get the api-key in the secrets file)
-- **message**: type of message that will be used in order to adapt the input to the model requirements. It could be:
-  - chatClaude: Claude models with text capabilities
-  - chatClaude3: Claude models with text and vision capabilities
-  - chatGPT: ChatGPT models with text capabilities
-  - chatGPT-v: ChatGPT with text and vision capabilities
-  - dalle3: Dall-E 3 models (image generation)
-- **api_version**: version of the api (model) that is being used
-- **model_pool**: pools the model belongs to
+- **model**: name of the model. In azure platform will be the deployment name of the model.
+- **model_type**: defined by the user (same models must have the same <i>model_type</i>).
+- **max_input_tokens**: maximum number of tokens accepted by the model as input.
+- **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
+- **message**: type of message that will be used in order to adapt the input to the model's requirements. It could be:
+  - chatClaude: Claude models with text capabilities.
+  - chatClaude3: Claude models with text and vision capabilities.
+  - chatGPT: ChatGPT models with text capabilities.
+  - chatGPT-v: ChatGPT with text and vision capabilities.
+  - dalle: Dall-E models (image generation).
+- **api_version**: version of the api (model) that is being used.
+- **model_pool**: pools the model belongs to.
 
-###### Templates/prompts `/prompts/**.json`
-Stored in "src/LLM/prompts", in this directory we store the files containing the prompt templates like the following. When LLMAPI is initialized, reads all the files in the directory and loads to memory all the templates, removing duplicates. The name refered in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in json format and that contains query on its name.
+###### Templates `/prompts/**.json`
+Stored in "src/LLM/prompts", this directory contains the files with the prompt templates. When LLMAPI is initialized, it reads all the files in the directory and loads all the templates into memory, removing duplicates. The name refered to in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in JSON format and that contains 'query' in their name.
 ```json
 {
     "system_query": { 
@@ -2338,11 +2469,11 @@ Stored in "src/LLM/prompts", in this directory we store the files containing the
             },{
                 "type": "image_url",
                 "image_url": {
-                    "url": "https://imagerul.com",
+                    "url": "https://xxxxxxxxxxxxxxxxx.IMAGE_URL",
                     "detail": "high",
                 }
             },
-            $query
+            "$query"
         ]
     },
     "system_query_and_context_plus": { 
@@ -2351,18 +2482,18 @@ Stored in "src/LLM/prompts", in this directory we store the files containing the
     }
 }
 ```
-In this config file, each model (separated by platforms) need different parameters:
+In this config file, each model (separated by platforms) needs different parameters:
 - **azure**:
   - **embedding_model_name**: name of the model, decided by the user and used to distinguish between models.
-  - **embedding_model**: type of embedding model that uses the model
-  - **azure_api_version**: version of the api (embedding model) that is being used
-  - **azure_deployment_name**: deployment name of the embedding model in azure
-  - **zone**: place where the model has been deployed (used to get the api-key in the secrets file)
-  - **model_pool**: pools the model belongs to
+  - **embedding_model**: type of embedding model that uses the model.
+  - **azure_api_version**: version of the api (embedding model) that is being used.
+  - **azure_deployment_name**: deployment name of the embedding model in azure.
+  - **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
+  - **model_pool**: pools the model belongs to.
 - **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
-  - **embedding_model_name**: same as before
-  - **embedding_model**: same as before
-  - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different)
+  - **embedding_model_name**: same as before.
+  - **embedding_model**: same as before.
+  - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different).
 
 
 ##### Integration config files `src/integration/`
@@ -2371,22 +2502,22 @@ This file stores the information about the embedding models needed in the infoin
 
 ```json
 {
-  "dpr": {
+  "dpr-encoder": {
     "alias": "dpr-encoder",
     "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
     "platform": "huggingface"
   },
-  "azure_openai_ada": {
-    "alias": "ada-002-pool-europe",
+  "techhub-pool-world-ada-002": {
+    "alias": "techhub-pool-world-ada-002",
     "embedding_model": "text-embedding-ada-002",
     "platform": "azure"
   }
 }
 ```
 The parameters are:
-- **alias**: Model or pool of models to index (equivalent to *"embedding_model_name"* in *models_config.json* config file for infoindexing and inforetrieval)
-- **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to *"embedding_model"* in *models_config.json* config file for infoindexing and inforetrieval)
-- **platform**: Provider used to store and get the information (major keys in *models_config.json* config file for infoindexing and inforetrieval)
+- **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file for infoindexing and inforetrieval).
+- **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file for infoindexing and inforetrieval).
+- **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file for infoindexing and inforetrieval).
 
 ##### Inforetrieval + Infoindexing config files `src/ir/`
 ###### IR models `/conf/models_config.json`
@@ -2447,9 +2578,10 @@ This file is optional, just if a concrete index is stored in a different vector_
 ##### Compose config files `src/compose/`
 ###### Compose templates `/templates/**.json`
 In these files, the actions steps to execute by the compose module are stored in json format. The different actions that can be executed are:
+
 **Retrieve**
 
-This is to retrieve indexed documents based on a query. This is the most important action, and it is the one that will define our entry. In most cases, there should always be a retrieval that will usually be the first step of the flow. Once the search results are obtained in the format defined by the data model: By defauld, 1 streamlist with several streamchunk segments, other actions can be applied to them. It is also possible to store the chunks in different streamlists within the streambatch. An example json template:
+This action is to retrieve indexed documents based on a query. This is the most important action, and it is the one that will define our entry. In most cases, there should always be a retrieval that will usually be the first step of the flow. Once the search results are obtained in the format defined by the data model: By defauld, 1 streamlist with several streamchunk segments, other actions can be applied to them. It is also possible to store the chunks in different streamlists within the streambatch. An example json template:
 ```json
 {
     "action": "retrieve",
@@ -2461,7 +2593,7 @@ This is to retrieve indexed documents based on a query. This is the most importa
                     "query": "$query",
                     "task": "retrieve",
                     "top_k": 5,
-                    "filters": $filters
+                    "filters": "$filters"
                 },
                 "process_type": "retrieve",
             }
@@ -2470,36 +2602,36 @@ This is to retrieve indexed documents based on a query. This is the most importa
     }
 }
 ```
-Parameters of the 'retrieve' action:
-- **Index (string):** Index name where the document to retrieve is stored.
-- **Query (string):** User query to execute.
-- **Top_k (int):** Number of chunks to retrieve.
-- **Filters (json/dict):** Filters to apply while retrieving the document chunks.
-- **Type (string):** Retrieve type. The available types are:
-  - "get_chunks": Calls genai-inforetrieval to get the K number of chunks from the specified index.
-  - "get_document": Calls genai-inforetrieval to get the entire document content specified.
+Parameters of the <i>retrieve</i> action:
+* **Index (string):** Index name where the document to retrieve is stored.
+* **Query (string):** User query to execute.
+* **Top_k (int):** Number of chunks to retrieve.
+* **Filters (json/dict):** Filters to apply while retrieving the document chunks.
+* **Type (string):** Retrieve type. The available types are:
+  - <i>get_chunks</i>: Calls genai-inforetrieval to get the K number of chunks from the specified index.
+  - <i>get_document</i>: Calls genai-inforetrieval to get the entire document content specified.
 
 With the same action in the template json file, we can execute multiple retrieval to obtain different streamlist with different queries using the "retrieve" action name in the json api call.
 
 **Filter** 
 
 This action is executed at the streamlist level. The aim is to apply a filter to the streamlist (that is, to the list of retrieved documents). For example, you could apply a filter to keep only 5 chunks  out of the 10 chunks that the genai-inforetrieval returned. Another example would be to filter those documents that contain a certain metadata or that are not really related to the input query. Parameters of the action 'filter:
-  - **Type (string):** Filter type to execute. (top_k, related_to, metadata, permissionfilter)
-  - **Top_k (int):** Number of chunks to return.
-  - **Model (string):** LLM model to use.
-  - **Platform (string):** Platform hosting the LLM.
-  - **Query (string)**
-  - **Template_name (string):** Template name to use while calling genai-llmapi.
-  - **Filer_conditions (json/dict):** Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
+* **Type (string):** Filter type to execute. (top_k, related_to, metadata, permissionfilter)
+* **Top_k (int):** Number of chunks to return.
+* **Model (string):** LLM model to use.
+* **Platform (string):** Platform hosting the LLM.
+* **Query (string)**
+* **Template_name (string):** Template name to use while calling genai-llmapi.
+* **Filer_conditions (json/dict):** Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
-Example of filter action using type “related_to”:
+Example of <i>filter</i> action using <u>related_to</u> type:
 ```json
 {
     "action": "filter",
     "action_params": {
         "params": {
             "llm_metadata": {
-                "model": "gpt-3.5-16k-pool-techhub-europe",
+                "model": "techhub-pool-world-gpt-3.5-turbo-16k",
             },
             "platform_metadata": {
                 "platform": "azure",
@@ -2524,8 +2656,7 @@ Example of filter action using type “metadata”:
                     {"eq": ("city","New York")}, //Checks if a metadata is equal to a value.
                     {"in": ("city",["New York","London"])}, //Checks if a metadata is in a list of values.
                     {"textinmeta": ("city","New Yor")}, //Checks if a string is contained in the metadata.
-                    {"metaintext": ("city","The city of New York is known as the big 
-                                apple")}
+                    {"metaintext": ("city","The city of New York is known as the big apple")}
                 ],
                 "and": [
                     {"gt": ("age",30)}, //Checks if a metadata is greater than a value.
@@ -2542,17 +2673,17 @@ Example of filter action using type “metadata”:
 ```
 
 Allowed date types:
-- Yyyy-mm-dd
-- Yyyy/mm/dd
-- Yyyy/mm
-- yyyy
-- Yyyymmdd
-- Mmddyy
-- Mmddyyyy
-- Mm/dd/yy
-- Mm/dd/yyyy
-- Mm-dd-yy
-- Mm-dd-yyyy
+* yyyy-mm-dd
+* yyyy/mm/dd
+* yyyy/mm
+* yyyy
+* yyyymmdd
+* mmddyy
+* mmddyyyy
+* mm/dd/yy
+* mm/dd/yyyy
+* mm-dd-yy
+* mm-dd-yyyy
 
 **Merge**
 
@@ -2563,14 +2694,13 @@ The parameters of this action are:
 - Sep (string): Value to use to separate each content chunk.
 - Grouping_key (string): Value to group the results.
                     
-Example for action 'merge' in template:
+Example for <i>merge</i> action in template:
 ```json
 {
     "action": "merge",
     "action_params": {
         "params": {
-            "template ": "Content: $content, Date: $date, Doc name: 
-                         $document_name",
+            "template ": "Content: $content, Date: $date, Doc name: $document_name",
             "sep": "####"
         },
         "type": "meta"
@@ -2580,9 +2710,9 @@ Example for action 'merge' in template:
 
 **Batchmerge**
 
-This action merges the different streamlist in a streambatch into a single streamlist with non-repeated chunks. Starts with 1 streambatch containing multiple streamlist containing multiple chunks that can be repeated between streamlists and it ends with a streambatch containing 1 streamlist with unique chunks.        
+This action merges the different streamlists in a streambatch into a single streamlist with non-repeated chunks. It starts with one streambatch containing multiple streamlists, each with multiple chunks that can be repeated between streamlists, and ends with a streambatch containing one streamlist with unique chunks.  
 
-Example for action 'batchmerge' in template:
+Example for <i>batchmerge</i> action in template:
 ```json
 {
     "action": "batchmerge",
@@ -2599,17 +2729,17 @@ Example for action 'batchmerge' in template:
 Can be executed for the streambatch or for streamlist. It can sort the streamlist based on the score, content length, document id or snippet number and the streambatch based on the mean score or the overall content. It can also sort based on other specified metadata or date. The usable date formats are the same as for the 'filter' action.
 
 The parameters of this action are:
-- **Type (string):** Sorting type to execute.
+* **Type (string):** Sorting type to execute.
   - Score: Sorts by the mean score of each chunk.
   - Length: Sorts by the length of each chunk.
   - Doc_id: Sort by the document id of each chunk.
   - Sn_number: Sort by the snippet number of each chunk.
   - Date: Sort by metadata named “date” with date type values.
   - Meta: Sort by the metadata value, date values don’t work in this type.
-- **Desc (bool):** Sort descendant or ascendant.
-- **Value:** Metadata to use while sorting the streamlist.
+* **Desc (bool):** Sort descendant or ascendant.
+* **Value:** Metadata to use while sorting the streamlist.
 
-Example for action 'sort' with type length:
+Example for <i>sort</i> action with type <u>length</u>:
 ```json
 {
     "action": "sort",
@@ -2622,7 +2752,7 @@ Example for action 'sort' with type length:
 }
 ```
 
-Example for action 'sort' with type meta:
+Example for <i>sort</i> action with type <u>meta</u>:
 ```json
 {
     "action": "sort",
@@ -2641,11 +2771,11 @@ Example for action 'sort' with type meta:
 This action sorts the streamlist by groups. Each group will be sorted by snippet_number, like its natural order and then the groups can be sorted by the maximum score from each group, the mean score from each group and by date.
 
 The parameters of this action are:
-  - **Type (string):** Groupby type to use. (docscore, date).
-  - **Method (string):** Method to use in the docscore sorting (max, mean).
-  - **Desc (bool):** Sort descendant or ascendant.
+* **Type (string):** Groupby type to use. (docscore, date).
+* **Method (string):** Method to use in the docscore sorting (max, mean).
+* **Desc (bool):** Sort descendant or ascendant.
 
-Example for action ‘groupby’ with type docscore:
+Example for <i>groupby</i> action with <u>docscore</u> type:
 ```json
 {
     "action": "groupby",
@@ -2659,7 +2789,7 @@ Example for action ‘groupby’ with type docscore:
 }
 ```
 
-Example for action ‘groupby’ with type date:
+Example for <i>groupby</i> action with <u>date</u> type:
 ```json
 {
     "action": "groupby",
@@ -2676,17 +2806,17 @@ Example for action ‘groupby’ with type date:
 
 This is the action that calls the LLM service (that is, it calls an LLM). This is the action where the LLM template (“template_name”) must be defined. Here we can also define the system and query that will be sent to the LLM.
 The parameters of this action are:
-- **Type (string):** Method to user while calling genai-llmapi. (llm_content, llm_segments)
-- **Model (string):** LLM model to use.
-- **Platform (string):** Platform hosting the LLM.
-- **Query (string)**
-- **Template_name (string):** Template name to use while calling genai-llmapi.
-- **System (string):** Context and task that will be sent to the LLM.
+* **Type (string):** Method to user while calling genai-llmapi. (llm_content, llm_segments).
+* **Model (string):** LLM model to use.
+* **Platform (string):** Platform hosting the LLM.
+* **Query (string)**
+* **Template_name (string):** Template name to use while calling genai-llmapi.
+* **System (string):** Context and task that will be sent to the LLM.
 
 Within this action, there are two types:
 - **Llm_content:** This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved and the and the last element of the streamlist will be the answer generated by the LLM.
 
-Example for ‘llm_action’ action with type llm_content
+Example for <i>llm_action</i> action with <u>llm_content</u> type:
 ```json
 {
     "action": "llm_action",
@@ -2712,7 +2842,7 @@ Example for ‘llm_action’ action with type llm_content
 
 - **Llm_segments:** This takes each one of the document fragments and sends them individually to the LLM. Therefore, you will get as many responses as document fragments you sent. The response will contain a streambatch of one streamlist containing the chunks retrieved with each answer.
 
-Example for ‘llm_action’ action with type llm_segment
+Example for <i>llm_action</i> action with <u>llm_segment</u> type:
 ```json
 {   
     "action": "llm_action",
@@ -2760,13 +2890,13 @@ All necessary credentials for the components are stored in secrets for security 
     The different parameters (only for elastic as is the available one) are:
     - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
     - **vector_storage_type:** Type of the vector storage selected (currently, only "elastic" is allowed).
-    - **vector_storage_host:** Host of the vector storage
-    - **vector_storage_schema:** Schema of the vector storage
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
     - **vector_storage_port:** Port where the vector storage is located.
-    - **vector_storage_username:** Username to access to the vector storage
-    - **vector_storage_password:** Password to access to the vector storage
+    - **vector_storage_username:** Username to access to the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage.
 
-- **Models api-keys and urls**: file where urls and api-keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The custom path for this secret is "models/", making the full path `"secrets/models/models.json"`. The secret looks like:
+- **Models api-keys and urls**: file where URLs and API-Keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The custom path for this secret is "models/", making the full path `"secrets/models/models.json"`. The secret looks like:
     ```json
     {
         "URLs": {
@@ -2777,14 +2907,15 @@ All necessary credentials for the components are stored in secrets for security 
         },
         "api-keys": {
             "azure": {
-                "*zone*": "*api-key*",
+                "zone": "*api-key*",
             }
         }
     }
     ```
     The explanation for every field:
     - The **URLs** field has all urls of the available models. For LLMApi models the urls must be inside the code in order to replace the "$ZONE", "$MODEL" and "$API" params obtained from "models_config.json" because all the base of the urls from azure is always the same. 
-    - The **api-keys** field is to provide the api-keys of the models. in OpenAI the same api_key is shared for all of the models, in azure depends on its region
+    - The **api-keys** field is to provide the API Keys of the models. In OpenAI, the same API Key is shared for all of the models, while in azure, it depends on the region.  
+
 ## Advanced Examples
 
 To run the following examples, change the payload JSON to the ones indicated below and call the system with that JSON.
@@ -3117,7 +3248,7 @@ If we want to retrieve a whole document or documents from our index depending on
 }
 ```
 
-Keeping just the 'retrieve' action with type "get_documents" the template looks like:
+Keeping just the <i>retrieve</i> action with  <u>get_documents</u> type the template looks like:
 
 ```json
 [
@@ -3136,7 +3267,7 @@ Keeping just the 'retrieve' action with type "get_documents" the template looks 
 
 This way we will receive the whole documents "myfile.pdf" and "myfile2.pdf" from the indexes "myindex" and "myindex2" respectively.
 
-When using the type "get_documents" in the retrieve action it is mandatory to send the filters parameter not empty.
+When using the type <u>get_documents</u> in the retrieve action it is mandatory to send the filters parameter not empty.
 
 Response:
 
@@ -3176,7 +3307,7 @@ Response:
 
 ##### Expand query action
 
-Using the expand query action can be combined with batchmerge to unify all the retrieved chunks for the llm:
+Using the expand query action can be combined with batchmerge to unify all the retrieved chunks for the LLM:
 
 ```json
 {
@@ -3326,7 +3457,7 @@ Response
 
 ##### Filter action
 
-To use the filter action with type "top_k" for the example we need to add the parameter "top_k":
+To use the filter action with type <i>top_k</i> for the example we need to add the parameter <u>top_k</u>:
 
 ```json
 {
@@ -3348,7 +3479,7 @@ To use the filter action with type "top_k" for the example we need to add the pa
 }
 ```
 
-Now we add the 'filter' action to the template. The template "retrieve_filter_llm" is:
+Now we add the <i>filter</i> action to the template. The template "retrieve_filter_llm" is:
 
 ```json
 [
@@ -3452,7 +3583,7 @@ Response:
 
 ##### Merge action
 
-The compose request will be "base_request" changing the query to "What are the components of compose?" and the actions template "retrieve_merge_llm" is as follows:
+The compose request will be "base_request" changing the query to "What are the components of compose?" and the actions template <i>retrieve_merge_llm</i> is as follows:
 
 Body:
 
@@ -3532,7 +3663,7 @@ Template:
 ]
 ```
 
-After the action 'retrieve' we will obtain 1 streambatch containing 1 streamlist with multiple streamchunks. After the action 'merge' there will be 1 streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
+After the <i>retrieve</i> action we will obtain 1 streambatch containing 1 streamlist with multiple streamchunks. After the <i>merge</i> action there will be 1 streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
 
 Response:
 
@@ -3740,7 +3871,7 @@ There are several options for sort type, which we usually define it in the reque
 
 In addition to 'index' and 'query' we are sending three more parameters. 'top_k' does not necessarily need to be sent in the request for the 'sort' action, it can be defined directly in the template. The same goes for the parameters of the 'sort' action ("sort_desc" and "sort_type"), they can be defined in the template or in the call.
 
-The "retrieve_sort_llm" template would be:
+The <i>retrieve_sort_llm</i> template would be:
 
 ```json
 [
@@ -3755,7 +3886,7 @@ The "retrieve_sort_llm" template would be:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": "$top_k",
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -3766,9 +3897,9 @@ The "retrieve_sort_llm" template would be:
         "action": "sort",
         "action_params": {
             "params": {
-                "desc": $sort_desc
+                "desc": "$sort_desc"
             },
-            "type": $sort_type
+            "type": "$sort_type"
         }
     }, {
         "action": "llm_action",
@@ -3842,7 +3973,7 @@ Response:
 
 ##### Groupby action
 
-We will call compose with "base_request" calling the template "retrieve_groupby_llm". To create this template we add the action 'groupby' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the template **retrieve_groupby_llm**. To create this template we add the  <i>groupby</i> action to the basic "retrieval_llm" template.
 
 Body:
 
@@ -3855,7 +3986,7 @@ Body:
                 "params": {
                     "query": "What is a streamlist?",
                     "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus",
                 }
@@ -3880,7 +4011,7 @@ Template:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 10,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -3971,7 +4102,7 @@ Response:
 
 ##### Reformulate action
 
-We will call compose with "base_request" calling the template "retrieve_reformulate". To create this template we add the action 'reformulate_query' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the template **retrieve_reformulate**. To create this template we add the <i>reformulate_query</i> action to the basic **retrieval_llm** template.
 
 Body:
 
@@ -3979,19 +4110,19 @@ Body:
 {
     "generic": {
         "compose_conf": {
-            "session_id": "mysession123",
+            "session_id": "my_session_1111-2222-3333",
             "persist": {
                 "type": "chat",
                 "params": {
                     "max_persistence": 20
                 }
-            }
+            },
             "template": {
                 "name": "retrieve_reformulate",
                 "params": {
                     "query": "Explain the action groupby",
-                    "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "index": "my_index",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -4007,19 +4138,19 @@ Body for the second call:
 {
     "generic": {
         "compose_conf": {
-            "session_id": "mysession123",
+            "session_id": "my_session_1111-2222-3333",
             "persist": {
                 "type": "chat",
                 "params": {
                     "max_persistence": 10
                 }
-            }
+            },
             "template": {
                 "name": "retrieve_reformulate",
                 "params": {
                     "query": "Give me an example",
-                    "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "index": "my_index",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -4056,7 +4187,7 @@ Template:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 5,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -4093,7 +4224,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "mysession123",
+        "session_id": "my_session_1111-2222-3333",
         "streambatch": [
             [
                 {
@@ -4158,7 +4289,7 @@ Session saved with the reformulated query:
 
 ##### Filter query action
 
-We will call compose with "base_request" calling the template "retrieve_filter_query". To create this template we add the action 'filter_query' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the template **retrieve_filter_query**. To create this template, we add the <i>filter_query</i> action to the basic **retrieval_llm** template.
 
 Body:
 
@@ -4171,7 +4302,7 @@ Body:
                 "params": {
                     "query": "Explain how to ",
                     "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -4205,7 +4336,7 @@ Template:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 5,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -4312,7 +4443,7 @@ Response:
 
 ##### Filter response action
 
-We will call compose with "base_request" calling the template "retrieve_filter_response". To create this template we add the action 'filter_response' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the template **retrieve_filter_response**. To create this template, we add the <i>filter_response</i> action to the basic **retrieval_llm** template.
 
 Body:
 
@@ -4325,7 +4456,7 @@ Body:
                 "params": {
                     "query": "Explain how to use compose",
                     "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -4350,7 +4481,7 @@ Template:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 5,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -4392,7 +4523,7 @@ Template:
 
 Filter template:
 
-*For example we use compose as the topic to detect.*
+<i>For example we use <u>compose</u> as the topic to detect.</i>
 
 ```json
 {
@@ -4479,7 +4610,7 @@ Response:
 
 ##### Combining actions
 
-We can combine in the template the actions we have seen, e.g. combining 'groupby' and 'merge' after the retrieval we can call compose with "base_request" and the following template:
+We can combine in the template the actions we have seen, e.g. combining <i>groupby</i> and <i>merge</i> after the retrieval we can call compose with "base_request" and the following template:
 
 Body:
 
@@ -4495,7 +4626,7 @@ Body:
                     "top_k": 5,
                     "platform": "azure",
                     "system": "You are an assistant",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",   
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",   
                     "filters": {},
                     "template_llm": "rag_with_references"      
                 }
@@ -4519,7 +4650,7 @@ Template:
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-						"filters": $filters
+						"filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -4622,8 +4753,8 @@ payload =  {
                 "params": {
                     "query": "summarize the content",
                     "system": "You are an AI assistant",
-                    "index": "myindex",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "index": "my_index",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "template_name": "rag_with_references"
                 }
@@ -4640,7 +4771,7 @@ payload =  {
 
 ## Documentation
 
-For further information follow the link (comming soon).
+For further information, follow the link (coming soon).
 
 ## Process Flow
 
