@@ -88,7 +88,7 @@ stages:
 
               echo "installing requirements from $(pwd)"
               pip install -r requirements_info.txt
-              pip install pytest pytest-cov aioresponses
+              pip install pytest pytest-cov
 
               export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
               echo running coverage
