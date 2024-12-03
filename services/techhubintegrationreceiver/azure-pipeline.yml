@@ -88,10 +88,10 @@ stages:
           pip install -r requirements_info.txt
     
           export PYTHONPATH=/home/vsts/work/1/s/common/
-          export INTEGRATION_NAME = 'search'
-          export STORAGE_PERSIST_FOLDER = 'test'
-          export STORAGE_CONFIG_FOLDER = "test"
-          export LOCAL_COMMON_PATH = 'common'
+          export INTEGRATION_NAME='search'
+          export STORAGE_PERSIST_FOLDER='test'
+          export STORAGE_CONFIG_FOLDER="test"
+          export LOCAL_COMMON_PATH='common'
           echo running coverage
           coverage run --source=/home/vsts/work/1/s/services/$(serviceName)/ -m pytest -s
           coverage report
