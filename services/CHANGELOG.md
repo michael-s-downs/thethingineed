@@ -3,23 +3,43 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## vX.X.X (x)
+- genai-compose:
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+- genai-infoindexing:
+  - [New] Added new chunking methods:
+    - Recursive
+    - Surrounding context window
+  - [New] Added method to check that the same chunking method is always used
+  - [Improvement] Files distribution organized
+  - [Improvement] Llamaindex library updated
+  - [Improvement] Now snippet_id same as elasticsearch id_
+- integration-sender:
+  - [New] Added new chunking methods (input parameters)
+  - [Improvement] Input parameters communication between methods improved
+- genai-inforetrieval:
+  - [New] Added retrieval for new chunking methods:
+    - Recursive
+    - Surrounding context window
+  - [New] Added method to check that the retrieval strategy fits with the chunking method used
+  - [Improvement] Files distribution organized
+  - [Improvement] Llamaindex library updated
+  - [Improvement] Elasticsearch adaption library updated to version 0.3.3 to stay merged with Llamaindex library
+
+## v2.1.0 (2024-11-28)
 - genai-compose:
     - [New] Endpoint to list templates
     - [New] Endpoint to list filter templates
     - [New] Endpoint to get the content of a template
     - [New] Endpoint to get the content of a filter template
+    - [New] Try Lingua instead of langdetect to improve language detection
     - [Fix] Query to minus before langdetect
+    - [Fix] Perist dict not adding new entries
+    - [Fix] Documentation examples
 - genai-llmapi:
-    - [Fix] Endpoint list templates shows file name
-- genai-infoindexing:
-  - [New] New methods to do the chunking: 
-    - Recursive: each node extracted in the basic way
-    - Surrounding context window:
-  - [New] Refactor of the way to get the chunks (chunking_methods.py)
-  - [Improvement] Check if the same chunking method is always used for the index
-  - [Improvement] Refactor of parsers.py in order tu support the new chunking methods and json_input structure
-  
+    - [Improvement] Set default model to 'techhub-pool-world-gpt-4o'
+    - [Fix] Endpoint list templates shows file name with its templates
+
 ## v2.0.0 (2024-11-08)
 - genai-llmapi:
     - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
