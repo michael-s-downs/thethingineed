@@ -152,7 +152,11 @@ class S3Service(BaseStorageService):
             return self.resources[origin]
 
         bucket_credentials = self.credentials[origin]
-        s3_resource = boto3.resource("s3", aws_access_key_id=bucket_credentials['access_key'], aws_secret_access_key=bucket_credentials['secret_key'])
+
+        if eval(os.getenv("AWS_ROLE", "False")):
+            s3_resource = boto3.resource("s3")
+        else:
+            s3_resource = boto3.resource("s3", aws_access_key_id=bucket_credentials['access_key'], aws_secret_access_key=bucket_credentials['secret_key'])
 
         self.resources[origin] = s3_resource
 
@@ -167,7 +171,11 @@ class S3Service(BaseStorageService):
             return self.clients[origin]
 
         bucket_credentials = self.credentials[origin]
-        s3_client = boto3.client("s3", aws_access_key_id=bucket_credentials['access_key'], aws_secret_access_key=bucket_credentials['secret_key'])
+
+        if eval(os.getenv("AWS_ROLE", "False")):
+            s3_client = boto3.client("s3")
+        else:
+            s3_client = boto3.client("s3", aws_access_key_id=bucket_credentials['access_key'], aws_secret_access_key=bucket_credentials['secret_key'])
 
         self.clients[origin] = s3_client
 
@@ -190,6 +198,8 @@ class S3Service(BaseStorageService):
                         'secret_key': os.getenv(self.env_vars[1]),
                         'region_name': os.getenv(self.env_vars[2])
                     }
+                elif eval(os.getenv("AWS_ROLE", "False")):
+                    credentials = {}
                 else:
                     raise Exception("Credentials not found")
 

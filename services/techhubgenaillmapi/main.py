@@ -39,7 +39,7 @@ class LLMDeployment(BaseDeployment):
         self.available_models = self.storage_manager.get_available_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
 
-        self.templates, self.templates_names = self.storage_manager.get_templates()
+        self.templates, self.templates_names, self.display_templates_with_files = self.storage_manager.get_templates(return_files=True)
 
         # Check if default templates are in the templates
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
@@ -186,7 +186,7 @@ class LLMDeployment(BaseDeployment):
             if result['status_code'] == 200 and not eval(os.getenv('TESTING', "False")):
                 if model.MODEL_MESSAGE == "dalle":
                     reporting_type = "images"
-                    n_tokens = result['result']['n']
+                    n_tokens = 1
                 else:
                     reporting_type = "tokens"
                     n_tokens = result['result']['n_tokens']
@@ -233,7 +233,7 @@ def sync_deployment() -> Tuple[str, int]:
 @app.route('/reloadconfig', methods=['GET'])
 def reloadconfig() -> Tuple[str, int]:
     deploy.logger.info("Reload config request received")
-    deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+    deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     result = json.dumps({
         'status': "ok",
         'status_code': 200
@@ -250,7 +250,7 @@ def healthcheck() -> Dict:
 @app.route('/list_templates', methods=['GET'])
 def list_available_templates() -> Tuple[str, int]:
     deploy.logger.info("List templates request received")
-    return ResponseObject(**{"status": "finished", "result": {"templates": deploy.templates_names}, "status_code": 200}).get_response_base()
+    return ResponseObject(**{"status": "finished", "result": deploy.display_templates_with_files, "status_code": 200}).get_response_base()
 
 @app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[str, int]:
@@ -281,7 +281,7 @@ def upload_prompt_template() -> Tuple[str, int]:
     response = deploy.storage_manager.upload_template(dat)
     if response.get('status_code') == 200:
         # Update the templates modification in the llmapi component
-        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+        deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
 
 
@@ -292,7 +292,7 @@ def delete_prompt_template() -> Tuple[str, int]:
     response = deploy.storage_manager.delete_template(dat)
     if response.get('status_code') == 200:
         # Update the templates modification in the llmapi component
-        deploy.templates, deploy.templates_names = deploy.storage_manager.get_templates()
+        deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
 
 

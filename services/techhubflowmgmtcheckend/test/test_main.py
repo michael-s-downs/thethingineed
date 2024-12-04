@@ -9,7 +9,8 @@ from common.error_messages import PARSING_PARAMETERS_ERROR, GETTING_DATASET_STAT
 @pytest.fixture
 def mock_deployment():
     """Fixture to create a FlowMgmtCheckEndDeployment instance"""
-    deployment = FlowMgmtCheckEndDeployment()
+    with patch("main.set_queue"):
+        deployment = FlowMgmtCheckEndDeployment()
     deployment.logger = MagicMock()  # Mock logger to prevent actual logging
     return deployment
 

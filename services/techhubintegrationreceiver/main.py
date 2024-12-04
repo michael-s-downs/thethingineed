@@ -11,7 +11,7 @@ from flask import Flask, request
 
 # Custom imports
 sys.path.append(os.getenv('LOCAL_COMMON_PATH'))
-from common.integration_base import *
+from integration_base import *
 
 
 # Global vars

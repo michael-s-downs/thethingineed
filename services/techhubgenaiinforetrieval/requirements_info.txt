@@ -1,19 +1,17 @@
 ### This code is property of the GGAO ###
 
 
-#genai-sdk-services==0.3.5
+#genai-sdk-services==0.4.3
 tiktoken==0.4.0
 pydantic==1.10.8
 elasticsearch==8.13.2
-langdetect==1.0.9
-python-magic-bin==0.4.14
 
-#llama-index-embeddings-azure-openai==0.1.9
-#llama-index-embeddings-bedrock==0.2.0
-#llama-index-vector-stores-elasticsearch==0.2.0
-#llama-index==0.10.41
-#llama-index-embeddings-huggingface==0.2.1
-#llama-index-retrievers-bm25==0.4.0
+llama-index-embeddings-azure-openai==0.2.5
+llama-index-embeddings-bedrock==0.3.1
+llama-index-vector-stores-elasticsearch==0.3.3
+llama-index==0.11.23
+llama-index-embeddings-huggingface==0.3.1
+llama-index-retrievers-bm25==0.4.0
 
 Flask==3.0.3
 Jinja2==3.1.4

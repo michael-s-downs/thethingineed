@@ -19,3 +19,6 @@ IaC/Terraform/vars/
 .coverage
 htmlcov/
 .pytest_cache/
+
+*models_map.json
+.pre-commit-config.yaml

@@ -19,6 +19,11 @@ metadata:
     nginx.org/client-max-body-size: '0'
     nginx.org/proxy-connect-timeout: 600s
     nginx.org/proxy-read-timeout: 600s
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, PUT, POST, OPTIONS, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-headers: >-
+     DNT,X-CustomHeader,X-LANG,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,X-Api-Key,X-Device-Id,Access-Control-Allow-Origin,Authorization
+    nginx.ingress.kubernetes.io/enable-cors: "true"
 spec:
   rules:
   - host: {{ .Values.ingress.basedomain }}
