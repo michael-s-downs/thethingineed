@@ -1668,75 +1668,75 @@ The available models depend on the region where the suscription is deployed. Mak
 
 | Model Name | Pools | Platform |
 |--------|------|------|
-|techhubinc-AustraliaEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-BrazilSouth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-CanadaEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-CanadaEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
-|techhubinc-CanadaEast-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-EastUS-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-EastUS-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubinc-EastUS-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-EastUS2-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-EastUS2-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-EastUS2-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubinc-FranceCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-FranceCentral-Ada-3-large|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubinc-JapanEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-JapanEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-NorthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-NorwayEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-NorwayEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-SouthAfricaNorth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-SouthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-SouthIndia-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-SouthIndia-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-SwedenCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-SwedenCentral-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-SwitzerlandNorth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubinc-UKSouth-Ada-002 |techhub-pool-world-ada-002|azure|
-|techhubinc-UKSouth-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubinc-WestEurope-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-WestUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-WestUS3-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubinc-WestUS3-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubinc-AustraliaEast-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-BrazilSouth-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-CanadaEast-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-CanadaEast-Ada-3-small|techhubinc-pool-world-ada-3-small|azure|
+|techhubinc-CanadaEast-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-EastUS-Ada-3-large|techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-EastUS-Ada-3-small|techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small|azure|
+|techhubinc-EastUS-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-EastUS2-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-EastUS2-Ada-3-large|techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-EastUS2-Ada-3-small|techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small|azure|
+|techhubinc-FranceCentral-Ada-002|techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-FranceCentral-Ada-3-large|techhubinc-pool-eu-ada-3-large, techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-JapanEast-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-JapanEast-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-NorthCentralUS-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-NorwayEast-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-NorwayEast-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-SouthAfricaNorth-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-SouthCentralUS-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-SouthIndia-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-SouthIndia-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-SwedenCentral-Ada-002|techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-SwedenCentral-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-SwitzerlandNorth-Ada-002|techhubinc-pool-world-ada-002|azure|
+|techhubinc-UKSouth-Ada-002 |techhubinc-pool-world-ada-002|azure|
+|techhubinc-UKSouth-Ada-3-large|techhubinc-pool-world-ada-3-large|azure|
+|techhubinc-WestEurope-Ada-002|techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-WestUS-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-WestUS3-Ada-002|techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002|azure|
+|techhubinc-WestUS3-Ada-3-large|techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
 - Dev region
 
 | Model Name | Pools | Platform |
 |--------|------|------|
-|techhubdev-AustraliaEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-BrazilSouth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-CanadaEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-CanadaEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-CanadaEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
-|techhubdev-EastUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-EastUS-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-EastUS-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubdev-EastUS2-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-EastUS2-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-EastUS2-Ada-3-small|techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small|azure|
-|techhubdev-FranceCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-FranceCentral-Ada-3-large|techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large|azure|
-|techhubdev-JapanEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-JapanEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-JapanEast-Ada-3-small|techhub-pool-world-ada-3-small|azure|
-|techhubdev-NorthCentralUS-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-NorwayEast-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-NorwayEast-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-SouthAfricaNorth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-SouthCentralUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-SouthIndia-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-SouthIndia-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-SwedenCentral-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-SwedenCentral-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-SwitzerlandNorth-Ada-002|techhub-pool-world-ada-002|azure|
-|techhubdev-UKSouth-Ada-002 |techhub-pool-world-ada-002|azure|
-|techhubdev-UKSouth-Ada-3-large|techhub-pool-world-ada-3-large|azure|
-|techhubdev-WestEurope-Ada-002|techhub-pool-eu-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-WestUS-Ada-002|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-WestUS3-Ada-3-large|techhub-pool-us-ada-002, techhub-pool-world-ada-002|azure|
-|techhubdev-WestUS3-Ada-002|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
+|techhubdev-AustraliaEast-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-BrazilSouth-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-CanadaEast-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-CanadaEast-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-CanadaEast-Ada-3-small|techhubdev-pool-world-ada-3-small|azure|
+|techhubdev-EastUS-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-EastUS-Ada-3-large|techhubdev-pool-us-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-EastUS-Ada-3-small|techhubdev-pool-us-ada-3-small, techhubdev-pool-world-ada-3-small|azure|
+|techhubdev-EastUS2-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-EastUS2-Ada-3-large|techhubdev-pool-us-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-EastUS2-Ada-3-small|techhubdev-pool-us-ada-3-small, techhubdev-pool-world-ada-3-small|azure|
+|techhubdev-FranceCentral-Ada-002|techhubdev-pool-eu-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-FranceCentral-Ada-3-large|techhubdev-pool-eu-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-JapanEast-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-JapanEast-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-JapanEast-Ada-3-small|techhubdev-pool-world-ada-3-small|azure|
+|techhubdev-NorthCentralUS-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-NorwayEast-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-NorwayEast-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-SouthAfricaNorth-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-SouthCentralUS-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-SouthIndia-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-SouthIndia-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-SwedenCentral-Ada-002|techhubdev-pool-eu-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-SwedenCentral-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-SwitzerlandNorth-Ada-002|techhubdev-pool-world-ada-002|azure|
+|techhubdev-UKSouth-Ada-002 |techhubdev-pool-world-ada-002|azure|
+|techhubdev-UKSouth-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-WestEurope-Ada-002|techhubdev-pool-eu-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-WestUS-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-WestUS3-Ada-3-large|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
+|techhubdev-WestUS3-Ada-002|techhubdev-pool-us-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 |dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
 

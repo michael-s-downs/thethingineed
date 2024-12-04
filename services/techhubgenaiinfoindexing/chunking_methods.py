@@ -55,19 +55,21 @@ class ChunkingMethod(ABC):
         final_nodes = []
         sections = ""
         for counter, node in enumerate(nodes):
-            ids_node = self._add_ids(node, counter)
-            titles_tables_node, sections = self._add_titles_and_tables(ids_node, sections, origin)
-            titles_tables_node.id_ = "{:02x}".format(mmh3.hash128(str(titles_tables_node.text), signed=False))
+            titles_tables_node, sections = self._add_titles_and_tables(node, sections, origin)
+            # Must be added here as in titles_tables text is changed
+            ids_node = self._add_ids(titles_tables_node, counter)
             # Exclude when embedding generation
-            titles_tables_node.excluded_embed_metadata_keys = list(titles_tables_node.metadata.keys())
-            titles_tables_node.excluded_llm_metadata_keys = list(titles_tables_node.metadata.keys())
-            final_nodes.append(titles_tables_node)
+            ids_node.excluded_embed_metadata_keys = list(ids_node.metadata.keys())
+            ids_node.excluded_llm_metadata_keys = list(ids_node.metadata.keys())
+            final_nodes.append(ids_node)
         return final_nodes
 
     @staticmethod
     def _add_ids(node, counter: int):
         node.metadata['snippet_number'] = counter
+        id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
         node.metadata['snippet_id'] = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        node.id_ = id
         return node
 
     def _add_titles_and_tables(self, node, sections: str, origin):
@@ -147,6 +149,7 @@ class Recursive(ChunkingMethod):
         node.metadata['snippet_number'] = counter
         id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
         node.metadata['snippet_id'] = id
+        node.id_ = id
         # This one is the reference to parent chunk (extended while children created)
         node.metadata['index_id'] = id
         return node
