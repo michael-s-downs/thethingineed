@@ -14,7 +14,7 @@
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Core Concepts](#core-concepts)
     - [Architecture](#architecture)
-  - [Calling LLMAPI](#calling-llmapi)
+  - [Calling LLM API](#calling-llm-api)
     - [Simple prediction call:](#simple-prediction-call)
       - [Query types](#query-types)
     - [Get models:](#get-models)
@@ -22,7 +22,7 @@
       - [Examples](#examples)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /predict](#request-and-response-formats-for-predict)
+    - [Request and Response Formats for */predict*](#request-and-response-formats-for-predict)
     - [Parameters explanation](#parameters-explanation)
     - [Persistence format](#persistence-format)
     - [Error Handling](#error-handling)
@@ -864,7 +864,7 @@ The response structure must be as follows:
   - lang (optional): String containing the language we want the LLM to respond. Options: es (spanish), en (english) or ja (japanese). It is necessary to previously define templates for each language. This means that we have a "base_template" without language specification (it will recognise the language from the query) and 3 more templates as "base_template_es", "base_template_en" and "base_template_ja". In this templates we will specify the language in the 'system' parameter.
 
 - llm_metadata (required):
-  - model (optional): Name of the model to be used on each platform, if not indicated “gpt-3.5-pool-europe” is used by default. These are the models available on each platform and their corresponding tokens limit.
+  - model (mandatory): Name of the model (or pool) to be used on each platform. These are the models available on each platform and their corresponding tokens limit.
   - max_input_tokens (optional): Maximum number of tokens to be sent in the request. If the maximum size is exceeded, it will be cut from the context, leaving space for the model response.
   - max_tokens (optional): Maximum number of tokens to generate in the response.
   - temperature (optional): Temperature to use. Value between 0 and 2 (in Bedrock 0-1). Higher values like 0.8 make the output more random. Lower values like 0.2 make it more deterministic. By default 0.
@@ -979,6 +979,7 @@ Furthermore, an example of persistence incluiding images in url format (the imag
 |Detail parameter not allowed in Claude vision models|In the ‘image’ diccionary the key ‘detail’ is only accepted for GPT-v models.|
 |Internal error, query is mandatory|Key ‘query’ is mandatory in the request.|
 |<p>Model: {wrong\_model} model</p><p>is not supported in platform azure.</p>|Incorrect or not supported model for chosen platform.|
+| Error parsing JSON: '<error>' in parameter '<parameter>' for value '<value>' | Error parsing the input |
 
 
 ## Use Cases
@@ -1149,7 +1150,7 @@ Some instructions to create templates to obtain better results from the LLM:
 
 The files-secrets architecture is:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v4-config.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v1.4.0-config.png)
 #### Secrets
 
 All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 3 different secrets:
@@ -1310,7 +1311,7 @@ LLMAPI needs 2 config files to run.
     
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v5-config-file-uses.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
 
@@ -1364,11 +1365,11 @@ This class manages the main flow of the component by parsing the input, calling 
 
 ![alt text](imgs/techhubgenaillmapi/llmdeployment.png)
 
-**loaders.py (`ManagerLoader`, `DocumentLoader`, `LLMStorageLoader`)**
+**loaders.py (`ManagerStorage`, `BaseStoragemanager`, `LLMStorageManager`)**
 
-This class is responsible of loading from cloud storage all files associated with the llmapi process; this includes the [configuration files](#configuration-files) like models and templates/prompts.
+This class is responsible of managing the operations with all files associated with the llmapi process in the cloud storage; this includes the [configuration files](#configuration-files) like models and templates/prompts.
 
-![alt text](imgs/techhubgenaillmapi/loaders.png)
+![alt text](imgs/techhubgenaillmapi/storage_manager.png)
 
 **endpoints.py (`ManagerPlatform`, `Platform`, `ImplementedPlatforms`)**
 
@@ -1401,7 +1402,7 @@ When the model has been adapted and with the number of tokens of each message (i
 ![alt text](imgs/techhubgenaillmapi/limiters.png)
 
 ### Flow
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v4-decision-flow.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
