@@ -14,6 +14,8 @@ FLOWMGMT_APIRESPONSE_SERVICE = "flowmgmt_apiresponse"
 FLOWMGMT_CLEANER_SERVICE = "flowmgmt_cleaner"
 # Common
 VECTOR_DB_SERVICE = "vectordb"
+CHUNKING_SERVICE = "chunking"
+RETRIEVAL_STRATEGIES = "retrieval_strategies"
 PARSERS_SERVICE = "parsers"
 PREPROCESS_EXTRACT_COMMON = "preprocess_extract_common"
 PREPROCESS_OCR_COMMON = "preprocess_ocr_common"

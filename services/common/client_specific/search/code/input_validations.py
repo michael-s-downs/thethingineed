@@ -213,6 +213,41 @@ def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
 
     return all(valid_list), messages_list
 
+
+def _validate_chunking_method(request_json: dict) -> Tuple[bool, list]:
+    # Check chunking methods (simple not necessary as all mandatory params, have default ones)
+    messages = []
+    valid = True
+    if isinstance(request_json['input_json'].get('chunking_method'), dict):
+        request_json['input_json'] |= request_json['input_json']['chunking_method']
+    method = request_json['input_json'].get('method', "simple")
+    if method != "simple":
+        if method == "recursive": 
+            sub_window_overlap = request_json['input_json'].get('sub_window_overlap') 
+            sub_window_length = request_json['input_json'].get('sub_window_length')
+            if not (sub_window_overlap and sub_window_length) or request_json['input_json'].get('windows'):
+                valid = False
+                messages.append("The 'recursive' chunking method must only have the 'sub_window_overlap' and 'sub_window_length' key")
+            else:
+                if sub_window_length > request_json['input_json'].get('window_length', 300):
+                    valid = False
+                    messages.append("The 'sub_window_length' must be less than 'window_length' (300 by default)")
+                if sub_window_overlap > request_json['input_json'].get('window_overlap', 10):
+                    valid = False
+                    messages.append("The 'sub_window_overlap' must be less than 'window_overlap' (10 by default)")
+        elif method == "surrounding_context_window":
+            if not request_json['input_json'].get('windows') or (request_json['input_json'].get('sub_window_overlap') or request_json['input_json'].get('sub_window_length')):
+                valid = False
+                messages.append("The 'surrounding_context_window' chunking method must only have the 'windows' key")
+        else:
+            valid = False
+            messages.append(f"Method '{method}' is not a valid chunking type")
+    else:
+        if request_json['input_json'].get('sub_window_overlap') or request_json['input_json'].get('sub_window_length') or request_json['input_json'].get('windows'):
+            valid = False
+            messages.append("The 'simple' chunking method does not need 'sub_window_overlap', 'sub_window_length' or 'windows' parameters")
+    return valid, messages
+
 def _validate_docsfolder(request_json: dict) -> Tuple[bool, list]:
     """ Validate param documents_folder
 
@@ -285,7 +320,7 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models]
+    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models, _validate_chunking_method]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)

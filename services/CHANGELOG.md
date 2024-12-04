@@ -4,8 +4,27 @@
 # Changelog
 
 ## vX.X.X (x)
--genai-compose:
+- genai-compose:
     - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+- genai-infoindexing:
+  - [New] Added new chunking methods:
+    - Recursive
+    - Surrounding context window
+  - [New] Added method to check that the same chunking method is always used
+  - [Improvement] Files distribution organized
+  - [Improvement] Llamaindex library updated
+  - [Improvement] Now snippet_id same as elasticsearch id_
+- integration-sender:
+  - [New] Added new chunking methods (input parameters)
+  - [Improvement] Input parameters communication between methods improved
+- genai-inforetrieval:
+  - [New] Added retrieval for new chunking methods:
+    - Recursive
+    - Surrounding context window
+  - [New] Added method to check that the retrieval strategy fits with the chunking method used
+  - [Improvement] Files distribution organized
+  - [Improvement] Llamaindex library updated
+  - [Improvement] Elasticsearch adaption library updated to version 0.3.3 to stay merged with Llamaindex library
 
 ## v2.1.0 (2024-11-28)
 - genai-compose:

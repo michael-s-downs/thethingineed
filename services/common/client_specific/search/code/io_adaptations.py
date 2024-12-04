@@ -80,13 +80,31 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
 
     # Define params to configure index
     request_json['index_conf'] = {}
-    request_json['index_conf']['index'] = request_json['input_json'].get('index')
+    request_json['index_conf']['vector_storage_conf'] = {
+        'index': request_json['input_json'].get('index'),
+        'modify_index_docs': request_json['input_json'].get('modify_index', {}),
+        'vector_storage': request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+    }
+
+    if not isinstance(request_json['input_json'].get('chunking_method'), dict):
+        # Add to dictionary format to retrocompatibility with older versions
+        request_json['input_json']['chunking_method'] = {
+            'method': request_json['input_json'].get('method', "simple"),
+            'sub_window_overlap': request_json['input_json'].get('sub_window_overlap'),
+            'sub_window_length': request_json['input_json'].get('sub_window_length'),
+            'window_overlap': request_json['input_json'].get('window_overlap', 10),
+            'window_length': request_json['input_json'].get('window_length', 300),
+            'windows': request_json['input_json'].get('windows')
+        }
+    
+    # Delete none items from dicts
+    request_json['index_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+    request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+    
+    # Add metadata and models
     request_json['index_conf']['metadata'] = request_json['input_json'].get('metadata', {})
     request_json['index_conf']['models'] = request_json['input_json'].get('models', ["azure_openai_ada"])
-    request_json['index_conf']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
-    request_json['index_conf']['window_length'] = request_json['input_json'].get('window_length', 300)
-    request_json['index_conf']['modify_index'] = request_json['input_json'].get('modify_index', {})
-    request_json['index_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+
 
     # Define params to configure layout
     layout = request_json['input_json'].get('layout', False)

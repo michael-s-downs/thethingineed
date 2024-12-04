@@ -75,7 +75,7 @@ class BaseStorageManager(ABC):
         pass
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_file_storage_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -401,14 +401,14 @@ class ManagerStorage(object):
         """
         for loader in ManagerStorage.MODEL_TYPES:
             loader_type = conf.get('type')
-            if loader.is_platform_type(loader_type):
+            if loader.is_file_storage_type(loader_type):
                 conf.pop('type')
                 return loader(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerStorage.get_possible_platforms()}")
+                         f"Possible values: {ManagerStorage.get_posible_file_storages()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_posible_file_storages() -> List:
         """ Method to list the document loaders: [IRStorage, LLMStorage]
 
         :param conf: Model configuration. Example:  {"type":"IRStorage"}
