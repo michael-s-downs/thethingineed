@@ -10,7 +10,8 @@ import os
 
 @pytest.fixture
 def preprocess_deployment():
-    return PreprocessOCRDeployment()
+    with patch("main.set_queue"):
+        return PreprocessOCRDeployment()
 
 @pytest.fixture(autouse=True)
 def mock_aws_credentials(monkeypatch):

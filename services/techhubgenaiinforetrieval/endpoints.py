@@ -3,7 +3,7 @@
 
 from flask import request
 from typing import Tuple, Dict
-from common.ir import get_connector
+from common.ir.utils import get_connector
 from common.utils import ELASTICSEARCH_INDEX
 from common.genai_json_parser import get_exc_info
 import elasticsearch.exceptions 
@@ -19,12 +19,11 @@ def get_documents_filenames_handler(deploy, request) -> Tuple[Dict, int]:
         return {'status': "error", 'error_message': "Missing parameter: index", 'status_code': 400}, 400
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    operation_method = connector.get_documents_filenames
 
     for model in deploy.all_models:
         index_name = ELASTICSEARCH_INDEX(index, model)
         try:
-            status, result, status_code = operation_method(index_name)
+            status, result, status_code = connector.get_documents_filenames(index_name)
             connector.close()
             return {'status': status, 'result': {"status_code": status_code, "docs": result, "status": status}}, status_code
         except elasticsearch.NotFoundError:
@@ -50,12 +49,10 @@ def retrieve_documents_handler(deploy, request) -> Tuple[Dict, int]:
         return {'status': "error", 'error_message': "There must be at least one filter", 'status_code': 400}, 400
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    operation_method = connector.get_documents
-
     for model in deploy.all_models:
         index_name = ELASTICSEARCH_INDEX(index, model)
         try:
-            status, result, status_code = operation_method(index_name, filters)
+            status, result, status_code = connector.get_documents(index_name, filters)
             connector.close()
             return {
                 'status': status,

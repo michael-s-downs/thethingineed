@@ -8,6 +8,7 @@
     - [Key Features](#key-features)
   - [Getting started](#getting-started)
   - [Concepts and Definitions](#concepts-and-definitions)
+  - [Chunking Methods](#chunking-methods)
   - [Component Reference](#component-reference)
     - [Using with integration](#using-with-integration)
     - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
@@ -33,12 +34,12 @@ The GENAI INFOINDEXING service provides a comprehensive solution to streamline t
 
 ### Key Features
 
-- Multi-platform Support: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
-- Customizable Parameters: Control snippet generation for documents adjusting parameters such as window length to meet specific use case requirements.
-- Versatile Model Selection: Access a wide range of embedding models across different geographical regions to support global operations.
-- Multi-Language Support: Index documents in multiple languages, offering multilingual support for global operations and diverse user bases.
-- Custom Metadata Fields: Allow users to define custom metadata fields for their documents, facilitating better organization, categorization, and retrieval.
-- Editable Indexed Documents: Allow users to modify metadata or update the content of already indexed documents, ensuring that information remains accurate and up-to-date.
+- **Multi-platform Support**: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
+- **Customizable Parameters**: Control snippet generation for documents adjusting parameters such as window length to meet specific use case requirements.
+- **Versatile Model Selection**: Access a wide range of embedding models across different geographical regions to support global operations.
+- **Multi-Language Support**: Index documents in multiple languages, offering multilingual support for global operations and diverse user bases.
+- **Custom Metadata Fields**: Allow users to define custom metadata fields for their documents, facilitating better organization, categorization, and retrieval.
+- **Editable Indexed Documents**: Allow users to modify metadata or update the content of already indexed documents, ensuring that information remains accurate and up-to-date.
 
 ## Getting started
 
@@ -49,7 +50,7 @@ The first step you need to take to use the infoindexing component on your local 
 After that, you need to create an environment with Python 3.11 and install the required packages listed in the "requirements.txt" file:
 
 ```sh
-pip install -r "**path to the requirements.txt file**"
+pip install -r "xxxxxx/yyyyyy/zzzzzz/requirements.txt"
 ```
 Once everything above is configured, you need to run the main.py file from the integration-receiver subcomponent, and call the /process API endpoint with body and headers similar to the following example:
 
@@ -57,22 +58,30 @@ Once everything above is configured, you need to run the main.py file from the i
 import requests
 import json
 
+# Mandatory input data by user
+api_key = "xxxxxxxxxxxx"
+file_encoded = "" #doc encoded as base64
+index_value = "index_name"
+
+# Request to the API configuration
 url = "http://localhost:8888/process"
 
 payload = {
-  "index": "index_name",
+  "index": f"{index_value}",
   "operation": "indexing",
   "documents_metadata": {
-    "doc1.pdf": {"content_binary": "doc encoded as base64"}
+    "doc1.pdf": {"content_binary": f"{file_encoded}"}
   },
   "response_url": "http://"
 }
 
 headers = {
-  "x-api-key": "secret api key"
+  "x-api-key": f"{api_key}"
+  "Content-Type": "application/json"
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
+response = requests.request("POST", url, headers=headers, json=payload, verify=False)
+print(response.text)
 ```
 
 For a successful configuration, the response must look like this:
@@ -90,6 +99,41 @@ To understand the indexing module, there are a few concepts that we need to defi
 - **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
 - **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
 - **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
+
+## Chunking Methods
+
+To do the chunking an important concept that will be done indistinctly in all chunking methods is the chunking overlap, which consists in unifying the top and the bottom of consecutive chunks by being the same. The size is specified by the user. A visual representation of the chunking overlap is as follows:
+
+![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-overlapping-operation.png)
+
+Once explained the overlapping, there are 3 chunking methods to split the text in smaller parts:
+
+- **Simple:** The method simply splits the chunks one at a time, in a sequential way using the 'window_length' and 'window_overlap' parameters.
+
+  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-simple.png)
+
+
+- **Surrounding Context Window:** This method divides the chunks as the previous one but in the metadata field 'window' will insert the content of the front and back chunks depending on the window param (if is two, the two front and two back chunks content will be inserted). The structure of the text is as follows:
+
+  ```
+  window * front_chunks_content + actual_chunk_content + window * back_chunks_content
+  ```
+
+  A visual example of surrounding context window with the window field equal to 1 is:
+
+  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-surrounding.png)
+
+  Finally a short and simple example with text would be:
+
+  | Chunk number | Chunk content | Window field (metadata) |
+  |--------------|---------------|-------------------------|
+  | 1            | Is Zaragoza   | Is Zaragoza a good city |
+  | 2            | a good city   | Is Zaragoza a good city to live in? |
+  | 3            | to live in?   | a good city to live in? |
+
+- **Recursive:** The recursive chunking method will do a first simple split and then a second split of the obtained chunks using the 'sub_window_length' and 'sub_window_overlap' parameters. In the following image there are divided in two sub-chunks as the sub window overlap and length are the half of the window overlap and length parameters.
+
+  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
 
 ## Component Reference
 If infoindexing is working with the whole toolkit, the request will be done by API call to integration and the response will be given by checkend as an async callback (also written in redis database).
@@ -121,18 +165,45 @@ If everything goes smoothly, response structure must be as follows (since it is 
 }
 ```
 
-If a response_url is provided, enabling a callback response when the process ends, the service will send a POST request with the following structure:
+If a <i>response_url</i> is provided, when the process ends, the service will send a POST request with the following structure:
+* Response without error:
+```json
+{
+  "status": "Finished",
+  "request_id": "unique id for the request",
+  "index": "index_name",
+  "docs": {
+    "doc1.pdf": {
+      "content_binary": "n7h8...073/doc1.pdf",
+      "ocr_used": "azure-ocr",
+      "async": true,
+      "status": "Finished",
+      "process_id": "ir_index_202..."
+    }
+  }
+}
+```
+* Response with error:
 ```json
 {
   "status": "Finished/Error",
-  "error": "Description of the error, only sent if an error occurs",
+  "error": "Description of the error",
   "request_id": "unique id for the request",
   "index": "index_name",
-  "docs": "filename of the indexed documents"
+  "docs": {
+    "doc1.pdf": {
+      "content_binary": "n7h81...7ss/doc1.pdf",
+      "ocr_used": "azure-ocr",
+      "async": true,
+      "status": "Error",
+      "process_id": "ir_index_202..."
+    }
+  }
 }
 ```
 
-For further information, see [rag toolkit documentation](#readme-rag-toolkit-documentation-link)
+For further information, see the<i>README</i> section in left menu.  
+
 ### Writing message in queue (Developer functionality)
 If using just infoindexing module for developing purposes as is not needed to pass through the other components to know how infoindexing works (just an already preprocessed document can be used or a simpler one), a txt file located in a route of the *STORAGE_BACKEND* environment variable and separated by *\t* will be necessary.
 
@@ -149,18 +220,18 @@ route/to/the/file this is the content of all the file in raw format, just as a s
 
 With this type of calling, the infoindexing component can be adapted to different modules or just be called if you have the raw content with the txt format explained (no preprocessing is mandatory). 
 
-For a calling with just the infoindexing module, this are the necessary parameters:
+For a calling with just the infoindexing module, this are the mandatory parameters:
 
-- **project_conf**: Configuration of project
-    - **process_id**: Id of process
-    - **process_type**: Type of process
-    - **department**: Department assigned to apikey
-    - **report_url**: Url to report metrics to apigw
-- **index_conf**: Configuration of index process
+- **project_conf**: Configuration of project.
+    - **process_id**: Id of process.
+    - **process_type**: Type of process.
+    - **department**: Department assigned to apikey.
+    - **report_url**: Url to report metrics to apigw.
+- **index_conf**: Configuration of index process.
+  - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
-    - **windows_overlap**: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 100, and it is measured with NLTK tokenizer.
-    - **windows_length**: Length of chunks
-    - **modify_index_docs**: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
+    - **vector_storage**: Key to get the configuration of the database from config file.
+    - **modify_index_docs <i>(optional)</i>**: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
       ```python
       {
         "update": {"filename": True},
@@ -168,12 +239,18 @@ For a calling with just the infoindexing module, this are the necessary paramete
       }
       ``` 
       Where in the update key, the user specifies the metadata used as a filter to find the document.
+  - **chunking_method**: Configuration of the chunking method.
+    - **window_overlap**: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 10, and it is measured with NLTK tokenizer.
+    - **window_length**: Length of chunks. Default value is 300.
+    - **method**: Type of chunking technique that will be used simple is the default one.
+    - **sub_window_length**: Integer value to specify the window length for the sub-chunks. (**<i>Recursive method only</i>**).
+    - **sub_window_overlap**: Integer value to specify the window overlap for the sub-chunks. (**<i>Recursive method only</i>**).
+    - **windows:** Number of the windows that will be taken in this method. (**<i>Recursive method only</i>**).
+  - **models**: Indexing model configuration.
+    - **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
+    - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
+    - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
 
-    - **models**: Indexing model configuration
-        - **alias**: Model or pool of models to index (equivalent to *"embedding_model_name"* in *models_config.json* config file)
-        - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to *"embedding_model"* in *models_config.json* config file)
-        - **platform**: Provider used to store and get the information (major keys in *models_config.json* config file)
-    - **vector_storage**: Key to get the configuration of the database from config file
 - **specific**
   - **dataset**
     - **dataset_key**: This key is generated by integration being:
@@ -190,7 +267,7 @@ For a calling with just the infoindexing module, this are the necessary paramete
       ```
       In the case that infoindexing is not used with integration, can be whatever written by the user.
   - **paths**
-    - **text**: This is the place where the document explained in [Calling indexing by injecting a message in the queue](#calling-indexing-by-injecting-a-message-in-the-queue) has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
+    - **text**: This is the place where the document explained in [Writing message in queue (developer functionality)](#writing-message-in-queue-developer-functionality) has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
       ```json
       {
         "text": "username/dataset_key/txt/username/request_id/"
@@ -199,7 +276,7 @@ For a calling with just the infoindexing module, this are the necessary paramete
       An example could be:
       ```json
       {
-        "text": "albertoperezblasco/ir_index_20240711_081350_742985_d847mh/txt/albertoperezblasco/request_20240711_081349_563044_5c2bac/"
+        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/"
       }
       ```
       Otherwise, it has to be the route where the user uploads this file.
@@ -216,17 +293,23 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
             "report_url": "http://uhis-cdac-apigw.uhis-cdac/apigw/license/report/24e79c90cfcc46b7b43c36b63012bce9",
         },
         "index_conf": {
-            "index": "pruebas_indexing",
-            "windows_overlap": 10,
-            "windows_length": 300,
+            "vector_storage_conf": {
+                "index": "pruebas_indexing",
+                "vector_storage": "elastic-develop-local",
+                "modify_index_docs": {}
+            },
+            "chunking_method": {
+                "method": "simple",
+                "windows_overlap": 10,
+                "windows_length": 300,
+            },
             "models": [
                 {
                     "embedding_model":"text-embedding-ada-002",
                     "platform":"openai",
                     "alias": "ada-002-pool-europe"
                 }
-            ],
-            "vector_storage": "elastic-develop-local"
+            ]
         }
     },
     "specific": {
@@ -243,7 +326,8 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
 To conclude, the result of using infoindexing in this way can be seen in redis or in the logs. In this example, an error will raise by trying to write in the queue. To know if the document was indexed, the inforetrieval endpoint to see all the documents from an index can be used.
 
 ### Redis status
-This service always write the final status of the process in a redis database. The status will be a code, 200 if the indexation was ok or a code error otherwise. For the msg parameter, is a short description of the error cause (see more in [Error handling](#error-handling)) or *"Indexing finished"* if the indexation was ok.
+All indexing components write their status to the Redis data base.
+This service always writes the final status of the process in the Redis database. That status has 2 parameters: **status** and **msg**. If the indexing was successful, set the status code to 200; otherwise, set an error code. The <i>msg</i> parameter is a short description of the error cause (see more in [Error handling](#error-handling)) or <i>"Indexing finished"</i> if the indexation was successful.
 ```json
 {
   "status": "200",
@@ -280,6 +364,7 @@ Some common error messages you may encounter:
 | Detected metadata discrepancies. Verify that all documents have consistent metadata keys.                                                    | Different metadata between the documents |
 | Max num of retries reached. Nodes have been deleted.                                                                                         | Max retries of Timeout or BulkingError reached (3), the documents indexed until the moment the error raised will be deleted. |
 | File {txt_path} not found in IRStorage                                                                                                       | Processed file not found in the path for the workspace/origin (depending TESTING variable) |
+| Chunking method type doesnt exist <input_chunking_method>. Possible values: ['simple', 'recursive', 'surrounding_context_window'] | The chunking method passed is not supported |
 
 
 
@@ -288,7 +373,7 @@ Some common error messages you may encounter:
 
 The files/secrets architecture is:
 
-![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v4-config.png)
+![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v1.4.0-config.png)
 
 ### Blobs/Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
@@ -296,7 +381,7 @@ This service, needs different buckets if it is going to work along with integrat
   - STORAGE_BACKEND: To store the raw document data processed by all the previous components.
   - STORAGE_DATA: To store the document data that is going to be used by the previous services.
 - **Just infoindexing**: 
-  - STORAGE_BACKEND: Only this bucket is needed to read the raw document explained in [Calling indexing by injecting a message in the queue](#calling-indexing-by-injecting-a-message-in-the-queue) 
+  - STORAGE_BACKEND: Only this bucket is needed to read the raw document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality)) 
 
 ### Secrets
 All necessary credentials for the indexing flow are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 5 different secrets:
@@ -416,37 +501,39 @@ Apart from the five secrets explained above, the system needs another configurat
   }
   ```
   In this config file, the models from different platforms need different parameters:
-    - Azure models:
-        - embedding_model_name: name of the model, decided by the user and used to distinguish between models.
-        - embedding_model: type of embedding model that uses the model
-        - zone: place where the model has been deployed (used to get the api-keys)
-        - azure_api_version: version of the api (embedding model) that is being used
-        - azure_deployment_name: deployment name of the embedding model in azure
-        - model_pool: pools the model belongs to
-    - Bedrock models:
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - zone: place where the model has been deployed
-        - model_pool: pools the model belongs to
-    - HuggingFace models (huggingface): This type of model is not deployed anywhere, so there is no region or pool to specify.
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - retriever_model: model used when retrieving information (in hugging-face models normally are different)
+    * <u>Azure models</u>:
+        - **embedding_model_name**: name of the model, decided by the user and used to distinguish between models.
+        - **embedding_model**: type of embedding model that uses the model
+        - **zone**: place where the model has been deployed (used to get the api-keys)
+        - **azure_api_version**: version of the api (embedding model) that is being used
+        - **azure_deployment_name**: deployment name of the embedding model in azure
+        - **model_pool**: pools the model belongs to
+    * <u>Bedrock models</u>:
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **zone**: place where the model has been deployed
+        - **model_pool**: pools the model belongs to
+    * <u>HuggingFace models (huggingface)</u>: This type of model is not deployed anywhere, so there is no region or pool to specify.
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **retriever_model**: model used when retrieving information (in hugging-face models normally are different)
 
 An example where the rest of the data is extracted from the message:
-![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v5-config-files-uses.png)
+![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)
 
 ### Environment variables
-- AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
-- AWS_SECRET_KEY: AWS Secret access key to the project.(if not in secrets)
-- AZ_CONN_STR_STORAGE: Azure connection string. (if not in secrets)
-- PROVIDER: Cloud service to use to load the configuration files (aws or azure).
-- STORAGE_DATA: Name of bucket/blob to store datasets.
-- STORAGE_BACKEND: Name of bucket/blob to store configuration files and all the process related files.
-- SECRETS_PATH: Path to the secrets folder.
-- Q_INFO_INDEXING: Name of the queue for the infoindexing service
-- TESTING: Optional environment variable to use when testing the module. With this variable, the processed files are located in STORAGE_DATA blob/bucket and the report to the api is not done. This variable is for running the test purposes or when debugging in local in order to use concrete files just in the infoindexing component.
-- Q_FLOWMGMT_CHECKEND: Queue to write the message after finishing the process. The checkend mainly reports tye indexation result to the url given in the integration process.
+
+* **AWS_ACCESS_KEY**: AWS Public access key to the project. (if not in secrets)
+* **AWS_SECRET_KEY**: AWS Secret access key to the project.(if not in secrets)
+* **AZ_CONN_STR_STORAGE**: Azure connection string. (if not in secrets)
+* **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
+* **STORAGE_DATA**: Name of bucket/blob to store datasets.
+* **STORAGE_BACKEND**: Name of bucket/blob to store configuration files and all the process related files.
+* **SECRETS_PATH**: Path to the secrets folder.
+* **Q_INFO_INDEXING**: Name of the queue for the infoindexing service
+* **TESTING**: Optional environment variable to use when testing the module. With this variable, the processed files are located in STORAGE_DATA blob/bucket and the report to the api is not done. This variable is for running the test purposes or when debugging in local in order to use concrete files just in the infoindexing component.
+* **Q_FLOWMGMT_CHECKEND**: Queue to write the message after finishing the process. The checkend mainly reports tye indexation result to the url given in the integration process.  
+
 
 ## Code Overview
 
@@ -458,156 +545,153 @@ This class manages the main flow of the component by parsing the input, calling 
 
 ![infoindexing deployment](imgs/techhubgenaiinfoindexing/infoindexationDeployment.png)
 
-**parsers.py (`ManagerParser`,`InfoindexingParser`)**
+**parsers.py (`ManagerParsers`,`Parser`,`InfoindexingParser`)**
 
 This class parses the input json request received from the queue, getting all the necessary parameters.
 
-Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Parameters explanation](#parameters-explanation)), while others are internal parameters introduced by the integration service.
+Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Writing-message-in-queue-(Developer-functionality))), while others are internal parameters introduced by the integration service.
 
-- Project conf: Configuration of project
-    - force_ocr: True or False to force the process to go through ocr engine in preprocess
-    - laparams: Parameter to extract more information in PDFMiner text extraction in preprocess
-    - process_id: Id of process
-    - timeout_id: Id used to control process timeout
-    - process_type: Type of process
-    - department: Department assigned to apikey
-    - project_type: Text/Image type of document
-    - report_url: Url to report metrics to apigw
-    - timeout_sender: Process time for timeout to occur
-    - extract_tables: True or False to generate file with tables extract of OCR in preprocess
-    - csv: True or False, Indicate if the text is in the csv file
-    - url_sender: Name or URl to respond
-- OCR conf: Configuration to batch file in OCR
-    - batch_lenght: Size max of pages to batch
-    - files_size: Size max of byte size to batch
-    - calls_per_minute: Number max of call to send OCR
-- Dataset conf: Configuration of dataset
-    - dataset_path: Path of the dataset folder in storage
-    - dataset_csv_path: Path of the dataset csv in storage
-    - path_col: Column of dataset that indicates Url
-    - label_col: Column of dataset that indicates CategoryId
-    - dataset_id: Id of the dataset
-- Preprocess conf: Configuration of preprocess.
-    - num_pag_ini: Number of page of document to initialize extraction
-    - page_limit: Total numbers of pages to extract
-    - layout_conf: Configuration to do layout
-        - do_lines_text: True or False, try to extract lines without OCR
-        - do_lines_ocr: True or False, try to extract lines with OCR
-        - lines_conf: Configuration of lines
-            - do_lines_results: True or False, update images with lines and prediction
-            - model: Name of model to predict lines
-        - do_titles: Extract and generate files with only titles
-        - do_tables: Extract and generate files with only tables
-        - tables_conf:
-            - sep: Indicate which separator use to generate csv with tables lines
-- Origins: Configuration of origin of resources
-    - ocr: aws-ocr/google-ocr, Types of ocr supported
-- Index conf: Configuration of index process
-    - index: Name of index
-    - windows_overlap: Overlap to apply to chunks
-    - windows_length: Length of chunks
-    - modify_index_docs: How to proceed when indexing a document
-        - update: Update by parameter indicated
-        - delete: Delete by parameter indicated
-    - models: Indexing model configuration
-        - alias: Model or pool of models to index (equivalent to name in config file)
-        - embedding_model: Type of embedding that will calculate the vector of embeddings
-        - platform: Provider used to store and get the information
-    - vector_storage: Key to get the configuration of the database from config file
+* **Project conf:** Configuration of project.
+    - **force_ocr:** <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
+    - **laparams:** Parameter to extract more information in PDFMiner text extraction in preprocess.
+    - **process_id:** Id of process.
+    - **timeout_id:** Id used to control process timeout.
+    - **process_type:** Type of process.
+    - **department:** Department assigned to apikey.
+    - **project_type:** Text/Image type of document.
+    - **report_url:** Url to report metrics to apigw.
+    - **timeout_sender:** Process time for timeout to occur.
+    - **extract_tables:** <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
+    - **csv:** <i>True</i> or <i>False</i>, Indicate if the text is in the CSV file.
+    - **url_sender:** Name or URl to respond.
+* **OCR conf:** Configuration to batch file in OCR.
+    - **batch_lenght:** Size max of pages to batch.
+    - **files_size:** Size max of byte size to batch.
+    - **calls_per_minute:** Number max of call to send OCR.
+* **Dataset conf:** Configuration of dataset.
+    - **dataset_path:** Path of the dataset folder in storage.
+    - **dataset_csv_path:** Path of the dataset csv in storage.
+    - **path_col:** Column of dataset that indicates URL.
+    - **label_col:** Column of dataset that indicates CategoryId.
+    - **dataset_id:** Id of the dataset.
+* **Preprocess conf:** Configuration of preprocess.
+    - **num_pag_ini:** Number of page of document to initialize extraction.
+    - **page_limit:** Total numbers of pages to extract.
+    - **layout_conf:** Configuration to do layout.
+        - **do_lines_text:** <i>True</i> or <i>False</i>, try to extract lines without OCR.
+        - **do_lines_ocr:** <i>True</i> or <i>False</i>, try to extract lines with OCR.
+        - **lines_conf:** Configuration of lines.
+            - **do_lines_results:** <i>True</i> or <i>False</i>, update images with lines and prediction.
+            - **model:** Name of model to predict lines.
+        - **do_titles:** Extract and generate files with only titles.
+        - **do_tables:** Extract and generate files with only tables.
+        - **tables_conf:**
+            - **sep:** Indicate which separator use to generate csv with tables lines.
+* **Origins:** Configuration of origin of resources.
+    - **ocr:** <i>aws-ocr</i> or <i>google-ocr</i>, Types of OCR supported.
+* **Index conf:** Configuration of index process.
+    - **vector_storage_conf:** Configuration of the vector storage.
+        - **index:** Name of index.
+        - **vector_storage:** Key to get the configuration of the database from config file.
+        - **modify_index_docs:** How to proceed when indexing a document.
+          - **update:** Update by parameter indicated.
+          - **delete:** Delete by parameter indicated.
+    - **chunking_method:**
+        - **method:** Type of chunking method.
+        - **window_overlap:** Overlap to apply to chunks.
+        - **window_length:** Length of chunks.
+        - **sub_window_overlap:** Overlap to apply to sub-chunks (recursive).
+        - **sub_window_length:** Length of sub-chunks (recursive).
+        - **windows:** Number of windows (surrounding).
+    - **models:** Indexing model configuration.
+        - **alias:** Model or pool of models to index (equivalent to name in config file).
+        - **embedding_model:** Type of embedding that will calculate the vector of embeddings.
+        - **platform:** Provider used to store and get the information.
+    
 
-But the necessary ones, are the explained in the readme file.
+However, the necessary ones are detailed in the readme file.
 
 ![parsers](imgs/techhubgenaiinfoindexing/parsers.png)
 
-**loaders.py (`ManagerLoader`, `DocumentLoader`,`IRStorageLoader`)**
+**storage_manager.py (`ManagerStorage`, `BaseStorageManager`, `IRStorageManager`)**
 
-This class is responsible of loading from cloud storage all files associated with the indexing process; this includes files generated in the preprocess (documents text and geospatial information) and [configuration files](#configuration-files).
+This class is responsible of managing the operations with the cloud storage of all files associated with the indexing process; this includes files generated in the preprocess (documents text and geospatial information) and [configuration files](#configuration-files).
 
-![parsers](imgs/techhubgenaiinfoindexing/loaders.png)
+![storage manager](imgs/techhubgenaiinfoindexing/storage_manager.png)
 
 **connectors.py (`ManagerConnector`, `Connector`,`ElasticSearchConnector`)**
 
 This class manages the connection with the vector database, checking all the different important things like maintaining the same index during different indexations. If first indexation has been made with some models and metadata, the same models and metadata must be the same for all documents.
 
 If the database is ElasticSearch, the mandatory columns in the index tables are:
-- _index: The name of the index in Elasticsearch.
-- _type: The type of the document. By default, it is set to "_doc".
-- _id: The ID of the chunk in Elasticsearch.
-- _score: An automatic value generated by Haystack.
-- content: The text of the chunk.
-- metadata: Dictionary with all of the metadata values for each chunk. The base metadata fields are:
-  - filename: The name of the file where the chunk text is located.
-  - uri: The path to the cloud where the document has been saved for possible download.
-  - document_id: The identifier of the document to which the chunk of text belongs.
-  - snippet_number: The same value and meaning as the previous field.
-  - snippet_id: The identifier of the text chunk.
-  - _node_content: Metadata introduced by LlamaIndex. String containing all the node content, including metadata, text and realtionships with other nodes.
-  - _node_type: Metadata introduced by LlamaIndex. Type of LlamaIndex node; may be "text", "image", "index" or "document". For snippets is always "text". 
-  - doc_id: Duplicated identifier for the document generated by LlamaIndex
-  - ref_doc_id: Duplicated identifier for the document generated by LlamaIndex
+* **_index:** The name of the index in Elasticsearch.
+* **_type:** The type of the document. By default, it is set to "_doc".
+* **_id:** The ID of the chunk in Elasticsearch.
+* **_score:** An automatic value generated by Haystack.
+* **content:** The text of the chunk.
+* **metadata:** Dictionary with all of the metadata values for each chunk. The base metadata fields are:
+  - **filename:** The name of the file where the chunk text is located.
+  - **uri:** The path to the cloud where the document has been saved for possible download.
+  - **document_id:** The identifier of the document to which the chunk of text belongs.
+  - **snippet_number:** The same value and meaning as the previous field.
+  - **snippet_id:** The identifier of the text chunk (same as _id).
+  - **_node_content:** Metadata introduced by LlamaIndex. String containing all the node content, including metadata, text and realtionships with other nodes.
+  - **_node_type:** Metadata introduced by LlamaIndex. Type of LlamaIndex node; may be: <i>text, image, index</i> or <i>document</i>. For snippets is always <i>text</i>.
+  - **doc_id:** Duplicated identifier for the document generated by LlamaIndex
+  - **ref_doc_id:** Duplicated identifier for the document generated by LlamaIndex
+  - **window *(surrounding context window method)*:** Text formed by the text of the front and back chunks indicated in the 'windows' param and the text of the actual chunk (correctly ordered)
+  - **original_text *(surrounding context window method)*:** Metadata introduced by LlamaIndex. The original text of the chunk.
   - Metadata added by the user...
-- embedding: Column where the snippet embeddings will be stored.
+  - **index_id *(recursive):*** Reference to its parent index (if the node is the parent itself, the id will be the same as _id) 
+* **embedding:** Column where the snippet embeddings will be stored.
 
-![parsers](imgs/techhubgenaiinfoindexing/connectors.png)
+![connectors](imgs/techhubgenaiinfoindexing/connectors.png)
 
-**vector_storages.py (`ManagerStore`, `DocumentStore`,`LlamaIndex`)**
+**vector_storages.py (`ManagerVectorDB`, `VectorDB`,`LlamaIndex`)**
 
 This class saves the documents and their associated metadata in the database.
 
-![parsers](imgs/techhubgenaiinfoindexing/vector_storages.png)
+![vector_storages](imgs/techhubgenaiinfoindexing/vector_storages.png)
 
 
 ### Flow
-![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v4-decision-flow.png)
+![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.drawio.png)
 
-In the following diagram flows, each color will represent the following files:
-
-![alt text](imgs/techhubgenaiinfoindexing/flow1.png)
+In the following flows diagram, each color will represent the following files:
+    
+  <img src="imgs/techhubgenaiinfoindexing/flow1.png" width="175">
 
 1.	When the service is initialized, it loads all the [secrets](#secrets) and [configuration files](#configuration-files) containing pools, models, and vector_storage details, to know the ones that are available.
-
-![alt text](imgs/techhubgenaiinfoindexing/flow2.png)
-
-2. Using the [parser](#parserspy-parserinfoindexing-managerparser) class, the input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
-![alt text](imgs/techhubgenaiinfoindexing/flow3.png)
-
-3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models in this call must match those used during the first indexation.
-
-![alt text](imgs/techhubgenaiinfoindexing/flow4.png)
-
-4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded
-
-![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
-
+    ![alt text](imgs/techhubgenaiinfoindexing/flow2.png)
+2. Using the parser class (see <i>Files and Classes > parsers.py</i>). The input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
+    ![alt text](imgs/techhubgenaiinfoindexing/flow3.png)
+3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models and the chunking method in this call must match those used during the first indexation.
+    ![alt text](imgs/techhubgenaiinfoindexing/flow4.png)
+4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded.
+    ![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
 5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
-
-![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
-
-6. Here the modify_index_docs param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is *name of the index without* \\/,|>?\*<" \\_*embedding_model* (the special characters are replaced by _) . An example could be
+    ![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
+6. Here the <i>modify_index_docs</i> param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is name of the index without <i> \\/,|>?\*<" \\_ </i>embedding_model (the special characters are replaced by _) . An example could be
     ```text
     firstindexation_text-embedding-ada-002
     ```
-
-![alt text](imgs/techhubgenaiinfoindexing/flow7.png)
-
-7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then all documents are processed by splitting them into chunks (of variable size depending on `window_length` and `window_overlap` [parameters](#parameters-explanation)) and associating each snippet with its corresponding metadata.
-   
-![alt text](imgs/techhubgenaiinfoindexing/flow8.png)
-
-
-8. Write the documents in the vector storage for each model, following all this steps:
-
+    ![alt text](imgs/techhubgenaiinfoindexing/flow7.png)
+7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then the manager of the chunking method selected en the 'method' parameter will be chosen and the document splitted in chunks based on the method using the parameters in 'chunking_method'.
+    <img src="imgs/techhubgenaiinfoindexing/flow8.png" width="300">
+8. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
+    <img src="imgs/techhubgenaiinfoindexing/flow9.png" width="300">
+9. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
+    <img src="imgs/techhubgenaiinfoindexing/flow10.png" width="900">
+10. Write the documents in the vector storage for each model, following all this steps:
     1. The first step is to internally generate the index name for each requested model.
     2. Then the object used to generate the embeddings is created
     3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
     4. Save the number of pages and tokens for every model to report it after.
     5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
-    ![alt text](imgs/techhubgenaiinfoindexing/flow9.png)
+    ![alt text](imgs/techhubgenaiinfoindexing/flow11.png)
+11.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
 
-
-8.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
-
-    ![alt text](imgs/techhubgenaiinfoindexing/flow10.png)
+    ![alt text](imgs/techhubgenaiinfoindexing/flow12.png)
 
 
 

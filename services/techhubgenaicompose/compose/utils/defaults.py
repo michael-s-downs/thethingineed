@@ -17,7 +17,7 @@ SUM_TEMPLATE = {
     },
     "llm_metadata": {
         "max_tokens": 10000,
-        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
+        "model": "techhubdev-pool-world-gpt-4o-mini"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -31,7 +31,7 @@ FILTER_TEMPLATE = {
         "template_name": "emptysystem_query"
     },
     "llm_metadata": {
-        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
+        "model": "techhubdev-pool-world-gpt-4o-mini"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -46,7 +46,7 @@ REFORMULATE_TEMPLATE = {
     },
     "llm_metadata": {
         # "max_tokens": 10000,
-        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
+        "model": "techhubdev-pool-world-gpt-4o-mini"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -60,7 +60,21 @@ TRANSLATE_TEMPLATE = {
         "template": "{\"system\": \"You are a profesional translator and only answer with the translated sentence.\",\"user\": \"$query\"}"
     },
     "llm_metadata": {
-        "model": "techhubinc-pool-world-gpt-3.5-turbo-16k"
+        "model": "techhubdev-pool-world-gpt-4o-mini"
+    },
+    "platform_metadata": {
+        "platform":"azure", 
+        "timeout": TIMEOUT
+    }
+}
+
+STEP_TEMPLATE = {
+    "query_metadata": {
+        "query": "",
+        "template": "{\"system\": \" You will receive a complex query, and your task is to split it into the fewest possible simpler, specific queries that fully capture the original intent. \\n Rules: \\n Divide the query into distinct, logical components. \\n Ensure each part is clear, concise, and addresses a specific aspect of the original query. \\n Do not add or omit information; focus solely on breaking the query into manageable pieces. \\n Examples: \\n Input query: ¿Se ha realizado alguna intervención fuera de mantenimiento programado? ¿causa? ¿en qué equipo/s? ¿ha dado lugar a alguna Condición Anómala? \\n Response: \\n ¿Se ha realizado alguna intervención fuera de mantenimiento programado? \\n ¿Cuál fue la causa de la intervención? \\n ¿En qué equipo se realizó la intervención? \\n ¿Ha dado lugar la intervención a alguna condición anómala? \\n Input query: ¿Qué medidas se han implementado para mejorar la eficiencia energética en la planta? \\n Response: \\n ¿Qué medidas se han implementado para mejorar la eficiencia energética? \\n ¿Cómo han afectado dichas medidas a la operación de la planta? \\n Now process the following: \",\"user\": \"$query\"}"
+    },
+    "llm_metadata": {
+        "model": "techhubdev-pool-world-gpt-4o-mini"
     },
     "platform_metadata": {
         "platform":"azure", 
@@ -99,7 +113,7 @@ FILTERED_ACTIONS = [
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "techhubinc-pool-world-gpt-3.5-turbo-16k",
+                    "model": "techhubdev-pool-world-gpt-4o-mini",
 					"max_input_tokens":5000
                 },
                 "platform_metadata": {

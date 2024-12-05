@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 from unittest import mock
 
 # Local imports
-from common.indexing.parsers import ManagerParser, ParserInforetrieval, ParserInfoindexing
+from common.ir.parsers import ManagerParser, ParserInforetrieval, ParserInfoindexing
 from common.errors.genaierrors import PrintableGenaiError
 
 

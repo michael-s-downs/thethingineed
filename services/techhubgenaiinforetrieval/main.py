@@ -2,49 +2,46 @@
 
 
 # Native imports
-import json
-import re
 
 # Installed imports
 import tiktoken
 
-from rescoring import rescore_documents
 from flask import Flask, request
-import elasticsearch.exceptions
 from elasticsearch_adaption import \
     ElasticsearchStoreAdaption  # Custom class that adapts the elasticsearch store to improve filters
-# In the version 0.2.0 it's impossible to use multiple filters in the same query
+# In the version 0.3.3 it's impossible to use multiple filters in the same query
 from elasticsearch.helpers.vectorstore import AsyncDenseVectorStrategy, AsyncBM25Strategy
 from elasticsearch import AsyncElasticsearch
-from llama_index.core import VectorStoreIndex, MockEmbedding
-from llama_index.core.llms.mock import MockLLM
-from llama_index.core.vector_stores import MetadataFilter, MetadataFilters, FilterCondition
-from llama_index.core.base.embeddings.base import BaseEmbedding
-from llama_index.core.retrievers import QueryFusionRetriever
-from llama_index.core.schema import NodeWithScore, QueryBundle
+from llama_index.core import MockEmbedding
+
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
 from common.genai_controllers import storage_containers, set_storage
 from common.genai_json_parser import *
+from retrieval_strategies import ManagerRetrievalStrategies
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
-from common.ir import get_connector, get_embed_model
+from common.ir.utils import get_connector, get_embed_model 
 from common.utils import load_secrets, ELASTICSEARCH_INDEX
 from common.storage_manager import ManagerStorage
-from common.indexing.parsers import ManagerParser, ParserInforetrieval
-from common.indexing.connectors import Connector
+from common.ir.parsers import ManagerParser, ParserInforetrieval
+from common.ir.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
-from common.utils import get_models
 
 from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
 
+
 class InfoRetrievalDeployment(BaseDeployment):
-    MODEL_FORMATS = {
-        "bm25--score": "sparse"
-    }
 
     TOKENIZER = {
         "bm25--score": None
+    }
+
+    STRATEGY_CHUNKING_METHOD_EQUIVALENCE = {
+        "genai_retrieval": "simple",
+        "recursive_genai_retrieval": "recursive",
+        "surrounding_genai_retrieval": "surrounding_context_window",
+        "llamaindex_fusion": "simple"
     }
 
     def __init__(self):
@@ -106,7 +103,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                 # Add bm25 retriever (with one index that matches is enough, all indexes in elastic can do this retrieval)
                 vector_store = ElasticsearchStoreAdaption(index_name=index_name, es_client=es_client,
                                                           retrieval_strategy=AsyncBM25Strategy())
-                return vector_store
+                return vector_store, model
 
         raise PrintableGenaiError(400, "There is no index that matches the passed value")
 
@@ -122,7 +119,7 @@ class InfoRetrievalDeployment(BaseDeployment):
         retrievers = []
         for model in models:
             if model.get('embedding_model') == "bm25":
-                vector_store = self.get_bm25_vector_store(index, connector, es_client)
+                vector_store, _ = self.get_bm25_vector_store(index, connector, es_client)
                 # MockEmbedding used to avoid errors in the bm25 retriever (OPENAI_API_KEY mandatory)
                 embed_model = MockEmbedding(embed_dim=256)
                 embed_query = query #BM25 does not use embeddings
@@ -153,115 +150,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                                                    self.models_credentials)
 
     @staticmethod
-    def generate_llama_filters(filters):
-        """ Generate llama filters
-
-        :return: Llama filters
-        """
-        llama_filters = []
-        for key, value in filters.items():
-            if isinstance(value, list):
-                multiple_filter = [MetadataFilter(key=key, value=v) for v in value]
-            else:
-                multiple_filter = [MetadataFilter(key=key, value=value)]
-            llama_filters.append(MetadataFilters(filters=multiple_filter, condition=FilterCondition.OR))
-
-        return MetadataFilters(filters=llama_filters, condition=FilterCondition.AND)
-
-
-    def retrieve(self, vector_store: ElasticsearchStoreAdaption, embed_model: BaseEmbedding, retriever_type: str,
-                 filters: dict, top_k: int, docs: dict, embed_query: list, query: str) -> list:
-        """Retrieve documents from a retriever
-
-        :param vector_store: Vector store to use in retrieval
-        :param embed_model: Embed model to use in retrieval
-        :param query: Query to retrieve
-        :param filters: Filters to apply
-        :param top_k: Number of documents to retrieve
-
-        :return: List of documents
-        """
-
-        vector_store_index = VectorStoreIndex.from_vector_store(vector_store=vector_store, embed_model=embed_model)
-        retriever = vector_store_index.as_retriever(similarity_top_k=top_k, filters=self.generate_llama_filters(filters))
-
-        if isinstance(embed_query, list):
-            retrieved_docs = retriever.retrieve(QueryBundle(query_str=query, embedding=embed_query))
-        else:
-            #bm25 does not use embeddings
-            retrieved_docs = retriever.retrieve(QueryBundle(query_str=query))
-        self.logger.debug(f"{retriever_type} retrieved {len(retrieved_docs)} documents")
-
-        for doc in retrieved_docs:
-            self.add_retrieved_document(docs, doc, retriever_type)
-
-        return retrieved_docs
-    @staticmethod
-    def add_retrieved_document(docs: dict, retrieved_doc: NodeWithScore, retriever_type: str):
-        """ Add a retrieved document to the list of documents
-
-        :param docs: Dictionary of documents
-        :param retrieved_doc: Retrieved document
-        :param retriever_type: Type of retriever
-        """
-        if retrieved_doc.metadata['snippet_id'] not in docs:
-            retrieved_doc.metadata[retriever_type] = retrieved_doc.score
-            docs[retrieved_doc.metadata['snippet_id']] = retrieved_doc
-        else:
-            if retriever_type not in docs[retrieved_doc.metadata['snippet_id']].metadata:
-                docs[retrieved_doc.metadata['snippet_id']].metadata[retriever_type] = retrieved_doc.score
-                docs[retrieved_doc.metadata['snippet_id']].score += retrieved_doc.score
-
-    def genai_retrieval_strategy(self, retrievers_arguments, input_object):
-        docs_by_retrieval = {}
-        unique_docs = {}
-        for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
-            docs_tmp = self.retrieve(vector_store, embed_model, retriever_type, input_object.filters,
-                                     input_object.top_k, unique_docs, embed_query, input_object.query)
-
-            docs_by_retrieval[retriever_type] = docs_tmp
-
-        # Complete the scores that have not been obtained till this point
-        ids_incompleted_docs = self.get_ids_empty_scores(docs_by_retrieval, set(unique_docs.keys()))
-        if sum([len(docs) for docs in docs_by_retrieval.values()]) > 0:
-            self.logger.debug(f"Re-scoring with {', '.join(list(zip(*retrievers_arguments))[3])} retrievers")
-            for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:
-                input_object.filters['snippet_id'] = ids_incompleted_docs[retriever_type]
-                top_k_new = len(ids_incompleted_docs[retriever_type])
-                if top_k_new > 0:
-                    self.retrieve(vector_store, embed_model, retriever_type, input_object.filters, top_k_new,
-                                  unique_docs, embed_query, input_object.query)
-
-        retrievers = [retriever_type for _, _, _, retriever_type in retrievers_arguments]
-        for doc in unique_docs.values():
-            for retriever_type in retrievers:
-                if retriever_type not in doc.metadata:
-                    # Sometimes bm25 does not retrieve all documents
-                    doc.metadata[retriever_type] = 0
-            doc.score /= len(retrievers_arguments)
-
-        rescored_docs = rescore_documents(unique_docs, input_object.query, input_object.rescoring_function,
-                                          self.MODEL_FORMATS, retrievers)
-
-        sorted_docs = sorted(rescored_docs, key=lambda x: x.score, reverse=True)
-
-        return sorted_docs
-    @staticmethod
-    def get_ids_empty_scores(ids_dict: dict, all_ids: set):
-        """Get the document ids that some models have not retrieved and thus don't have scores
-
-        :param ids_dict (dict): Dictionary of ids that each of the models have retriever
-
-        :return dict: ids that do not have scores
-        """
-        ids_empty_scores = {}
-        for retriever_type, ids in ids_dict.items():
-            # Difference between all ids and the ids that have been retrieved
-            ids_empty_scores[retriever_type] = list(all_ids - set(doc.metadata['snippet_id'] for doc in ids))
-
-        return ids_empty_scores
-
-    @staticmethod
     def parse_output(sorted_documents, query: str = "") -> List:
         """ Parse List of documents to a JSON-Serializable list to return
 
@@ -284,24 +172,6 @@ class InfoRetrievalDeployment(BaseDeployment):
             })
         return final_docs
 
-    def rrf_retrieval_strategy(self, retrievers_arguments, input_object):
-        retrievers = []
-        for vector_store, embed_model, _, retriever_type in retrievers_arguments:
-            vector_store_index = VectorStoreIndex.from_vector_store(vector_store=vector_store, embed_model=embed_model)
-            retrievers.append(vector_store_index.as_retriever(filters=self.generate_llama_filters(input_object.filters),
-                                                              similarity_top_k=input_object.top_k + 1))
-        retriever = QueryFusionRetriever(
-            retrievers,
-            llm=MockLLM(),
-            mode=input_object.strategy_mode,
-            similarity_top_k=input_object.top_k + 1,
-            num_queries=1,  # set this to 1 to disable query generation
-            use_async=True,
-            verbose=True
-        )
-        return retriever.retrieve(input_object.query)
-
-        
     def process(self, json_input: dict):
         try:
             self.logger.debug(f"Data entry: {json_input}")
@@ -314,19 +184,31 @@ class InfoRetrievalDeployment(BaseDeployment):
                                            http_auth=(connector.username, connector.password),
                                            verify_certs=False, timeout=30)
 
+
             # If no models are passed, we will retrieve with bm25 and the models used in the indexation process
             if len(input_object.models) == 0:
                 input_object.models = self.get_default_models(input_object.index, connector)
             else:
                 self.assert_correct_models(input_object.index, input_object.models, connector)
 
+            # Check if the strategy selected can be done with the index passed
+            chunking_method = self.STRATEGY_CHUNKING_METHOD_EQUIVALENCE[input_object.strategy]
+            if len(input_object.models) == 1 and input_object.models[0]['alias'] == "bm25":
+            # In the case that only bm25 is passed, the index with the model used must be searched
+                _, model = self.get_bm25_vector_store(input_object.index, connector, es_client)
+                models = [model]
+            else:
+                models = [model['embedding_model'] for model in input_object.models if model['alias'] != "bm25"]
+            connector.assert_correct_chunking_method(input_object.index, chunking_method, models)
+
             retrievers_arguments = self.get_retrievers_arguments(input_object.models, input_object.index, es_client,
                                                                  connector, input_object.query)
-
-            if input_object.strategy == "llamaindex_fusion":
-                sorted_documents = self.rrf_retrieval_strategy(retrievers_arguments, input_object)
-            elif input_object.strategy == "genai_retrieval":
-                sorted_documents = self.genai_retrieval_strategy(retrievers_arguments, input_object)
+            conf = {"strategy": input_object.strategy}
+            if input_object.strategy == "recursive_genai_retrieval":
+                # Needed to get the whole index for every retriever
+                conf["connector"] = connector
+            retrieval_strategy = ManagerRetrievalStrategies.get_retrieval_strategy(conf)
+            sorted_documents = retrieval_strategy.do_retrieval_strategy(input_object, retrievers_arguments)
 
             tokens_report = {}
             for vector_store, embed_model, embed_query, retriever_type in retrievers_arguments:

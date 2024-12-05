@@ -1,6 +1,9 @@
 ### This code is property of the GGAO ###
 # Native imports
 import re, copy, json
+import subprocess
+import sys
+import os
 
 # Installed imports
 import pytest
@@ -13,7 +16,8 @@ import elasticsearch
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from main import app, InfoRetrievalDeployment, manage_actions_get_elasticsearch, manage_actions_delete_elasticsearch
+from main import app, InfoRetrievalDeployment
+from retrieval_strategies import SimpleStrategy
 from elasticsearch_adaption import ElasticsearchStoreAdaption
 
 ada_002_germany = {
@@ -82,6 +86,8 @@ def get_connector():
     magic_object.get.return_value = 2
     connector.delete_documents.return_value = magic_object
     connector.delete_index.return_value = True
+    connector.assert_correct_chunking_method = MagicMock(return_value=None)
+    connector.list_indices.return_value = (['index1_model1', 'index2_model2', 'index2_model2'])
     return connector
 
 class TestMain:
@@ -119,7 +125,8 @@ class TestMain:
 
         # Case correct
         self.connector.exist_index.return_value = True
-        assert isinstance(self.deployment.get_bm25_vector_store("test_index", self.connector, MagicMock()), ElasticsearchStoreAdaption)
+        vector_store, _ = self.deployment.get_bm25_vector_store("test_index", self.connector, MagicMock())
+        assert isinstance(vector_store, ElasticsearchStoreAdaption)
 
     def test_get_retrievers_arguments(self):
         models = [
@@ -156,7 +163,7 @@ class TestMain:
         list_filter = {
             "filename": ["a.pdf", "b.pdf"]
         }
-        response = self.deployment.generate_llama_filters(list_filter)
+        response = SimpleStrategy.generate_llama_filters(list_filter)
         assert len(response.filters[0].filters) == 2
         assert str(response.filters[0].condition.value) == "or"
         assert str(response.condition.value) == "and"
@@ -165,7 +172,7 @@ class TestMain:
         string_filter = {
             "filename": "a.pdf"
         }
-        response = self.deployment.generate_llama_filters(string_filter)
+        response = SimpleStrategy.generate_llama_filters(string_filter)
         assert len(response.filters[0].filters) == 1
         assert str(response.filters[0].condition.value) == "or"
         assert str(response.condition.value) == "and"
@@ -182,10 +189,10 @@ class TestMain:
             self.deployment.process({})
 
     def test_genai_retrieval_strategy(self):
-        with patch('llama_index.core.base.base_retriever.BaseRetriever.retrieve') as mock_retrieve:
+        with patch('retrieval_strategies.GenaiStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.side_effect = [documents_bm25, documents_ada, documents_bm25, documents_ada]
+                    mock_retrieve.return_value = documents_bm25
                     json_input = {
                         "index_conf": {
                             "top_k": 3,
@@ -204,17 +211,16 @@ class TestMain:
                     _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
                     rescored_docs = result['docs']
                     assert result['status_code'] == 200
-                    assert rescored_docs[2]['meta']["bm25--score"] == 0
-                    assert rescored_docs[0]['content'] == "Test-2"
-                    assert rescored_docs[0]['meta']["ada--score"] == 0.55
+                    assert rescored_docs[1]['content'] == "Test-2"
+                    assert rescored_docs[0]['score'] == 0.23
                     assert len(rescored_docs) == 3
-                    assert rescored_docs[1]['meta']["bm25--score"] == 0.23 and rescored_docs[1]['meta']["ada--score"] == 0.5
+                    assert rescored_docs[2]['meta']['filename'] == "test-2"
 
     def test_llamaindex_fusion_strategy(self):
-        with patch('llama_index.core.base.base_retriever.BaseRetriever.retrieve') as mock_retrieve:
+        with patch('retrieval_strategies.LlamaIndexFusionStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.side_effect = [documents_bm25, documents_ada, documents_bm25, documents_ada]
+                    mock_retrieve.return_value = documents_bm25
                     json_input = {
                         "index_conf": {
                             "top_k": 3,
@@ -223,7 +229,7 @@ class TestMain:
                             "index": "test",
                             "strategy": "llamaindex_fusion",
                             "strategy_mode": "reciprocal_rerank",
-                            "models": ["bm25", "ada-002-germany"]
+                            "models": []
                         }
                     }
                     mock_get_retrievers_arguments.return_value = [
@@ -233,10 +239,68 @@ class TestMain:
                     _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
                     rescored_docs = result['docs']
                     assert result['status_code'] == 200
+                    assert rescored_docs[1]['content'] == "Test-2"
+                    assert rescored_docs[0]['score'] == 0.23
                     assert len(rescored_docs) == 3
-                    assert rescored_docs[0]['content'] == "Test"
-                    assert rescored_docs[0]['meta']["ada--score"] == 0.5
-                    assert rescored_docs[1]['meta']["bm25--score"] == 0.778 and rescored_docs[1]['meta']["ada--score"] == 0.55
+                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+
+
+    def test_recursive_genai_retrieval_strategy(self):
+        with patch('retrieval_strategies.GenaiRecursiveStrategy.do_retrieval_strategy') as mock_retrieve:
+            with patch('main.get_connector', return_value=self.connector):
+                with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
+                    mock_retrieve.return_value = documents_bm25
+                    json_input = {
+                        "index_conf": {
+                            "top_k": 3,
+                            "filters": {},
+                            "query": "query",
+                            "index": "test",
+                            "strategy": "recursive_genai_retrieval",
+                            "rescoring_function": "mean",
+                            "models": []
+                        }
+                    }
+                    mock_get_retrievers_arguments.return_value = [
+                        (MagicMock(), MagicMock(), "query", "bm25--score"),
+                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                    ]
+                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                    rescored_docs = result['docs']
+                    assert result['status_code'] == 200
+                    assert rescored_docs[1]['content'] == "Test-2"
+                    assert rescored_docs[0]['score'] == 0.23
+                    assert len(rescored_docs) == 3
+                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+
+
+    def test_surrounding_genai_retrieval_strategy(self):
+        with patch('retrieval_strategies.GenaiSurroundingStrategy.do_retrieval_strategy') as mock_retrieve:
+            with patch('main.get_connector', return_value=self.connector):
+                with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
+                    mock_retrieve.return_value = documents_bm25
+                    json_input = {
+                        "index_conf": {
+                            "top_k": 3,
+                            "filters": {},
+                            "query": "query",
+                            "index": "test",
+                            "strategy": "surrounding_genai_retrieval",
+                            "rescoring_function": "mean",
+                            "models": ["bm25"]
+                        }
+                    }
+                    mock_get_retrievers_arguments.return_value = [
+                        (MagicMock(), MagicMock(), "query", "bm25--score"),
+                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                    ]
+                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                    rescored_docs = result['docs']
+                    assert result['status_code'] == 200
+                    assert rescored_docs[1]['content'] == "Test-2"
+                    assert rescored_docs[0]['score'] == 0.23
+                    assert len(rescored_docs) == 3
+                    assert rescored_docs[2]['meta']['filename'] == "test-2"
 
 @pytest.fixture
 def client():
@@ -250,7 +314,7 @@ def test_retrieve_documents(client):
         "index": "test",
         "filters": "{\"test_system_query_v\": {\"system\": \"$system\", \"user\": [{\"type\": \"text\", \"text\": \"Answer the question as youngster: \"},{\"type\": \"image_url\",\"image\": {\"url\": \"https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png\",\"detail\": \"high\"}},\"$query\"]}}"
     }
-    with patch('main.get_connector') as mock_get_connector:
+    with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
         response = client.post("/retrieve_documents", json=body)
         result = json.loads(response.text).get('result')
@@ -264,14 +328,41 @@ def test_retrieve_documents(client):
     response = client.post("/retrieve_documents", json=body)
     result = json.loads(response.text)
     assert response.status_code == 400
-    assert result.get('result') == "There must at least one filter"
+    assert result.get('error_message') == "There must be at least one filter"
+
+def test_retrieve_documents_exceptions(client):
+    body = {
+        "index": "test",
+        "filters": "{\"test_system_query_v\": {\"system\": \"$system\", \"user\": [{\"type\": \"text\", \"text\": \"Answer the question as youngster: \"},{\"type\": \"image_url\",\"image\": {\"url\": \"https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png\",\"detail\": \"high\"}},\"$query\"]}}"
+    }
+
+    with patch('endpoints.get_connector') as mock_get_connector:
+        mock_connector = MagicMock()
+        mock_get_connector.return_value = mock_connector
+
+        not_found_error = elasticsearch.NotFoundError(
+            message="Index not found",
+            meta={"status": 404, "request_id": "test_id"},
+            body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
+        )
+        mock_connector.get_documents.side_effect = not_found_error
+        response = client.post("/retrieve_documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Index 'test'" in result.get('error_message')
+
+        mock_connector.get_documents.side_effect = Exception("Unexpected error")
+        response = client.post("/retrieve_documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Error processing operation: Unexpected error" in result.get('error_message')
 
 
 def test_retrieve_documents_filenames(client):
     body = {
         "index": "test"
     }
-    with patch('main.get_connector') as mock_get_connector:
+    with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
         response = client.post("/get_documents_filenames", json=body)
         result = json.loads(response.text).get('result')
@@ -282,7 +373,36 @@ def test_retrieve_documents_filenames(client):
     response = client.post("/get_documents_filenames", json={})
     result = json.loads(response.text)
     assert response.status_code == 400
-    assert result.get('result') == "Missing parameter: index"
+    assert result.get('error_message') == "Missing parameter: index"
+
+def test_retrieve_documents_filenames_exceptions(client):
+    body = {
+        "index": "test"
+    }
+
+    with patch('endpoints.get_connector') as mock_get_connector:
+        mock_connector = MagicMock()
+        mock_get_connector.return_value = mock_connector
+
+        # Excepción genérica
+        mock_connector.get_documents_filenames.side_effect = Exception("Mocked exception")
+        response = client.post("/get_documents_filenames", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert result.get('error_message') == "Error processing operation: Mocked exception"
+
+        # elasticsearch.NotFoundError
+        not_found_error = elasticsearch.NotFoundError(
+            message="Index not found",
+            meta={"status": 404, "request_id": "test_id"},
+            body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
+        )
+        mock_connector.get_documents_filenames.side_effect = not_found_error
+        response = client.post("/get_documents_filenames", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Index 'test'" in result.get('error_message')
+
 
 
 def test_get_models(client):
@@ -301,12 +421,39 @@ def test_delete_index(client):
     body = {
         "index": "test"
     }
-    with patch('main.get_connector') as mock_get_connector:
+    with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
         response = client.post("/delete_index", json=body)
         result = json.loads(response.text).get('result')
         assert response.status_code == 200
         assert result == "Index 'test' deleted for '1' models"
+
+def test_delete_index_exceptions(client):
+    body = {
+        "index": "test"
+    }
+    with patch('endpoints.get_connector') as mock_get_connector:
+
+        mock_connector = MagicMock()
+        mock_get_connector.return_value = mock_connector
+
+        mock_connector.delete_index.side_effect = Exception("Mocked exception")
+        response = client.post("/delete_index", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert result.get('error_message') == "Error processing delete index operation: Mocked exception"
+
+        not_found_error = elasticsearch.NotFoundError(
+            message="Index not found",
+            meta={"status": 404, "request_id": "test_id"},
+            body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
+        )
+        mock_connector.delete_index.side_effect = not_found_error
+        response = client.post("/delete_index", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert ("Index 'test' not found") in result.get('error_message')
+
 
 def test_process(client):
     with patch('main.deploy.sync_deployment') as mock_post:
@@ -327,7 +474,7 @@ def test_delete_documents(client):
             "filename": ["test.pdf"]
         }
     }
-    with patch('main.get_connector') as mock_get_connector:
+    with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
         response = client.post("/delete-documents", json=body)
         result = json.loads(response.text).get('result')
@@ -335,6 +482,63 @@ def test_delete_documents(client):
         assert result == "Documents that matched the filters were deleted for 'test'"
 
 
+def test_delete_documents_exeception(client):
+    body = {
+        "index": "test",
+        "delete": {
+            "filename": ["test.pdf"]
+        }
+    }
+    with patch('endpoints.get_connector') as mock_get_connector:
+
+        mock_connector = MagicMock()
+        mock_get_connector.return_value = mock_connector
+
+
+        mock_connector.delete_documents.side_effect = Exception("Mocked exception")
+        response = client.post("/delete-documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert result.get('error_message') == "Error processing delete operation: Mocked exception"
+
+        not_found_error = elasticsearch.NotFoundError(
+            message="Index not found",
+            meta={"status": 404, "request_id": "test_id"},
+            body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
+        )
+        mock_connector.delete_documents.side_effect = not_found_error
+        response = client.post("/delete-documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
+
+        mock_connector.delete_documents.side_effect = None
+        mock_connector.delete_documents.return_value = MagicMock(
+            body={"failures": [{"reason": "test failure"}], "deleted": 0}
+        )
+        response = client.post("/delete-documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
+
+        mock_connector.delete_documents.return_value = MagicMock(
+            body={"failures": [], "deleted": 0}
+        )
+        response = client.post("/delete-documents", json=body)
+        result = json.loads(response.text)
+        assert response.status_code == 400
+        assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
+
+
+def test_list_indices(client):
+    with patch('endpoints.get_connector') as mock_get_connector:
+        mock_get_connector.return_value = get_connector()
+        response = client.get("/list_indices")
+        result = json.loads(response.text)
+        assert response.status_code == 200
+        assert len(result.get('indices')) == 2
+
+"""
 def test_manage_actions_get_elastic():
     with patch('main.deploy', get_ir_deployment()):
         # Index not found
@@ -407,3 +611,4 @@ def test_manage_actions_delete_elastic():
         response, status_code = manage_actions_delete_elasticsearch("test", "delete_index", {}, connector)
         assert status_code == 400
         assert response['result'] == "Index 'test' not found"
+"""

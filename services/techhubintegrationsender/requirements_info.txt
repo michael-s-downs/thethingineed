@@ -1,5 +1,5 @@
 genai-sdk-services==0.4.3
 Pillow==10.0.1
-pandas==2.1.1
+pandas==2.2.3
 numpy==2.0.2
 requests==2.32.3

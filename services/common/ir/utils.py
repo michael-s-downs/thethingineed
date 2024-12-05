@@ -1,7 +1,9 @@
 ### This code is property of the GGAO ###
 
 # Native imports
-import os, json
+import os
+import json
+import re
 
 # Installed imports
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
@@ -11,10 +13,12 @@ from llama_index.core.embeddings import BaseEmbedding
 
 # Custom imports
 from common.genai_controllers import load_file, provider
-from common.indexing.connectors import Connector, ManagerConnector
+from common.ir.connectors import Connector, ManagerConnector
 
 IR_INDICES = "src/ir/index/"
-INDEX_S3 = lambda index: IR_INDICES + index + ".json"
+INDEX_STORAGE = lambda index: IR_INDICES + index + ".json"
+
+
 
 def modify_index_documents(connector, modify_index_docs: dict, docs: list, index: str, logger) -> list:
     """
@@ -107,7 +111,7 @@ def get_connector(index: str, workspace, vector_storages) -> Connector:
     """
     # Get the connector name
     try:
-        state_dict = load_file(workspace, INDEX_S3(index))
+        state_dict = load_file(workspace, INDEX_STORAGE(index))
         if len(state_dict) == 0:
             connector_name = ""
         else:

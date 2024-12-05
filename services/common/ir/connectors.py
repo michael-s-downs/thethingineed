@@ -38,20 +38,40 @@ class Connector(ABC):
         """
         pass
 
-    def assert_correct_index_conf(self, index: str, available_models: list, models: list):
+    def assert_correct_index_conf(self, index: str, chunking_method: str, available_models: list, models: list):
         """Raises an error if you try to change the models for an already created index
 
         :param index: Index to check
+        :param chunking_method: Chunking mode used
         :param available_models: Models available
         :param models: Models to check
         """
         pass
 
+    def assert_correct_chunking_method(self, index: str, chunking_method: str, models: list):
+        """Raises an error if you try to change the chunking method for an already created index
+
+        :param index: Index to check
+        :param chunking_method: Chunking mode used
+        :param models: Models to check
+        """
+        pass
 
     def exist_index(self, index: str):
         """ Method to check if an index exists
 
         :param index: Index to check
+        """
+        pass
+
+    def get_full_index(self, index: str, filters: list, offset: int = 0, size: int = 25) -> list:
+        """ Method to get an index with all chunks
+
+        :param index: Index to get
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
         """
         pass
 
@@ -108,7 +128,7 @@ class Connector(ABC):
         """
         pass
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_connector_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -166,13 +186,15 @@ class ElasticSearchConnector(Connector):
                     f"Metadata keys {new_meta} do not match those in the existing index {index}. "
                     f"Check and align metadata keys. Index metadata: {list(index_meta)}")
 
-    def assert_correct_index_conf(self, index: str, available_models: list, models: list):
+    def assert_correct_index_conf(self, index: str, chunking_method: str, available_models: list, models: list):
         """Raises an error if you try to change the models for an already created index
 
         :param index: Index to check
+        :param chunking_method: Chunking mode used
         :param available_models: Models available
         :param models: Models to check
         """
+        # Assert correct models config
         models_used = []
         for model in available_models:
             if self.exist_index(ELASTICSEARCH_INDEX(index, model)):
@@ -182,6 +204,41 @@ class ElasticSearchConnector(Connector):
         models_sent = [model.get('embedding_model') for model in models]
         if not all([model in models_sent for model in models_used]) or len(models_sent) != len(models_used):
             raise PrintableGenaiError(400, f"Error the models sent: '{models_sent}' must be equal to the models used in the first indexation '{models_used}'")
+        # Just passed models because at this point, models used in first indexation are the same as the ones sent
+        self.assert_correct_chunking_method(index, chunking_method, models_sent)
+
+    def assert_correct_chunking_method(self, index: str, chunking_method: str, models: list):
+        """Raises an error if you try to change the chunking method for an already created index
+
+        :param index: Index to check
+        :param chunking_method: Chunking mode used
+        :param models: Models to check
+        """
+        for model in models:
+            # All models sent does exist
+            index_name = ELASTICSEARCH_INDEX(index, model)
+            # Get the node_type used in first indexation
+            try:
+                result = self.connection.search(index=index_name,
+                                                query={"bool": {"must": {"match_all": {}}}},
+                                                size=1, from_=0)
+                node_type = result["hits"]["hits"][0]["_source"]["metadata"]["_node_type"]
+            except RequestError as e:
+                return "error", (f"Error: {e.info['error']['reason']} caused by: "
+                                 f"{e.info['error']['caused_by']['reason']}"), 400
+            # Get the metadata used in first indexation
+            index_metadata = self.get_index_mapping(index_name)[index_name]['mappings']['properties']['metadata']['properties'].keys()
+            if (chunking_method == "surrounding_context_window" and (node_type != "TextNode" or
+                    not all(elem in index_metadata for elem in ['window', 'original_text']))):
+                raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+            else:
+                if chunking_method == "simple" and (node_type != "TextNode" or any(elem in index_metadata for elem in ['window', 'original_text'])):
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                               f"with the chunking method '{chunking_method}' at first time.")
+                if chunking_method == "recursive" and node_type != "IndexNode":
+                    raise PrintableGenaiError(400, f"Error the index '{index_name}' was not indexed "
+                                                   f"with the chunking method '{chunking_method}' at first time.")
 
     def exist_index(self, index: str):
         """ Method to check if an index exists"""
@@ -206,6 +263,28 @@ class ElasticSearchConnector(Connector):
         if self.connection is None:
             raise PrintableGenaiError(400, f"Error the connection has not been established")
         return self.connection.indices.delete(index=index)
+
+    def get_full_index(self, index: str, filters: dict, offset: int = 0, size: int = 25) -> list:
+        """ Method to get an index with all chunks
+
+        :param index: Index to get
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
+        """
+        chunks = []
+        while True:
+            result = self.connection.search(index=index,
+                                            query={"bool": {"filter": self._generate_filters(filters), "must": {"match_all": {}}}},
+                                            size=size, from_=offset)
+            if len(result.get('hits', {}).get('hits', [])) == 0:
+                break
+            chunks.extend([chunk for chunk in result["hits"]["hits"]])
+            offset += size
+        if len(chunks) == 0:
+            raise PrintableGenaiError(400, f"Error the index '{index}' is empty so retrieval cannot be done.")
+        return chunks
 
     def get_index_mapping(self, index: str):
         """ Async method to get the index mapping
@@ -279,21 +358,6 @@ class ElasticSearchConnector(Connector):
             return "error", f"Index is empty", 400
         return self._parse_response(chunks)
 
-    @staticmethod
-    def _generate_filters(filters: dict):
-        operands = []
-        for key, value in filters.items():
-            if isinstance(value, str):
-                operands.append({"bool": {"should": {"term": {f"metadata.{key}.keyword": value}}}})
-            elif isinstance(value, list) and all([isinstance(val, str) for val in value]):
-                operands_should = []
-                for subfilter in value:
-                    operands_should.append({"term": {f"metadata.{key}.keyword": subfilter}})
-                operands.append({"bool": {"should": operands_should}})
-            else:
-                raise PrintableGenaiError(400, f"Error the value '{value}' for the key '{key}' must be a string or a list containing strings.")
-        return {"bool": {"must": operands}}
-
     def delete_documents(self, index_name: str, filters: dict):
         """ Method to delete a document from an index
 
@@ -305,24 +369,6 @@ class ElasticSearchConnector(Connector):
 
         body = {"query": self._generate_filters(filters)}
         return self.connection.delete_by_query(index=index_name, body=body)
-
-    @staticmethod
-    def _parse_response(chunks: list):
-        result = []
-        for chunk in chunks:
-            meta = {}
-            for key, value in chunk.get('_source').get('metadata').items():
-                if key not in ['_node_content', '_node_type', 'doc_id', 'ref_doc_id']:
-                    meta[key] = value
-            new_dict = {
-                'id_': chunk.get('_id'),
-                'meta': meta,
-                'content': chunk.get('_source').get('content'),
-                'score': chunk.get('_score')
-            }
-
-            result.append(new_dict)
-        return "finished", result, 200
 
     def close(self):
         """ Method to close the connection to the vector storage database
@@ -373,6 +419,46 @@ class ElasticSearchConnector(Connector):
             raise PrintableGenaiError(500, f"Error retrieving indices: {str(e)}")
 
 
+    ############################################################################################################
+    #                                                                                                          #
+    #                                           PRIVATE METHODS                                                #
+    #                                                                                                          #
+    ############################################################################################################
+
+    @staticmethod
+    def _generate_filters(filters: dict):
+        operands = []
+        for key, value in filters.items():
+            if isinstance(value, str):
+                operands.append({"bool": {"should": {"term": {f"metadata.{key}.keyword": value}}}})
+            elif isinstance(value, list) and all([isinstance(val, str) for val in value]):
+                operands_should = []
+                for subfilter in value:
+                    operands_should.append({"term": {f"metadata.{key}.keyword": subfilter}})
+                operands.append({"bool": {"should": operands_should}})
+            else:
+                raise PrintableGenaiError(400, f"Error the value '{value}' for the key '{key}' must be a string or a list containing strings.")
+        return {"bool": {"must": operands}}
+
+    @staticmethod
+    def _parse_response(chunks: list):
+        result = []
+        for chunk in chunks:
+            meta = {}
+            for key, value in chunk.get('_source').get('metadata').items():
+                if key not in ['_node_content', '_node_type', 'doc_id', 'ref_doc_id']:
+                    meta[key] = value
+            new_dict = {
+                'id_': chunk.get('_id'),
+                'meta': meta,
+                'content': chunk.get('_source').get('content'),
+                'score': chunk.get('_score')
+            }
+
+            result.append(new_dict)
+        return "finished", result, 200
+
+
 class ManagerConnector(object):
     MODEL_TYPES = [ElasticSearchConnector]
 
@@ -384,13 +470,13 @@ class ManagerConnector(object):
         """
         for connector in ManagerConnector.MODEL_TYPES:
             connection_type = conf.get('vector_storage_type')
-            if connector.is_platform_type(connection_type):
+            if connector.is_connector_type(connection_type):
                 return connector(conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerConnector.get_possible_platforms()}")
+                         f"Possible values: {ManagerConnector.get_possible_connectors()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_connectors() -> List:
         """ Method to list the endpoints: [azure, openai]
 
         :param conf: Model configuration. Example:  {"platform":"openai"}

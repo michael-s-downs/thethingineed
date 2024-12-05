@@ -14,28 +14,28 @@ import time
 # Installed imports
 import pandas as pd
 import langdetect
-import mmh3
 import tiktoken
 from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
 from elasticsearch.helpers.errors import BulkIndexError
 from elastic_transport import ConnectionTimeout
 from elasticsearch import AsyncElasticsearch
 from llama_index.vector_stores.elasticsearch import ElasticsearchStore
-from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import StorageContext, VectorStoreIndex, Settings, Document
 from httpx import TimeoutException
 from openai import RateLimitError
 
 # Custom imports
-from common.ir import modify_index_documents, get_embed_model
-from common.genai_controllers import load_file, provider
+from common.ir.utils import modify_index_documents, get_embed_model
+from common.genai_controllers import provider
 from common.logging_handler import LoggerHandler
-from common.indexing.parsers import Parser
+from common.ir.parsers import Parser
 from common.services import VECTOR_DB_SERVICE
-from common.indexing.connectors import Connector
+from common.ir.connectors import Connector
 from common.genai_json_parser import get_exc_info
 from common.utils import ELASTICSEARCH_INDEX
 from common.errors.genaierrors import PrintableGenaiError
+
+from chunking_methods import ManagerChunkingMethods
 
 
 class VectorDB(ABC):
@@ -61,7 +61,7 @@ class VectorDB(ABC):
 
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_vector_database_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -106,11 +106,11 @@ class LlamaIndex(VectorDB):
 
         n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
 
+        chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
+                                                                      "workspace": self.workspace})
+
         # The last docs is used to get the nodes, because all the documents in the indexes must be indentical
-        nodes_per_doc = self._get_nodes(docs, io.windows_length, io.windows_overlap)
-
-        # Elasticsearch client
-
+        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding)
 
         # Indexation with the embeddings generation
         for model in io.models:
@@ -206,32 +206,6 @@ class LlamaIndex(VectorDB):
             raise ex
         return docs
 
-    def _get_nodes(self, docs: list, windows_length, windows_overlap) -> list:
-        """Get nodes from documents
-
-        :param docs: list of documents
-        :param windows_lenght: windows lenght
-        :param windows_overlap: windows overlap
-
-        :return: list of nodes
-        """
-        nodes_per_doc = []
-        for doc in docs:
-            # If not added, does not appear in inforetrieval (value substituted by llama_index in indexation)
-            doc.metadata.setdefault('document_id', str(uuid.uuid4()))
-            # Exclude when splitting (chunk size dependent on the metadata)
-            doc.excluded_llm_metadata_keys = list(doc.metadata.keys())
-            doc.excluded_embed_metadata_keys = list(doc.metadata.keys())
-            nodes = SentenceSplitter(chunk_size=windows_length, chunk_overlap=windows_overlap,
-                                     tokenizer=self.encoding.encode, paragraph_separator="\\n\\n").get_nodes_from_documents([doc], show_progress=True)
-
-            if eval(os.getenv('TESTING', "False")):
-                final_nodes = self._add_nodes_metadata(nodes, self.origin)
-            else:
-                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
-            nodes_per_doc.append(final_nodes)
-        return nodes_per_doc
-
     def _write_nodes(self, nodes_per_doc: list, embed_model, vector_store, models, index_name, delta=0, max_retries=3):
         """Write documents in the document store
 
@@ -283,57 +257,6 @@ class LlamaIndex(VectorDB):
             self.logger.debug(f"Result deleting documents in index {processed_index_name}: {result}")
 
 
-    def _add_nodes_metadata(self, nodes, origin):
-        final_nodes = []
-        counter = 0
-        sections = ""
-        for node in nodes:
-            ids_node, counter = self._add_ids(node, counter)
-            titles_tables_node, sections = self._add_titles_and_tables(ids_node, sections, origin)
-            titles_tables_node.id_ = "{:02x}".format(mmh3.hash128(str(titles_tables_node.text), signed=False))
-            # Exclude when embedding generation
-            titles_tables_node.excluded_embed_metadata_keys = list(titles_tables_node.metadata.keys())
-            titles_tables_node.excluded_llm_metadata_keys = list(titles_tables_node.metadata.keys())
-            final_nodes.append(titles_tables_node)
-            counter += 1
-        return nodes
-
-    @staticmethod
-    def _add_ids(node, counter: int):
-        node.metadata['snippet_number'] = counter
-        node.metadata['snippet_id'] = str(uuid.uuid4())
-        return node, counter
-
-    def _add_titles_and_tables(self, node, sections: str, origin):
-        text = node.text
-        meta = node.metadata
-        mapping_path = meta.pop('_header_mapping', "")
-        if mapping_path:
-            headers_mapping = json.loads(load_file(origin, mapping_path))
-            titles = re.findall(r"<(pag_\d+_header_\d+)>", text)
-            if not titles:
-                meta['sections_headers'] = sections.split("||")[-1]
-            else:
-                sections = "||".join([headers_mapping[t] for t in titles])
-                meta['sections_headers'] = sections
-            for t in titles:
-                text = text.replace(f"<{t}>", "")
-        else:
-            meta['sections_headers'] = ""
-
-        csv_path = meta.pop('_csv_path', "")
-        if csv_path:
-            tables = re.findall(r"<(pag_\d+_table_\d+)>", text)
-            for t in tables:
-                csv = load_file(origin, csv_path + t + ".csv").decode()
-                text = text.replace(f"<{t}>", csv)
-            meta['tables'] = True if tables else False
-        else:
-            meta['tables'] = ""
-
-        node.text = text
-        return node, sections
-
 class ManagerVectorDB(object):
     MODEL_TYPES = [LlamaIndex]
 
@@ -345,14 +268,14 @@ class ManagerVectorDB(object):
         """
         for store in ManagerVectorDB.MODEL_TYPES:
             store_type = conf.get('type')
-            if store.is_platform_type(store_type):
+            if store.is_vector_database_type(store_type):
                 conf.pop('type')
                 return store(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerVectorDB.get_possible_platforms()}")
+                         f"Possible values: {ManagerVectorDB.get_possible_vector_databases()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_vector_databases() -> List:
         """ Method to list the endpoints: [azure, openai]
 
         :param conf: Model configuration. Example:  {"platform":"openai"}

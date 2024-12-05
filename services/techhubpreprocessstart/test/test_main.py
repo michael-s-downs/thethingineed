@@ -29,21 +29,22 @@ def deployment():
     """Creates instance of PreprocessStartDeployment for testing."""
     with patch('main.load_file', return_value=b'{}') as mock_load_file:
         with patch('main.db_dbs', return_value={'status': ('redis', None), 'timeout': ('redis', None), 'session': ('redis', '4')}):
-            pdm = PreprocessStartDeployment()
-            pdm.json_base = {
-                "generic": {
-                    "project_conf": {
-                        "force_ocr": False,
-                        "laparams": "none"
-                    },
-                    "ocr_conf": {
-                        "batch_length": 16,
-                        "files_size": 10485760,
-                        "calls_per_minute": 400
+            with patch("main.set_queue"):
+                pdm = PreprocessStartDeployment()
+                pdm.json_base = {
+                    "generic": {
+                        "project_conf": {
+                            "force_ocr": False,
+                            "laparams": "none"
+                        },
+                        "ocr_conf": {
+                            "batch_length": 16,
+                            "files_size": 10485760,
+                            "calls_per_minute": 400
+                        }
                     }
                 }
-            }
-            return pdm
+                return pdm
 
 @patch('main.load_file')
 @patch('main.provider')

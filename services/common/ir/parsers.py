@@ -29,7 +29,7 @@ class Parser(ABC):
         self.logger = logger_handler.logger
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_parser_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -42,7 +42,7 @@ class Parser(ABC):
             template = Template(models_credentials.get('URLs').get('AZURE_EMBEDDINGS_URL'))
             return {
                 "alias": alias,
-                "platform": platform,
+                "platform": platform,   
                 "embedding_model": model_selected.get('embedding_model'),
                 "api_key": models_credentials['api-keys'][platform][model_selected.get('zone')],
                 "azure_api_version": model_selected.get("azure_api_version"),
@@ -69,10 +69,15 @@ class Parser(ABC):
 
 class ParserInfoindexing(Parser):
     OPTIONAL_PARAMS = {
-        'windows_overlap': 100,
-        'windows_length': 300,
+        'window_overlap': 100,
+        'window_length': 300,
+        "windows": 1,
+        'sub_window_overlap': 50,
+        'sub_window_length': 100,
         'modify_index_docs': {}
     }
+
+    INDEXING_MODES = ["simple", "recursive", "surrounding_context_window"]
 
     MODEL_FORMAT = "infoindexing"
 
@@ -88,7 +93,6 @@ class ParserInfoindexing(Parser):
             self.logger.error("Error parsing JSON. No generic and specific configuration.",
                               exc_info=get_exc_info())
             raise ex
-
         try:
             self.get_dataset_csv_path()
         except KeyError as ex:
@@ -99,11 +103,6 @@ class ParserInfoindexing(Parser):
 
         try:
             self.get_project_conf()
-            self.get_url()
-            self.get_process_type()
-            self.get_process_id()
-            self.get_department()
-            self.get_csv()
         except KeyError as ex:
             self.logger.debug("Error parsing JSON. No configuration of project defined.",
                               exc_info=get_exc_info())
@@ -123,17 +122,13 @@ class ParserInfoindexing(Parser):
 
         try:
             self.get_index_conf()
-            self.get_index()
+            self.get_vector_storage_conf(vector_storages)
+            self.get_chunking_method()
             self.get_models(available_pools, available_models, models_credentials)
-
-            self.get_vector_storage(vector_storages)
-            self.get_windows_overlap()
-            self.get_windows_length()
-            self.get_modify_index_docs()
         except KeyError as ex:
             self.logger.debug(f"Error getting indexing params for {self.index_conf}",
                               exc_info=get_exc_info())
-            self.logger.error(f"[Process {self.dataset_status_key}] Error getting model params.",
+            self.logger.error(f"[Process {self.dataset_status_key}] Error getting indexation params.",
                               exc_info=get_exc_info())
             raise ex
 
@@ -153,22 +148,12 @@ class ParserInfoindexing(Parser):
         self.dataset_csv_path = self.generic.get('dataset_conf', {}).get('dataset_csv_path')
 
     def get_project_conf(self):
-        self.project_conf = get_project_config(generic=self.generic)
-
-    def get_url(self):
-        self.url = self.project_conf['report_url']
-
-    def get_process_type(self):
-        self.process_type = self.project_conf['process_type']
-
-    def get_process_id(self):
-        self.process_id = self.project_conf['process_id']
-
-    def get_department(self):
-        self.department = self.project_conf['department']
-
-    def get_csv(self):
-        self.csv = self.project_conf.get("csv", False)
+        project_conf = get_project_config(generic=self.generic)
+        self.url = project_conf['report_url']
+        self.process_type = project_conf['process_type']
+        self.process_id = project_conf['process_id']
+        self.department = project_conf['department']
+        self.csv = project_conf.get("csv", False)
 
     def get_do_titles(self):
         self.do_titles = get_do_titles(generic=self.generic)
@@ -179,8 +164,35 @@ class ParserInfoindexing(Parser):
     def get_index_conf(self):
         self.index_conf = self.generic['index_conf']
 
-    def get_index(self):
-        self.index = self.index_conf['index']
+    def get_vector_storage_conf(self, vector_storages):
+        vector_storage_conf = self.index_conf['vector_storage_conf']
+        self.index = vector_storage_conf['index']
+        self.modify_index_docs = vector_storage_conf.get('modify_index_docs', self.OPTIONAL_PARAMS['modify_index_docs'])
+        self.vector_storage = self.get_vector_storage(vector_storages, vector_storage_conf)
+
+    @staticmethod
+    def get_vector_storage(vector_storages, vector_storage_conf):
+        vector_storage = vector_storage_conf.get('vector_storage')
+        for vs in vector_storages:
+            if vs.get("vector_storage_name") == vector_storage:
+                return vs
+        raise PrintableGenaiError(400, f"Vector storage {vector_storage} not available")
+
+    def get_chunking_method(self):
+        self.chunking_method = self.index_conf['chunking_method']
+        if self.chunking_method.get('method') in self.INDEXING_MODES:
+            # If exists get the value if not, set the default value
+            self.chunking_method.setdefault('window_overlap', self.OPTIONAL_PARAMS['window_overlap'])
+            self.chunking_method.setdefault('window_length', self.OPTIONAL_PARAMS['window_length'])
+            if self.chunking_method['method'] == "recursive":
+                self.chunking_method.setdefault('sub_window_overlap', self.OPTIONAL_PARAMS['sub_window_overlap'])
+                self.chunking_method.setdefault('sub_window_length', self.OPTIONAL_PARAMS['sub_window_length'])
+            elif self.chunking_method['method'] == "surrounding_context_window":
+                self.chunking_method.setdefault('windows', self.OPTIONAL_PARAMS['windows'])
+        else:
+            raise PrintableGenaiError(400, f"Chunking mode {self.chunking_method.get('method')} not available")
+
+
 
     def get_models(self, available_pools: dict, available_models: dict, models_credentials: dict):
         self.models = self.index_conf['models']
@@ -207,27 +219,11 @@ class ParserInfoindexing(Parser):
                 raise PrintableGenaiError(400, f"Model '{model.get('embedding_model')}' duplicated")
             unique_embedding_models.append(model.get('embedding_model'))
 
-    def get_vector_storage(self, vector_storages):
-        vector_storage = self.index_conf.get('vector_storage')
-        for vs in vector_storages:
-            if vs.get("vector_storage_name") == vector_storage:
-                self.vector_storage = vs
-                return
-        raise PrintableGenaiError(400, f"Vector storage {vector_storage} not available")
-
-    def get_windows_overlap(self):
-        self.windows_overlap = self.index_conf.get('windows_overlap', self.OPTIONAL_PARAMS['windows_overlap'])
-
-    def get_windows_length(self):
-        self.windows_length = self.index_conf.get('windows_length', self.OPTIONAL_PARAMS['windows_length'])
-
-    def get_modify_index_docs(self):
-        self.modify_index_docs = self.index_conf.get('modify_index_docs', self.OPTIONAL_PARAMS['modify_index_docs'])
-
 
 class ParserInforetrieval(Parser):
-
-    AVAILABLE_STRATEGIES = ["genai_retrieval", "llamaindex_fusion"]
+    GENAI_STRATEGIES = ["genai_retrieval", "recursive_genai_retrieval", "surrounding_genai_retrieval"]
+    LLAMAINDEX_STRATEGIES = ["llamaindex_fusion"]
+    AVAILABLE_STRATEGIES = GENAI_STRATEGIES + LLAMAINDEX_STRATEGIES
     AVAILABLE_RESCORING_FUNCTIONS = ["mean", "length", "loglength", "pos", "posnorm", "norm", "nll", "rrf"]
 
     MODEL_FORMAT = "inforetrieval"
@@ -293,8 +289,8 @@ class ParserInforetrieval(Parser):
             raise PrintableGenaiError(400, f"Strategy '{self.strategy}' not supported, the available ones are {self.AVAILABLE_STRATEGIES}")
 
     def get_strategy_mode(self, index_conf):
-        if self.strategy == "genai_retrieval" and "strategy_mode" in index_conf:
-            raise PrintableGenaiError(400, "Strategy 'genai_retrieval' does not use 'strategy_mode' parameter, use 'llamaindex_fusion' instead")
+        if self.strategy in self.GENAI_STRATEGIES and "strategy_mode" in index_conf:
+            raise PrintableGenaiError(400, f"Strategy '{self.strategy}' does not use 'strategy_mode' parameter, use one in '{self.LLAMAINDEX_STRATEGIES}' instead")
         strategy_mode = index_conf.get("strategy_mode", "reciprocal_rerank")
         if strategy_mode not in FUSION_MODES._value2member_map_:
             raise PrintableGenaiError(400, f"Strategy mode '{strategy_mode}' not implemented, try one of {[i.value for i in FUSION_MODES]}")
@@ -306,8 +302,8 @@ class ParserInforetrieval(Parser):
 
 
     def get_rescoring_function(self, index_conf):
-        if self.strategy == "llamaindex_fusion" and "rescoring_function" in index_conf:
-            raise PrintableGenaiError(400, "Strategy 'llamaindex_fusion' does not use 'rescoring_function' parameter, use 'genai_retrieval' instead")
+        if self.strategy in self.LLAMAINDEX_STRATEGIES and "rescoring_function" in index_conf:
+            raise PrintableGenaiError(400, f"Strategy '{self.strategy}' does not use 'rescoring_function' parameter, use one in '{self.GENAI_STRATEGIES}' instead")
         self.rescoring_function = index_conf.get("rescoring_function", "mean")
         if self.rescoring_function not in self.AVAILABLE_RESCORING_FUNCTIONS:
             raise PrintableGenaiError(400, f"Rescoring function '{self.rescoring_function}' not supported, the available ones are {self.AVAILABLE_RESCORING_FUNCTIONS}")
@@ -366,14 +362,14 @@ class ManagerParser(object):
         """
         for parser in ManagerParser.MODEL_TYPES:
             parser_type = conf.get('type')
-            if parser.is_platform_type(parser_type):
+            if parser.is_parser_type(parser_type):
                 conf.pop('type')
                 return parser(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerParser.get_possible_platforms()}")
+                         f"Possible values: {ManagerParser.get_possible_parsers()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_possible_parsers() -> List:
         """ Method to list the parser types: [infoindexing, inforetrieval]
 
         :param conf: Model configuration. Example:  {"type":"infoindexing","platform":{...}}

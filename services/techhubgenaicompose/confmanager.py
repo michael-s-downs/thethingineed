@@ -171,13 +171,14 @@ class ConfManager(AbstractManager):
         if default_model is None:
             return
         
-        from compose.utils.defaults import SUM_TEMPLATE, FILTER_TEMPLATE, REFORMULATE_TEMPLATE, TRANSLATE_TEMPLATE, FILTERED_ACTIONS
+        from compose.utils.defaults import SUM_TEMPLATE, FILTER_TEMPLATE, REFORMULATE_TEMPLATE, TRANSLATE_TEMPLATE, FILTERED_ACTIONS, STEP_TEMPLATE
 
-        SUM_TEMPLATE["llm_metadata"]["model"] = default_model
-        FILTER_TEMPLATE["llm_metadata"]["model"] = default_model
-        REFORMULATE_TEMPLATE["llm_metadata"]["model"] = default_model
-        TRANSLATE_TEMPLATE["llm_metadata"]["model"] = default_model
-        FILTERED_ACTIONS[1]["action_params"]["params"]["llm_metadata"]["model"] = default_model
+        SUM_TEMPLATE['llm_metadata']['model'] = default_model
+        FILTER_TEMPLATE['llm_metadata']['model'] = default_model
+        REFORMULATE_TEMPLATE['llm_metadata']['model'] = default_model
+        TRANSLATE_TEMPLATE['llm_metadata']['model'] = default_model
+        STEP_TEMPLATE['llm_metadata']['model'] = default_model
+        FILTERED_ACTIONS[1]['action_params']['params']['llm_metadata']['model'] = default_model
     
     def set_detector(self):
        langs = os.environ.get("DEFAULT_LANGS") 
@@ -189,7 +190,10 @@ class ConfManager(AbstractManager):
                 "fr": Language.FRENCH,
                 "de": Language.GERMAN,
                 "it": Language.ITALIAN,
-                "pt": Language.PORTUGUESE
+                "pt": Language.PORTUGUESE,
+                "ca": Language.CATALAN,
+                "ko": Language.KOREAN,
+                "zh": Language.CHINESE
             }
             langs = [*map(langs_map.get, langs)]
             self.detector = LanguageDetectorBuilder.from_languages(langs).with_preloaded_language_models().build()

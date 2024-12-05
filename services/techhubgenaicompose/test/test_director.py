@@ -1,19 +1,15 @@
 ### This code is property of the GGAO ###
 
-import asyncio
-import pytest
 import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
+import pytest
 import json
 from unittest.mock import patch, MagicMock, AsyncMock, patch
 from director import Director  # Assuming your code is in director.py
-from basemanager import AbstractManager
 from compose.streambatch import StreamBatch
 from pcutils.persist import PersistDict
-from confmanager import ConfManager
-from actionsmanager import ActionsManager
-from outputmanager import OutputManager
 from common.errors.genaierrors import PrintableGenaiError
-from compose.query import expansion  # Import the actual expansion function if available
 
 @pytest.fixture
 def mock_director():

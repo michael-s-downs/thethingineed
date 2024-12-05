@@ -274,14 +274,14 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
     template = json.loads(open(templates_path + "async_indexing.json", 'r').read())
 
     if not 'csv_method' in request_params:
-        dataset_path = _generate_dataset(request_files, request_params['folder'], request_params['metadata'])
+        dataset_path = _generate_dataset(request_files, request_params['folder'], request_params['index_conf']['metadata'])
     else:
         dataset_path = f"{request_files[0]}"
         template['csv'] = True
 
     template['dataset_conf']['dataset_csv_path'] = dataset_path
     template['dataset_conf']['dataset_path'] = request_params['folder']
-    template['index_conf']['index'] = request_params['index']
+    template['index_conf'] = request_params['index_conf']
 
     if 'force_ocr' in request_params:
         template['force_ocr'] = request_params['force_ocr']
@@ -291,20 +291,12 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
         template['languages'] = request_params['languages']
     if 'timeout' in request_params:
         template['timeout_sender'] = request_params['timeout']
-    if 'window_length' in request_params:
-        template['index_conf']['windows_length'] = request_params['window_length']
-    if 'window_overlap' in request_params:
-        template['index_conf']['windows_overlap'] = request_params['window_overlap']
     if request_params.get('process_id', ""):
         template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     if request_params.get('layout_conf', {}):
         template['preprocess_conf']['layout_conf'] = request_params['layout_conf']
-    if request_params.get('modify_index', {}):
-        template['index_conf']['modify_index_docs'] = request_params['modify_index']
-    if request_params.get('models', []):
+    if request_params.get('models', {}):
         template['index_conf']['models'] = request_params['models']
-    if request_params.get('vector_storage', {}):
-        template['index_conf']['vector_storage'] = request_params['vector_storage']
     if request_params.get('integration', {}):
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
