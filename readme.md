@@ -111,8 +111,6 @@ The RAG toolkit is composed of several components that are divided into 2 pipeli
 
 ![alt text](services/documentation/imgs/Architecture_indexing.png "Process flow")
 
-![alt text](services/documentation/imgs/Architecture_documentmanagement.png "Process flow")
-
 ## Get started
 
 ### URLs
