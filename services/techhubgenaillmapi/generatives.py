@@ -835,17 +835,17 @@ class NovaModel(GenerativeModel):
         """
         messages = self.message.preprocess()
         system = messages.pop(-2).get('content') # Remove system message from the list
-        body = json.dumps({"system": system,
+        body = {"system": system,
                            "messages": messages,
                            "inferenceConfig": {
                                 "max_new_tokens": self.max_tokens,
                                 "temperature": self.temperature,
                                 "top_p": self.top_p,
                                 "stopSequences": self.stop
-                           }})
+                           }}
         if self.top_k:
             body['inferenceConfig']['top_k'] = self.top_k
-        return body
+        return json.dumps(body)
 
     def get_result(self, response: dict) -> dict:
         """ Method to format the model response.
