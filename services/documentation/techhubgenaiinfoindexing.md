@@ -326,7 +326,8 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
 To conclude, the result of using infoindexing in this way can be seen in redis or in the logs. In this example, an error will raise by trying to write in the queue. To know if the document was indexed, the inforetrieval endpoint to see all the documents from an index can be used.
 
 ### Redis status
-This service always write the final status of the process in a redis database. The status will be a code, 200 if the indexation was ok or a code error otherwise. For the msg parameter, is a short description of the error cause (see more in [Error handling](#error-handling)) or <i>"Indexing finished"</i> if the indexation was ok.
+All indexing components write their status to the Redis data base.
+This service always writes the final status of the process in the Redis database. That status has 2 parameters: **status** and **msg**. If the indexing was successful, set the status code to 200; otherwise, set an error code. The <i>msg</i> parameter is a short description of the error cause (see more in [Error handling](#error-handling)) or <i>"Indexing finished"</i> if the indexation was successful.
 ```json
 {
   "status": "200",
@@ -380,7 +381,7 @@ This service, needs different buckets if it is going to work along with integrat
   - STORAGE_BACKEND: To store the raw document data processed by all the previous components.
   - STORAGE_DATA: To store the document data that is going to be used by the previous services.
 - **Just infoindexing**: 
-  - STORAGE_BACKEND: Only this bucket is needed to read the raw document explained in [Writing message in queue (developer functionality)](#writing-message-in-queue-developer-functionality) 
+  - STORAGE_BACKEND: Only this bucket is needed to read the raw document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality)) 
 
 ### Secrets
 All necessary credentials for the indexing flow are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 5 different secrets:
@@ -500,37 +501,39 @@ Apart from the five secrets explained above, the system needs another configurat
   }
   ```
   In this config file, the models from different platforms need different parameters:
-    - Azure models:
-        - embedding_model_name: name of the model, decided by the user and used to distinguish between models.
-        - embedding_model: type of embedding model that uses the model
-        - zone: place where the model has been deployed (used to get the api-keys)
-        - azure_api_version: version of the api (embedding model) that is being used
-        - azure_deployment_name: deployment name of the embedding model in azure
-        - model_pool: pools the model belongs to
-    - Bedrock models:
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - zone: place where the model has been deployed
-        - model_pool: pools the model belongs to
-    - HuggingFace models (huggingface): This type of model is not deployed anywhere, so there is no region or pool to specify.
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - retriever_model: model used when retrieving information (in hugging-face models normally are different)
+    * <u>Azure models</u>:
+        - **embedding_model_name**: name of the model, decided by the user and used to distinguish between models.
+        - **embedding_model**: type of embedding model that uses the model
+        - **zone**: place where the model has been deployed (used to get the api-keys)
+        - **azure_api_version**: version of the api (embedding model) that is being used
+        - **azure_deployment_name**: deployment name of the embedding model in azure
+        - **model_pool**: pools the model belongs to
+    * <u>Bedrock models</u>:
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **zone**: place where the model has been deployed
+        - **model_pool**: pools the model belongs to
+    * <u>HuggingFace models (huggingface)</u>: This type of model is not deployed anywhere, so there is no region or pool to specify.
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **retriever_model**: model used when retrieving information (in hugging-face models normally are different)
 
 An example where the rest of the data is extracted from the message:
 ![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)
 
 ### Environment variables
-- **AWS_ACCESS_KEY**: AWS Public access key to the project. (if not in secrets)
-- **AWS_SECRET_KEY**: AWS Secret access key to the project.(if not in secrets)
-- **AZ_CONN_STR_STORAGE**: Azure connection string. (if not in secrets)
-- **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
-- **STORAGE_DATA**: Name of bucket/blob to store datasets.
-- **STORAGE_BACKEND**: Name of bucket/blob to store configuration files and all the process related files.
-- **SECRETS_PATH**: Path to the secrets folder.
-- **Q_INFO_INDEXING**: Name of the queue for the infoindexing service
-- **TESTING**: Optional environment variable to use when testing the module. With this variable, the processed files are located in STORAGE_DATA blob/bucket and the report to the api is not done. This variable is for running the test purposes or when debugging in local in order to use concrete files just in the infoindexing component.
-- **Q_FLOWMGMT_CHECKEND**: Queue to write the message after finishing the process. The checkend mainly reports tye indexation result to the url given in the integration process.
+
+* **AWS_ACCESS_KEY**: AWS Public access key to the project. (if not in secrets)
+* **AWS_SECRET_KEY**: AWS Secret access key to the project.(if not in secrets)
+* **AZ_CONN_STR_STORAGE**: Azure connection string. (if not in secrets)
+* **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
+* **STORAGE_DATA**: Name of bucket/blob to store datasets.
+* **STORAGE_BACKEND**: Name of bucket/blob to store configuration files and all the process related files.
+* **SECRETS_PATH**: Path to the secrets folder.
+* **Q_INFO_INDEXING**: Name of the queue for the infoindexing service
+* **TESTING**: Optional environment variable to use when testing the module. With this variable, the processed files are located in STORAGE_DATA blob/bucket and the report to the api is not done. This variable is for running the test purposes or when debugging in local in order to use concrete files just in the infoindexing component.
+* **Q_FLOWMGMT_CHECKEND**: Queue to write the message after finishing the process. The checkend mainly reports tye indexation result to the url given in the integration process.  
+
 
 ## Code Overview
 
@@ -546,67 +549,67 @@ This class manages the main flow of the component by parsing the input, calling 
 
 This class parses the input json request received from the queue, getting all the necessary parameters.
 
-Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#using-with-integration)), while others are internal parameters introduced by the integration service.
+Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Writing-message-in-queue-(Developer-functionality))), while others are internal parameters introduced by the integration service.
 
-- **Project conf:** Configuration of project
-    - **force_ocr:** True or False to force the process to go through ocr engine in preprocess
-    - **laparams:** Parameter to extract more information in PDFMiner text extraction in preprocess
-    - **process_id:** Id of process
-    - **timeout_id:** Id used to control process timeout
-    - **process_type:** Type of process
-    - **department:** Department assigned to apikey
-    - **project_type:** Text/Image type of document
-    - **report_url:** Url to report metrics to apigw
-    - **timeout_sender:** Process time for timeout to occur
-    - **extract_tables:** True or False to generate file with tables extract of OCR in preprocess
-    - **csv:** True or False, Indicate if the text is in the csv file
-    - **url_sender:** Name or URl to respond
-- **OCR conf:** Configuration to batch file in OCR
-    - **batch_lenght:** Size max of pages to batch
-    - **files_size:** Size max of byte size to batch
-    - **calls_per_minute:** Number max of call to send OCR
-- **Dataset conf:** Configuration of dataset
-    - **dataset_path:** Path of the dataset folder in storage
-    - **dataset_csv_path:** Path of the dataset csv in storage
-    - **path_col:** Column of dataset that indicates Url
-    - **label_col:** Column of dataset that indicates CategoryId
-    - **dataset_id:** Id of the dataset
-- **Preprocess conf:** Configuration of preprocess.
-    - **num_pag_ini:** Number of page of document to initialize extraction
-    - **page_limit:** Total numbers of pages to extract
-    - **layout_conf:** Configuration to do layout
-        - **do_lines_text:** True or False, try to extract lines without OCR
-        - **do_lines_ocr:** True or False, try to extract lines with OCR
-        - **lines_conf:** Configuration of lines
-            - **do_lines_results:** True or False, update images with lines and prediction
-            - **model:** Name of model to predict lines
-        - **do_titles:** Extract and generate files with only titles
-        - **do_tables:** Extract and generate files with only tables
+* **Project conf:** Configuration of project.
+    - **force_ocr:** <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
+    - **laparams:** Parameter to extract more information in PDFMiner text extraction in preprocess.
+    - **process_id:** Id of process.
+    - **timeout_id:** Id used to control process timeout.
+    - **process_type:** Type of process.
+    - **department:** Department assigned to apikey.
+    - **project_type:** Text/Image type of document.
+    - **report_url:** Url to report metrics to apigw.
+    - **timeout_sender:** Process time for timeout to occur.
+    - **extract_tables:** <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
+    - **csv:** <i>True</i> or <i>False</i>, Indicate if the text is in the CSV file.
+    - **url_sender:** Name or URl to respond.
+* **OCR conf:** Configuration to batch file in OCR.
+    - **batch_lenght:** Size max of pages to batch.
+    - **files_size:** Size max of byte size to batch.
+    - **calls_per_minute:** Number max of call to send OCR.
+* **Dataset conf:** Configuration of dataset.
+    - **dataset_path:** Path of the dataset folder in storage.
+    - **dataset_csv_path:** Path of the dataset csv in storage.
+    - **path_col:** Column of dataset that indicates URL.
+    - **label_col:** Column of dataset that indicates CategoryId.
+    - **dataset_id:** Id of the dataset.
+* **Preprocess conf:** Configuration of preprocess.
+    - **num_pag_ini:** Number of page of document to initialize extraction.
+    - **page_limit:** Total numbers of pages to extract.
+    - **layout_conf:** Configuration to do layout.
+        - **do_lines_text:** <i>True</i> or <i>False</i>, try to extract lines without OCR.
+        - **do_lines_ocr:** <i>True</i> or <i>False</i>, try to extract lines with OCR.
+        - **lines_conf:** Configuration of lines.
+            - **do_lines_results:** <i>True</i> or <i>False</i>, update images with lines and prediction.
+            - **model:** Name of model to predict lines.
+        - **do_titles:** Extract and generate files with only titles.
+        - **do_tables:** Extract and generate files with only tables.
         - **tables_conf:**
-            - **sep:** Indicate which separator use to generate csv with tables lines
-- **Origins:** Configuration of origin of resources
-    - **ocr:** aws-ocr/google-ocr, Types of ocr supported
-- **Index conf:** Configuration of index process
-    - **vector_storage_conf:** Configuration of the vector storage
-        - **index:** Name of index
-        - **vector_storage:** Key to get the configuration of the database from config file
-        - **modify_index_docs:** How to proceed when indexing a document
-          - **update:** Update by parameter indicated
-          - **delete:** Delete by parameter indicated
+            - **sep:** Indicate which separator use to generate csv with tables lines.
+* **Origins:** Configuration of origin of resources.
+    - **ocr:** <i>aws-ocr</i> or <i>google-ocr</i>, Types of OCR supported.
+* **Index conf:** Configuration of index process.
+    - **vector_storage_conf:** Configuration of the vector storage.
+        - **index:** Name of index.
+        - **vector_storage:** Key to get the configuration of the database from config file.
+        - **modify_index_docs:** How to proceed when indexing a document.
+          - **update:** Update by parameter indicated.
+          - **delete:** Delete by parameter indicated.
     - **chunking_method:**
-        - **method:** Type of chunking method
-        - **window_overlap:** Overlap to apply to chunks
-        - **window_length:** Length of chunks
-        - **sub_window_overlap:** Overlap to apply to sub-chunks (recursive)
-        - **sub_window_length:** Length of sub-chunks (recursive)
-        - **windows:** Number of windows (surrounding)
-    - **models:** Indexing model configuration
-        - **alias:** Model or pool of models to index (equivalent to name in config file)
-        - **embedding_model:** Type of embedding that will calculate the vector of embeddings
-        - **platform:** Provider used to store and get the information
+        - **method:** Type of chunking method.
+        - **window_overlap:** Overlap to apply to chunks.
+        - **window_length:** Length of chunks.
+        - **sub_window_overlap:** Overlap to apply to sub-chunks (recursive).
+        - **sub_window_length:** Length of sub-chunks (recursive).
+        - **windows:** Number of windows (surrounding).
+    - **models:** Indexing model configuration.
+        - **alias:** Model or pool of models to index (equivalent to name in config file).
+        - **embedding_model:** Type of embedding that will calculate the vector of embeddings.
+        - **platform:** Provider used to store and get the information.
     
 
-But the necessary ones, are the explained in the readme file.
+However, the necessary ones are detailed in the readme file.
 
 ![parsers](imgs/techhubgenaiinfoindexing/parsers.png)
 
@@ -621,26 +624,26 @@ This class is responsible of managing the operations with the cloud storage of a
 This class manages the connection with the vector database, checking all the different important things like maintaining the same index during different indexations. If first indexation has been made with some models and metadata, the same models and metadata must be the same for all documents.
 
 If the database is ElasticSearch, the mandatory columns in the index tables are:
-- **_index:** The name of the index in Elasticsearch.
-- **_type:** The type of the document. By default, it is set to "_doc".
-- **_id:** The ID of the chunk in Elasticsearch.
-- **_score:** An automatic value generated by Haystack.
-- **content:** The text of the chunk.
-- **metadata:** Dictionary with all of the metadata values for each chunk. The base metadata fields are:
+* **_index:** The name of the index in Elasticsearch.
+* **_type:** The type of the document. By default, it is set to "_doc".
+* **_id:** The ID of the chunk in Elasticsearch.
+* **_score:** An automatic value generated by Haystack.
+* **content:** The text of the chunk.
+* **metadata:** Dictionary with all of the metadata values for each chunk. The base metadata fields are:
   - **filename:** The name of the file where the chunk text is located.
   - **uri:** The path to the cloud where the document has been saved for possible download.
   - **document_id:** The identifier of the document to which the chunk of text belongs.
   - **snippet_number:** The same value and meaning as the previous field.
   - **snippet_id:** The identifier of the text chunk (same as _id).
   - **_node_content:** Metadata introduced by LlamaIndex. String containing all the node content, including metadata, text and realtionships with other nodes.
-  - **_node_type:** Metadata introduced by LlamaIndex. Type of LlamaIndex node; may be "text", "image", "index" or "document". For snippets is always "text". 
+  - **_node_type:** Metadata introduced by LlamaIndex. Type of LlamaIndex node; may be: <i>text, image, index</i> or <i>document</i>. For snippets is always <i>text</i>.
   - **doc_id:** Duplicated identifier for the document generated by LlamaIndex
   - **ref_doc_id:** Duplicated identifier for the document generated by LlamaIndex
   - **window *(surrounding context window method)*:** Text formed by the text of the front and back chunks indicated in the 'windows' param and the text of the actual chunk (correctly ordered)
   - **original_text *(surrounding context window method)*:** Metadata introduced by LlamaIndex. The original text of the chunk.
   - Metadata added by the user...
   - **index_id *(recursive):*** Reference to its parent index (if the node is the parent itself, the id will be the same as _id) 
-- **embedding:** Column where the snippet embeddings will be stored.
+* **embedding:** Column where the snippet embeddings will be stored.
 
 ![connectors](imgs/techhubgenaiinfoindexing/connectors.png)
 
@@ -654,58 +657,38 @@ This class saves the documents and their associated metadata in the database.
 ### Flow
 ![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.drawio.png)
 
-In the following diagram flows, each color will represent the following files:
+In the following flows diagram, each color will represent the following files:
     
   <img src="imgs/techhubgenaiinfoindexing/flow1.png" width="175">
 
 1.	When the service is initialized, it loads all the [secrets](#secrets) and [configuration files](#configuration-files) containing pools, models, and vector_storage details, to know the ones that are available.
-
     ![alt text](imgs/techhubgenaiinfoindexing/flow2.png)
-
-2. Using the [parser](#parserspy-parserinfoindexing-managerparser) class, the input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
+2. Using the parser class (see <i>Files and Classes > parsers.py</i>). The input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
     ![alt text](imgs/techhubgenaiinfoindexing/flow3.png)
-
 3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models and the chunking method in this call must match those used during the first indexation.
-
     ![alt text](imgs/techhubgenaiinfoindexing/flow4.png)
-
-4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded
-
+4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded.
     ![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
-
 5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
-
     ![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
-
-6. Here the modify_index_docs param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is *name of the index without* \\/,|>?\*<" \\_*embedding_model* (the special characters are replaced by _) . An example could be
+6. Here the <i>modify_index_docs</i> param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is name of the index without <i> \\/,|>?\*<" \\_ </i>embedding_model (the special characters are replaced by _) . An example could be
     ```text
     firstindexation_text-embedding-ada-002
     ```
-
     ![alt text](imgs/techhubgenaiinfoindexing/flow7.png)
-
 7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then the manager of the chunking method selected en the 'method' parameter will be chosen and the document splitted in chunks based on the method using the parameters in 'chunking_method'.
-   
     <img src="imgs/techhubgenaiinfoindexing/flow8.png" width="300">
-
-8. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#writing-message-in-queue-developer-functionality). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
-
+8. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
     <img src="imgs/techhubgenaiinfoindexing/flow9.png" width="300">
-
-9. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#writing-message-in-queue-developer-functionality) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
-
+9. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
     <img src="imgs/techhubgenaiinfoindexing/flow10.png" width="900">
-
 10. Write the documents in the vector storage for each model, following all this steps:
-
     1. The first step is to internally generate the index name for each requested model.
     2. Then the object used to generate the embeddings is created
     3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
     4. Save the number of pages and tokens for every model to report it after.
     5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
     ![alt text](imgs/techhubgenaiinfoindexing/flow11.png)
-
-
 11.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
 
     ![alt text](imgs/techhubgenaiinfoindexing/flow12.png)

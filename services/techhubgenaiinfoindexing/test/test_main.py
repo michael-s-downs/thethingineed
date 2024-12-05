@@ -124,7 +124,8 @@ class TestInfoIndexationDeployment():
     @patch("common.deployment_utils.BaseDeployment.async_deployment")
     def test_main_execution(self, mock_async_deployment):
         with patch("builtins.print"):
-            deploy = InfoIndexationDeployment()
+            with patch("main.set_queue"):
+                deploy = InfoIndexationDeployment()
 
         deploy.async_deployment()
         mock_async_deployment.assert_called_once()
