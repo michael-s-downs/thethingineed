@@ -111,8 +111,6 @@ The RAG toolkit is composed of several components that are divided into 2 pipeli
 
 ![alt text](services/documentation/imgs/Architecture_indexing.png "Process flow")
 
-![alt text](services/documentation/imgs/Architecture_documentmanagement.png "Process flow")
-
 ## Get started
 
 ### URLs
@@ -2425,7 +2423,15 @@ The configuration of these releases ara attached to the release folder within of
 If you deploy the repository on your local computer, these are several steps that you need to take.
 
 #### Indexing pipeline
-The first step you need to take (before running the indexing pipeline) is to set the following environment variables:
+
+The first step you need to take is to create queues in your cloud system. The queues are as follows (you can choose the name you prefer):
+* **[name]--q-preprocess-start**. Name of the queue of the preprocess-start subcomponent. Example: sandbox--q-preprocess-start.
+* **[name]--q-preprocess-extract**. Name of the queue of the preprocess-extract subcomponent. Example: sandbox--q-preprocess-extract.
+* **[name]--q-preprocess-ocr**.Name of the queue of the preprocess-ocr subcomponent. Example: sandbox--q-preprocess-ocr.
+* **[name]--q-preprocess-end**.Name of the queue of the start-preprocess subcomponent. Example: sandbox--q-preprocess-end.
+* **[name]--q-info-indexing**.Name of the queue for the indexing subcomponent. Example: sandbox--q-info-indexing.  
+
+The second step you need to take (before running the indexing pipeline) is to set the following environment variables:
 
 ```sh
 "PROVIDER": "[azure | aws]", //Cloud storage and queue service provider
@@ -2442,7 +2448,7 @@ The first step you need to take (before running the indexing pipeline) is to set
 After that, you need to create an environment with <i>Python 3.11</i> and install the required packages listed in the "requirements.txt" file:
 
 ```sh
-pip install -r "**path to the requirements.txt file**"
+pip install -r "xxxxxx/yyyyyy/zzzzzz/requirements.txt"
 ```
 
 Once everything above is configured, you need to run the <i>main.py</i> file from the integration-receiver subcomponent, and call the <i>/process</i> endpoint with body and headers similar to the following example:
@@ -2508,15 +2514,15 @@ The first step you need to take to run the indexing pipeline on your local machi
 Create a <i>Python 3.11</i> environment and install the required libraries in with the <i>requirements.txt</i> file.
 
 ```sh
-pip install -r "**path to the requirement.txt file**"
+pip install -r "xxxxxx/yyyyyy/zzzzzz/requirements.txt"
 ```
 
 Then execute the compose main.py file:
 
-```sh
+```python
 python compose/main.py"
 ```
-To call the <i>/process</i> endpoint, you just need to change the <deployment_url> to localhost and include these parameters in the headers:
+To call the <i>/process</i> endpoint, you just need to change the <deployment_url> to **localhost** and include these mandatory parameters in the headers:
 
 ```json
 "headers": {
@@ -2561,18 +2567,18 @@ This file is the most important one because it stores information about the diff
 }
 ```
 Each parameter for a model configuration is:
-- **model**: name of the model. In azure platform will be the deployment name of the model.
-- **model_type**: defined by the user (same models must have the same <i>model_type</i>).
-- **max_input_tokens**: maximum number of tokens accepted by the model as input.
-- **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
-- **message**: type of message that will be used in order to adapt the input to the model's requirements. It could be:
-  - chatClaude: Claude models with text capabilities.
-  - chatClaude3: Claude models with text and vision capabilities.
-  - chatGPT: ChatGPT models with text capabilities.
-  - chatGPT-v: ChatGPT with text and vision capabilities.
-  - dalle: Dall-E models (image generation).
-- **api_version**: version of the api (model) that is being used.
-- **model_pool**: pools the model belongs to.
+* **model**: name of the model. In azure platform will be the deployment name of the model.
+* **model_type**: defined by the user (same models must have the same <i>model_type</i>).
+* **max_input_tokens**: maximum number of tokens accepted by the model as input.
+* **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
+* **message**: type of message that will be used in order to adapt the input to the model's requirements. It could be:
+  - **chatClaude**: Claude models with text capabilities.
+  - **chatClaude3**: Claude models with text and vision capabilities.
+  - **chatGPT**: ChatGPT models with text capabilities.
+  - **chatGPT-v**: ChatGPT with text and vision capabilities.
+  - **dalle**: Dall-E models (image generation).
+* **api_version**: version of the api (model) that is being used.
+* **model_pool**: pools the model belongs to.
 
 ###### Templates `/prompts/**.json`
 Stored in "src/LLM/prompts", this directory contains the files with the prompt templates. When LLMAPI is initialized, it reads all the files in the directory and loads all the templates into memory, removing duplicates. The name refered to in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in JSON format and that contains 'query' in their name.
@@ -2697,7 +2703,7 @@ An example could be:
 This file is optional, just if a concrete index is stored in a different vector_storage (reacheable by the application) with its credentials in the vector_storage_config secret explained below. The file is stored in "src/ir/index" and its name will be the same as the used in the indexation/retrieval (index_name.json) process. It looks like:
 ```json
 {
-    "vector_storage": "*vector_storage_alias*"
+    "vector_storage": "vector_storage_alias"
 }
 ```
 
@@ -2816,9 +2822,9 @@ Allowed date types:
 This action merges the different streamchunks in a streamlist into a single streamchunk. Starts with 1 streambatch containing 1 streamlist with multiple streamchunks and it ends with a streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group. The result chunk will have the merged information in the content field and in the metadata common to all the chunks merged will be saved in the new chunk.
 
 The parameters of this action are:
-- Template (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
-- Sep (string): Value to use to separate each content chunk.
-- Grouping_key (string): Value to group the results.
+* **Template (string)**: Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
+* **Sep (string)**: Value to use to separate each content chunk.
+* **Grouping_key (string)**: Value to group the results.
                     
 Example for <i>merge</i> action in template:
 ```json
@@ -2856,12 +2862,12 @@ Can be executed for the streambatch or for streamlist. It can sort the streamlis
 
 The parameters of this action are:
 * **Type (string):** Sorting type to execute.
-  - Score: Sorts by the mean score of each chunk.
-  - Length: Sorts by the length of each chunk.
-  - Doc_id: Sort by the document id of each chunk.
-  - Sn_number: Sort by the snippet number of each chunk.
-  - Date: Sort by metadata named “date” with date type values.
-  - Meta: Sort by the metadata value, date values don’t work in this type.
+  - **Score**: Sorts by the mean score of each chunk.
+  - **Length**: Sorts by the length of each chunk.
+  - **Doc_id**: Sort by the document id of each chunk.
+  - **Sn_number**: Sort by the snippet number of each chunk.
+  - **Date**: Sort by metadata named “date” with date type values.
+  - **Meta**: Sort by the metadata value, date values don’t work in this type.
 * **Desc (bool):** Sort descendant or ascendant.
 * **Value:** Metadata to use while sorting the streamlist.
 
@@ -2885,7 +2891,7 @@ Example for <i>sort</i> action with type <u>meta</u>:
     "action_params": {
         "params": {
             "desc": true,
-            "value": $metadata_name
+            "value": "$metadata_name"
         },
         "type": "meta"
     }
@@ -2930,7 +2936,7 @@ Example for <i>groupby</i> action with <u>date</u> type:
 
 **LLM_action**
 
-This is the action that calls the LLM service (that is, it calls an LLM). This is the action where the LLM template (“template_name”) must be defined. Here we can also define the system and query that will be sent to the LLM.
+This is the action that calls the LLM service (that is, it calls an LLM). This is the action where the LLM template (<i>template_name</i>) must be defined. Here we can also define the system and query that will be sent to the LLM.
 The parameters of this action are:
 * **Type (string):** Method to user while calling genai-llmapi. (llm_content, llm_segments).
 * **Model (string):** LLM model to use.
@@ -3002,11 +3008,11 @@ All necessary credentials for the components are stored in secrets for security 
         "vector_storage_supported": [{
                 "vector_storage_name": "elastic-develop",
                 "vector_storage_type": "elastic",
-                "vector_storage_host": "*host*",
+                "vector_storage_host": "[SET_HOST_VALUE]",
                 "vector_storage_schema": "https",
                 "vector_storage_port": 9200,
                 "vector_storage_username": "elastic",
-                "vector_storage_password": "*password*"
+                "vector_storage_password": "[SET_PASSWORD_VALUE]"
             },
             . . .
         ]
@@ -3033,7 +3039,7 @@ All necessary credentials for the components are stored in secrets for security 
         },
         "api-keys": {
             "azure": {
-                "zone": "*api-key*",
+                "zone": "[SET_API_KEY_VALUE]",
             }
         }
     }
@@ -3200,7 +3206,7 @@ In this case we want to retrieve a document or documents from our index dependin
 }
 ```
 
-If we want to retrieve more information we can do a multiple retrieval. In the following request one retrieval will filter by 'filename' and the other by 'snnipet_id'.
+If we want to retrieve more information we can do a multiple retrieval. In the following request one retrieval will filter by <i>filename</i> and the other by <i>snnipet_id</i>.
 
 ```json
 {
@@ -3242,7 +3248,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
         "action_params": {
             "params": {
                 "index": "$index",
-                "filters": $filters
+                "filters": "$filters"
             },
             "type": "get_documents"
         }
@@ -3252,7 +3258,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -3279,7 +3285,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3383,7 +3389,7 @@ Keeping just the <i>retrieve</i> action with  <u>get_documents</u> type the temp
         "action_params": {
             "params": {
                 "index": "$index",
-                "filters": $filters
+                "filters": "$filters"
             },
             "type": "get_documents"
         }
@@ -3401,7 +3407,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3504,7 +3510,7 @@ Template:
                 "query_metadata": {
                     "query": "$query",
                     "system":"You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "template_name": "[system query and context plus]"
                 }
             },
             "type": "llm_content"
@@ -3519,7 +3525,7 @@ Response
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3596,7 +3602,7 @@ To use the filter action with type <i>top_k</i> for the example we need to add t
             "query": "What does the sort action do?",
             "top_k": 2,
             "llm_template":"system_query_and_context_plus",
-            "$model": "gpt-3.5-16k-pool-techhub-japan",
+            "$model": "techhub-pool-world-gpt-3.5-turbo-16k",
             "platform": "azure"
         }
       }
@@ -3666,7 +3672,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3723,7 +3729,7 @@ Body:
             "index": "my index",
             "query": "What are the components of compose?",
             "top_k": 15,
-            "model": "gpt-3.5-16k-pool-techhub-japan",
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k",
             "platform": "azure",
             "llm_template": "system_query_and_context_plus"
         }
@@ -3748,7 +3754,7 @@ Template:
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": "$top_k",
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -3797,7 +3803,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3847,7 +3853,7 @@ The request for this action can be:
         "name": "retrieve_batchmerge_llm",
         "params": {
             "query": "What is a streamlist?",
-            "model": "gpt-3.5-16k-pool-techhub-japan",
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k",
             "platform": "azure",
             "template_name": "system_query_and_context_plus",
             "retrieve": [
@@ -3882,7 +3888,7 @@ We will use for this example the template "retrieve_batchmerge_llm":
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 5,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -3927,7 +3933,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -3983,7 +3989,7 @@ There are several options for sort type, which we usually define it in the reque
                     "query": "What is compose?",
                     "index": "myindex",
                     "top_k": 2,
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus",
                     "sort_desc": true,
@@ -4056,7 +4062,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -4184,7 +4190,7 @@ Response:
 {
     "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "<username>/<my_session_id>",
         "streambatch": [
             [
                 {
@@ -4838,6 +4844,7 @@ Template:
 Response:
 
 ```json
+{
  "status": "finished",
     "result": {
         "session_id": "username/my_session_id",
@@ -4905,13 +4912,13 @@ For further information, follow the link (coming soon).
 
 The indexing flow is the following:
 
-- When a call is received APIGW authorizes and sends the request to INTEGRATION
-- INTEGRATION changes the call from http to queue and send it to PREPROCESS
-- PREPROCESS extracts text with open source libraries or OCR
-- If the PREPROCESS finishes correct sends the text to INFOINDEXING. 
-- When INFOINDEXING finishes indexing the text sends a message to FLOWMGMT CHECKEND 
+- When a call is received APIGW authorizes and sends the request to INTEGRATION.
+- INTEGRATION changes the call from http to queue and send it to PREPROCESS.
+- PREPROCESS extracts text with open source libraries or OCR.
+- If the PREPROCESS finishes correctly, it sends the text to INFOINDEXING. 
+- When INFOINDEXING finishes indexing the text, it sends a message to FLOWMGMT CHECKEND.
 - FLOWMGMT CHECKEND sends the confirmation to INTEGRATION. 
-- When INTEGRATION receives the message send a call to FLOWMGMT INFODELETE to delete the temporal files. 
+- When INTEGRATION receives the message, it sends a call to FLOWMGMT INFODELETE to delete the temporal files. 
 - During all this process, FLOWMGMT CHECKTIMEOUT checks the timeout of the execution.  
   
 - APIGW
