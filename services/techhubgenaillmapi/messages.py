@@ -344,6 +344,136 @@ class Claude3Message(Message):
             {'role': 'user', 'content': user_content}]
 
 
+class NovaMessage(Message):
+    MODEL_FORMAT = "chatNova"
+
+    def __init__(self, query: str, template: dict, template_name: str = "system_query", context: str = "",
+                 system=DEFAULT_SYSTEM_MSG, persistence=()):
+        """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
+
+        :param query: Question made.
+        :param template: Template used to build the prompt.
+        :param template_name: Template Name used to build the prompt.
+        :param context: Context used to answer the question.
+        :param system:  openai model system configuration
+        :param persistence: List containing the conversation history
+        """
+        super().__init__()   
+        self.query = query
+        self.context = context
+        self.template_name = template_name
+        self.template = template
+        self.system = system
+        self.persistence = persistence if isinstance(persistence, list) else []
+        self.multiprompt = bool(self.persistence)
+        self.substituted_query = []
+        adapter = ManagerAdapters.get_adapter({'adapter': "nova", 'message': self})
+        adapter.adapt_query_and_persistence()
+        self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
+
+    def unitary_persistence(self) -> List:
+        """Given a persistence it will return a list with the messages in a unitary format.
+
+        :return: List with the messages in a unitary format
+        """
+        unitary_persistence = []
+        for pair in self.persistence:
+            for message in pair:
+                if isinstance(message['content'], str):
+                    message['content'] = [{"text": message['content']}]
+                unitary_persistence.append(message)
+        return unitary_persistence
+
+
+    def preprocess(self):
+        """Given a query and a context it will return the text in the GPT model format.
+
+        :return: List with the messages in the correct format for the model
+        """
+        user_prompt = Template(self.template["user"])
+        if "system" in self.template:
+            system_prompt = Template(self.template["system"])
+            system_content = system_prompt.safe_substitute(system=self.system)
+        else:
+            system_content = self.system
+
+        user_content = user_prompt.safe_substitute(query=self.query, context=self.context)
+        return self.unitary_persistence() + [
+            {'role': 'assistant', 'content': [{"text": system_content}]},
+            {'role': 'user', 'content': [{"text": user_content}]}]
+
+class NovaVMessage(Message):
+    MODEL_FORMAT = "chatNova-v"
+
+    def __init__(self, query: str, template: dict, template_name: str = "system_query_v", context: str = "",
+                 system='I am a helpful assistant', persistence=()):
+        """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
+
+        :param query: Question made.
+        :param template: Template used to build the prompt.
+        :param template_name: Template Name used to build the prompt.
+        :param context: Context used to answer the question.
+        :param system:  openai model system configuration
+        :param persistence: List containing the conversation history
+        """
+        super().__init__() # super to Message to avoid claude3 format query and persistence adaptation  
+        self.query = query
+        if context != "" and isinstance(self.query, list):
+            raise PrintableGenaiError(400, "Context param not allowed in vision models")
+        self.context = context
+        self.template_name = template_name
+        self.template = template
+        self.system = system
+        self.persistence = persistence if isinstance(persistence, list) else []
+        self.multiprompt = bool(self.persistence)
+        self.substituted_query = []
+        adapter = ManagerAdapters.get_adapter({'adapter': "nova", 'message': self})
+        adapter.adapt_query_and_persistence()
+        self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
+    
+    def unitary_persistence(self) -> List:
+        """Given a persistence it will return a list with the messages in a unitary format.
+
+        :return: List with the messages in a unitary format
+        """
+        unitary_persistence = []
+        for pair in self.persistence:
+            for message in pair:
+                if isinstance(message['content'], str):
+                    message['content'] = [{"text": message['content']}]
+                unitary_persistence.append(message)
+        return unitary_persistence
+
+
+    def preprocess(self):
+        """Given a query and a context it will return the text in the Bedrock model format.
+
+        :return: List with the messages in the correct format for the model
+        """
+        if "system" in self.template:
+            system_prompt = Template(self.template["system"])
+            system_content = system_prompt.safe_substitute(system=self.system)
+        else:
+            system_content = self.system
+
+        user_content = []
+        user_prompt = Template(self.template["user"])
+        if isinstance(self.template["user"], str):
+            user_content = user_prompt.safe_substitute(query=self.query, context=self.context)
+        else:
+            for e in self.template["user"]:
+                if e == "$query":
+                    user_content.extend(self.query)
+                else:
+                    user_content.append(e)
+
+        if isinstance(user_content, str):
+            user_content = [{"text": user_content}]
+
+        return self.unitary_persistence() + [
+            {'role': 'assistant', 'content': [{"text": system_content}]},
+            {'role': 'user', 'content': user_content}]
+        
 class Llama3Message(Message):
     MODEL_FORMAT = "chatLlama3"
 
@@ -396,11 +526,11 @@ class Llama3Message(Message):
 
 
 class ManagerMessages(object):
-    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message]
+    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message, NovaMessage, NovaVMessage]
 
     @staticmethod
     def get_message(conf: dict) -> Message:
-        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v, chatNova, chatNova-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: message object
@@ -415,7 +545,7 @@ class ManagerMessages(object):
 
     @staticmethod
     def get_possible_messages() -> List:
-        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v]
+        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v, chatNova, chatNova-v]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude3"}
         :return: available messages
