@@ -47,6 +47,7 @@ class BaseAdapter(ABC):
         for pair in self.message.persistence:
             self._adapt_messages(pair)
 
+
     def _adapt_messages(self, messages):
         """ Method to add the number of tokens to the messages
 
@@ -57,12 +58,22 @@ class BaseAdapter(ABC):
                 message['n_tokens'] = len(self.encoding.encode(message['content']))
             elif isinstance(message['content'], list):
                 for item in message['content']:
-                    if item.get('n_tokens'):
-                        continue
+                    if item['type'] in ["image_url", "image_b64"]:
+                        self._adapt_image(item)
                     elif item['type'] == "text":
-                        item['n_tokens'] = len(self.encoding.encode(item['text']))
-                    elif item['type'] == "image_url":
-                        item['n_tokens'] = self._adapt_image(item)
+                        self._adapt_text(item)
+
+
+    def _adapt_text(self, text):
+        """ Method to adapt text to gpt4v format
+        
+        :param text: Text to adapt
+        """
+        if text.get('n_tokens'):
+            return
+        else:
+            text['n_tokens'] = len(self.encoding.encode(text['text']))
+
 
     def _adapt_image(self, item):
         """ Method to get the number of tokens from an image"""
@@ -114,14 +125,22 @@ class GPT4VAdapter(BaseAdapter):
                 message['n_tokens'] = len(self.encoding.encode(message['content']))
             elif isinstance(message['content'], list):
                 for item in message['content']:
-                    if item.get('n_tokens') and item['type'] in ["image_url", "image_b64"]:
+                    if item['type'] in ["image_url", "image_b64"]:
                         self._adapt_image(item)
-                    elif item.get('n_tokens'):
-                        continue
                     elif item['type'] == "text":
-                        item['n_tokens'] = len(self.encoding.encode(item['text']))
-                    elif item['type'] in ["image_url", "image_b64"]:
-                        item['n_tokens'] = self._adapt_image(item)
+                        self._adapt_text(item)
+
+
+    def _adapt_text(self, text):
+        """ Method to adapt text to gpt4v format
+        
+        :param text: Text to adapt
+        """
+        if text.get('n_tokens'):
+            return
+        else:
+            text['n_tokens'] = len(self.encoding.encode(text['text']))
+
 
     def _adapt_image(self, image):
         """ Method to get tokens from an image and adapt it to gpt4v format
@@ -141,14 +160,17 @@ class GPT4VAdapter(BaseAdapter):
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(content, "utf-8"))))
             except:
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
-
-        if image['image'].get('detail') == "low":
-            total = 85
+            
+        if not image.get('n_tokens'):
+            if image['image'].get('detail') == "low":
+                total = 85
+            else:
+                width, height = self.resize_image(img.width, img.height, 1024, 1024)
+                h = ceil(height / 512)
+                w = ceil(width / 512)
+                total = 85 + 170 * h * w
         else:
-            width, height = self.resize_image(img.width, img.height, 1024, 1024)
-            h = ceil(height / 512)
-            w = ceil(width / 512)
-            total = 85 + 170 * h * w
+            total = image['n_tokens']
 
         media_type = img.format
         if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
@@ -163,8 +185,7 @@ class GPT4VAdapter(BaseAdapter):
         else:
             image['image_url'] = {'url': content}
         image.pop('image')
-
-        return total
+        image['n_tokens'] = total
 
 
 class DalleAdapter(BaseAdapter):
@@ -187,6 +208,12 @@ class DalleAdapter(BaseAdapter):
                     # item in a list to keep the same format as the other adapters
                     dalle_persistence.append([item])
         self.message.persistence = dalle_persistence
+
+    def _adapt_messages(self, messages):
+        for message in messages:
+            if not message.get('n_tokens'):
+                # Dalle is non-vision so it will be only text
+                message['n_tokens'] = len(self.encoding.encode(message['content']))
 
     @classmethod
     def is_adapter_type(cls, adapter_type: str):
@@ -220,20 +247,26 @@ class Claude3Adapter(BaseAdapter):
                 message['n_tokens'] = len(self.encoding.encode(message['content']))
             elif isinstance(message['content'], list):
                 for item in message['content']:
-                    if item.get('n_tokens') and item['type'] in ["image_url", "image_b64"]:
-                        self._adapt_image(item)
-                    elif item.get('n_tokens'):
-                        continue
-                    elif item['type'] == "text":
-                        item['n_tokens'] = len(self.encoding.encode(item['text']))
+                    if item['type'] == "text":
+                        self._adapt_text(item)
                     elif item['type'] in ["image_url", "image_b64"]:
-                        item['n_tokens'] = self._adapt_image(item)
+                        self._adapt_image(item)
+
+    def _adapt_text(self, text):
+        """ Method to adapt text to claude format
+        
+        :param text: Text to adapt
+        """
+        if text.get('n_tokens'):
+            return
+        else:
+            text['n_tokens'] = len(self.encoding.encode(text['text']))
+            
 
     def _adapt_image(self, image):
         """ Method to get tokens from an image and adapt it to claude3 format
 
         :param image: Image to get tokens from
-        :return: int - Number of tokens
         """
         if image['image'].get('detail'):
             raise PrintableGenaiError(400, "Detail parameter not allowed in Claude vision model")
@@ -253,8 +286,11 @@ class Claude3Adapter(BaseAdapter):
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
 
         #TODO - Check what are they doing with image tokens calculation (this way appears in the api)
-        width, height = self.resize_image(img.width, img.height, 1568, 1568)
-        total = int((height * width) / 750)  # Not accurate
+        if not image.get('n_tokens'):
+            width, height = self.resize_image(img.width, img.height, 1568, 1568)
+            total = int((height * width) / 750)  # Not accurate
+        else:
+            total = image['n_tokens']
 
         media_type = img.format
         if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
@@ -264,16 +300,93 @@ class Claude3Adapter(BaseAdapter):
         image['type'] = "image"
         image['source'] = {"type": "base64", "media_type": "image/" + media_type.lower(), "data": base64_str}
         image.pop('image')
+        image['n_tokens'] = total
 
-        return total
+
+
+class NovaAdapter(BaseAdapter):
+    ADAPTER_FORMAT = "nova"
+
+    def __init__(self, message):
+        """ Constructor for the NovaAdapter class
+
+        :param message: Message like class
+        """
+        super().__init__(message)
+        self.message.substituted_query = self.message.preprocess()[-2:]
+
+    def _adapt_messages(self, messages):
+        """ Method to add the number of tokens to the messages
+
+        :param messages: List of messages
+        """
+        for message in messages:
+            # Is always a list (forced in the model)
+            for item in message['content']:
+                if not item.get('type') or item['type'] == "text":
+                    # Non-vision case when item does not have type
+                    self._adapt_text(item)
+                elif item['type'] in ["image_url", "image_b64"]:
+                    item = self._adapt_image(item)
+
+    def _adapt_text(self, text):
+        """ Method to adapt text to nova-v format"""
+        text.pop('type', None) # In nova no type param is needed
+        if not text.get('n_tokens'):
+            text['n_tokens'] = len(self.encoding.encode(text['text']))
+
+    def _adapt_image(self, image):
+        """ Method to get tokens from an image and adapt it to nova-v format
+
+        :param image: Image to get tokens from
+        :return: int - Number of tokens
+        """
+        if image['image'].get('detail'):
+            raise PrintableGenaiError(400, "Detail parameter not allowed in Nova vision model")
+
+        if image['type'] == "image_url":
+            try:
+                downloaded_img = requests.get(image['image']['url']).content
+                base64_str = base64.b64encode(downloaded_img).decode("utf-8")
+                img = Image.open(io.BytesIO(downloaded_img))
+            except:
+                raise PrintableGenaiError(400, "Image must be a valid url format")
+        elif image['type'] == "image_b64":
+            base64_str = image['image']['base64']
+            try:
+                img = Image.open(io.BytesIO(base64.decodebytes(bytes(base64_str, "utf-8"))))
+            except:
+                raise PrintableGenaiError(400, "Image must be a valid base64 format")
+
+        #TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        if not image.get('n_tokens'):
+            width, height = self.resize_image(img.width, img.height, 1568, 1568)
+            total = int((height * width) / 750)  # Not accurate
+        else:
+            total = image['n_tokens']
+
+        media_type = img.format
+        if media_type not in ['JPEG', 'PNG', 'GIF', 'WEBP']:
+            raise PrintableGenaiError(400, "Image must be in format [jpeg, png, gif, webp]")
+
+
+        # To change format to nova (no type param is needed)
+        image['image'] = {
+                "format": media_type.lower(),
+                "source": {
+                    "bytes": base64_str
+                }
+        }
+        image['n_tokens'] = total
+        image.pop('type')
 
 
 class ManagerAdapters(object):
-    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter]
+    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter]
 
     @staticmethod
     def get_adapter(conf: dict):
-        """ Method to instantiate the adapter class: [claude3, gpt4v, dalle, base]
+        """ Method to instantiate the adapter class: [claude3, gpt4v, dalle, base, nova]
 
         :param conf: Adapter configuration. Example:  {"adapter":"claude3"}
         """
@@ -287,7 +400,7 @@ class ManagerAdapters(object):
 
     @staticmethod
     def get_possible_adapters() -> List:
-        """ Method to list the adapters: [claude3, gpt4v, dalle, base]
+        """ Method to list the adapters: [claude3, gpt4v, dalle, base, nova]
 
         :param conf: Adapter configuration. Example:  {"adapter":"claude3"}
         """
