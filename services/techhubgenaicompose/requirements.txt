@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
-
 aiohttp==3.8.5
 nltk==3.8.1
 langfuse==2.33
 lingua-language-detector==2.0.2
+aioresponses==0.7.6
