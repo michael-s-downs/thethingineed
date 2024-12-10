@@ -22,7 +22,7 @@ natsort==8.4.0
 langdetect==1.0.9
 elasticsearch
 pydantic==2.9.2
-numpy==2.0.2
+numpy==1.26.4 # required by llama-index-retrievers-bm25==0.4.0
 tiktoken==0.7
 mmh3
 llama-index-embeddings-azure-openai==0.1.9
