@@ -2,6 +2,7 @@
 
 
 # Native imports
+import os
 import importlib
 import logging
 from typing import Tuple
@@ -56,6 +57,9 @@ class QueueController(object):
         :param origin_type: Type of the queue to get the service of.
         :return: (BaseQueueService) Service to be used
         """
+        if (eval(os.getenv('STORAGE_QUEUE', "False")) and origin_type == "azure"):
+            origin_type = origin_type + "_storage"
+
         for origin in self.user_functions_services:
             if origin.check_origin(origin_type):
                 return origin()
