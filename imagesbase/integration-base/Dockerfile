@@ -23,7 +23,6 @@ ADD requirements.txt /opt/uhis_docker/
 
 # MOVE WORKER DIR AND INSTALL AND DELETE LIBRARIES
 WORKDIR /opt/uhis_docker
-RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install genai-sdk-services --no-index --find-links=/packages
 RUN rm -rf /packages
