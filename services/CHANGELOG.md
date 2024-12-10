@@ -4,18 +4,20 @@
 # Changelog
 
 ## v2.1.0 (2024-11-28)
+- apigw:
+    - [New] Update CORS with 'allow-cors-origins' to allow direct calls from website
+    - [New] Change default input limit from 30MB to dynamic value by environment variable 'MAX_REQUEST_SIZE'
 - genai-compose:
     - [New] Endpoint to list templates
     - [New] Endpoint to list filter templates
     - [New] Endpoint to get the content of a template
     - [New] Endpoint to get the content of a filter template
-    - [New] Try Lingua instead of langdetect to improve language detection
+    - [New] Replace library 'lingua' instead of 'langdetect' to improve language detection (required more memory)
     - [Fix] Query to minus before langdetect
     - [Fix] Perist dict not adding new entries
     - [Fix] Documentation examples
 - genai-llmapi:
-    - [Improvement] Set default model to 'techhub-pool-world-gpt-4o'
-    - [Fix] Endpoint list templates shows file name with its templates
+    - [Fix] Endpoint for list templates now shows file name with its templates
 
 ## v2.0.0 (2024-11-08)
 - genai-llmapi:
