@@ -1,4 +1,4 @@
-genai-sdk-services==0.4.3
+genai-sdk-services==0.4.9
 Pillow==10.0.1
 pandas==2.2.3
 numpy==1.26.4 # required by llama-index-retrievers-bm25==0.4.0
