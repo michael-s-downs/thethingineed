@@ -16,7 +16,7 @@ import pyathena
 import pymysql
 import redis
 from psycopg2 import connect, extras
-
+import psycopg2
 
 class BaseDBService():
 
@@ -126,7 +126,7 @@ class MysqlService(BaseDBService):
 
     credentials = {}
     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "mysql", "mysql.json")
-    env_vars = ["SQLDB_HOST", "SQLDB_USER", "SQLDB_PASS"]
+    env_vars = ["SQLDB_HOST", "SQLDB_USER", "SQLDB_PASSWORD", "SQLBD_PORT"]
 
     def __init__(self):
         """ Init the service """
@@ -147,7 +147,8 @@ class MysqlService(BaseDBService):
                     credentials = {
                         'host': os.getenv(self.env_vars[0]),
                         'user': os.getenv(self.env_vars[1]),
-                        'password': os.getenv(self.env_vars[2])
+                        'password': os.getenv(self.env_vars[2]),
+                        'port': os.getenv(self.env_vars[3], 3306)
                     }
                 else:
                     raise Exception("Credentials not found")
@@ -168,6 +169,7 @@ class MysqlService(BaseDBService):
             host=self.credentials[origin]['host'],
             user=self.credentials[origin]['user'],
             password=self.credentials[origin]['password'],
+            port=self.credentials[origin]['port'],
             db=self.credentials[origin]['db'],
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor,
@@ -1045,7 +1047,7 @@ class PostgreSQLService(BaseDBService):
 
     credentials = {}
     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "postgresql", "postgresql.json")
-    env_vars = ["SQLDB_HOST", "SQLDB_USER", "SQLDB_PASS", "SQLBD_PORT"]
+    env_vars = ["SQLDB_HOST", "SQLDB_USER", "SQLDB_PASSWORD", "SQLBD_PORT"]
 
     def __init__(self):
         """ Init the service """
@@ -1238,7 +1240,10 @@ class PostgreSQLService(BaseDBService):
         connection = self._get_db_connection(origin)
         with connection.cursor() as cursor:
             cursor.execute(query)
-            result = cursor.fetchall()
+            try:
+                result = cursor.fetchall()
+            except:
+                result = [cursor.rowcount]
             connection.commit()
             connection.close()
             if isinstance(result, list):
