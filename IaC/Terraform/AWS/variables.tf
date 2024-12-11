@@ -13,19 +13,14 @@ variable "SA_CONTAINER_NAMES" {
   description = "The name of the container to create in the storage account."
 }
 
-variable "RG_SUBNET" {
-  type        = map(string)
-  description = "Names of subnet by resource to deploy."
-}
-
-variable "VNET_NAME" {
-  type        = map(string)
-  description = "Names of virtual network by resource to deploy."
-}
-
-variable "ROLE_AWS" {
+variable "SUBNET_GROUP" {
   type        = string
-  description = "Name of role to assign to script"
+  description = "Name of subnet group"
+}
+
+variable "SECURITY_GROUP" {
+  type        = string
+  description = "Identifier of security group"
 }
 
 variable "SB_QUEUES" {

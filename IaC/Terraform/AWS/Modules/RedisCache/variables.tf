@@ -12,13 +12,12 @@ variable "tags" {
   type = map(any)
 }
 
-variable "vnet" {
+variable "subnet_group" {
   type        = string
-  description = "Name of virtual network"
+  description = "Name of subnet group"
 }
 
-
-variable "subnet" {
+variable "sg" {
   type        = string
-  description = "Name of subnet"
+  description = "Identifier of security group"
 }
