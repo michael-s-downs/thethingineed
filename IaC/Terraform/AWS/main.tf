@@ -17,9 +17,9 @@ terraform {
 
 provider "aws" {
   region = var.RG_LOCATION
-  assume_role {
-    role_arn = var.ROLE_AWS
-  }
+  # assume_role {
+  #   role_arn = var.ROLE_AWS
+  # }
 }
 
 locals {
@@ -43,21 +43,21 @@ module "techhub_bucket" {
 }
 
 module "techhub_rds" {
-  source   = "./Modules/RDS"
-  rg       = var.RG_NAME
-  location = var.RG_LOCATION
-  subnet   = var.RG_SUBNET["rds"]
-  vnet     = var.VNET_NAME["rds"]
-  tags     = local.common_tags
+  source       = "./Modules/RDS"
+  rg           = var.RG_NAME
+  location     = var.RG_LOCATION
+  subnet_group = var.SUBNET_GROUP
+  sg           = var.SECURITY_GROUP
+  tags         = local.common_tags
 }
 
 module "techhub_redis" {
-  source   = "./Modules/RedisCache"
-  rg       = var.RG_NAME
-  location = var.RG_LOCATION
-  subnet   = var.RG_SUBNET["redis"]
-  vnet     = var.VNET_NAME["redis"]
-  tags     = local.common_tags
+  source       = "./Modules/RedisCache"
+  rg           = var.RG_NAME
+  location     = var.RG_LOCATION
+  subnet_group = var.SUBNET_GROUP
+  sg           = var.SECURITY_GROUP
+  tags         = local.common_tags
 }
 
 module "techhub_sqs" {
