@@ -4,7 +4,7 @@
 # Native imports
 import os
 import json
-import time
+import signal
 from typing import Dict, Tuple
 
 # Installed imports
@@ -234,10 +234,12 @@ def sync_deployment() -> Tuple[str, int]:
 def reloadconfig() -> Tuple[str, int]:
     deploy.logger.info("Reload config request received")
     deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
+    notify_workers_reload()
     result = json.dumps({
         'status': "ok",
         'status_code': 200
     }), 200
+
 
     return result
 
@@ -295,6 +297,12 @@ def delete_prompt_template() -> Tuple[str, int]:
         deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
 
+def notify_workers_reload():
+    pid_file = os.getenv('GUNICORN_PID', '/tmp/gunicorn.pid')
+    if os.path.exists(pid_file):
+        with open(pid_file, 'r') as file:
+            master_pid = int(file.read().strip())
+            os.kill(master_pid, signal.SIGHUP)
 
 
 if __name__ == "__main__":
