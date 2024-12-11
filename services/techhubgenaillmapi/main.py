@@ -11,6 +11,7 @@ from flask import Flask, request
 from pydantic import ValidationError
 
 # Local imports
+from common.genai_status_control import get_value, update_status
 from common.genai_controllers import storage_containers, set_storage, set_queue, provider, db_dbs, set_db
 from common.genai_json_parser import get_exc_info
 from common.deployment_utils import BaseDeployment
@@ -22,7 +23,6 @@ from generatives import ManagerModel, GenerativeModel
 from common.storage_manager import ManagerStorage
 from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject, adapt_input_queue
 from common.utils import get_models
-from common.genai_status_control import get_value, update_status
 
 class LLMDeployment(BaseDeployment):
     def __init__(self):
