@@ -4,7 +4,6 @@
 # Native imports
 import os
 import json
-import signal
 from typing import Dict, Tuple
 
 # Installed imports
@@ -12,7 +11,7 @@ from flask import Flask, request
 from pydantic import ValidationError
 
 # Local imports
-from common.genai_controllers import storage_containers, set_storage, set_queue, provider, upload_object, delete_file
+from common.genai_controllers import storage_containers, set_storage, set_queue, provider, db_dbs, set_db
 from common.genai_json_parser import get_exc_info
 from common.deployment_utils import BaseDeployment
 from common.services import GENAI_LLM_SERVICE
@@ -23,11 +22,16 @@ from generatives import ManagerModel, GenerativeModel
 from common.storage_manager import ManagerStorage
 from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject, adapt_input_queue
 from common.utils import get_models
+from common.genai_status_control import get_value, update_status
 
 class LLMDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
         super().__init__()
+        set_db(db_dbs)
+        self.REDIS_ORIGIN = db_dbs['session']
+        self.tenant = os.getenv('TENANT', "LOCAL_TEST")
+        self.logger.debug(f"Tenant var: {self.tenant}")
         if QUEUE_MODE:
             self.Q_IN = (provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT'))
             set_queue(self.Q_IN)
@@ -40,6 +44,7 @@ class LLMDeployment(BaseDeployment):
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
 
         self.templates, self.templates_names, self.display_templates_with_files = self.storage_manager.get_templates(return_files=True)
+        self.set_redis_templates()
 
         # Check if default templates are in the templates
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
@@ -165,6 +170,7 @@ class LLMDeployment(BaseDeployment):
         exc_info = get_exc_info()
 
         try:
+            self.get_redis_templates()
             # Adaptations for queue case
             json_input = adapt_input_queue(json_input)
 
@@ -209,6 +215,20 @@ class LLMDeployment(BaseDeployment):
 
         return ResponseObject(**result).get_response_predict()
 
+    def set_redis_templates(self):
+        try:
+            update_status(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM", json.dumps([self.templates, self.templates_names, self.display_templates_with_files]))
+        except Exception as ex:
+            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving templates to redis.")
+
+    def get_redis_templates(self):
+        try:
+            response = get_value(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM")[0]['values']
+            if response:
+                redis_session = json.loads(response.decode())
+                self.templates, self.templates_names, self.display_templates_with_files = redis_session[0], redis_session[1], redis_session[2]
+        except Exception as ex:
+            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError getting templates from redis.")
 
 app = Flask(__name__)
 deploy = LLMDeployment()
@@ -234,7 +254,7 @@ def sync_deployment() -> Tuple[str, int]:
 def reloadconfig() -> Tuple[str, int]:
     deploy.logger.info("Reload config request received")
     deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
-    notify_workers_reload()
+    deploy.set_redis_template()
     result = json.dumps({
         'status': "ok",
         'status_code': 200
@@ -296,15 +316,6 @@ def delete_prompt_template() -> Tuple[str, int]:
         # Update the templates modification in the llmapi component
         deploy.templates, deploy.templates_names, deploy.display_templates_with_files = deploy.storage_manager.get_templates(return_files=True)
     return ResponseObject(**response).get_response_base()
-
-def notify_workers_reload():
-    pid_file = os.getenv('GUNICORN_PID', '/tmp/gunicorn.pid')
-    if os.path.exists(pid_file):
-        with open(pid_file, 'r') as file:
-            master_pid = int(file.read().strip())
-            deploy.logger.info(f"Killing worker {master_pid} --------------------------------")
-            os.kill(master_pid, signal.SIGHUP)
-
 
 if __name__ == "__main__":
     if QUEUE_MODE:
