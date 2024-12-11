@@ -916,50 +916,32 @@ In the following diagram flows, each color will represent the following files:
 
 <img src="imgs/techhubgenaiinforetrieval/flow1.png" width="150">
 
-1. Load the configuration files and secrets (pools, models, and vector_storage details) to know which ones are available (when the service is initialized).
-
-    <img src="imgs/techhubgenaiinforetrieval/flow2.png" width="900">
-
-2. Parse the input from the call to get all the parameters.
-
-    <img src="imgs/techhubgenaiinforetrieval/flow3.png" width="750">
-
-3. Get the connector for the index referred in the call. If there is file for the index with the structure explained above this will be the vector storage (reacheable), if not the program will get the one from the "VECTOR_STORAGE" environment variable.
-
-   ![alt text](imgs/techhubgenaiinforetrieval/flow4.png)
-
-4. This process manages the embedding models that will be used in the retrieval. If there are models on the call, will be matched with the ones available (to know if it is possible to do the retrieval), if not, the retrieval will be done with all models availables (all used during indexing process)
-
-   ![alt text](imgs/techhubgenaiinforetrieval/flow5.png)
-
-5. Once all the embedding models are matched, the retrieval will be done with the specified strategy .
-   
-    ![alt text](imgs/techhubgenaiinforetrieval/flow6.png)
-    
-6. Depending on the strategy, one or another flow is used in order to retrieve the documents (in the llamaindex_fusion strategy the LlamaIndex QueryFusionRetriever does all the process (scoring, retrieval...) while genai_retrieval will be explained below). In all strategies the adaptation of the llamaindex-elasticsearch is used (elasticsearch_adaption) as it does the retrieval using the connection with ElasticSearch. This adaption is mandatory as the library itself does not support multiple filters while doing retrieval. 
-
-   
-   ![alt text](imgs/techhubgenaiinforetrieval/flow7.png)
-
-Finally the genai_strategy is as follows:
-
-6.1. In this step, the first retrieval is done using a llamaindex-elasticsearch adaption for each model. Different retrieval methods and retrievers are used to get the chunks: 
-
-   - **GenaiStrategy:** Base retriever from  llamaindex-elasticsearch connection object (llamaindex library adapted by us as theirs do not allow multiple filters in a query).
-   - **SurroundingGenaiStrategy:** Same retriever as 'GenaiStrategy' but after retrieval, the text field is replaced by the surrounding text stored in 'metadata.window' (with front and rear chunks indicated while indexing).
-   - **RecursiveGenaiStrategy:** Different retriever from 'GenaiStrategy' as it needs a recursive one. Another thing that is mandatory is the full index with its chunks in a LlamaIndex 'Node' format in the cache.
-
-6.2. In this step, all chunks that doesn't have scores for all models (have not been retrieved with every model), will be chosen by their id to do a retrieval with the remaining models. 
-
-<img src="imgs/techhubgenaiinforetrieval/flow8.png" width="300">
-
-6.3. The retrieval adding in the filters field the "snippet_id" of the chunks to retrieve in order to get the full scores is done. This retrieval is done to complete the scores it means that a single chunk, has individual scores for all models selected in the call to do the retrieval.
-
-<img src="imgs/techhubgenaiinforetrieval/flow9.png" width="300">
-
-6.4. When the passages are obtained, the chunks with the same content will be merged to get unique chunks with all models scores, then the rescoring function (if passed, if not, the mean of all scores is estimated by default) will be done. 
-
-<img src="imgs/techhubgenaiinforetrieval/flow10.png" width="250">
+<ol>
+    <li>Load the configuration files and secrets (pools, models, and vector_storage details) to know which ones are available (when the service is initialized).
+    <img src="imgs/techhubgenaiinforetrieval/flow2.png" width="900"></li>
+    <li>Parse the input from the call to get all the parameters.
+    <img src="imgs/techhubgenaiinforetrieval/flow3.png" width="750"></li>
+    <li>Get the connector for the index referred in the call. If there is file for the index with the structure explained above this will be the vector storage (reacheable), if not the program will get the one from the "VECTOR_STORAGE" environment variable.
+    <img src ="imgs/techhubgenaiinforetrieval/flow4.png"></li>
+    <li>This process manages the embedding models that will be used in the retrieval. If there are models on the call, will be matched with the ones available (to know if it is possible to do the retrieval), if not, the retrieval will be done with all models availables (all used during indexing process)
+    <img src= "imgs/techhubgenaiinforetrieval/flow5.png"></li>
+    <li>Once all the embedding models are matched, the retrieval will be done with the specified strategy.
+    <img src="imgs/techhubgenaiinforetrieval/flow6.png"></li>
+    <li>Depending on the strategy, one or another flow is used in order to retrieve the documents (in the llamaindex_fusion strategy the LlamaIndex QueryFusionRetriever does all the process (scoring, retrieval...) while genai_retrieval will be explained below). In all strategies the adaptation of the llamaindex-elasticsearch is used (elasticsearch_adaption) as it does the retrieval using the connection with ElasticSearch. This adaption is mandatory as the library itself does not support multiple filters while doing retrieval. 
+    <img src="imgs/techhubgenaiinforetrieval/flow7.png"> Finally the genai_strategy is as follows:</li>
+    <ol type="a">
+        <li>In this step, the first retrieval is done using a llamaindex-elasticsearch adaption for each model. Different retrieval methods and retrievers are used to get the chunks: 
+        <ul>
+            <li><b>GenaiStrategy:</b> Base retriever from  llamaindex-elasticsearch connection object (llamaindex library adapted by us as theirs do not allow multiple filters in a query).</li>
+            <li><b>SurroundingGenaiStrategy:</b> Same retriever as 'GenaiStrategy' but after retrieval, the text field is replaced by the surrounding text stored in 'metadata.window' (with front and rear chunks indicated while indexing). </li>
+            <li><b>RecursiveGenaiStrategy:</b> Different retriever from 'GenaiStrategy' as it needs a recursive one. Another thing that is mandatory is the full index with its chunks in a LlamaIndex 'Node' format in the cache.</li>
+        </ul>
+    <li>In this step, all chunks that doesn't have scores for all models (have not been retrieved with every model), will be chosen by their id to do a retrieval with the remaining models. 
+    <img src="imgs/techhubgenaiinforetrieval/flow8.png" width="300"></li>
+    <li>The retrieval adding in the filters field the "snippet_id" of the chunks to retrieve in order to get the full scores is done. This retrieval is done to complete the scores it means that a single chunk, has individual scores for all models selected in the call to do the retrieval.
+    <img src="imgs/techhubgenaiinforetrieval/flow9.png" width="300"></li>
+    <li>When the passages are obtained, the chunks with the same content will be merged to get unique chunks with all models scores, then the rescoring function (if passed, if not, the mean of all scores is estimated by default) will be done. 
+    <img src="imgs/techhubgenaiinforetrieval/flow10.png" width="250"></li>
 
 The available rescoring functions are:
     
@@ -973,17 +955,17 @@ The available rescoring functions are:
 | norm     | It will normalize each model's scores between 0 and 1. Then computes the mean.|
 | nll (norm-loglength)     | It will normalize each model's scores between 0 and 1. Then computes the loglegth function.|
 | rrf (reciprocal-rerank-fusion) | Uses the formula explained in the [paper](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) 
+</li>
+</ol>
 
+<li>Report the tokens used to the api by calling apigw that stores the result in the database (number of tokens by api-key).
 
+<img src="imgs/techhubgenaiinforetrieval/flow11.png" width="250"></li>
 
+<li>Returns the result to the user and end the process for the call
 
-7. Report the tokens used to the api by calling apigw that stores the result in the database (number of tokens by api-key).
-
-    <img src="imgs/techhubgenaiinforetrieval/flow11.png" width="250">
-
-8.  Returns the result to the user and end the process for the call
-
-    ![alt text](imgs/techhubgenaiinforetrieval/flow12.png)
+<img src="imgs/techhubgenaiinforetrieval/flow12.png"></li>
+</ol>
 
 To conclude, here is an example about how the managing of the scores completion is done with "bm25" and "text-embedding-ada-002" models and a top_k=3. In this case, a same chunk has been extracted with both models and the retrieval is re-done with the rest of them, the two remaining ones from "bm25" and the two remaining ones from "text-embedding-ada-002".
 
