@@ -302,6 +302,7 @@ def notify_workers_reload():
     if os.path.exists(pid_file):
         with open(pid_file, 'r') as file:
             master_pid = int(file.read().strip())
+            deploy.logger.info(f"Killing worker {master_pid} --------------------------------")
             os.kill(master_pid, signal.SIGHUP)
 
 
