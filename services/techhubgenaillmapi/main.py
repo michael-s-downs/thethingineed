@@ -28,9 +28,11 @@ class LLMDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
         super().__init__()
-        set_db(db_dbs)
-        self.REDIS_ORIGIN = db_dbs['session']
-        self.tenant = os.getenv('TENANT', "LOCAL_TEST")
+        self.tenant = os.getenv('TENANT', "LOCAL")
+        if self.tenant != "LOCAL":
+            set_db(db_dbs)
+            self.REDIS_ORIGIN = db_dbs['session']
+
         self.logger.debug(f"Tenant var: {self.tenant}")
         if QUEUE_MODE:
             self.Q_IN = (provider, os.getenv('Q_GENAI_LLMQUEUE_INPUT'))
@@ -216,12 +218,18 @@ class LLMDeployment(BaseDeployment):
         return ResponseObject(**result).get_response_predict()
 
     def set_redis_templates(self):
+        if self.tenant == "LOCAL":
+            return
+
         try:
             update_status(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM", json.dumps([self.templates, self.templates_names, self.display_templates_with_files]))
         except Exception as ex:
             raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving templates to redis.")
 
     def get_redis_templates(self):
+        if self.tenant == "LOCAL":
+            return
+        
         try:
             response = get_value(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM")[0]['values']
             if response:
