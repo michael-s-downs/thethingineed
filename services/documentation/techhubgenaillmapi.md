@@ -1322,6 +1322,12 @@ In the case that there is no template name, each generative model has a default 
 - PROVIDER: Cloud service to use to load the configuration files (aws or azure).
 - STORAGE_BACKEND: Tenant backend name. Example: "dev-backend".
 - SECRETS_PATH: Path to the secrets folder in the pod,
+- Optional:
+    - TENANT: Tenant where the process is running.
+    - REDIS_DB_SESSION: Session database number.
+    - REDIS_HOST: Redis host url.
+    - REDIS_PORT: Redis port, usually 6379.
+    - REDIS_PASSWORD: Redis authentication password.
 
 *When the provider is **Azure**, the AWS variables can be empty, and the same applies when using **AWS** with the Azure variables.*
 
