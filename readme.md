@@ -2216,7 +2216,7 @@ api_key = "XXXXXXXXXXXXXXXXXXXX"
 URL_COMPOSE =  f"{url}/compose/process"
 
 system = "You are an expert assistant"
-query = "what is the france capital ?"
+query = "what is the france capital?"
 template_name = "system_query"
 platform = "azure"
 model = "techhub-pool-world-gpt-3.5-turbo-16k"
@@ -2526,7 +2526,7 @@ pip install -r "xxxxxx/yyyyyy/zzzzzz/requirements.txt"
 Then execute the compose main.py file:
 
 ```python
-python compose/main.py"
+python "compose/main.py"
 ```
 To call the <i>/process</i> endpoint, you just need to change the <deployment_url> to **localhost** and include the mandatory parameters.
 
@@ -2683,7 +2683,7 @@ This config file is needed to specify which model is going to be used when in th
 ```json
 {
   "bm25": "bm25",
-  "*embedding_model*": "*embedding_model_name/pool*"
+  "embedding_model": "embedding_model_name/pool"
 }
 ```
 An example could be:
@@ -2999,7 +2999,7 @@ Example for <i>llm_action</i> action with <u>llm_segment</u> type:
     
 All necessary credentials for the components are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). The different secrets that are used in the components are:
 
-- **Vector storages configuration**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/" making the full path `"secrets/vector-storage/vector_storage_config.json"`.. The format of the secret is as follows:
+* **Vector storages configuration**:file where data such as credentials, URLs, etc., from the different supported vector storages are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/" making the full path <i>"secrets/vector-storage/vector_storage_config.json"</i>. The format of the secret is as follows:
     ```json
     {
         "vector_storage_supported": [{
@@ -3025,7 +3025,7 @@ All necessary credentials for the components are stored in secrets for security 
     - **vector_storage_username:** Username to access to the vector storage.
     - **vector_storage_password:** Password to access to the vector storage.
 
-- **Models api-keys and urls**: file where URLs and API-Keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The custom path for this secret is "models/", making the full path `"secrets/models/models.json"`. The secret looks like:
+* **Models api-keys and urls**: file where URLs and API-Keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The custom path for this secret is "models/", making the full path <i>"secrets/models/models.json"</i>. The secret looks like:  
     ```json
     {
         "URLs": {
@@ -3041,13 +3041,14 @@ All necessary credentials for the components are stored in secrets for security 
         }
     }
     ```
+
     The explanation for every field:
     - The **URLs** field has all urls of the available models. For LLMApi models the urls must be inside the code in order to replace the "$ZONE", "$MODEL" and "$API" params obtained from "models_config.json" because all the base of the urls from azure is always the same. 
     - The **api-keys** field is to provide the API Keys of the models. In OpenAI, the same API Key is shared for all of the models, while in azure, it depends on the region.  
 
 ## Advanced Examples
 
-To run the following examples, change the payload JSON to the ones indicated below and call the system with that JSON.
+To run the following examples, you should change the JSON payload for the ones indicated below and call the system with that JSON.
 
 ### Indexing Pipeline
 
@@ -3182,7 +3183,7 @@ Response:
 
 #### Retrieve document by metadata and call LLM
 
-In this case we want to retrieve a document or documents from our index depending on its metadata (not on the query as before) to be sent as context to the LLM. The request to retrieve one document by its filename would be:
+In this case we want to retrieve a document (or documents) from our index depending on its metadata (not on the query as before) to be sent as context to the LLM. The request to retrieve one document by its filename would be:
 
 ```json
 {
@@ -3203,7 +3204,7 @@ In this case we want to retrieve a document or documents from our index dependin
 }
 ```
 
-If we want to retrieve more information we can do a multiple retrieval. In the following request one retrieval will filter by <i>filename</i> and the other by <i>snnipet_id</i>.
+If we want to retrieve more information we can do a multiple retrieval. In the following request, one retrieval will filter by <i>filename</i> and the other by <i>snnipet_id</i>.
 
 ```json
 {
@@ -3234,9 +3235,9 @@ If we want to retrieve more information we can do a multiple retrieval. In the f
 }
 ```
 
-As before, the retrieved information will be sent to the LLM as context to answer the query "What are the New Year's resolutions?".
+As before, the retrieved information will be sent to the LLM as context to answer the query <i>What are the New Year's resolutions?</i>.
 
-For these last two requests the template "retrieve_docs_and_llm" would be:
+For last two requests, the template **retrieve_docs_and_llm** would be:
 
 ```json
 [
@@ -3273,7 +3274,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
 ]
 ```
 
-In the "retrieve_docs_and_llm" compose template, the retrieve action has a different "type" than in the "techhub_retrieval_reference" template.
+In the **retrieve_docs_and_llm** compose template, the retrieve action has a different "type" than in the **techhub_retrieval_reference** template.
 The type here is "get_documents" that retrieves the entire document, whereas in the "techhub_retrieval_reference" the type is "get_chunks" that retrieves chunks.
 
 Response:
@@ -3353,7 +3354,7 @@ Response:
 
 #### Retrieve full document
   
-If we want to retrieve a whole document or documents from our index depending on its metadata without calling the LLM we must eliminate the key 'query' from the request 'params'. Unlike the previous case where we receive the document in many chunks, in this case we will receive the document with all the text in a row.
+If we want to retrieve a whole document (or documents) from our index depending on its metadata without calling the LLM we must eliminate the parameter 'query' from the request 'params'. Unlike the previous case where we receive the document in many chunks, in this case we will receive the document with all the text in a row.
 
 ```json
 {
@@ -3394,7 +3395,7 @@ Keeping just the <i>retrieve</i> action with  <u>get_documents</u> type the temp
 ]
 ```
 
-This way we will receive the whole documents "myfile.pdf" and "myfile2.pdf" from the indexes "myindex" and "myindex2" respectively.
+This way, we will receive the whole documents "myfile.pdf" and "myfile2.pdf" from the indexes "myindex" and "myindex2" respectively.
 
 When using the type <u>get_documents</u> in the retrieve action it is mandatory to send the filters parameter not empty.
 
@@ -3443,11 +3444,12 @@ Using the expand query action can be combined with batchmerge to unify all the r
   "generic": {
     "compose_conf": {
       "template": {
-        "name": "retrieve_expand_query",
+        "name": "retrieval_expandquery",
         "params": {
             "index": "myindex",
             "query": "What does the sort action do?",
-            "langs": ["es", "ja"]
+            "langs": ["es", "ja"],
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k"
         }
       }
     }
@@ -3586,7 +3588,7 @@ Response
 
 ##### Filter action
 
-To use the filter action with type <i>top_k</i> for the example we need to add the parameter <u>top_k</u>:
+To use the filter action with type <i>top_k</i>, we need to add the parameter <u>top_k</u>:
 
 ```json
 {
@@ -3599,7 +3601,7 @@ To use the filter action with type <i>top_k</i> for the example we need to add t
             "query": "What does the sort action do?",
             "top_k": 2,
             "llm_template":"system_query_and_context_plus",
-            "$model": "techhub-pool-world-gpt-3.5-turbo-16k",
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k",
             "platform": "azure"
         }
       }
@@ -3723,7 +3725,7 @@ Body:
       "template": {
         "name": "retrieve_merge_llm",
         "params": {
-            "index": "my index",
+            "index": "myindex",
             "query": "What are the components of compose?",
             "top_k": 15,
             "model": "techhub-pool-world-gpt-3.5-turbo-16k",
@@ -3852,7 +3854,7 @@ The request for this action can be:
             "query": "What is a streamlist?",
             "model": "techhub-pool-world-gpt-3.5-turbo-16k",
             "platform": "azure",
-            "template_name": "system_query_and_context_plus",
+            "llm_template": "system_query_and_context_plus",
             "retrieve": [
                 {
                     "query": "What is a streamchunk?",
@@ -3990,7 +3992,8 @@ There are several options for sort type, which we usually define it in the reque
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus",
                     "sort_desc": true,
-                    "sort_type": "sn_number"
+                    "sort_type": "sn_number",
+                    "system": ""
                 }
             }
         }
@@ -4114,10 +4117,14 @@ Body:
                 "name": "retrieve_groupby_llm",
                 "params": {
                     "query": "What is a streamlist?",
-                    "index": "my index",
+                    "index": "indexdevelop",
                     "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus",
+                    "groupby_method": "mean",
+                    "groupby_type": "docscore",
+                    "groupby_desc": false,
+                    "system": ""
                 }
             }
         }
@@ -4247,7 +4254,7 @@ Body:
                 }
             },
             "template": {
-                "name": "retrieve_reformulate",
+                "name": "retrieval_reformulate",
                 "params": {
                     "query": "Explain the action groupby",
                     "index": "my_index",
@@ -4275,7 +4282,7 @@ Body for the second call:
                 }
             },
             "template": {
-                "name": "retrieve_reformulate",
+                "name": "retrieval_reformulate",
                 "params": {
                     "query": "Give me an example",
                     "index": "my_index",
@@ -4427,10 +4434,10 @@ Body:
     "generic": {
         "compose_conf": {
             "template": {
-                "name": "retrieve_filter_query",
+                "name": "retrieval_filter_query",
                 "params": {
                     "query": "Explain how to ",
-                    "index": "my index",
+                    "index": "myindex",
                     "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
@@ -4572,7 +4579,7 @@ Response:
 
 ##### Filter response action
 
-We will call compose with "base_request" calling the template **retrieve_filter_response**. To create this template, we add the <i>filter_response</i> action to the basic **retrieval_llm** template.
+We will call compose with "base_request" calling the template **retrieval_filter_response**. To create this template, we add the <i>filter_response</i> action to the basic **retrieval_llm** template.
 
 Body:
 
@@ -4581,10 +4588,10 @@ Body:
     "generic": {
         "compose_conf": {
             "template": {
-                "name": "retrieve_filter_response",
+                "name": "retrieval_filter_response",
                 "params": {
                     "query": "Explain how to use compose",
-                    "index": "my index",
+                    "index": "myindex",
                     "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
@@ -4751,13 +4758,13 @@ Body:
                 "name": "techhub_retrieval_reference",
                 "params": {
                     "query": "What is a streamlist?",
-                    "index": "my index",
+                    "index": "myindex",
                     "top_k": 5,
                     "platform": "azure",
                     "system": "You are an assistant",
                     "model": "techhub-pool-world-gpt-3.5-turbo-16k",   
                     "filters": {},
-                    "template_llm": "rag_with_references"      
+                    "llm_template": "rag_with_references"      
                 }
             }
         }
@@ -4844,7 +4851,7 @@ Response:
 {
  "status": "finished",
     "result": {
-        "session_id": "username/my_session_id",
+        "session_id": "username/user_session_id",
         "streambatch": [
             [
                 {
