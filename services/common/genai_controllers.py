@@ -30,7 +30,8 @@ data_bunch_c = DataBunchController()
 db_credentials_redis = {
     'status': os.getenv('REDIS_DB_STATUS'),
     'timeout': os.getenv('REDIS_DB_TIMEOUT'),
-    'session': os.getenv('REDIS_DB_SESSION')
+    'session': os.getenv('REDIS_DB_SESSION'),
+    'templates': os.getenv('REDIS_DB_TEMPLATES')
 }
 
 # Global variables
