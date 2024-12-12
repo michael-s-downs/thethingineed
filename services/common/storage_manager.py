@@ -93,6 +93,9 @@ class BaseStorageManager(ABC):
         :param dat: dict with the template name
         """
         pass
+    def get_default_models(self):
+        """ Get the default models that can be used """
+        pass
 
 
 class LLMStorageManager(BaseStorageManager):
@@ -102,6 +105,7 @@ class LLMStorageManager(BaseStorageManager):
         super().__init__(workspace, origin)
         self.prompts_path = "src/LLM/prompts/"
         self.models_file_path = "src/LLM/conf/models_config.json"
+        self.default_models_file_path = "src/LLM/conf/default_llm_models.json"
         if not self.load_file(self.workspace, self.models_file_path):
             self.models_file_path = "src/compose/conf/models_config.json"
 
@@ -114,6 +118,16 @@ class LLMStorageManager(BaseStorageManager):
                 return json.loads(s3_models_file).get("LLMs")
             else:
                 raise PrintableGenaiError(400, f"Models can't be loaded, maybe the models_config.json is wrong")
+
+    def get_default_models(self):
+        s3_models_file = self.load_file(self.workspace, self.default_models_file_path)
+        if s3_models_file is None or len(s3_models_file) <= 0:
+            raise PrintableGenaiError(400, f"Default models can't be downloaded because {self.models_file_path} not found in {self.workspace}")
+        else:
+            if json.loads(s3_models_file):
+                return json.loads(s3_models_file)
+            else:
+                raise PrintableGenaiError(400, f"Default models can't be loaded, maybe the default_models_config.json is wrong")
 
     def get_available_pools(self):
         s3_models_file = self.load_file(self.workspace, self.models_file_path)

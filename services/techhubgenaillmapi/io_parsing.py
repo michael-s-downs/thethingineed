@@ -200,7 +200,7 @@ class LLMMetadata(BaseModel):
     # Nova model parameter
     top_k: Optional[int] = Field(None, ge=0, le=500) # Optional int with range constraint
     model: Optional[str] = None
-    platform: Literal['azure', 'bedrock', 'openai']
+    default_model: Optional[str] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
@@ -215,11 +215,10 @@ class LLMMetadata(BaseModel):
     @model_validator(mode='before')
     def validate_default_model(cls, values):
         if not values.get('model'):
-            platform = values.get('platform')
-            if platform == 'azure':
-                values['model'] = 'techhub-pool-world-gpt-4o'
-            elif platform == 'bedrock':
-                values['model'] = 'techhub-pool-world-claude-3-5-sonnet-1:0'
+            if not values.get('default_model'):
+                raise ValueError("Internal error, default model not founded")
+            values['model'] = values.get('default_model')
+        values.pop('default_model', None)
         return values
 
 
