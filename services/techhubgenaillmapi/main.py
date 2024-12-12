@@ -31,7 +31,7 @@ class LLMDeployment(BaseDeployment):
         self.tenant = os.getenv('TENANT', "LOCAL")
         if self.tenant != "LOCAL":
             set_db(db_dbs)
-            self.REDIS_ORIGIN = db_dbs['session']
+            self.REDIS_ORIGIN = db_dbs['templates']
 
         self.logger.debug(f"Tenant var: {self.tenant}")
         if QUEUE_MODE:

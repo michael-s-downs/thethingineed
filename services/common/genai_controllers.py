@@ -31,7 +31,7 @@ db_credentials_redis = {
     'status': os.getenv('REDIS_DB_STATUS'),
     'timeout': os.getenv('REDIS_DB_TIMEOUT'),
     'session': os.getenv('REDIS_DB_SESSION'),
-    'llm_templates': os.getenv('REDIS_DB_TEMPLATES')
+    'templates': os.getenv('REDIS_DB_TEMPLATES')
 }
 
 # Global variables
