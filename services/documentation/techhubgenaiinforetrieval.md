@@ -441,17 +441,17 @@ The response would be a list of all the available models on the platform:
 
 The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
 
-- embedding_model (optional): A string representing the embedding model to filter.
-- pool (optional): A string or list of strings representing the model pools to filter.
-- platform (optional): A string representing the platform to filter.
-- zone (optional): A string representing the zone to filter.
+* embedding_model (optional): A string representing the embedding model to filter.
+* pool (optional): A string or list of strings representing the model pools to filter.
+* platform (optional): A string representing the platform to filter.
+* zone (optional): A string representing the zone to filter.
 
 #### Examples
 
 Filter by model pool:
-- Request:
+* Request:
 https://**\<deploymentdomain\>**/retrieve/get_models?pool=ada-002-pool-world
-- Response:
+* Response:
 ```json
 {
     "status": "ok",
@@ -470,10 +470,10 @@ https://**\<deploymentdomain\>**/retrieve/get_models?pool=ada-002-pool-world
 ```
 
 Filter by embedding model:
-- Request:
+* Request:
 https://**\<deploymentdomain\>**/retrieve/get_models?embedding_model=text-embedding-3-small
 
-- Response:
+* Response:
 ```json
 {
     "status": "ok",
@@ -490,10 +490,10 @@ https://**\<deploymentdomain\>**/retrieve/get_models?embedding_model=text-embedd
 ```
 
 Filter by zone:
-- Request:
+* Request:
 https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
-- Response:
+* Response:
 ```json
 {
     "status": "ok",
@@ -559,8 +559,25 @@ The response would be a list of index names along with the models associated wit
 
 ### Endpoints
 
-- /process (POST): This is the main endpoint.
-- /delete-documents (POST): Deletes document from index.
+* **/process (POST)**: This is the main endpoint.  
+    Body:
+
+    ```json
+    {
+        "index_conf": {
+            "index": "myindex",
+            "query": "How many employees does NTT DATA have?",
+            "top_k": 2,
+            "filters": {
+                "filename": ["manual.docx"]
+            },
+            "models": [
+            ]
+        }
+    }
+    ```
+
+* **/delete-documents (POST)**: Deletes document from index.  
     Body:
 
     ```json
@@ -571,7 +588,7 @@ The response would be a list of index names along with the models associated wit
         }
     }
     ```
-- /delete_index (POST): Deletes an index.
+* **/delete_index (POST)**: Deletes an index.  
     Body:
 
     ```json
@@ -579,15 +596,15 @@ The response would be a list of index names along with the models associated wit
         "index": "myindex"
     }
     ```
-- /healthcheck (GET): Used to check if the component is available. Returns:
+* **/healthcheck (GET)**: Used to check if the component is available.  
+    Returns:
 
     ```json
     {
         "status": "Service available"
     }
     ```
-
-- /retrieve_documents (POST): Retrieves document from index.
+* **/retrieve_documents (POST)**: Retrieves document from index.  
     Body:
 
     ```json
@@ -599,7 +616,7 @@ The response would be a list of index names along with the models associated wit
     }
     ```
 
-- /get_documents_filenames (POST): Retrieves documents filenames from index.
+* **/get_documents_filenames (POST)**: Retrieves documents filenames from index.  
     Body:
 
     ```json
@@ -608,11 +625,11 @@ The response would be a list of index names along with the models associated wit
     }
     ```
     
-- /get_models (GET): Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
+* **/get_models (GET)**: Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
   Request: https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
-- /list_indices (GET): Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
-  Request: https://**\<deploymentdomain\>**/retrieve/list_indices
+* **/list_indices (GET)**: Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
+  Request: https://**\<deploymentdomain\>**/retrieve/list_indices  
 Returns:
     ```json
     {
@@ -640,17 +657,30 @@ Returns:
 
 ### Parameters explanation
 
-- **index_conf** (required): configuration of the index:
-  - **index** (required): Name of index
-  - **query** (required): This is the question we want the retrieval to get information of
-  - **rescoring_function** (optional):  It can be [mean, posnorm, pos, length, loglength, norm, nll], it changes the way to ponderate semantic search vs bm25 to improve results. (mean by default)
-  - **strategy** (optional): To select the behaviour of the chunk extraction there are a few options: llamaindex_fusion (uses a llamaindex encapsulated retrieval strategy) or the genai_strategies (each one for the chunking method used):
-    - **genai_retrieval:** For 'simple' chunking method
-    - **recursive_genai_retrieval:** For 'recursive' chunking method
-    - **surrounding_genai_retrieval:** For 'surrounding_context_window' method
-  - **strategy_mode** (optional): When the strategy is llamaindex_fusion, the merge format used (can be *reciprocal_rerank*, *relative_score*, *dist_based_score* or *simple*)
-  - **top_k** (optional): Number of passages to be returned (10 as default)
-  - **filters** (optional): For each key it will only return keys that are contained in the list. For example in the example json, the system will return only passages in Doc1.pdf
+* **index_conf** (required): configuration of the index:
+  - **index** (required): Name of index.
+  - **query** (required): This is the question we want the retrieval to get information of.
+  - **rescoring_function** (optional): It changes the way to ponderate semantic search vs bm25 to improve results. It can be:
+    + mean (default value)
+    + posnorm
+    + pos
+    + length
+    + loglength
+    + norm
+    + nll
+  - **strategy** (optional): To select the behaviour of the chunk extraction there are a few options: 
+    + llamaindex_fusion: uses a <i>llamaindex</i> encapsulated retrieval strategy.
+    + genai_strategies: used for <i>chunking methods</i>. Values:
+        - **genai_retrieval:** For 'simple' chunking method.
+        - **recursive_genai_retrieval:** For 'recursive' chunking method.
+        - **surrounding_genai_retrieval:** For 'surrounding_context_window' method.
+  - **strategy_mode** (optional): When the strategy is <i>llamaindex_fusion</i>, the merge format used can be:
+    + reciprocal_rerank.
+    + relative_score.
+    + dist_based_score.
+    + simple.
+  - **top_k** (optional): Number of passages to be returned (10 as default).
+  - **filters** (optional): For each key it will only return keys that are contained in the list. For example in the example JSON, the system will return only passages in <i>Doc1.pdf</i>.
 
     ```json
     "filters":{
