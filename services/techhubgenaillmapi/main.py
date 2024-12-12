@@ -91,6 +91,7 @@ class LLMDeployment(BaseDeployment):
         return ManagerPlatform.get_platform(parsed_platform_metadata)
 
     def parse_model(self, llm_metadata: dict, platform: Platform):
+        llm_metadata['platform'] = platform.MODEL_FORMAT
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
         parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
                                                                                                 {})
