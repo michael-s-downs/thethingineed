@@ -222,7 +222,10 @@ class ElasticSearchConnector(Connector):
                 result = self.connection.search(index=index_name,
                                                 query={"bool": {"must": {"match_all": {}}}},
                                                 size=1, from_=0)
-                node_type = result["hits"]["hits"][0]["_source"]["metadata"]["_node_type"]
+                if len(result['hits']['hits']) == 0:
+                    # The indices are empty so we can return
+                    return
+                node_type = result['hits']['hits'][0]['_source']['metadata']['_node_type']
             except RequestError as e:
                 return "error", (f"Error: {e.info['error']['reason']} caused by: "
                                  f"{e.info['error']['caused_by']['reason']}"), 400

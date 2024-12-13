@@ -20,13 +20,15 @@ textdistance==4.6.3
 python-magic==0.4.27
 natsort==8.4.0
 langdetect==1.0.9
-elasticsearch
+elasticsearch==8.13.2
 pydantic==2.9.2
-numpy==2.0.2
+numpy==1.26.4 # required by llama-index-retrievers-bm25==0.4.0
 tiktoken==0.7
 mmh3
-llama-index-embeddings-azure-openai==0.1.9
-llama-index-embeddings-bedrock==0.2.0
-llama-index-vector-stores-elasticsearch==0.2.0
-llama-index==0.10.41
-llama-index-embeddings-huggingface==0.2.1
+llama-index-embeddings-azure-openai==0.2.5
+llama-index-embeddings-bedrock==0.3.1
+llama-index-vector-stores-elasticsearch==0.3.3
+llama-index==0.11.23
+llama-index-embeddings-huggingface==0.3.1
+llama-index-retrievers-bm25==0.4.0
+cryptography>=2.1.4 # required by azure-storage-blob==12.23.1

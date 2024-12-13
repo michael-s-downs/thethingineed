@@ -326,7 +326,7 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
 To conclude, the result of using infoindexing in this way can be seen in redis or in the logs. In this example, an error will raise by trying to write in the queue. To know if the document was indexed, the inforetrieval endpoint to see all the documents from an index can be used.
 
 ### Redis status
-All indexing components write their status to the Redis data base.
+All indexing components write their status to the Redis database.
 This service always writes the final status of the process in the Redis database. That status has 2 parameters: **status** and **msg**. If the indexing was successful, set the status code to 200; otherwise, set an error code. The <i>msg</i> parameter is a short description of the error cause (see more in [Error handling](#error-handling)) or <i>"Indexing finished"</i> if the indexation was successful.
 ```json
 {
@@ -655,7 +655,7 @@ This class saves the documents and their associated metadata in the database.
 
 
 ### Flow
-![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.drawio.png)
+![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.png)
 
 In the following flows diagram, each color will represent the following files:
     

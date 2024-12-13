@@ -187,7 +187,7 @@ class LLMMetadata(BaseModel):
     max_input_tokens: Optional[PositiveInt] = None
     temperature: Optional[confloat(ge=0.0, le=2.0)] = None
     max_tokens: Optional[PositiveInt] = None
-    stop: Optional[str] = None
+    stop: Optional[list] = None
     functions: Optional[list] = None
     function_call: Optional[str] = None
     seed: Optional[PositiveInt] = None
@@ -196,6 +196,9 @@ class LLMMetadata(BaseModel):
     size: Literal['1024x1024', '1792x1024', '1024x1792'] = None
     style: Literal['vivid', 'natural'] = None
     user: Optional[str] = None
+    top_p: Optional[confloat(ge=0.0, le=1.0)] = None
+    # Nova model parameter
+    top_k: Optional[int] = Field(None, ge=0, le=500) # Optional int with range constraint
     model: str = Field(default='techhub-pool-world-gpt-4o')
 
     class Config:
