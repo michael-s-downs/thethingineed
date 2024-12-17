@@ -122,22 +122,25 @@ The example template we are using is called "retrieval_llm":
 ]
 ```
 
-*The parameter values starting with "$" will be replaced in execution time with the params received in the api call.*
+*The parameter values starting with "$" will be replaced in execution time with the params received in the API call.*
 
-*To get more information about the templates and actions refer to [Actions](#actions)
+*<i>To get more information about the templates and actions refer to [Actions](#actions)</i>
 
-Then call the url with **/process** api endpoint using the following body and headers:
+Then call the URL with **/process** API endpoint using the following body and headers:
 
 ```json
 {
     "generic": {
         "compose_conf": {
             "template": {
-                "name": "retrieval_llm",
+                "name": "retrieve_llm",
                 "params": {
                     "query": "summarize the content",
-                    "index": "myindex",
-                    "model": "gpt-3.5-16k-pool-techhub-europe"
+                    "index": "index_name",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "system": "",
+                    "llm_template": "system_query"
                 }
             }
         }
@@ -147,7 +150,7 @@ Then call the url with **/process** api endpoint using the following body and he
 
 ```json
 "headers": {
-    "x-api-key": "yourapikey",
+    "x-api-key": "XXXXXXXXXXXXXXX",
 }
 ```
 
@@ -163,10 +166,14 @@ payload =  {
     "generic": {
         "compose_conf": {
             "template": {
-                "name": "retrieval_llm",
+                "name": "retrieve_llm",
                 "params": {
                     "query": "summarize the content about compose manual",
-                    "index": "myindex",
+                    "index": "index_name",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "system": "",
+                    "llm_template": "system_query"
                 }
             }
         }
@@ -174,7 +181,7 @@ payload =  {
 }
 
 headers = {
-    'x-api-key': 'yourapikey',
+    'x-api-key': 'XXXXXXXXXXXXXXX',
     'Content-Type': 'application/json'
 }
 
@@ -193,7 +200,7 @@ If the response looks like this, you are good to go.
         "streambatch": [
             [
                 {
-                    "content": "  System (string): Context and task that will be sent to the LLM.\n\n5.2.3. Calling Compose Service\n\nThe  API Documentation  provides detailed  information  on how  to  call  the  compose.  The key\nparameter to include is the template's name, which defines the compose flow to be followed.\nAs mentioned earlier, these configuration templates are stored in cloud storage, specifically S3\nand Azure Storage. These are some basic examples of requests for the compose service and their\ncorresponding templates:\n\nThe simplest request would be to call for the LLM with a query and without retrieval.\n{\n\"generic\": {\n\"compose_conf\": {\n\n\f\n\"template\": {\n\"name\": \"llm\",\n\"params\": {\n\"query\": \"What are the New Year's resolutions?\"}\n}\n,\n\"persist\": {\n\"type\": \"chat\",\n\"params\": {\n\"max_persistence\": 20\n}\n}\n}}\n}\n\nIn  this  example  we  call  compose  using  the  template  “llm”  stored  in  cloud,  with  the  param\n“query” and we set persistence to store / load the conversation with the llm with a maximum\nnumber of 20 iterations between user and llm.\n\nThe template “llm” is:\n[\n{\n\"action\":  \"retrieve\",\n\"action_params\":  {\n\"type\":  \"streamlist\",\n\"params\":  {\n\"streamlist\": [\n{\n\"content\":  \"\",\n\"meta\":  {\n\"field1\":  \"\"\n},\n\"scores\":  {\n\"bm25\":  1,\n\"sim-example\":  1\n}\n}\n],\n\"generic\":  {\n\"index_conf\":  {\n\"query\":  \"$query\"\n}\n}\n}\n}\n},\n{\n\"action\":  \"summarize\",\n\"action_params\":  {\n\"params\":  {\n\"llm_metadata\":  {\n\"model\":  \"gpt-3.5-16k-pool-techhub-europe\"\n},\n\"platform_metadata\":  {\n\"platform\":  \"azure\"\n},\n\"query_metadata\":  {\n\"query\":  \"$query\",\n\"template_name\":  \"system_query\"\n}\n},\n\"type\":  \"llm_content\"\n}\n}\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing.\n\n\f\nNow if we want to retrieve information from an index, we will add the “index” parameter to the\nrequest.\n{\n\"generic\": {\n\"compose_conf\": {\n\"template\": {\n\"name\": \"retrieval_llm\",\n\"params\": {\n\"query\": \"What are the New Year's resolutions?",
+                    "content": "System (string): Context and task that will be sent to the LLM.\n\n5.2.3. Calling Compose Service\n\nThe  API Documentation  provides detailed  information  on how  to  call  the  compose.  The key\nparameter to include is the template's name, which defines the compose flow to be followed.\nAs mentioned earlier, these configuration templates are stored in cloud storage, specifically S3\nand Azure Storage. These are some basic examples of requests for the compose service and their\ncorresponding templates:\n\nThe simplest request would be to call for the LLM with a query and without retrieval.\n{\n\"generic\": {\n\"compose_conf\": {\n\n\f\n\"template\": {\n\"name\": \"llm\",\n\"params\": {\n\"query\": \"What are the New Year's resolutions?\"}\n}\n,\n\"persist\": {\n\"type\": \"chat\",\n\"params\": {\n\"max_persistence\": 20\n}\n}\n}}\n}\n\nIn  this  example  we  call  compose  using  the  template  “llm”  stored  in  cloud,  with  the  param\n“query” and we set persistence to store / load the conversation with the llm with a maximum\nnumber of 20 iterations between user and llm.\n\nThe template “llm” is:\n[\n{\n\"action\":  \"retrieve\",\n\"action_params\":  {\n\"type\":  \"streamlist\",\n\"params\":  {\n\"streamlist\": [\n{\n\"content\":  \"\",\n\"meta\":  {\n\"field1\":  \"\"\n},\n\"scores\":  {\n\"bm25\":  1,\n\"sim-example\":  1\n}\n}\n],\n\"generic\":  {\n\"index_conf\":  {\n\"query\":  \"$query\"\n}\n}\n}\n}\n},\n{\n\"action\":  \"summarize\",\n\"action_params\":  {\n\"params\":  {\n\"llm_metadata\":  {\n\"model\":  \"gpt-3.5-16k-pool-techhub-europe\"\n},\n\"platform_metadata\":  {\n\"platform\":  \"azure\"\n},\n\"query_metadata\":  {\n\"query\":  \"$query\",\n\"template_name\":  \"system_query\"\n}\n},\n\"type\":  \"llm_content\"\n}\n}\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing.\n\n\f\nNow if we want to retrieve information from an index, we will add the “index” parameter to the\nrequest.\n{\n\"generic\": {\n\"compose_conf\": {\n\"template\": {\n\"name\": \"retrieval_llm\",\n\"params\": {\n\"query\": \"What are the New Year's resolutions?",
                     "meta": {
                         "document_id": "d431375b-909f-4779-9422-e55a10a16239",
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../myfile.pdf",
@@ -238,38 +245,38 @@ If the response looks like this, you are good to go.
 
  The available endpoints in the compose component are:
 
-- /process (POST): This is the main endpoint, used to call the Compose Service.
-- /healthcheck (GET): Used to check if the component is available. Returns:
+* **/process (POST)**: This is the main endpoint, used to call the Compose service.
+* **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
-```json
-{
-    "status": "Service available"
-}
-```
+    ```json
+    {
+        "status": "Service available"
+    }
+    ```
 
-- /load_session (POST): Used to load directly to REDIS a conversation.
+* **/load_session (POST)**: Used to load directly to REDIS a conversation.
 
-```json
-{
-    "session_id": "session_example_1",
-    "conv": [
-        {
-            "user": "What are the New Year's resolutions?",
-            "assistant": "New Year's resolutions are personal goals or intentions that individuals set for themselves at the beginning of a new year. These resolutions are often aimed at improving oneself, such as adopting healthier habits, learning new skills, or achieving specific goals.",
-            "n_tokens": 16,
-            "input_tokens": 54,
-            "output_tokens": 46
-        }
-    ],
-    "max_persistence": 20
-}
-```
+    ```json
+    {
+        "session_id": "session_example_1",
+        "conv": [
+            {
+                "user": "What are the New Year's resolutions?",
+                "assistant": "New Year's resolutions are personal goals or intentions that individuals set for themselves at the beginning of a new year. These resolutions are often aimed at improving oneself, such as adopting healthier habits, learning new skills, or achieving specific goals.",
+                "n_tokens": 16,
+                "input_tokens": 54,
+                "output_tokens": 46
+            }
+        ],
+        "max_persistence": 20
+    }
+    ```
 
-- /list_templates (GET): Used to list all templates stored in cloud.
+* **/list_templates (GET)**: Used to list all templates stored in cloud.
 
-- /list_filter_templates (GET): Used to list all filter templates stored in cloud.
+* **/list_filter_templates (GET)**: Used to list all filter templates stored in cloud.
 
-- /get_template (POST): Used to get the content of a template json file stored in cloud.
+* **/get_template (POST)**: Used to get the content of a template JSON file stored in cloud.
 
     ```json
     {
@@ -277,7 +284,7 @@ If the response looks like this, you are good to go.
     }
     ```
 
-- /get_filter_template (POST): Used to get the content of a filter template json file stored in cloud.
+* **/get_filter_template (POST)**: Used to get the content of a filter template JSON file stored in cloud.
 
     ```json
     {
@@ -285,63 +292,67 @@ If the response looks like this, you are good to go.
     }
     ```
 
-- /upload_template (POST): Used to upload a template json file to the cloud storage the content value must be a json converted to string.
+* **/upload_template (POST)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
 
-```json
-{
-  "name": "example_template",
-  "content": "[\r\n    {\r\n        \"action\": \"summarize\",\r\n        \"action_params\": {\r\n            \"params\": {\r\n                \"llm_metadata\": {\r\n                    \"model\": \"gpt-3.5-16k-pool-europe\"\r\n                },\r\n                \"platform_metadata\": {\r\n                    \"platform\": \"azure\"\r\n                },\r\n                \"query_metadata\": {\r\n                    \"query\": \"$query\",\r\n                    \"template_name\": \"system_query\"\r\n                }\r\n            },\r\n            \"type\": \"llm_content\"\r\n        }\r\n    }\r\n]"
-}
-```
+    ```json
+    {
+    "name": "example_template",
+    "content": "[\r\n    {\r\n        \"action\": \"summarize\",\r\n        \"action_params\": {\r\n            \"params\": {\r\n                \"llm_metadata\": {\r\n                    \"model\": \"gpt-3.5-16k-pool-europe\"\r\n                },\r\n                \"platform_metadata\": {\r\n                    \"platform\": \"azure\"\r\n                },\r\n                \"query_metadata\": {\r\n                    \"query\": \"$query\",\r\n                    \"template_name\": \"system_query\"\r\n                }\r\n            },\r\n            \"type\": \"llm_content\"\r\n        }\r\n    }\r\n]"
+    }
+    ```
 
-- /upload_filter_template (POST): Used to upload a filter template json file to the cloud storage the content value must be a json converted to string.
+* **/upload_filter_template (POST)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
 
-```json
-{
-  "name": "example_filter_template",
-  "content": "{\r\n    \"filter_types\": [\r\n        \"GPT\"\r\n    ],\r\n    \"substitutions_template\": \"Classify the 'Query' into one of the following categories: \\n1) Drugs: When the query mentions drugs, drug traffickers, Sito Miñanco, fariña, cocaine, smuggling, or 'batea' tobacco. \\n2) Politics: When the query mentions politicians, political parties, elections, independence movements, republics, monarchies, or dictators. \\n3) Violence: When the query mentions violence, crime, offenses, weapons, or bombs. \\n4) Others: If the query does not mention the above topics. \\nRespond only with the category and topic (do not provide any explanation or reasoning). \\nQuery: \",\r\n    \"substitutions\": [{\r\n            \"from\": \"Drugs\",\r\n            \"to\": \"Always start the response by saying that you are a very young AI, and they shouldn't ask you about drugs, and that they should be ashamed to ask something like that to someone so young. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"flora and fauna\",\r\n                \"geography\",\r\n                \"customs\"\r\n            ],\r\n            \"randpick\": 3\r\n        }, {\r\n            \"from\": \"Politics\",\r\n            \"to\": \"Always start the response by saying that you are a newly created AI, and there are many political topics that you are still learning about, so you prefer not to give an opinion without knowing. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"flora and fauna\",\r\n                \"geography\",\r\n                \"customs\",\r\n                \"beaches\"\r\n            ],\r\n            \"randpick\": 3\r\n        }, {\r\n            \"from\": \"Violence\",\r\n            \"to\": \"Always start the response by saying that as an AI, you don't believe in violence and only believe in helping people. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"ROSALÍA DE CASTRO\",\r\n                \"EMILIA PARDO BAZÁN\"\r\n            ]\r\n        }\r\n    ]\r\n}\r\n"
-}
-```
+    ```json
+    {
+    "name": "example_filter_template",
+    "content": "{\r\n    \"filter_types\": [\r\n        \"GPT\"\r\n    ],\r\n    \"substitutions_template\": \"Classify the 'Query' into one of the following categories: \\n1) Drugs: When the query mentions drugs, drug traffickers, Sito Miñanco, fariña, cocaine, smuggling, or 'batea' tobacco. \\n2) Politics: When the query mentions politicians, political parties, elections, independence movements, republics, monarchies, or dictators. \\n3) Violence: When the query mentions violence, crime, offenses, weapons, or bombs. \\n4) Others: If the query does not mention the above topics. \\nRespond only with the category and topic (do not provide any explanation or reasoning). \\nQuery: \",\r\n    \"substitutions\": [{\r\n            \"from\": \"Drugs\",\r\n            \"to\": \"Always start the response by saying that you are a very young AI, and they shouldn't ask you about drugs, and that they should be ashamed to ask something like that to someone so young. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"flora and fauna\",\r\n                \"geography\",\r\n                \"customs\"\r\n            ],\r\n            \"randpick\": 3\r\n        }, {\r\n            \"from\": \"Politics\",\r\n            \"to\": \"Always start the response by saying that you are a newly created AI, and there are many political topics that you are still learning about, so you prefer not to give an opinion without knowing. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"flora and fauna\",\r\n                \"geography\",\r\n                \"customs\",\r\n                \"beaches\"\r\n            ],\r\n            \"randpick\": 3\r\n        }, {\r\n            \"from\": \"Violence\",\r\n            \"to\": \"Always start the response by saying that as an AI, you don't believe in violence and only believe in helping people. Then say you prefer to talk about: \",\r\n            \"extra_words\": [\r\n                \"climate\",\r\n                \"nature\",\r\n                \"landscapes\",\r\n                \"ROSALÍA DE CASTRO\",\r\n                \"EMILIA PARDO BAZÁN\"\r\n            ]\r\n        }\r\n    ]\r\n}\r\n"
+    }
+    ```
 
-- /delete_template (POST): Used to delete a template json file from cloud storage.
+* **/delete_template (POST)**: Used to delete a template JSON file from cloud storage.
 
-```json
-{
-  "name": "example_template"
-}
-```
+    ```json
+    {
+    "name": "example_template"
+    }
+    ```
 
-- /delete_filter_template (POST): Used to delete a filter template json file from cloud storage.
+* **/delete_filter_template (POST)**: Used to delete a filter template JSON file from cloud storage.
 
-```json
-{
-  "name": "example_filter_template"
-}
-```
+    ```json
+    {
+    "name": "example_filter_template"
+    }
+    ```
 
 ### Request and Response Formats for /process
 
-Requests structure must be as follows.
+Requests structure must be as follows:
 
 ```json
 {
     "generic": {
         "compose_conf": {
             "template": {
-                "name": "retrieval_llm",
+                "name": "retrieve_llm",
                 "params": {
                     "query": "What are the New Year's resolutions?",
-                    "index": "myindex"
+                    "index": "myindex",                    
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "system": "",
+                    "llm_template": "system_query"
                 }
-            }
-        ,
+            },
             "persist": {
                 "type": "chat",
                 "params": {
-                "max_persistence": 20
+                    "max_persistence": 20
                 }
             }
-    }}
+        }
+    }
 }
 ```
 
@@ -414,9 +425,9 @@ Request parameters:
             }
         ```
 
-        The "max_persistence" field allows the user to specify the maximum number of interactions to be stored. Another important parameter is "session_id". After the first query is made, the service will return a session_id which must be included in all subsequent requests. If the user prefers to use their own id, they need to include it in every request.
+        The <i>max_persistence</i> field allows the user to specify the maximum number of interactions to be stored. Another important parameter is <i>session_id</i>. After the first query is made, the service will return a session_id which must be included in all subsequent requests. If the user prefers to use their own id, they need to include it in every request.
 
-        By default, 48 hours is the time that the conversations of the session_id are stored and can be used as persistence to call the llm component. This time of expiration, can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.
+        By default, 48 hours is the time that the conversations of the session_id are stored and can be used as persistence to call the llm component. This time of expiration can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.
 
         Parameters:
       - **type**(required): Persistence type, for now, only “chat” mode available.
@@ -462,11 +473,11 @@ The output can be changed passing in the requests some attribute values:
 
 ### User query processing
 
-Compose Service can improve the understanding of any natural language query provided by the user through a series of steps involving retrieval and LLM functionalities. A key step is to filter out irrelevant or inappropriate questions that are not supported by the use case. This ensures that the query remains focused on the subject matter of the documents.
+Compose Service can improve the understanding of any natural language query provided by the user through a series of steps involving retrieval and LLM functionalities. A key step is to <u>filter out</u> irrelevant or inappropriate questions that are not supported by the use case. This ensures that the query remains focused on the subject matter of the documents.
 
-Another important step is the ability to reformulate the question, which helps to make the query more specific and refined. This ultimately leads to a better understanding and resolution of the query.
+Another important step is the ability to <u>reformulate</u> the question, which helps to make the query more specific and refined. This ultimately leads to a better understanding and resolution of the query.
 
-In addition, persistence functionality stores the inputs and outputs of the conversation, allowing users to continue the conversation and ask more specific questions based on the answers provided by the generative model. Here are some examples that illustrate the use of each of these functionalities.
+In addition, <u>persistence</u> functionality stores the inputs and outputs of the conversation, allowing users to continue the conversation and ask more specific questions based on the answers provided by the generative model. Here are some examples that illustrate the use of each of these functionalities.
 
 To use it add the action [filter query](#filter-query-action) to the compose template.
 
@@ -498,21 +509,21 @@ An example of the filter configuration file is as follow:
 
 Parameters:
 
-- **filter_types**: Currently There is only one type of filter, GPT.
+* **filter_types**: Currently there is only one type of filter: <i>GPT</i>.
 
-- **substitutions_template**: It will be the prompt used for classification.
+* **substitutions_template**: It will be the prompt used for classification.
 
-- **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+* **substitutions**: It will be defined in the format "from-to" and will specify the type of substitution. Each type is defined differently.
 
   - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 #### Filter result
 
-By filtering out inappropriate or sensitive content from the results from the llm, the search system can avoid providing misleading or unrelated information to the user. This step helps to improve the overall security of the compose.
+By filtering out inappropriate or sensitive content from the results of the LLM, the search system can avoid providing misleading or unrelated information to the user. This step helps to improve the overall security of the compose.
 
 To use it add the action [filter response](#filter-response-action) to the compose template.
 
-The resuslt filter tempalte file must be uploaded to the cloud storage queryfilters_templates folder inside Compose section.
+The result filter tempalte file must be uploaded to the cloud storage queryfilters_templates folder inside Compose section.
 
 An example of the filter configuration file is as follow:
 
@@ -566,6 +577,12 @@ The user has the option to enable conversation storage by adding a new parameter
             "add_answer": false,
             "save_mod_query": true
         }
+},
+"persist": {
+    "type": "chat",
+    "params": {
+        "max_persistence": 20
+    }
 }
 ```
 
@@ -637,9 +654,9 @@ For example, in the base_template, the retrieval configuration part is as follow
 }
 ```
 
-The values observed in the template can either be constant or can be provided directly when calling the Compose service. For instance, "index: 'myindex'" selects the vector storage index, while "query: '$query'" is replaced with the value sent in the request. In this template, the information is required based on the query.
+The values observed in the template can either be constant or can be provided directly when calling the Compose service. For instance, "index: 'myindex'" selects the vector storage <i>myindex</i>, while "query: '$query'" is replaced with the value sent in the request. In this template, the information is required based on the query.
 
-On the other hand, we have the option of multiple retrieval by query or by filters. The template for this “retrieve” action is the same as for the simple retrieval above but the compose request must contain a “retrieve” key with a list of retrieval parameters, which will be independent from those of the LLM call.
+On the other hand, we have the option of multiple retrieval by query or by filters. The template for this <i>retrieve</i> action is the same as for the simple retrieval above but the compose request must contain a “retrieve” key with a list of retrieval parameters, which will be independent from those of the LLM call.
 
 - Documents retrieval
 
@@ -658,7 +675,7 @@ On the other hand, we have the option of multiple retrieval by query or by filte
     }
     ```
 
-    In this case the retrieval depends on the filters, choosing to retrieve a document based on the metadata, e.g. the filename. A multiple retrieval of documents can be done and we will receive in each streamlist each document all together.
+    In this case, the retrieval depends on the filters, choosing to retrieve a document based on the metadata, e.g. the filename. A multiple retrieval of documents can be done and we will receive in each streamlist each document all together.
 
     Parameters:
 
@@ -684,7 +701,7 @@ On the other hand, we have the option of multiple retrieval by query or by filte
 
     ** *The italic ones are the best options*
 
-  - **filters**: For each key it will only return keys that are contained in the list. For example in the example json, the system will return only passages from: “12 sustainable New Year's resolutions_EN” filename or the full document if the template is like the second example of template (retrieve full document)
+  - **filters**: For each key it will only return keys that are contained in the list. For example in the JSON example, the system will return only passages from: “12 sustainable New Year's resolutions_EN” filename or the full document if the template is like the second example of template (retrieve full document)
 
     ```json
     "filters": {
@@ -708,7 +725,7 @@ Using the action filter, we can obtain the streamchunks that match the condition
             "or": [
                 {"eq": ("city", "New York")}, # Checks if a metadata is equal to a value.
                 {"in": ("city", ["New York", "London"])},  # Checks if a metadata is in a list of values.
-                {"textinmeta": ("city", "New Yor")}, # Chekcs if a string is contained in the metadata.
+                {"textinmeta": ("city", "New York")}, # Chekcs if a string is contained in the metadata.
                 {"metaintext": ("city", "The city of New York is known as the big apple.")} # Checks if a metadata is contained in a string.
             ],
             "and": [
@@ -786,10 +803,10 @@ A vision query is a list containing dictionaries with individual queries. This m
 
 Parameters for vision queries:
 
-- **Type** (mandatory): The type of query we are going to send. This can be just text or an image in format url or base64. The options for this key are: text/image_url/image_b64
-- **Text**: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the llm.
-- **Url**: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
-- **Base64**: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
+* **Type** (mandatory): The type of query we are going to send. This can be just text or an image in URL or base64 format. The options for this key are: <i>text, image_url</i> or <i>image_b64</i>.
+* **Text**: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the LLM.
+* **Url**: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
+* **Base64**: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
 
 The following would be an example of a query containing the three types:
 
@@ -839,9 +856,9 @@ This use case corresponds to the simplest request, this is calling for the LLM w
   }
   ```
 
-  In this example we call compose using the template "only_llm" stored in cloud, with the param "query" and we set persistence to store / load the conversation with the llm with a maximum number of 20 iterations between user and llm.
+  In this example we call compose using the template "only_llm" stored in cloud, with the param "query" and we set persistence to store/load the conversation with the LLM with a maximum number of 20 iterations between user and LLM.
   
-  The action 'llm_action' is in charge of calling the LLM and it has two types: "llm_content" and "llm_segment". We can define the 'type' in the template or send it as a parameter in the request and write in the template "type": "$type". In this case we have not sent the 'type' in the request so we have to define it in the template "only_llm", which would be:
+  The action **llm_action** is in charge of calling the LLM and it has two types: <i>llm_content</i> and <i>llm_segment</i>. We can define the 'type' in the template or send it as a parameter in the request and write in the template "type": "$type". In this case we have not sent the 'type' in the request so we have to define it in the template "only_llm", which would be:
 
 ```json
 [
@@ -850,7 +867,7 @@ This use case corresponds to the simplest request, this is calling for the LLM w
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe"
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
                 },
                 "platform_metadata": {
                     "platform": "azure"
@@ -905,7 +922,7 @@ Response:
 
 #### Retrieve and LLMAPI
 
-If we want to retrieve information from an index we will add the parameter 'index' to the request. We will retrieve information from our index depending on its similarity with the 'query'. The information received will be sent to the LLM as context to answer the query.
+If we want to retrieve information from an index, we will set index name to the parameter 'index' into the request. We will retrieve information from our index depending on its similarity with the 'query'. The information received will be sent to the LLM as context to answer the query.
 
 We will call the following JSON request 'base_request' since it can be used in several examples just by changing the template name.
 
@@ -917,7 +934,11 @@ We will call the following JSON request 'base_request' since it can be used in s
                 "name": "retrieval_llm",
                 "params": {
                     "query": "What is a streamlist?",
-                    "index": "myindex"
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "index": "myindex",
+                    "platform": "azure",
+                    "system": "",
+                    "llm_template": "system_query"
                 }
             },
             "persist": {
@@ -931,7 +952,7 @@ We will call the following JSON request 'base_request' since it can be used in s
 }
 ```
 
-The template "retrieval_llm" is also frequently used and it would be:
+The template "retrieve_llm" is also frequently used and it would be:
 
 ```json
 [
@@ -959,7 +980,7 @@ The template "retrieval_llm" is also frequently used and it would be:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -1115,7 +1136,8 @@ In this case we want to retrieve a document or documents from our index dependin
                     "index": "myindex",
                     "filters": {
                         "filename": "manual.docx"
-                    }
+                    },                    
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
                 }
             }
         }
@@ -1146,7 +1168,8 @@ If we want to retrieve more information we can do a multiple retrieval. In the f
                                 "snippet_id": "871d4f43-49c5-47a6-8d10-c8681cec7589"
                             }                         
                         }
-                    ]
+                    ],                    
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
                 }
             }
         }
@@ -1156,7 +1179,7 @@ If we want to retrieve more information we can do a multiple retrieval. In the f
 
 As before, the retrieved information will be sent to the LLM as context to answer the query "What are the New Year's resolutions?".
 
-For these last two requests the template "retrieve_docs_and_llm" would be:
+For these last two requests the template <i>retrieve_docs_and_llm</i> would be:
 
 ```json
 [
@@ -1165,7 +1188,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
         "action_params": {
             "params": {
                 "index": "$index",
-                "filters": $filters
+                "filters": "$filters"
             },
             "type": "get_documents"
         }
@@ -1175,7 +1198,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "$model",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -1193,7 +1216,7 @@ For these last two requests the template "retrieve_docs_and_llm" would be:
 ]
 ```
 
-The only change between "retrieval_llm" and "retrieve_docs_and_llm" is the type of the action 'retrieve' being "ir_retrieve" and "get_documents" respectively.
+The only change between <i>retrieve_llm</i> and <i>retrieve_docs_and_llm</i> is the type of the action **retrieve** being "ir_retrieve" and "get_documents" respectively.
 
 Response:
 
@@ -1306,7 +1329,7 @@ Keeping just the 'retrieve' action with type "get_documents" the template looks 
         "action_params": {
             "params": {
                 "index": "$index",
-                "filters": $filters
+                "filters": "$filters"
             },
             "type": "get_documents"
         }
@@ -1451,7 +1474,7 @@ Response:
 
 #### Image generation with Dalle3
 
-In this example we are using Dalle3 to generate an image of a motorbike and the result will be an url to the image.
+In this example we are using Dalle3 to generate an image of a motorbike and the result will be an URL to the image.
 
 Template:
 
@@ -1490,7 +1513,10 @@ Body:
                 "name": "dalle",
                 "params": {
                     "query": "An orange motorbike",
-                    "model": "gpt-dalle3-pool-techhub-europe"                  
+                    "model": "techhub-pool-world-dalle3",
+                    "style": "vivid",
+                    "size": "1024x1024",
+                    "quality": "standard"             
                 }
             }
         }
@@ -1504,13 +1530,36 @@ Response:
 {
     "status": "finished",
     "result": {
-        "answer": "**link to the generated image",
-        "logprobs": [],
-        "n_tokens": 0,
-        "input_tokens": 4,
-        "query_tokens": 4,
-        "output_tokens": 0,
-        "n": 1
+        "session_id": "f[USER]/session_20241213_111306_457846_3v7112/techhub-dalle3",
+        "streambatch": [
+            [
+                {
+                    "content": "",
+                    "meta": {
+                        "field1": ""
+                    },
+                    "scores": {
+                        "bm25": 1,
+                        "sim-example": 1
+                    },
+                    "answer": null,
+                    "tokens": null
+                },
+                {
+                    "content": "",
+                    "meta": {
+                        "title": "Summary"
+                    },
+                    "scores": 1,
+                    "answer": "https://dalleprodaue.blob.core.windows.net/private/images/96888c77-517e-47af-b45c-77da2ca04c6b/generated_00.png?se=2024-12-14T11%3A13%3A18Z&sig=QCySJDgUN1XFvNanykHqowsNGy1kF8a%2F6EdeIUQkLDs%3D&ske=2024-12-19T13%3A45%3A32Z&skoid=f4f58869-78fa-4857-8a87-4ce5ae4ba8c3&sks=b&skt=2024-12-12T13%3A45%3A32Z&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skv=2020-10-02&sp=r&spr=https&sr=b&sv=2020-10-02",
+                    "tokens": {
+                        "input_tokens": 4,
+                        "output_tokens": 0
+                    }
+                }
+            ]
+        ],
+        "answer": "https://dalleprodaue.blob.core.windows.net/private/images/96888c77-517e-47af-b45c-77da2ca04c6b/generated_00.png?se=2024-12-14T11%3A13%3A18Z&sig=QCySJDgUN1XFvNanykHqowsNGy1kF8a%2F6EdeIUQkLDs%3D&ske=2024-12-19T13%3A45%3A32Z&skoid=f4f58869-78fa-4857-8a87-4ce5ae4ba8c3&sks=b&skt=2024-12-12T13%3A45%3A32Z&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skv=2020-10-02&sp=r&spr=https&sr=b&sv=2020-10-02"
     },
     "status_code": 200
 }
@@ -1529,11 +1578,12 @@ Using the expand query action can be combined with batchmerge to unify all the r
   "generic": {
     "compose_conf": {
       "template": {
-        "name": "retrieve_expand_query",
+        "name": "retrieval_expandquery",
         "params": {
             "index": "myindex",
             "query": "What does the sort action do?",
-            "langs": ["es", "ja"]
+            "langs": ["es", "ja"],
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k"
         }
       }
     }
@@ -1584,7 +1634,7 @@ Template:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -1683,7 +1733,10 @@ To use the filter action with type "top_k" for the example we need to add the pa
         "params": {
             "index": "myindex",
             "query": "What does the sort action do?",
-            "top_k": 2
+            "top_k": 2,
+            "llm_template":"system_query_and_context_plus",
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+            "platform": "azure"
         }
       }
     }
@@ -1691,7 +1744,7 @@ To use the filter action with type "top_k" for the example we need to add the pa
 }
 ```
 
-Now we add the 'filter' action to the template. The template "retrieve_filter_llm" is:
+Now we add the **filter** action to the template. The template <i>retrieve_filter_llm</i> is:
 
 ```json
 [
@@ -1719,7 +1772,7 @@ Now we add the 'filter' action to the template. The template "retrieve_filter_ll
         "action_params":  {
             "type":  "top_k",
             "params":  {
-                "top_k": $top_k
+                "top_k": "$top_k"
             }
         }
     },
@@ -1728,7 +1781,7 @@ Now we add the 'filter' action to the template. The template "retrieve_filter_ll
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "$model",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -1813,7 +1866,7 @@ Response:
 
 #### Merge action
 
-The compose request will be "base_request" changing the query to "What are the components of compose?" and the actions template "retrieve_merge_llm" is as follows:
+The compose request will be "base_request" changing the query to "<i>What are the components of compose?</i>" and the actions template **retrieve_merge_llm** is as follows:
 
 Body:
 
@@ -1824,8 +1877,11 @@ Body:
       "template": {
         "name": "retrieve_merge_llm",
         "params": {
-            "index": "my index",
-            "query": "What are the components of compose?"
+            "index": "myindex",
+            "query": "What are the components of compose?",
+            "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+            "platform": "azure",
+            "llm_template": "system_query"
         }
       }
     }
@@ -1847,8 +1903,8 @@ Template:
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-                        "top_k": 15,
-                        "filters": $filters
+                        "top_k": "$top_k",
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -1859,11 +1915,11 @@ Template:
     {
         "action": "merge",
         "action_params": {
+            "type": "meta",
             "params": {
-                "template": "Content: $content",
-                "sep": "###"
-            },
-            "type": "meta"
+                "template": "[[START OF DOCUMENT]] Content $content (Source: $filename) [[END OF DOCUMENT]]",
+                "sep": "########"
+            }
         }
     },
     {
@@ -1871,16 +1927,15 @@ Template:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
-                    "max_input_tokens": 5000
+                    "model": "$model"
                 },
                 "platform_metadata": {
-                    "platform": "azure"
+                    "platform": "$platform"
                 },
                 "query_metadata": {
                     "query": "$query",
                     "system": "You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "template_name": "$llm_template"
                 }
             },
             "type": "llm_content"
@@ -1889,7 +1944,7 @@ Template:
 ]
 ```
 
-After the action 'retrieve' we will obtain 1 streambatch containing 1 streamlist with multiple streamchunks. After the action 'merge' there will be 1 streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
+After the **retrieve** action we will obtain 1 streambatch containing 1 streamlist with multiple streamchunks. After the **merge** action there will be 1 streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
 
 Response:
 
@@ -1946,6 +2001,9 @@ The request for this action can be:
     "compose_conf": {
       "template": {
         "name": "retrieve_batchmerge_llm",
+        "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+        "platform": "azure",
+        "llm_template": "system_query_and_context_plus",
         "params": {
             "query": "What is a streamlist?",
             "retrieve": [
@@ -1965,7 +2023,7 @@ The request for this action can be:
 }
 ```
 
-We will use for this example the template "retrieve_batchmerge_llm":
+We will use for this example the template <i>retrieve_batchmerge_llm</i>:
 
 ```json
 [
@@ -1979,38 +2037,39 @@ We will use for this example the template "retrieve_batchmerge_llm":
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-                        "top_k": 5,
-                        "filters": $filters
+                        "top_k": "$top_k",
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
             },
             "type": "get_chunks"
         }
-    }, 
+    },
     {
-        "action": "batchmerge",
+        "action": "merge",
         "action_params": {
+            "type": "meta",
             "params": {
-            },
-            "type": "add"
+                "template": "[[START OF DOCUMENT]] Content $content (Source: $filename) [[END OF DOCUMENT]]",
+                "sep": "########"
+            }
         }
-    }, 
+    },
     {
         "action": "llm_action",
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
-                    "max_input_tokens": 5000
+                    "model": "$model"
                 },
                 "platform_metadata": {
-                    "platform": "azure"
+                    "platform": "$platform"
                 },
                 "query_metadata": {
                     "query": "$query",
                     "system": "You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "template_name": "$llm_template"
                 }
             },
             "type": "llm_content"
@@ -2082,8 +2141,12 @@ There are several options for sort type, which we usually define it in the reque
                     "query": "What is compose?",
                     "index": "myindex",
                     "top_k": 2,
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus",
                     "sort_desc": true,
-                    "sort_type": "sn_number"
+                    "sort_type": "sn_number",
+                    "system": ""
                 }
             }
         }
@@ -2091,9 +2154,9 @@ There are several options for sort type, which we usually define it in the reque
 }
 ```
 
-In addition to 'index' and 'query' we are sending three more parameters. 'top_k' does not necessarily need to be sent in the request for the 'sort' action, it can be defined directly in the template. The same goes for the parameters of the 'sort' action ("sort_desc" and "sort_type"), they can be defined in the template or in the call.
+In addition to <i>index</i> and <i>query</i> we are sending more parameters. 'top_k' does not necessarily need to be sent in the request for the action **sort**, it can be defined directly in the template. The same goes for the parameters of the action **sort** (<i>sort_desc</i> and <i>sort_type</i>), they can be defined in the template or in the call.
 
-The "retrieve_sort_llm" template would be:
+The <i>retrieve_sort_llm</i> template would be:
 
 ```json
 [
@@ -2107,37 +2170,35 @@ The "retrieve_sort_llm" template would be:
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": $filters
+                        "top_k": "$top_k",\t\t\t\t\t\t"filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
             },
             "type": "get_chunks"
         }
-    }, {
+    },\t{
         "action": "sort",
         "action_params": {
             "params": {
-                "desc": $sort_desc
+                "desc": "$sort_desc"
             },
-            "type": $sort_type
+            "type": "$sort_type"
         }
-    }, {
+    },
+    {
         "action": "llm_action",
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
-                    "max_input_tokens": 5000
+                    "model": "$model"
                 },
                 "platform_metadata": {
-                    "platform": "azure"
+                    "platform": "$platform"
                 },
                 "query_metadata": {
-                    "query": "$query",
-                    "system": "You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "query": "$query",\t\t\t\t\t"system": "$system",
+                    "template_name": "$llm_template"
                 }
             },
             "type": "llm_content"
@@ -2213,7 +2274,7 @@ Response:
 
 #### Groupby action
 
-We will call compose with "base_request" calling the template "retrieve_groupby_llm". To create this template we add the action 'groupby' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the template <i>retrieve_groupby_llm</i>. To create this template we add the action **groupby** to the basic <i>retrieval_llm</i> template.
 
 Body:
 
@@ -2225,7 +2286,14 @@ Body:
                 "name": "retrieve_groupby_llm",
                 "params": {
                     "query": "What is a streamlist?",
-                    "index": "my index"
+                    "index": "myindex",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus",
+                    "groupby_method": "mean",
+                    "groupby_type": "docscore",
+                    "groupby_desc": false,
+                    "system": ""
                 }
             }
         }
@@ -2247,8 +2315,8 @@ Template:
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-                        "top_k": 10,
-                        "filters": $filters
+                        "top_k": "$top_k",
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -2260,10 +2328,10 @@ Template:
         "action": "groupby",
         "action_params": {
             "params": {
-                "desc": true,
-                "method": "max"
+                "desc": "$groupby_desc",
+                "method": "$groupby_method"
             },
-            "type": "docscore"
+            "type": "$groupby_type"
         }
     },
     {
@@ -2271,16 +2339,15 @@ Template:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
-                    "max_input_tokens": 5000
+                    "model": "$model"
                 },
                 "platform_metadata": {
-                    "platform": "azure"
+                    "platform": "$platform"
                 },
                 "query_metadata": {
                     "query": "$query",
-                    "system": "You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "system": "$system",
+                    "template_name": "$llm_template"
                 }
             },
             "type": "llm_content"
@@ -2340,7 +2407,7 @@ Response:
 
 ##### Reformulate action
 
-We will call compose with "base_request" calling the template "retrieve_reformulate". To create this template we add the action 'reformulate_query' to the basic "retrieval_llm" template.
+We will call compose with "base_request" using the <i>retrieve_reformulate</i> template. To create this template, we add the action **reformulate_query** to the basic <i>retrieval_llm</i> template.
 
 Body:
 
@@ -2348,19 +2415,19 @@ Body:
 {
     "generic": {
         "compose_conf": {
-            "session_id": "mysession123",
+            "session_id": "my_session_1111-2222-3333",
             "persist": {
                 "type": "chat",
                 "params": {
-                    "max_persistence": 20
+                    "max_persistence": 10
                 }
-            }
+            },
             "template": {
-                "name": "retrieve_reformulate",
+                "name": "retrieval_reformulate",
                 "params": {
                     "query": "Explain the action groupby",
-                    "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "index": "myindex",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -2368,6 +2435,7 @@ Body:
         }
     }
 }
+
 ```
 
 Body for the second call:
@@ -2376,19 +2444,19 @@ Body for the second call:
 {
     "generic": {
         "compose_conf": {
-            "session_id": "mysession123",
+            "session_id": "my_session_1111-2222-3333",
             "persist": {
                 "type": "chat",
                 "params": {
-                    "max_persistence": 10
+                    "max_persistence": 20
                 }
-            }
+            },
             "template": {
-                "name": "retrieve_reformulate",
+                "name": "retrieval_reformulate",
                 "params": {
                     "query": "Give me an example",
-                    "index": "my index",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "index": "myindex",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query_and_context_plus"
                 }
@@ -2404,14 +2472,13 @@ Template:
 [
     {
         "action": "reformulate_query",
-        "action_params":{
-            "params":{
+        "action_params": {
+            "params": {
                 "max_persistence": 3,
                 "template_name": "reformulate",
                 "save_mod_query": false
             },
             "type": "mix_queries"
-
         }
     },
     {
@@ -2423,9 +2490,7 @@ Template:
                         "add_highlights": false,
                         "index": "$index",
                         "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": $filters
+                        "task": "retrieve",\t\t\t\t\t\t"top_k": 5,\t\t\t\t\t\t"filters": $filters
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -2438,16 +2503,14 @@ Template:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "platform": "$platform",
-                    "max_input_tokens": 5000
+                    "model": "$model",\t\t\t\t\t"max_input_tokens": 5000
                 },
                 "platform_metadata": {
-                    "platform": "$platform"
+                    "platform": "azure"
                 },
                 "query_metadata": {
-                    "query": "$query",
-                    "system": "You are a helpful assistant",
-                    "template_name": "$llm_template"
+                    "query": "$query",\t\t\t\t\t"system": "You are a helpful assistant",
+                    "template_name": "system_query_and_context_plus"
                 }
             },
             "type": "llm_content"
@@ -2527,7 +2590,7 @@ Session saved with the reformulated query:
 
 ##### Filter query action
 
-We will call compose with "base_request" calling the template "retrieve_filter_query". To create this template we add the action 'filter_query' to the basic "retrieval_llm" template.
+We will call compose with "base_request" using the  <i>retrieve_filter_query</i> template. To create this template we add the action **filter_query** to the basic <i>retrieval_llm</i> template.
 
 Body:
 
@@ -2539,7 +2602,7 @@ Body:
                 "name": "filter_query_llm",
                 "params": {
                     "query": "What are the most selled drinks in europe?.",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query"
                 }
@@ -2555,9 +2618,9 @@ Template:
 [
     {
         "action": "filter_query",
-        "action_params":{
+        "action_params": {
             "params": {
-                "template" : "filter_test"
+                "template": "filter_test"
             },
             "type": "llm"
         }
@@ -2567,7 +2630,7 @@ Template:
         "action_params": {
             "type": "streamlist",
             "params": {
-                "streamlist":[
+                "streamlist": [
                     {
                         "content": "",
                         "meta": {
@@ -2599,7 +2662,7 @@ Template:
                 },
                 "query_metadata": {
                     "query": "$query",
-                    "system":"You are a helpful assistant",
+                    "system": "You are a helpful assistant",
                     "template_name": "$llm_template"
                 }
             },
@@ -2661,7 +2724,7 @@ Response:
                         "title": "Summary"
                     },
                     "scores": 1,
-                    "answer": "I am a bot that specializes in discussing cars and automotive topics. How can I assist you with your automotive-related questions or interests today?"
+                    "answer": "I am a bot that specializes in discussing cars and automotive topics. How can I assist you with your automotive-related questions or interests today?",
                     "tokens": {
                         "input_tokens": 39,
                         "output_tokens": 50
@@ -2677,7 +2740,7 @@ Response:
 
 ##### Filter response action
 
-We will call compose with "base_request" calling the template "retrieve_filter_response". To create this template we add the action 'filter_response' to the basic "retrieval_llm" template.
+We will call compose with "base_request" calling the <i>retrieve_filter_response</i> template. To create this template we add the **filter_response** action to the basic <i>retrieval_llm</i> template.
 
 Body:
 
@@ -2689,7 +2752,7 @@ Body:
                 "name": "filter_result_llm",
                 "params": {
                     "query": "How to make an omelet?",
-                    "model": "gpt-3.5-16k-pool-techhub-japan",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "platform": "azure",
                     "llm_template": "system_query"
                 }
@@ -2761,7 +2824,7 @@ Template:
 
 Filter template:
 
-*For example we use compose as the topic to detect.*
+<i>For example we use compose as the topic to detect.</i>
 
 ```json
 {
@@ -2829,7 +2892,7 @@ Response:
 
 #### Combining actions
 
-We can combine in the template the actions we have seen, e.g. combining 'groupby' and 'merge' after the retrieval we can call compose with "base_request" and the following template:
+We can combine the actions we have seen in the template. For example, by combining **groupby** and **merge** after the retrieval, we can call compose with "base_request" and the following template:
 
 Body:
 
@@ -2841,7 +2904,14 @@ Body:
                 "name": "retrieve_groupby_llm",
                 "params": {
                     "query": "What is a streamlist?",
-                    "index": "my index"
+                    "index": "myindex",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
+                    "platform": "azure",
+                    "llm_template": "system_query_and_context_plus",
+                    "groupby_method": "mean",
+                    "groupby_type": "docscore",
+                    "groupby_desc": false,
+                    "system": ""
                 }
             }
         }
@@ -2863,8 +2933,8 @@ Template:
                         "index": "$index",
                         "query": "$query",
                         "task": "retrieve",
-                        "top_k": 20,
-                        "filters": $filters
+                        "top_k": "$top_k",
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -2876,21 +2946,10 @@ Template:
         "action": "groupby",
         "action_params": {
             "params": {
-                "desc": true,
-                "method": "max"
+                "desc": "$groupby_desc",
+                "method": "$groupby_method"
             },
-            "type": "docscore"
-        }
-    },
-    {
-        "action": "merge",
-        "action_params": {
-            "params": {
-                "template": "Content $content $document_id",
-                "sep": "######",
-                "grouping_key": "document_id"
-            },
-            "type": "meta"
+            "type": "$groupby_type"
         }
     },
     {
@@ -2898,16 +2957,15 @@ Template:
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
-                    "max_input_tokens": 5000
+                    "model": "$model"
                 },
                 "platform_metadata": {
-                    "platform": "azure"
+                    "platform": "$platform"
                 },
                 "query_metadata": {
                     "query": "$query",
-                    "system": "You are a helpful assistant",
-                    "template_name": "system_query_and_context_plus"
+                    "system": "$system",
+                    "template_name": "$llm_template"
                 }
             },
             "type": "llm_content"
@@ -2954,27 +3012,27 @@ Response:
 
 ![alt text](imgs/techhubgenaicompose/composepipeline.png)
 
-1. Compose: This service takes care of the following tasks.
+1. **Compose**: This service takes care of the following tasks.
     1. Receive the user's query and process it for processing in the rest of the services (obtain metadata or categorization of the query to filter information, reformulate the question to improve the search and retrieval of information, identify user intent, etc.)
     2. Call the information retrieval service.
     3. Generate the best context based on the information retrieved from the previous service (filtering of relevant units of information, sorting, etc.).
     4. Call the generative AI service that, using templates, configures the prompt to call the LLM to perform the task by the user with the generated context.
-2. Retrieval: A service that uses the user's query to retrieve information from the vector database where the units of information obtained from the documents were stored
-3. LLM System: Service that makes the call and configuration to the LLM.
+2. **Retrieval**: A service that uses the user's query to retrieve information from the vector database where the units of information obtained from the documents were stored.
+3. **LLM System**: Service that makes the call and configuration to the LLM.
 To begin using the compose con module, the initial step involves creating a configuration template. Within this template, it is necessary to configure the desired workflow for responding to a submitted task. For example, this may include performing a query to the information retrieval system in order to retrieve relevant information from the vector database.
-4. Cloud storage (AWS / AZURE): Used to load the templates with the actions, the available models, configuration, prompt templates.
+4. **Cloud storage (AWS / AZURE)**: Used to load the templates with the actions, the available models, configuration, prompt templates.
 
 ### Core Concepts
 
-1. **Actions**: Actions are configurated in the compose template and they define the compose flow. The main two actions are 'retrieve' and 'summarize'/'llm_action'. Other actions apply to the result of the 'retrieve' action, these are: filter, merge, batchmerge, sort and groupby.
+1. **Actions**: Actions are configurated in the compose template and they define the compose flow. The main two actions are **retrieve** and **summarize/llm_action**. Other actions apply to the result of the **retrieve** action, these are: <i>filter, merge, batchmerge, sort</i> and <i>groupby</i>.
 2. **Streamchunk**: Object created with each segment of the documents received from the retrieval. This element can store the content, scores, metadata, and the answer.
    1. **Content**: Content of the segment retrieved from the document. That is, the text extracted from the documents that has been indexed.
    2. **Meta**: Metadata from the document, that is, additional information about the document that is not part of the document’s content but provides extra details. Examples of this would be the document date, document title, etc. There are some metadata that are automatically extracted when a document is indexed, for example: the filename, document_id, snippet_number or snippet_id.
-       1. **Filename**: the name of the document
+       1. **Filename**: the name of the document.
        2. **Document_id**: the "id" assigned to the document when it is indexed.
        3. **Snippet_number**: the number of chunks within the document. That is, if a document is divided into 10 chunks when it is indexed, each chunk will be numbered from 1 to 10, in order.
        4. **Snippet_id**: the "id" assigned to each chunk of the document they are indexed.
-   3. **Scores**: Scores assigned to the segment from the models chosen for retrieval. They represent how similar a user query is to the document content. It goes from 0 to 1 (less to more similar). By default, two model scores are used: ada-emmbedings from OpenAi and BM25.
+   3. **Scores**: Scores assigned to the segment from the models chosen for retrieval. They represent how similar a user query is to the document content. It goes from 0 to 1 (less to more similar). By default, two model scores are used: <i>ada-emmbedings</i> from OpenAi and <i>BM25</i>.
    4. **Answer**: Contains the answer received from the LLM, if no answer generated this field will be empty.
 
 3. **Streamlist**: This is the list of chunks returned from the documents that is returned after calling the retrieval with a given query. This list is sorted according to the model scores, with the first elements being the most relevant (closer to the query, with the highest score) and the last elements being the least relevant. By default, the system returns 5 documents within a streamlist.
@@ -2997,14 +3055,14 @@ This service receives the user's request and searches for the template in the da
 
 Compose needs multiple files in cloud storage in the path "src/compose/" to run.
 
-- templates/: Stores the templates containing the action steps to execute in json files.
-- queryfilters_templates/: Stores the templates containing the filter categories for the query and result filters in json files with content like in the [example](#filter-query)
-- [LLMAPI configuration files](#link-llm-configuration-files)
-- [Retrieval configuration files](#link-retrieval-configuration-files)
+* **templates/**: Stores the templates containing the action steps to execute in json files.
+* **queryfilters_templates/**: Stores the templates containing the filter categories for the query and result filters in json files with content like in the [example](#filter-query-action)
+* **LLMAPI configuration files**. You can see <i>Genai LLM API > Configuration </i> section.
+* **Retrieval configuration files**. You can see <i>Genai Inforetrieval > Configuration </i> section.
 
 #### Secrets
     
-All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 4 different secrets:
+All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the <i>environment variables</i>(you can see <i>Genai Inforetrieval > Environment variables </i> section) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 4 different secrets:
 
 - **`azure.json`**: This file stores the credentials to connect to the required Azure blobs and queues (only needed if using Azure infrastructure). The custom path for this secret is "azure/", making the full path "secrets/azure/azure.json". The structure of this secret is as follows:
   ```json
@@ -3028,15 +3086,15 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 #### System requirements
 
-- Python 3.11
-- Cloud storage
-- [LLMAPI](#link al llmapi)
-- [Retrieval](#link al retrieval)
+* Python 3.11
+* Cloud storage
+* LLMAPI (See <i>Genai LLM API</i> documentation)
+* Retrieval (See <i>Genai inforetrieval</i> documentation)
 
 #### Installation
 
-- Create a new Python 3.11 environment
-- Install the required libraries with the "requirements.txt" file.
+- Create a new Python 3.11 environment.
+- Install the required libraries with the <i>requirements.txt</i> file.
 
     ```sh
     pip install -r "**path to the requirement.txt file**"
@@ -3050,42 +3108,42 @@ To get started with COMPOSE service on your local machine, you need to have Retr
     "STORAGE_BACKEND": "tenant-backend",
     "AZ_CONN_STR_STORAGE": "Endpoint=sb://exampleurl.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=sharedacceskeyexample123=",
     "SECRETS_PATH": "path to secrets folder",
-    "AWS_ACCESS_KEY": "example_access_123",
-    "AWS_SECRET_KEY": "example_secret_123",
+    "AWS_ACCESS_KEY": "XXXXXXXXXX",
+    "AWS_SECRET_KEY": "YYYYYYYYYY",
     ```
 
-    *To get more information go to [Environment variables](#environment-variables)*
+    <i>For more information, go to [Environment variables](#environment-variables)</i>.
 
-- Execute the main.py file:
+- Execute the <i>main.py</i> file:
 
     ```sh
-    python main.py"
+    python main.py
     ```
 
 ### Environment Variables
 
-- PROVIDER: Cloud service to use to load the configuration files (aws or azure).
-- STORAGE_BACKEND: Tenant backend name. Example: "dev-backend".
-- AZ_CONN_STR_STORAGE: Azure connection string.
-- SECRETS_PATH: Path to the secrets folder in the pod,
-- AWS_ACCESS_KEY: AWS Public access key to the project.
-- AWS_SECRET_KEY: AWS Secret access key to the project.
-- URL_LLM: Url to the LLMAPI predict endpoint.
-- URL_RETRIEVE: Url to the RETRIEVAL process endpoint.
-- REDIS_DB_SESSION: Session database number.
-- REDIS_HOST: Redis host url.
-- REDIS_PORT: Redis port, usually 6379.
-- REDIS_PASSWORD: Redis authentication password.
-- CRON_TIME: CRON execution interval time in seconds.
-- URI_PREFIX_KNOWLER: Uri prefix used for the "permission filter".
-- URL_ALLOWED_DOCUMENTS_KNOWLER: Url endpoint to used in the "permission filter".
-- LANGFUSE_PUBLIC_KEY: Langfuse project public key.
-- LANGFUSE_SECRET_KEY: Langfuse project secret key.
-- LANGFUSE_HOST: Langfuse host url.
-- LANGFUSE ("true", "false"): Variable used to set if COMPOSE uses langfuse per default.
-- DEFAULT_LLM_MODEL: Model name or pool used for the default templates for reformulate, filter, translate...
+* **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
+* **STORAGE_BACKEND**: Tenant backend name. Example: "dev-backend".
+* **AZ_CONN_STR_STORAGE**: Azure connection string.
+* **SECRETS_PATH**: Path to the secrets folder in the pod.
+* **AWS_ACCESS_KEY**: AWS Public access key to the project.
+* **AWS_SECRET_KEY**: AWS Secret access key to the project.
+* **URL_LLM**: Url to the LLMAPI predict endpoint.
+* **URL_RETRIEVE**: Url to the RETRIEVAL process endpoint.
+* **REDIS_DB_SESSION**: Session database number.
+* **REDIS_HOST**: Redis host url.
+* **REDIS_PORT**: Redis port, usually 6379.
+* **REDIS_PASSWORD**: Redis authentication password.
+* **CRON_TIME**: CRON execution interval time in seconds.
+* **URI_PREFIX_KNOWLER**: Uri prefix used for the "permission filter".
+* **URL_ALLOWED_DOCUMENTS_KNOWLER**: Url endpoint to used in the "permission filter".
+* **LANGFUSE_PUBLIC_KEY**: Langfuse project public key.
+* **LANGFUSE_SECRET_KEY**: Langfuse project secret key.
+* **LANGFUSE_HOST**: Langfuse host url.
+* **LANGFUSE ("true", "false")**: Variable used to set if COMPOSE uses langfuse per default.
+* **DEFAULT_LLM_MODEL**: Model name or pool used for the default templates for reformulate, filter, translate...
 
-*When the provider is "azure", the aws variables can be empty and the same when using "aws" with the azure variable*
+<i>When the provider is **azure**, the aws variables can be empty and the same when using *aws** with the azure variable</i>
 
 ## Code Overview
 
@@ -3097,7 +3155,7 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 
 - **ConfManager**
 
-    This class loads all the params and actions set in the compose template "compose_conf" field, loads the api gateway params and manage / call the rest of the managers.
+    This class loads all the params and actions set in the compose template <i>compose_conf</i> field, loads the api gateway params and manage / call the rest of the managers.
 
 - **AbstractManager**
 
@@ -3117,11 +3175,11 @@ To get started with COMPOSE service on your local machine, you need to have Retr
     }
     ```
 
-  - Lang (bool): To show the detected language in the query.
+  * **Lang (bool)**: To show the detected language in the query.
 
-  - N_conversation (int): To show the conversation of the session.
+  * **N_conversation (int)**: To show the conversation of the session.
 
-  - N_retrieval (int): To show the retrieved chunks.
+  * **N_retrieval (int)**: To show the retrieved chunks.
 
     The answer is always displayed.
 
@@ -3162,7 +3220,7 @@ In case there is no query but the "compose" receives some document names, it wil
 ### Actions
 
 All the actions have the same structure. A Factory class to select what type to execute within the action, an abstract method class and then one class per action type with the logic to execute it.
-Every sorting action has a boolean action param called “desc” to set if the result should be descendant or ascendant
+Every sorting action has a boolean action param called “desc” to set if the result should be descendant or ascendant.
 
 1. **Retrieve**
 
@@ -3181,7 +3239,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
                         "query": "$query",
                         "task": "retrieve",
                         "top_k": 5,
-                        "filters": $filters
+                        "filters": "$filters"
                     },
                     "process_type": "ir_retrieve"
                 }
@@ -3193,13 +3251,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters of the 'retrieve' action:
 
-   - **Index** (string): Index name where the document to retrieve is stored.
+   * **Index** (string): Index name where the document to retrieve is stored.
 
-   - **Query** (string): User query to execute.
+   * **Query** (string): User query to execute.
 
-   - **Top_k** (int): Number of chunks to retrieve.
+   * **Top_k** (int): Number of chunks to retrieve.
 
-   - **Filters** (json/dict): Filters to apply while retrieving the document chunks.
+   * **Filters** (json/dict): Filters to apply while retrieving the document chunks.
 
     Example:
 
@@ -3209,12 +3267,12 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-   - **Type** (string): Retrieve type. The available types are:
+   * **Type** (string): Retrieve type. The available types are:
 
-      1. "get_chunks": Calls genai-inforetrieval to get the K number of chunks from the specified index.
-      2. "get_document": Calls genai-inforetrieval to get the entire document content specified.
+      1. <i>get_chunks</i>: Calls genai-inforetrieval to get the K number of chunks from the specified index.
+      2. <i>get_document</i>: Calls genai-inforetrieval to get the entire document content specified.
 
-    With the same action in the template json file, we can execute multiple retrieval to obtain different streamlist with different queries using the "retrieve" action name in the json api call.
+    With the same action in the template JSON file, we can execute multiple retrieval to obtain different streamlist with different queries using the **retrieve** action name in the JSON API call.
 
     ```json
     "retrieve": [
@@ -3241,21 +3299,21 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters of the action 'filter:
 
-    - **Type** (string): Filter type to execute. (top_k, related_to, metadata, permissionfilter)
+    * **Type** (string): Filter type to execute. (top_k, related_to, metadata, permissionfilter)
 
-    - **Top_k** (int): Number of chunks to return.
+    * **Top_k** (int): Number of chunks to return.
 
-    - **Model** (string): LLM model to use.
+    * **Model** (string): LLM model to use.
 
-    - **Platform** (string): Platform hosting the LLM.
+    * **Platform** (string): Platform hosting the LLM.
 
-    - **Query** (string)
+    * **Query** (string)
 
-    - **Template_name** (string):  Template name to use while calling genai-llmapi.
+    * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
-    - **Filer_conditions** (json/dict): Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
+    * **Filer_conditions** (json/dict): Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
-    Example of 'filter' action using type **"related_to"**:
+    Example of the **filter** action using the "<i>related_to</i>" type:
 
     ```json
     {
@@ -3264,7 +3322,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "type":  "related_to",
             "params":  {
                 "llm_metadata":  {
-                    "model":  "gpt-3.5-16k-pool-techhub-europe"
+                    "model":  "techhub-pool-world-gpt-3.5-turbo-16k"
                 },
                 "platform_metadata":  {
                     "platform":  "azure"
@@ -3278,7 +3336,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    Example of 'filter' action using type **"metadata"**:
+    Example of the **filter** action using the "<i>metadata</i>" type:
 
     ```json
     {
@@ -3324,15 +3382,15 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     ![alt text](imgs/techhubgenaicompose/merge.png)
 
-    - **Type** (string): Merge type to execute. (meta)
+    * **Type** (string): Merge type to execute. (meta)
 
-    - **Template** (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
+    * **Template** (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
 
-    - **Sep** (string): Value to use to separate each content chunk.
+    * **Sep** (string): Value to use to separate each content chunk.
 
-    - **Grouping_key** (string): Value to group the results.
+    * **Grouping_key** (string): Value to group the results.
 
-    Example for action 'merge' in template:
+    Example of the **merge** action in a template:
 
     ```json
     {          
@@ -3351,7 +3409,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    This action merges the different streamlist in a streambatch into a single streamlist with non-repeated chunks. Starts with 1 streambatch containing multiple streamlist containing multiple chunks that can be repeated between streamlists and it ends with a streambatch containing 1 streamlist with unique chunks.
 
-   Example for action 'batchmerge' in template:
+   Example of the **batchmerge** action in a template:
 
    ```json
     {
@@ -3368,17 +3426,17 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Can be executed for the streambatch or for streamlist. It can sort the streamlist based on the score, content length, document id or snippet number and the streambatch based on the mean score or the overall content. It can also sort based on other specified metadata or date. The usable date formats are the same as for the 'filter' action.
 
-   - **Type** (string): Sorting type to execute.
+   * **Type** (string): Sorting type to execute.
         - **Score**: Sorts by the mean score of each chunk.
         - **Length**: Sorts by the length of each chunk.
         - **Doc_id**: Sort by the document id of each chunk.
         - **Sn_number**: Sort by the snippet number of each chunk.
         - **Date**: Sort by metadata named “date” with date type values.
         - **Meta**: Sort by the metadata value, date values don’t work in this type.
-   - **Desc** (bool): Sort descendant or ascendant.
-   - **Value**: Metadata to use while sorting the streamlist.
+   * **Desc** (bool): Sort descendant or ascendant.
+   * **Value**: Metadata to use while sorting the streamlist.
 
-   Example of action 'sort' with type **"length"**:
+   Example of the **sort** action using the "<i>length</i>" type:
 
    ```json
    {
@@ -3392,7 +3450,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
    ```
 
-   Example of action 'sort' with type **"meta"**:
+   Example of the **sort** action using the "<i>meta</i>" type:
 
    ```json
    {
@@ -3401,7 +3459,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "type":  "meta",
             "params":  {
                 "desc":  true,
-                "value": $metadata_name
+                "value": "$metadata_name"
             }
         }
     }
@@ -3414,13 +3472,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ![alt text](imgs/techhubgenaicompose/groupby1.png)
     ![alt text](imgs/techhubgenaicompose/groupby2.png)
 
-   - **Type** (string): Groupby type to use. (docscore, date).
+   * **Type** (string): Groupby type to use. (docscore, date).
 
-   - **Method** (string): Method to use in the docscore sorting (max, mean).
+   * **Method** (string): Method to use in the docscore sorting (max, mean).
 
-   - **Desc** (bool): Sort descendant or ascendant.
+   * **Desc** (bool): Sort descendant or ascendant.
 
-    Example for 'groupby' action with type "docscore":
+    Example of the **groupby** action using the "<i>docscore</i>" type:
 
     ```json
     {
@@ -3435,7 +3493,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    Example for 'groupby' action with type **"date"**:
+    Example of the **groupby** action using the "<i>date</i>" type:
 
     ```json
     {
@@ -3455,17 +3513,17 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Parameters of this action:
 
-   - **Type** (string): Method to user while calling genai-llmapi. (llm_content, llm_segments)
+   * **Type** (string): Method to user while calling genai-llmapi. (llm_content, llm_segments)
 
-   - **Model** (string): LLM model to use.
+   * **Model** (string): LLM model to use.
 
-   - **Platform** (string): Platform hosting the LLM.
+   * **Platform** (string): Platform hosting the LLM.
 
-   - **Query** (string)
+   * **Query** (string)
 
-   - **Template_name** (string):  Template name to use while calling genai-llmapi.
+   * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
-   - **System** (string): Context and task that will be sent to the LLM.
+   * **System** (string): Context and task that will be sent to the LLM.
 
    Within this action, there are two types:
 
@@ -3473,7 +3531,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
   
     ![alt text](imgs/techhubgenaicompose/llmcontent.png)
 
-    Example for 'llm_action' action with type "llm_content":
+    Example of the **llm_action** action using the "<i>llm_content</i>" type:
 
     ```json
         {   
@@ -3481,7 +3539,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
             "action_params": {
                 "params": {
                     "llm_metadata": {
-                        "model": "gpt-3.5-16k-pool-techhub-europe",
+                        "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                         "max_input_tokens":5000
                     },
                     "platform_metadata": {
@@ -3502,7 +3560,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
   
     ![alt text](imgs/techhubgenaicompose/llmsegment.png)
 
-    Example for 'llm_action' action with type "llm_segment":
+    Example of the **llm_action** action using the "<i>llm_segment</i>" type:
 
     ```json
     {   
@@ -3510,7 +3568,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action_params": {
             "params": {
                 "llm_metadata": {
-                    "model": "gpt-3.5-16k-pool-techhub-europe",
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k",
                     "max_input_tokens":5000
                 },
                 "platform_metadata": {
@@ -3532,83 +3590,85 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    Parameters of this action:
 
-   - **Type** (string): Method to use for the expansion. (langs, steps)
-   - **Params** (dict): Params for the action.
+   * **Type** (string): Method to use for the expansion. (langs, steps).
+   * **Params** (dict): Params for the action.
 
-    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
+   Possible values of <i>type</i> parameter:
 
-   - **Langs** (string, list): Languages to translate the query while using the langs type.
-   - **Model** (string, optional): Model to use for the translation.
+    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". <i>Model</i> param is optional.  
 
-    Example:
+    * **Langs** (string, list): Languages to translate the query while using the langs type.
+    * **Model** (string, optional): Model to use for the translation.
 
-    ```json
-   {
-        "action": "expansion",
-        "action_params":{
-            "params": {
-                "langs" : ["es", "ja", "chinese"],
-                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
-            },
-            "type": "lang"
+        Example:
+
+        ```json
+        {
+            "action": "expansion",
+            "action_params":{
+                "params": {
+                    "langs" : ["es", "ja", "chinese"],
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
+                },
+                "type": "lang"
+            }
         }
-    }
-    ```
+        ```
 
-    The available abbreviations are:
-    - "ja": "japanese",
-    - "es": "spanish",
-    - "en": "english",
-    - "fr": "french",
-    - "de": "german",
-    - "zh": "chinese",
-    - "it": "italian",
-    - "ko": "korean",
-    - "pt": "portuguese",
-    - "ru": "russian",
-    - "ar": "arabic",
-    - "hi": "hindi",
-    - "tr": "turkish",
-    - "nl": "dutch",
-    - "sv": "swedish",
-    - "pl": "polish",
-    - "el": "greek",
-    - "he": "hebrew",
-    - "vi": "vietnamese",
-    - "th": "thai",
-    - "ca": "catalan"
+        The available abbreviations are:
+        - "ja": "japanese",
+        - "es": "spanish",
+        - "en": "english",
+        - "fr": "french",
+        - "de": "german",
+        - "zh": "chinese",
+        - "it": "italian",
+        - "ko": "korean",
+        - "pt": "portuguese",
+        - "ru": "russian",
+        - "ar": "arabic",
+        - "hi": "hindi",
+        - "tr": "turkish",
+        - "nl": "dutch",
+        - "sv": "swedish",
+        - "pl": "polish",
+        - "el": "greek",
+        - "he": "hebrew",
+        - "vi": "vietnamese",
+        - "th": "thai",
+        - "ca": "catalan"
 
     **2. Step Expansion**: This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
 
-   - **K_steps** (int): Max number of query to create. The max number of queries is 10.
-   - **Context** (string, optional): Context for the template to use while calling llmapi.
-   - **Model** (string, optional): Model to use for the translation.
+    * **K_steps** (int): Max number of query to create. The max number of queries is 10.
+    * **Context** (string, optional): Context for the template to use while calling llmapi.
+    * **Model** (string, optional): Model to use for the translation.
 
-    Example:
+        Example:
 
-    ```json
-   {
-        "action": "expansion",
-        "action_params":{
-            "params": {
-                "k_steps": 2,
-                "model": "techhubinc-pool-us-gpt-3.5-turbo-16k"
-            },
-            "type": "steps"
+        ```json
+        {
+            "action": "expansion",
+            "action_params":{
+                "params": {
+                    "k_steps": 2,
+                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
+                },
+                "type": "steps"
+            }
         }
-    }
-    ```
+        ```
 
 9. **Reformulate query**
     This action allows the user to reformulate the original query to improve the quality of the responses.
 
    Parameters of this action:
 
-   - **Type** (string): Method to use for the reformulate. (mix_queries)
+   * **Type** (string): Method to use for the reformulate. (mix_queries)
 
    Within this action, there is one type:
 
-   - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+   * **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
 
     Example:
 
@@ -3626,23 +3686,19 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    - Params:
+    * Params:
       - Max_persistence (int): Max number of older sessions to use.
       - Template_name (string): Template used while calling the LLMAPI.
       - Save_mod_query (bool): Used to save or not the original query.
 
 10.  **filter query**
-    this action allows the user to filter the query to protect the tool from malicious queries or not wanted topics.
-
-    parameters of this action:
-
-    - **type** (string): method to use for the reformulate. (llm)
-
-    within this action, there is one type:
+    This action allows the user to filter the query to protect the tool from malicious queries or not wanted topics. The possible parameters of this action are:
+    
+* **type** (string): method to use for the reformulate. Within this action, there is one type:
 
     - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
 
-    example action:
+    Example:
 
     ```json
     {
@@ -3696,20 +3752,16 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 11.  **Filter response**
-    This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired.
+    This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired. The parameters of this action are:
 
-    Parameters of this action:
+* **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
-    - **Type** (string): Method to use for the reformulate. (llm)
-
-    Within this action, there is one type:
-
-    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
+    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
 
     Example action:
 
     ```json
-        {
+    {
         "action": "filter_response",
         "action_params":{
             "params": {
@@ -3747,13 +3799,13 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     Parameters:
 
-    - **filter_types**: Currently There is only one type of filter, GPT.
+    * **filter_types**: Currently There is only one type of filter, GPT.
 
-    - **substitutions_template**: It will be the prompt used for classification.
+    * **substitutions_template**: It will be the prompt used for classification.
 
-    - **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
 
-    - **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ## Troubleshooting
 
