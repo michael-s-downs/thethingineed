@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 # Local imports
-from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter
+from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter, NovaAdapter
 from common.errors.genaierrors import PrintableGenaiError
 from messages import ChatGPTMessage, DalleMessage, ChatGPTvMessage, Claude3Message
 
@@ -70,7 +70,7 @@ class TestManagerAdapters:
 
     def test_get_possible_platforms(self):
         platforms = ManagerAdapters.get_possible_adapters()
-        assert platforms == ["claude", "gpt4v", "dalle", "base"]
+        assert platforms == ["claude", "gpt4v", "dalle", "base", "nova"]
 
     def test_all_adapters(self):
         self.conf['adapter'] = "gpt4v"
@@ -161,8 +161,7 @@ class TestGPT4VAdapter:
         with patch('PIL.Image.open') as mock_image_open:
             mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
             result = adapter._adapt_image(image)
-            assert image == {'type': 'image_url', 'image_url': {'url': url}}
-            assert result == 765
+            assert image == {'type': 'image_url', 'image_url': {'url': url}, "n_tokens": 765}
         image_b64 = {
             'type': 'image_b64',
             'image': {
@@ -170,8 +169,7 @@ class TestGPT4VAdapter:
             }
         }
         result = adapter._adapt_image(image_b64)
-        assert image_b64 == {'type': 'image_url', 'image_url': {'url': "data:image/jpeg;base64," + base64}}
-        assert result == 765
+        assert image_b64 == {'type': 'image_url', 'image_url': {'url': "data:image/jpeg;base64," + base64}, "n_tokens": 765}
 
         image_detail = {
             'type': 'image_url',
@@ -183,8 +181,7 @@ class TestGPT4VAdapter:
         with patch('PIL.Image.open') as mock_image_open:
             mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
             result = adapter._adapt_image(image_detail)
-            assert image_detail == {'type': 'image_url', 'image_url': {'url': url, 'detail': 'low'}}
-            assert result == 85
+            assert image_detail == {'type': 'image_url', 'image_url': {'url': url, 'detail': 'low'},"n_tokens": 85}
 
         image_b64_wrong = {
             'type': 'image_b64',
@@ -272,7 +269,7 @@ class TestClaude3Adapter:
                 assert image.get('source').get('type') == "base64"
                 assert image.get('source').get('media_type') == "image/jpeg"
                 assert isinstance(image.get('source').get('data'), str)
-                assert result == 642
+                assert image.get('n_tokens') == 642
 
         image_b64 = {
             'type': 'image_b64',
@@ -284,7 +281,7 @@ class TestClaude3Adapter:
         assert image_b64.get('source').get('type') == "base64"
         assert image_b64.get('source').get('media_type') == "image/jpeg"
         assert isinstance(image_b64.get('source').get('data'), str)
-        assert result == 1080
+        assert image_b64.get('n_tokens') == 1080
         image_detail = {
             'type': 'image_url',
             'image': {
@@ -322,4 +319,68 @@ class TestClaude3Adapter:
                 mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
                 adapter._adapt_image(image_b64)
 
+class TestNovaAdapter:
+    def test_adapt_image(self):
+        message = MagicMock()
+        adapter = NovaAdapter(message)
+        image = {
+            'type': 'image_url',
+            'image': {
+                'url': url,
+            }
+        }
+        with patch('PIL.Image.open') as mock_image_open:
+            with patch('requests.get') as mock_requests_get:
+                mock_requests_get.return_value = MagicMock(content=b"image")
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
+                result = adapter._adapt_image(image)
+                assert image.get('image').get('format') == "jpeg"
+                assert isinstance(image.get('image').get('source').get('bytes'), str)
+                assert image.get('n_tokens') == 642
 
+        image_b64 = {
+            'type': 'image_b64',
+            'image': {
+                'base64': base64
+            }
+        }
+        result = adapter._adapt_image(image_b64)
+        assert image.get('image').get('format') == "jpeg"
+        assert isinstance(image.get('image').get('source').get('bytes'), str)
+        assert image_b64.get('n_tokens') == 1080
+        image_detail = {
+            'type': 'image_url',
+            'image': {
+                'url': url,
+                'detail': "low"
+            }
+        }
+        with pytest.raises(PrintableGenaiError, match="Error 400: Detail parameter not allowed in Nova vision model"):
+            adapter._adapt_image(image_detail)
+        image_b64_wrong = {
+            'type': 'image_b64',
+            'image': {
+                'base64': "añsjdfñlakjpowie"
+            }
+        }
+        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid base64 format"):
+            adapter._adapt_image(image_b64_wrong)
+        img_wrong_url = {
+            'type': 'image_url',
+            'image': {
+                'url': 'https://example.com/image.jpg'
+            }
+        }
+        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid url format"):
+            adapter._adapt_image(img_wrong_url)
+
+        image_b64 = {
+            'type': 'image_b64',
+            'image': {
+                'base64': base64
+            }
+        }
+        with patch('PIL.Image.open') as mock_image_open:
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format [jpeg, png, gif, webp]")):
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
+                adapter._adapt_image(image_b64)

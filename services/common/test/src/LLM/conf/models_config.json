@@ -72,7 +72,7 @@
 			"model_type": "claude-v3-haiku",
 			"max_input_tokens": 200000,
 			"zone": "eu-west-3",
-			"message": "chatClaude3",
+			"message": "chatClaude-v",
 			"api_version": "bedrock-2023-05-31",
 			"model_pool": ["claude-v3-haiku-pool-europe",
 			"claude-v3-haiku-pool-world"]
@@ -83,7 +83,7 @@
 			"model_type": "claude-v3-sonnet",
 			"max_input_tokens": 200000,
 			"zone": "eu-west-3",
-			"message": "chatClaude3",
+			"message": "chatClaude-v",
 			"api_version": "bedrock-2023-05-31",
 			"model_pool": ["claude-v3-sonnet-pool-europe",
 			"claude-v3-sonnet-pool-world"]

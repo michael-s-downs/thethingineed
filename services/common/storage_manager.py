@@ -104,7 +104,7 @@ class LLMStorageManager(BaseStorageManager):
     def __init__(self, workspace, origin):
         super().__init__(workspace, origin)
         self.prompts_path = "src/LLM/prompts/"
-        self.models_file_path = "src/LLM/conf/models_config.json"
+        self.models_file_path = "src/LLM/conf/models_config_new.json"
         self.default_models_file_path = "src/LLM/conf/default_llm_models.json"
         if not self.load_file(self.workspace, self.models_file_path):
             self.models_file_path = "src/compose/conf/models_config.json"

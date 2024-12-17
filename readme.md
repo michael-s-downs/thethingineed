@@ -2567,7 +2567,7 @@ Each parameter for a model configuration is:
 * **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
 * **message**: type of message that will be used in order to adapt the input to the model's requirements. It could be:
   - **chatClaude**: Claude models with text capabilities.
-  - **chatClaude3**: Claude models with text and vision capabilities.
+  - **chatClaude-v**: Claude models with text and vision capabilities.
   - **chatGPT**: ChatGPT models with text capabilities.
   - **chatGPT-v**: ChatGPT with text and vision capabilities.
   - **dalle**: Dall-E models (image generation).
