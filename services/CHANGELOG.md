@@ -3,7 +3,7 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## v2.2.0 (2024-12-17)
 - genai-compose:
     - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
 - genai-infoindexing:
@@ -13,8 +13,8 @@
     - [New] Added method to check that the same chunking method is always used
     - [New] New logger in debug mode when selecting model from pool
     - [Improvement] Files distribution organized
-    - [Improvement] Llamaindex library updated
-    - [Improvement] Now snippet_id same as elasticsearch id_
+    - [Improvement] Updated library 'llama-index'
+    - [Improvement] Now field 'snippet_id' same as elasticsearch 'id_'
 - integration-sender:
     - [New] Added new chunking methods (input parameters)
     - [Improvement] Input parameters communication between methods improved
@@ -24,16 +24,19 @@
         - Surrounding context window
     - [New] Added method to check that the retrieval strategy fits with the chunking method used
     - [New] New logger in debug mode when selecting model from pool
-
     - [Improvement] Files distribution organized
-    - [Improvement] Llamaindex library updated
-    - [Improvement] Elasticsearch adaption library updated to version 0.3.3 to stay merged with Llamaindex library
+    - [Improvement] Updated library 'llama-index'
+    - [Improvement] Adaption of library 'elasticsearch' updated to version 0.3.3 to stay aligned with library 'llama-index'
 - genai-llmapi:
     - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
     - [New] New logger in debug mode when selecting model from pool
-    - [Improvement] Set default model for each platform (depending on a file)
+    - [Improvement] Set default model for each platform (based on new config file 'src/LLM/conf/default_llm_models.json')
     - [Improvement] ChatClaude3 message refactor to ChatClaude-v
     - [Fix] Fix logger when zone not available in models secrets file
+- preprocess-ocr:
+    - [Fix] Solved error with Azure OCR updating library 'genai-sdk-services' to version 0.4.13
+        - Add environment variable AZ_OCR_API_VERSION to set dynamically or passing inside secret
+        - Set by default 'api_version' to '2024-11-30', to avoid error without environment variable or secret
 - ALL:
     - [New] Add logic to switch between Bus and Storage Azure queues by boolean env var 'STORAGE_QUEUE', by default 'False' (Bus)
 
@@ -148,7 +151,7 @@
 
 ## v1.4.0 (2024-08-26)
 - genai-infoindexing:
-    - [New] Now indexation process done with llama_index library
+    - [New] Now indexation process done with library 'llama-index' instead of 'haystack'
         - Chunks split
         - Embeddings generation
     - [New] Embeddings generation can be done with cohere

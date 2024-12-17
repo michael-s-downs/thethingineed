@@ -1,3 +1,6 @@
+### This code is property of the GGAO ###
+
+
 genai-sdk-services==0.4.9
 Pillow==10.0.1
 pandas==2.2.3
