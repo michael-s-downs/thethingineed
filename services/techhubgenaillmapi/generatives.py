@@ -1010,9 +1010,11 @@ class ManagerModel(object):
         ## backward compatibility        model_in = model_in.replace('pull', 'pool')
 
         available_models = available_models.get(platform_name, [])
+        pool = False
 
         if model_in in available_pools:
             selected_model = copy.deepcopy(random.choice(available_pools[model_in]))
+            pool = True
         else:
             selected_model = ManagerModel.find_model_in_available_models(model_in, available_models)
 
@@ -1025,7 +1027,10 @@ class ManagerModel(object):
                     selected_model.pop('model_pool', None)
                     selected_model.update(conf)
                     try:
-                        return model(**selected_model)
+                        model_object = model(**selected_model)
+                        if pool: 
+                            model_object.logger.debug(f"Model selected from pool: {model_object.model_name}.")
+                        return model_object
                     except TypeError as e:
                         raise PrintableGenaiError(400, f"Parameter:{str(e).split('argument')[1]} not supported in model: "
                                          f"'{selected_model.get('model')}'")

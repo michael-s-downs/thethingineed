@@ -133,7 +133,7 @@ class InfoRetrievalDeployment(BaseDeployment):
             retrievers.append((vector_store, embed_model, embed_query, f"{model.get('embedding_model')}--score"))
         return retrievers
 
-    def get_default_models(self, index: str, connector: Connector):
+    def get_default_models(self, input_object: ParserInforetrieval, connector: Connector):
         """ Get the default models for the index
 
         :param index: index to get the default models
@@ -142,11 +142,11 @@ class InfoRetrievalDeployment(BaseDeployment):
         """
         indexed_models = ["bm25"]
         for model in self.all_models:
-            if connector.exist_index(ELASTICSEARCH_INDEX(index, model)):
+            if connector.exist_index(ELASTICSEARCH_INDEX(input_object.index, model)):
                 indexed_models.append(self.default_embedding_equivalences[model])
     
         # Get the model credentials
-        return ParserInforetrieval.get_sent_models(indexed_models, self.available_pools, self.available_models,
+        return input_object.get_sent_models(indexed_models, self.available_pools, self.available_models,
                                                    self.models_credentials)
 
     @staticmethod
@@ -187,7 +187,7 @@ class InfoRetrievalDeployment(BaseDeployment):
 
             # If no models are passed, we will retrieve with bm25 and the models used in the indexation process
             if len(input_object.models) == 0:
-                input_object.models = self.get_default_models(input_object.index, connector)
+                input_object.models = self.get_default_models(input_object, connector)
             else:
                 self.assert_correct_models(input_object.index, input_object.models, connector)
 

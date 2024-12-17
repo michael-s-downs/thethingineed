@@ -11,6 +11,7 @@
         - Recursive
         - Surrounding context window
     - [New] Added method to check that the same chunking method is always used
+    - [New] New logger in debug mode when selecting model from pool
     - [Improvement] Files distribution organized
     - [Improvement] Llamaindex library updated
     - [Improvement] Now snippet_id same as elasticsearch id_
@@ -22,12 +23,17 @@
         - Recursive
         - Surrounding context window
     - [New] Added method to check that the retrieval strategy fits with the chunking method used
+    - [New] New logger in debug mode when selecting model from pool
+
     - [Improvement] Files distribution organized
     - [Improvement] Llamaindex library updated
     - [Improvement] Elasticsearch adaption library updated to version 0.3.3 to stay merged with Llamaindex library
 - genai-llmapi:
-    - [New] Added model Nova for AWS platform
-    - [Improvement] Set default model to 'techhub-pool-world-gpt-4o'
+    - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
+    - [New] New logger in debug mode when selecting model from pool
+    - [Improvement] Set default model for each platform (depending on a file)
+    - [Improvement] ChatClaude3 message refactor to ChatClaude-v
+    - [Fix] Fix logger when zone not available in models secrets file
 - ALL:
     - [New] Add logic to switch between Bus and Storage Azure queues by boolean env var 'STORAGE_QUEUE', by default 'False' (Bus)
 
