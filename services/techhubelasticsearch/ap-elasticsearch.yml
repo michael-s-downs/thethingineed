@@ -28,9 +28,8 @@ stages:
             scannerMode: 'cli'
             configMode: 'manual'
             cliProjectKey: $(System.DefinitionName)
-            cliSources: |
-                  $(System.DefaultWorkingDirectory)/services/techhubelasticsearch/,
-                  $(System.DefaultWorkingDirectory)/helm/
+            cliSources: '$(System.DefaultWorkingDirectory)/services/techhubelasticsearch/'
+                  
             # removes sonar.branch.name variable as this is not supported by community edition
         - task: PowerShell@2
           inputs:
