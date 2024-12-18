@@ -633,7 +633,7 @@ class FormRecognizer(BaseOCR):
     ORIGIN_TYPE = "azure-ocr"
     credentials = {}
     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "azure", "azure_ocr.json")
-    env_vars = ["AZ_KEY_CREDENTIAL", "AZ_OCR_ENDPOINT"]
+    env_vars = ["AZ_KEY_CREDENTIAL", "AZ_OCR_ENDPOINT", "AZ_OCR_API_VERSION"]
 
     def __init__(self):
         self.sc = StorageController()
@@ -674,10 +674,13 @@ class FormRecognizer(BaseOCR):
                 if os.path.exists(self.secret_path):
                     with open(self.secret_path, "r") as file:
                         credentials = json.load(file)
+                        if "api_version" not in credentials:
+                            credentials['api_version'] = os.getenv(self.env_vars[2], "2024-11-30")
                 elif os.getenv(self.env_vars[0], ""):
                     credentials = {
                         'key_credential': os.getenv(self.env_vars[0]),
-                        'endpoint': os.getenv(self.env_vars[1])
+                        'endpoint': os.getenv(self.env_vars[1]),
+                        'api_version': os.getenv(self.env_vars[2], "2024-11-30")
                     }
                 else:
                     raise Exception("Credentials not found")
@@ -760,8 +763,7 @@ class FormRecognizer(BaseOCR):
         self._set_credentials(credentials)
 
         bytes_mode = kwargs.get('bytes_mode', True)
-
-        client = DocumentIntelligenceClient(credential=AzureKeyCredential(self.credentials['key_credential']), endpoint=self.credentials['endpoint'])
+        client = DocumentIntelligenceClient(credential=AzureKeyCredential(self.credentials['key_credential']), endpoint=self.credentials['endpoint'], api_version=self.credentials['api_version'])
 
         returning_texts = []
         returning_blocks = []
