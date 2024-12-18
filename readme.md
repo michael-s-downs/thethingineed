@@ -955,25 +955,25 @@ The request would like like below
 A compose template is a JSON file detailing all the action steps the orchestrator needs to execute. These actions define the orchestrator flow; the main two actions are 'retrieve' and 'llm_action', but there are other actions that apply to the result of the 'retrieve' action: filter, merge, batchmerge, sort and groupby.
 
 These are the following compose templates currently available.
- * **retrieve**: to only retrieve documents, without content generation. This  template does not use a LLM.
- * **retrieve_llm**: to retrieve documents and content generation.
- * **retrieve_reference**: to retrieve documents and generate content with a LLM.
- * **llm_model**: to use a LLM directly, without a retrieval.
- * **multiple_retrieval**: to perform several retrievals, without content generation. This template does not use a LLM.
- * **multiple_retrieval_llm**: to perform several retrievals, with content generation.
- * **retrieve_embeddings**: to do a retrieval selecting an embedding model, without content generation. This template does not use a LLM.
- * **retrieve_embeddings_llm**: to do a retrieval selecting an embedding model, with content generation.
- * **retrieve_hybrid_scoring**: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), without content generation. This template does not use a LLM.
- * **retrieve_hybrid_scoring_llm**: to do a hybrid retrieval (BM25 + selected embedding model with a scoring function), with content generation.
- * **retrieve_hybrid_scoring_rrf**: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), without content generation. This template does not use a LLM.
- * **retrieve_hybrid_scoring_rrf_llm**: to do a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), with content generation.
- * **retrieve_sort_llm**: to do retrieval and sorting chunks, with content generation.
- * **retrieve_merge_llm**: to merge the content of chunks with metadata filename, with content generation.
- * **retrieve_fulldocument**: to retrieve a full document, without content generation. This  template does not use a LLM.
- * **retrieve_fulldoc_llm**: to retrieve a full document, with content generation.
- * **retrieve_batchmerge_llm**: to perform several retrievals, with content generation.
- * **expand_query_lang_llm**: to do a retrieval translating the queries in different languages, with content generation.
- * **dalle**: for calling DALL-E model.
+ * **retrieve**: This template does not use an LLM and its target is to only retrieve documents without content generation.
+ * **retrieve_llm**: The target of this template is to retrieve documents and return an answer using an LLM (interpreting the answer into human language).
+ * **retrieve_reference**: The target of this template is to retrieve documents and return a debug answer using an LLM (interpreting the answer into human language). When retrieving the answer from a document before using an LLM model, this template applies different actions to get an high-quality answer.
+ * **llm_model**: The target of this template is to use an LLM directly, without a retrieval.
+ * **multiple_retrieval**: This template does not use an LLM and to perform several retrievals from the document, without content generation.
+ * **multiple_retrieval_llm**: This template uses an LLM to perform several retrievals, along with content generation.
+ * **retrieve_embeddings**: This template does not use an LLM for retrieval by selecting an embedding model, and it does not generate content; it only retrieves the original snippet text.
+ * **retrieve_embeddings_llm**: This template uses an LLM for retrieval by selecting an embedding model, and it returns an answer using an LLM (interpreting the answer into human language).
+ * **retrieve_hybrid_scoring**: This template does not use an LLM and perforn a hybrid retrieval (BM25 + selected embedding model with a scoring function), without content generation.
+ * **retrieve_hybrid_scoring_llm**: This template uses an LLM for perform a hybrid retrieval (BM25 + selected embedding model with a scoring function), along with content generation.
+ * **retrieve_hybrid_scoring_rrf**: This template does not use an LLM and perforn a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), without content generation.
+ * **retrieve_hybrid_scoring_rrf_llm**: This template uses an LLM for perform a hybrid retrieval (BM25 + selected embedding model with RRF from LlamaIndex), along with content generation.
+ * **retrieve_sort_llm**: This template uses an LLM for retrieving and sorting chunks, along with content generation.
+ * **retrieve_merge_llm**: This template uses an LLM to merge the content of chunks with metadata filenames, along with content generation.
+ * **retrieve_fulldocument**: This template does not use an LLM to retrieve a full document, and it does not generate content.
+ * **retrieve_fulldoc_llm**: This template uses an LLM to retrieve a full document, along with content generation.
+ * **retrieve_batchmerge_llm**: This template uses an LLM to perform several retrievals, along with content generation. This template uses the batchmerge action.
+ * **expand_query_lang_llm**: This template uses an LLM for retrieval by translating queries into different languages, along with content generation.
+ * **dalle**: This template is used for calling the DALL-E model.
  
  #### Compose Template Expected parameters:
  
