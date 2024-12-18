@@ -43,6 +43,7 @@ class LLMDeployment(BaseDeployment):
         self.storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": self.workspace, "origin": self.origin})
         self.available_pools = self.storage_manager.get_available_pools()
         self.available_models = self.storage_manager.get_available_models()
+        self.default_models = self.storage_manager.get_default_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
 
         self.templates, self.templates_names, self.display_templates_with_files = self.storage_manager.get_templates(return_files=True)
@@ -86,7 +87,7 @@ class LLMDeployment(BaseDeployment):
             if template_name not in self.templates_names:
                 raise ValueError(f"Invalid template name '{template_name}'. The valid ones are '{self.templates_names}'")
         else:
-            if model.MODEL_MESSAGE in ["chatClaude3", "chatGPT-v"] and isinstance(query, str):
+            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v"] and isinstance(query, str):
                 model.DEFAULT_TEMPLATE_NAME = "system_query"
             template_name = model.DEFAULT_TEMPLATE_NAME
         return self.templates[template_name], template_name # When anyone passed, default_template_name is used
@@ -98,6 +99,7 @@ class LLMDeployment(BaseDeployment):
         return ManagerPlatform.get_platform(parsed_platform_metadata)
 
     def parse_model(self, llm_metadata: dict, platform: Platform):
+        llm_metadata['default_model'] = self.default_models.get(platform.MODEL_FORMAT)
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
         parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
                                                                                                 {})

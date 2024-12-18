@@ -199,7 +199,8 @@ class LLMMetadata(BaseModel):
     top_p: Optional[confloat(ge=0.0, le=1.0)] = None
     # Nova model parameter
     top_k: Optional[int] = Field(None, ge=0, le=500) # Optional int with range constraint
-    model: str = Field(default='techhub-pool-world-gpt-4o')
+    model: Optional[str] = None
+    default_model: Optional[str] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
@@ -210,6 +211,15 @@ class LLMMetadata(BaseModel):
             raise ValueError("Internal error, function_call is mandatory because you put the functions param")
         elif self.function_call and not self.functions:
             raise ValueError("Internal error, functions is mandatory because you put the function_call param")
+
+    @model_validator(mode='before')
+    def validate_default_model(cls, values):
+        if not values.get('model'):
+            if not values.get('default_model'):
+                raise ValueError("Internal error, default model not founded")
+            values['model'] = values.get('default_model')
+        values.pop('default_model', None)
+        return values
 
 
 class PlatformMetadata(BaseModel):

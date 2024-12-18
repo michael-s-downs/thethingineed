@@ -6,6 +6,7 @@ import os
 import re
 import copy
 import json
+import unittest
 
 # Installed imports
 import pytest
@@ -13,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from generatives import ChatGPTvModel
+from generatives import ChatGPTVision
 
 
 gpt_v_model = {
@@ -84,6 +85,21 @@ azure_call = {
     "llm_metadata": {
         "max_input_tokens": 1000,
         "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13"
+    },
+    "platform_metadata": {
+        "platform": "azure"
+    }
+}
+
+azure_call_no_model = {
+    "query_metadata": {
+        "query": "what is a seed?",
+        "template_name": "system_query",
+        "context": "The seed is an optional parameter, which can be set to an integer or null.This feature is in Preview. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result. Determinism isn't guaranteed, and you should refer to the system_fingerprint response parameter to monitor changes in the backend.system_fingerprint is a string and is part of the chat completion object.This fingerprint represents the backend configuration that the model runs with.It can be used with the seed request parameter to understand when backend changes have been made that might affect determinism.To view the full chat completion object with system_fingerprint, you could add print(response.model_dump_json(indent=2)) to the previous Python code next to the existing print statement, or $response | convertto-json -depth 5 at the end of the PowerShell example. This change results in the following additional information being part of the output:By using the same seed parameter of 42 for each of our three requests, while keeping all other parameters the same, we're able to produce much more consistent results.ImportantDeterminism is not guaranteed with reproducible output. Even in cases where the seed parameter and system_fingerprint are the same across API calls it is currently not uncommon to still observe a degree of variability in responses. Identical API calls with larger max_tokens values, will generally result in less deterministic responses even when the seed parameter is set. By default if you ask an Azure OpenAI Chat Completion model the same question multiple times you're likely to get a different response. The responses are therefore considered to be non-deterministic. Reproducible output is a new preview feature that allows you to selectively change the default behavior to help product more deterministic outputs.",
+        "persistence": vision_persistence
+    },
+    "llm_metadata": {
+        "max_input_tokens": 1000
     },
     "platform_metadata": {
         "platform": "azure"
@@ -162,17 +178,21 @@ default_templates = {"system_query": {
                                         "system": "Answer jajaja regardless the input by the user",
                                         "user": "What is the function of $query"},
                         "system_query_v": {"system": "$system",
-                                           "user": [{"type": "text", "text": "asdf"}, "$query"]}
+                                           "user": [{"type": "text", "text": "asdf"}, "$query"]},
+                    "system_query_es": {
+                                        "system": "Answer jajaja regardless the input by the user",
+                                        "user": "What is the function of $query"}
 }
 
-default_templates_names = ["system_query", "system_query_v"]
+default_templates_names = ["system_query", "system_query_v", "system_query_es"]
 
 default_templates_file_names = {
     "genai_lan_create_query.json": [
         "emptysystem_query",
         "emptysystem_query_es",
         "emptysystem_query_en",
-        "system_query"
+        "system_query",
+        "system_query_es"
     ]
 }
 
@@ -197,7 +217,7 @@ def get_llm_deployment():
         with patch("main.set_queue"):
             return LLMDeployment()
 
-class TestMain:
+class TestMain(unittest.TestCase):
     headers = {
         'x-tenant': 'develop',
         'x-department': 'main',
@@ -261,11 +281,15 @@ class TestMain:
     def test_get_template(self):
         template = "{\"system\": \"Answer jajaja regardless the input by the user\",\"user\": \"What is the function of $query\"}"
         template_name = "system_querys"
+        correct_template_name = "system_query"
 
         # template_passed
         dict_template, _ = self.deploy.get_template("", template, "", "", "")
         assert dict_template == {"system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}
 
+        #with template_name
+        _, template_name_correct = self.deploy.get_template(correct_template_name, "", "es", "", "")
+        assert dict_template == {"system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}
         # Invalid template_name
         with pytest.raises(ValueError):
             self.deploy.get_template(template_name, "", "es", "", "")
@@ -275,7 +299,7 @@ class TestMain:
         gpt_v_copy.pop('message')
         gpt_v_copy.pop('model_pool')
         gpt_v_copy['models_credentials'] = {}
-        _, template_name = self.deploy.get_template("", "", "", "", ChatGPTvModel(**gpt_v_copy))
+        _, template_name = self.deploy.get_template("", "", "", "", ChatGPTVision(**gpt_v_copy))
         assert template_name == "system_query"
 
     def test_max_input_tokens_dalle(self):
@@ -302,8 +326,70 @@ class TestMain:
         _, status_code = reloadconfig()
         assert status_code == 200
 
+    @patch('main.update_status')
+    def test_set_redis_templates(self, mock_update_status):
+        obj = get_llm_deployment()
+        obj.tenant = "LOCAL"
+        obj.set_redis_templates()
+        mock_update_status.assert_not_called()
 
+        obj.tenant = "NON_LOCAL"
+        obj.REDIS_ORIGIN = "redis_origin_mock"
+        obj.templates = ["template1"]
+        obj.templates_names = ["name1"]
+        obj.display_templates_with_files = ["file1"]
 
+        obj.set_redis_templates()
+        mock_update_status.assert_called_once_with(
+            "redis_origin_mock",
+            "templates:NON_LOCAL:TEMPLATES_LLM",
+            json.dumps([["template1"], ["name1"], ["file1"]])
+        )
+
+        mock_update_status.side_effect = Exception("Test Exception")
+        with self.assertRaises(PrintableGenaiError) as context:
+            obj.set_redis_templates()
+        self.assertIn("Test Exception", str(context.exception))
+        self.assertIn("Error saving templates to redis", str(context.exception))
+
+    @patch('main.get_value')
+    def test_get_redis_templates(self, mock_get_value):
+        obj = get_llm_deployment()
+        obj.tenant = "LOCAL"
+        obj.get_redis_templates()
+        mock_get_value.assert_not_called()
+
+        obj.tenant = "NON_LOCAL"
+        obj.REDIS_ORIGIN = "redis_origin_mock"
+        mock_get_value.return_value = [{
+            'values': json.dumps([
+                ["template1"], ["name1"], ["file1"]
+            ]).encode()
+        }]
+
+        obj.get_redis_templates()
+        self.assertEqual(obj.templates, ["template1"])
+        self.assertEqual(obj.templates_names, ["name1"])
+        self.assertEqual(obj.display_templates_with_files, ["file1"])
+
+        mock_get_value.side_effect = Exception("Test Exception")
+        with self.assertRaises(PrintableGenaiError) as context:
+            obj.get_redis_templates()
+        self.assertIn("Test Exception", str(context.exception))
+        self.assertIn("Error getting templates from redis", str(context.exception))
+
+    def test_get_validation_error_response(self):
+        error = {
+            'type': 'value_error',
+            'loc': ['x-limits'],
+            'msg': 'Rate limit exceeded'
+        }
+        response = self.deploy.get_validation_error_response(error)
+        assert response == {
+            'status': 'error',
+            'error_message': 'Rate limit exceeded',
+            'status_code': 429
+        }
 
 @pytest.fixture
 def client():

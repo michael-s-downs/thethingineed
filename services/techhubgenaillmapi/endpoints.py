@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 # Installed imports
 import boto3
 import botocore
+from botocore.config import Config
 
 # Custom imports
 from generatives import GenerativeModel
@@ -255,7 +256,7 @@ class AzurePlatform(GPTPlatform):
             self.headers = {'api-key': generativeModel.api_key, 'Content-Type': "application/json"}
             self.url = self.build_url(generativeModel)
         else:
-            raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not implemented in Azure Platform")
+            raise PrintableGenaiError(400, f"Api key not found for model {generativeModel.model_name} in Azure Platform")
 
 
 class BedrockPlatform(Platform):
@@ -301,12 +302,15 @@ class BedrockPlatform(Platform):
                 return {"error": "Max retries reached", "msg": "Max retries reached", "status_code": 500}
             data_call = self.generativeModel.parse_data()
             self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
+            config = Config(read_timeout=self.timeout, connect_timeout=self.timeout, region_name=self.generativeModel.zone)
             if provider == "azure":
-                bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone,
+                bedrock = boto3.client(service_name="bedrock-runtime",
                                        aws_access_key_id=self.aws_credentials['access_key'],
-                                       aws_secret_access_key=self.aws_credentials['secret_key'])
+                                       aws_secret_access_key=self.aws_credentials['secret_key'],
+                                       config=config)
             else:
-                bedrock = boto3.client(service_name="bedrock-runtime", region_name=self.generativeModel.zone)
+                bedrock = boto3.client(service_name="bedrock-runtime",
+                                       config=config)
             answer = bedrock.invoke_model(body=data_call,
                                           modelId=self.generativeModel.model_id)
             self.logger.info(f"LLM response: {answer}.")

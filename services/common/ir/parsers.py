@@ -204,6 +204,7 @@ class ParserInfoindexing(Parser):
             # Test if the alias is a pool
             if alias in available_pools.get(platform, {}).get(embedding_model, []):
                 alias = random.choice(available_pools.get(platform).get(embedding_model).get(alias).copy())
+                self.logger.debug(f"Model selected from pool: {alias}")
             # Get the model parameters based on the alias
             for m in available_models.get(platform, []):
                 if alias == m.get('embedding_model_name'):
@@ -317,8 +318,7 @@ class ParserInforetrieval(Parser):
         if langdetect.detect(self.query) != 'ja':
             self.query = self._strip_accents(self.query)
 
-    @staticmethod
-    def get_sent_models(sent_models, available_pools, available_models, models_credentials) -> list:
+    def get_sent_models(self, sent_models, available_pools, available_models, models_credentials) -> list:
         """ Method to get the models to use in the retrieval process
 
         :param sent_models: List of models
@@ -339,6 +339,7 @@ class ParserInforetrieval(Parser):
             model_selected = {}
             if model in available_pools:
                 alias = random.choice(available_pools[model])
+                self.logger.debug(f"Model selected from pool: {alias}")
             else:
                 alias = model
             for m in available_models:
@@ -348,7 +349,7 @@ class ParserInforetrieval(Parser):
             if not model_selected:
                 raise PrintableGenaiError(400, f"Model {alias} not found in available embedding models")
             platform = model_selected.get('platform')
-            models.append(Parser.get_embedding_model_data(platform, alias, models_credentials, model_selected))
+            models.append(self.get_embedding_model_data(platform, alias, models_credentials, model_selected))
         return models
 
 class ManagerParser(object):

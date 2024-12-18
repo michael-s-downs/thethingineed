@@ -14,7 +14,7 @@ import requests
 from endpoints import ManagerPlatform, Platform, GPTPlatform, OpenAIPlatform, AzurePlatform, BedrockPlatform
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
-from generatives import ChatGPTModel, GenerativeModel, DalleModel, ChatGPTvModel, ChatClaudeModel, LlamaModel
+from generatives import ChatGPTModel, GenerativeModel, DalleModel, ChatGPTVision, ChatClaudeModel, LlamaModel, ChatNova, ChatNovaVision
 
 aws_credentials = {"access_key": "346545", "secret_key": "87968"}
 models_urls = {
@@ -52,6 +52,16 @@ llama3_model = {
     "models_credentials": {"us-east-1": "mock_api"}
 }
 
+nova_model = {
+    "model": "techhubdev-amazon.nova-micro-v1-NorthVirginia",
+    "model_id": "amazon.nova-micro-v1:0",
+	"model_type": "nova-micro-v1",
+	"max_input_tokens": 128000,
+	"zone": "us-east-1",
+    "models_credentials": {},
+    "top_k":100
+}
+
 # Message that uses BaseAdapter:
 message_dict = {"query": "Hello, how are you?", "template": {
                         "system": "You are a helpful assistant.",
@@ -59,6 +69,36 @@ message_dict = {"query": "Hello, how are you?", "template": {
                         },
                 "persistence": []
                 }
+message_dict_vision = {"query": [
+            {
+            "type": "text",
+            "text": "What color are the cats in both images?"
+            },
+            {
+            "type": "image_url",
+            "image":{
+                "url": "https://th.bing.com/th/id/R.964f5f4e167f7a4c4391260dd5231e6b?rik=fl5nyYBrK1WNHA&riu=http%3a%2f%2fwww.mundogatos.com%2fUploads%2fmundogatos.com%2fImagenesGrandes%2ffotos-de-gatitos-7.jpg&ehk=muO2GWmBzRiibqUFezM7Nza3wi4TvK6pfesyysMvvYs%3d&risl=&pid=ImgRaw&r=0"
+                }
+            }
+        ],
+        "template": {
+                        "system": "You are a helpful assistant.",
+                        "user": "Answer me gently the query: $query"
+                        },
+        "persistence": [
+            [{
+                "role": "user",
+                "content":
+                [{
+                    "type": "image_url",
+                        "image": {"url": "https://th.bing.com/th/id/OIP.BEIceF9sNPUL_vM9N3_S_wHaDO?rs=1&pid=ImgDetMain"}
+                }]
+            },
+            {
+                "role": "assistant",
+                "content": "The cat is my favorite pet in that image."
+            }]
+        ]}
 
 
 
@@ -130,7 +170,7 @@ class TestAzurePlatform:
         with pytest.raises(PrintableGenaiError, match=f"Model message {generativeModel.MODEL_MESSAGE} not supported."):
             self.azure_platform.build_url(generativeModel)
     def test_set_model(self):
-        generativeModel = ChatGPTvModel(**model)
+        generativeModel = ChatGPTVision(**model)
         generativeModel.api_key = "mock_api_key"
         self.azure_platform.set_model(generativeModel)
 
@@ -141,8 +181,8 @@ class TestAzurePlatform:
         # Call the method with a mock generativeModel
         gptv_model = copy.deepcopy(model)
         gptv_model['zone'] = "mock_zone"
-        generativeModel = ChatGPTvModel(**gptv_model)
-        with pytest.raises(PrintableGenaiError, match=f"Model message {generativeModel.MODEL_MESSAGE} not implemented in Azure Platform"):
+        generativeModel = ChatGPTVision(**gptv_model)
+        with pytest.raises(PrintableGenaiError, match=f"Api key not found for model {generativeModel.model_name} in Azure Platform"):
             self.azure_platform.set_model(generativeModel)
 
 
@@ -213,7 +253,7 @@ class TestBedrockPlatform:
 
 
     def test_set_model(self):
-        generativeModel = ChatGPTvModel(**model)
+        generativeModel = ChatGPTVision(**model)
         generativeModel.api_key = "mock_api_key"
         self.bedrock_platform.set_model(generativeModel)
         assert self.bedrock_platform.generativeModel == generativeModel
@@ -233,11 +273,37 @@ class TestBedrockPlatform:
             assert result['result']['input_tokens'] == 454
             assert result['result']['output_tokens'] == 5454
 
+    @patch("endpoints.provider", "azure")
+    def test_call_model_bedrock_nova(self):
+        with patch('boto3.client') as mock_post:
+            body = MagicMock()
+            body.read.return_value = json.dumps({"output": {"message": {"content": [{"text": "asdf"}]}}, "usage": {"totalTokens": 1000, "input_tokens": 454, "output_tokens": 5454}})
+            mock_post.return_value.invoke_model.return_value = {"body": body}
+            generativeModel = ChatNova(**nova_model)
+            generativeModel.set_message(message_dict)
+            self.bedrock_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+    @patch("endpoints.provider", "azure")
+    def test_call_model_bedrock_nova_vision(self):
+        with patch('boto3.client') as mock_post:
+            body = MagicMock()
+            body.read.return_value = json.dumps({"output": {"message": {"content": [{"text": "asdf"}]}}, "usage": {"totalTokens": 1000, "input_tokens": 454, "output_tokens": 5454}})
+            mock_post.return_value.invoke_model.return_value = {"body": body}
+            generativeModel = ChatNovaVision(**nova_model)
+            generativeModel.set_message(message_dict_vision)
+            self.bedrock_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+
+
     @patch("endpoints.provider", "aws")
     def test_call_model_aws(self):
         with patch('boto3.client') as mock_post:
             body = MagicMock()
-            body.read.return_value = json.dumps({"generation": "asdf", "generation_token_count":454, "prompt_token_count":5454})
+            body.read.return_value = json.dumps({"generation": "asdf", "generation_token_count": 454, "prompt_token_count": 5454})
             mock_post.return_value.invoke_model.return_value = {"body": body}
             generativeModel = LlamaModel(**llama3_model)
             generativeModel.set_message(message_dict)
