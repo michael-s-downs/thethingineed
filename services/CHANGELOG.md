@@ -30,6 +30,7 @@
     - [Improvement] Set default model for each platform (based on new config file 'src/LLM/conf/default_llm_models.json')
     - [Improvement] ChatClaude3 message refactor to ChatClaude-v (require update 'src/LLM/conf/models_config.json')
     - [Fix] Improve logic to set as error model responses
+    - [Fix] Apply parameter 'timeout' currently available but not used
     - [Fix] Fix logger when zone not available in models secrets file
 - preprocess-ocr:
     - [Fix] Solved error with Azure OCR updating library 'genai-sdk-services' to version 0.4.13
