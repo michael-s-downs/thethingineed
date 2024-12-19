@@ -28,6 +28,7 @@ class LLMDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
         super().__init__()
+        self.tenant = os.getenv('TENANT', "develop")
         self.use_redis = eval(os.getenv('USE_REDIS', "False"))
         if self.use_redis:
             set_db(db_dbs)
