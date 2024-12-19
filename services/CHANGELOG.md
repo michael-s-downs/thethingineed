@@ -3,7 +3,7 @@
 
 # Changelog
 
-## v2.2.0 (2024-12-17)
+## v2.2.0 (2024-12-19)
 - genai-compose:
     - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
 - genai-infoindexing:
@@ -27,6 +27,7 @@
 - genai-llmapi:
     - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
     - [New] New logger in debug mode when selecting model from pool
+    - [New] Add Redis for sharing templates en memory without loading everytime from storage
     - [Improvement] Set default model for each platform (based on new config file 'src/LLM/conf/default_llm_models.json')
     - [Improvement] Refactor message 'chatClaude3' to 'chatClaude-v' (require update 'src/LLM/conf/models_config.json')
     - [Fix] Improve logic to set as error model responses

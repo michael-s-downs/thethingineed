@@ -28,8 +28,8 @@ class LLMDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
         super().__init__()
-        self.tenant = os.getenv('TENANT', "LOCAL")
-        if self.tenant != "LOCAL":
+        self.use_redis = eval(os.getenv('USE_REDIS', "False"))
+        if self.use_redis:
             set_db(db_dbs)
             self.REDIS_ORIGIN = db_dbs['templates']
 
@@ -220,25 +220,22 @@ class LLMDeployment(BaseDeployment):
         return ResponseObject(**result).get_response_predict()
 
     def set_redis_templates(self):
-        if self.tenant == "LOCAL":
-            return
+        if self.use_redis:
+            try:
+                update_status(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM", json.dumps([self.templates, self.templates_names, self.display_templates_with_files]))
+            except Exception as ex:
+                raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving templates to redis.")
 
-        try:
-            update_status(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM", json.dumps([self.templates, self.templates_names, self.display_templates_with_files]))
-        except Exception as ex:
-            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving templates to redis.")
 
     def get_redis_templates(self):
-        if self.tenant == "LOCAL":
-            return
-        
-        try:
-            response = get_value(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM")[0]['values']
-            if response:
-                redis_session = json.loads(response.decode())
-                self.templates, self.templates_names, self.display_templates_with_files = redis_session[0], redis_session[1], redis_session[2]
-        except Exception as ex:
-            raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError getting templates from redis.")
+        if self.use_redis:
+            try:
+                response = get_value(self.REDIS_ORIGIN, f"templates:{self.tenant}:TEMPLATES_LLM")[0]['values']
+                if response:
+                    redis_session = json.loads(response.decode())
+                    self.templates, self.templates_names, self.display_templates_with_files = redis_session[0], redis_session[1], redis_session[2]
+            except Exception as ex:
+                raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError getting templates from redis.")
 
 app = Flask(__name__)
 deploy = LLMDeployment()
