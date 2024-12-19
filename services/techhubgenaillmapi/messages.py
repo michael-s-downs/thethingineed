@@ -289,7 +289,7 @@ class ClaudeMessage(Message):
 
 
 class Claude3Message(Message):
-    MODEL_FORMAT = "chatClaude3"
+    MODEL_FORMAT = "chatClaude-v"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query_v", context: str = "",
                  system='I am a helpful assistant', persistence=()):
@@ -530,9 +530,9 @@ class ManagerMessages(object):
 
     @staticmethod
     def get_message(conf: dict) -> Message:
-        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v, chatNova, chatNova-v]
+        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v]
 
-        :param conf: Message configuration. Example:  {"message":"chatClaude3"}
+        :param conf: Message configuration. Example:  {"message":"chatClaude-v"}
         :return: message object
         """
         for message in ManagerMessages.MESSAGE_TYPES:
@@ -545,9 +545,9 @@ class ManagerMessages(object):
 
     @staticmethod
     def get_possible_messages() -> List:
-        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude3, chatGPT-v, chatNova, chatNova-v]
+        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v]
 
-        :param conf: Message configuration. Example:  {"message":"chatClaude3"}
+        :param conf: Message configuration. Example:  {"message":"chatClaude-v"}
         :return: available messages
         """
         return [message.MODEL_FORMAT for message in ManagerMessages.MESSAGE_TYPES]

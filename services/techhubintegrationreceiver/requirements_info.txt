@@ -1,4 +1,7 @@
-genai-sdk-services==0.4.9
+### This code is property of the GGAO ###
+
+
+genai-sdk-services==0.4.14
 flask==3.0.3
 gunicorn==23.0.0
 Pillow==10.0.1

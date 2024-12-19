@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
 from generatives import (ManagerModel, GenerativeModel, ChatGPTModel, GenerativeModel, DalleModel,
-                         ChatGPTvModel, ChatClaudeModel, ChatClaude3Model, LlamaModel)
+                         ChatGPTVision, ChatClaudeModel, ChatClaudeVision, LlamaModel, ChatNova, ChatNovaVision, NovaModel)
 
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
@@ -62,7 +62,7 @@ claude3_model = {
     "model_type": "claude-v3-haiku",
     "max_input_tokens": 200000,
     "zone": "eu-west-3",
-    "message": "chatClaude3",
+    "message": "chatClaude-v",
     "api_version": "bedrock-2023-05-31",
     "model_pool": ["claude-v3-haiku-pool-europe", "claude-v3-haiku-pool-world"],
     "models_credentials": {}
@@ -79,9 +79,31 @@ dalle_model = {
     "models_credentials": {}
 }
 
+nova_model = {
+    "model": "techhubdev-amazon.nova-micro-v1-NorthVirginia",
+    "model_id": "amazon.nova-micro-v1:0",
+	"model_type": "nova-micro-v1",
+	"max_input_tokens": 128000,
+	"zone": "us-east-1",
+	"message": "chatNova",
+	"model_pool": [	"techhubdev-pool-us-nova-micro-1:0","techhubdev-pool-world-nova-micro-1:0","techhub-pool-world-nova-micro-1:0"],
+    "models_credentials": {}
+}
+
+nova_v_model = {
+    "model": "techhubdev-amazon.nova-lite-v1-NorthVirginia",
+	"model_id": "amazon.nova-lite-v1:0",
+	"model_type": "nova-lite-v1",
+	"max_input_tokens": 300000,
+	"zone": "us-east-1",
+	"message": "chatNova-v",
+	"model_pool": ["techhubdev-pool-us-nova-lite-1:0","techhubdev-pool-world-nova-lite-1:0","techhub-pool-world-nova-lite-1:0"],
+    "models_credentials": {}
+}
+
 available_models = {
     "azure": [copy.deepcopy(gpt_model), copy.deepcopy(dalle_model), copy.deepcopy(gpt_v_model)],
-    "bedrock": [copy.deepcopy(claude_model), copy.deepcopy(llama3_model), copy.deepcopy(claude3_model)]
+    "bedrock": [copy.deepcopy(claude_model), copy.deepcopy(llama3_model), copy.deepcopy(claude3_model), copy.deepcopy(nova_model), copy.deepcopy(nova_v_model)]
 }
 
 available_pools = {
@@ -93,7 +115,10 @@ available_pools = {
     "techhubinc-pool-us-gpt-3.5-turbo-16k": [copy.deepcopy(gpt_model)],
     "techhubinc-pool-world-gpt-3.5-turbo-16k": [copy.deepcopy(gpt_model)],
     "techhubinc-pool-world-dalle3": [copy.deepcopy(dalle_model)],
-    "techhubinc-pool-world-gpt-4o": [copy.deepcopy(gpt_v_model)]
+    "techhubinc-pool-world-gpt-4o": [copy.deepcopy(gpt_v_model)],
+    "techhubdev-pool-world-nova-micro-1:0": [copy.deepcopy(nova_model)],
+    "techhubdev-pool-world-nova-lite-1:0": [copy.deepcopy(nova_v_model)],
+    "techhubdev-pool-world-nova-pro-1:0": [copy.deepcopy(nova_v_model)]
 }
 
 message_dict = {"query": "Hello, how are you?", "template": {
@@ -103,12 +128,22 @@ message_dict = {"query": "Hello, how are you?", "template": {
                 "persistence": []
                 }
 
+message_dict_nova = {
+    'query': 'Hello, how are you?',
+    'template': {
+        'system': 'You are a helpful assistant.',
+        'user': 'Answer me gently the query: $query'
+    },
+    'persistence': [],
+    'message': 'chatNova'
+}
+
 
 class TestManagerGeneratives:
 
     def test_all_messages(self):
         gptv = ManagerModel.get_model({"model": gpt_v_model['model']}, "azure", available_models, available_pools)
-        assert isinstance(gptv, ChatGPTvModel)
+        assert isinstance(gptv, ChatGPTVision)
         gpt = ManagerModel.get_model({"model": gpt_model['model']}, "azure", available_models, available_pools)
         assert isinstance(gpt, ChatGPTModel)
         claude = ManagerModel.get_model({"model": claude_model['model']}, "bedrock", available_models, available_pools)
@@ -118,11 +153,16 @@ class TestManagerGeneratives:
         llama3 = ManagerModel.get_model({"model": llama3_model['model']}, "bedrock", available_models, available_pools)
         assert isinstance(llama3, LlamaModel)
         claude3 = ManagerModel.get_model({"model": claude3_model['model']}, "bedrock", available_models, available_pools)
-        assert isinstance(claude3, ChatClaude3Model)
+        assert isinstance(claude3, ChatClaudeVision)
+        nova = ManagerModel.get_model({"model": nova_model['model']}, "bedrock", available_models, available_pools)
+        assert isinstance(nova, ChatNova)
+        novav = ManagerModel.get_model({"model": nova_v_model['model']}, "bedrock", available_models, available_pools)
+        assert isinstance(novav, ChatNovaVision)
+
 
     def test_pool_model(self):
         gptv = ManagerModel.get_model({"model": "techhubinc-pool-world-gpt-4o"}, "azure", available_models, available_pools)
-        assert isinstance(gptv, ChatGPTvModel)
+        assert isinstance(gptv, ChatGPTVision)
 
     def test_wrong_model(self):
         generative = {"model": "nonexistent"}
@@ -424,3 +464,49 @@ class TestDalle:
         with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Azure format is not as expected: "
                                                                 f"{mock_response['data'][0]}.")):
             dalle.get_result(mock_response)
+
+class TestNovaModel:
+    def test_temperature_ok(self):
+        conf = copy.deepcopy(nova_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 2.5
+        conf['max_tokens'] = 100
+        conf['bag_tokens'] = []
+        conf['top_p'] = 0.9
+        conf['top_k'] = 50
+        conf['stop'] = None
+        with pytest.raises(ValueError, match=re.escape(f"Temperature must be between 0.0 and 1.0 for the model {conf['model']}")):
+            NovaModel(**conf)
+
+    def test_get_result(self):
+        mock_response = {
+            'ResponseMetadata': {'HTTPStatusCode': 200},
+            'body': io.StringIO(json.dumps({'output': {'message': {'content': ''}}}))
+        }
+        conf = copy.deepcopy(nova_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 0.5
+        conf['max_tokens'] = 100
+        conf['bag_tokens'] = []
+        conf['top_p'] = 0.9
+        conf['top_k'] = 50
+        conf['stop'] = None
+        nova = NovaModel(**conf)
+        result = nova.get_result(mock_response)
+        assert result['error_message'] == "There is no response from the model for the request"
+
+        mock_response = {
+            'ResponseMetadata': {'HTTPStatusCode': 400},
+            'body': io.StringIO(json.dumps({'content': ''}))
+        }
+        result = nova.get_result(mock_response)
+        assert result['error_message'] == {'content': ''}
+
+        mock_response = {
+            'status_code': 400,
+            'msg': 'error'
+        }
+        result = nova.get_result(mock_response)
+        assert result['error_message'] == 'error'

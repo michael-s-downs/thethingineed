@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.4.9
+genai-sdk-services==0.4.14
 tiktoken==0.4.0
 pydantic==2.7
 elasticsearch==8.13.2

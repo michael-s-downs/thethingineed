@@ -165,7 +165,7 @@ class GPTModel(GenerativeModel):
         :return: Dict with the answer, tokens used and logprobs.
         """
         # Check status code
-        if 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 429, 500, 502, 503]:
+        if 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -299,7 +299,7 @@ class DalleModel(GPTModel):
         """
 
         # Check status code
-        if 'status_code' in response and response['status_code'] in [400, 401, 404, 408, 500, 502, 503]:
+        if 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -400,7 +400,7 @@ class ChatGPTModel(GPTModel):
         self.is_vision = False
 
 
-class ChatGPTvModel(GPTModel):
+class ChatGPTVision(GPTModel):
     MODEL_MESSAGE = "chatGPT-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
 
@@ -520,13 +520,13 @@ class ClaudeModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] != 200:
             return {
                 'status': 'error',
                 'error_message': json.loads(response.get('body').read()),
                 'status_code': response['ResponseMetadata']['HTTPStatusCode']
             }
-        elif 'status_code' in response and response['status_code'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        elif 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -600,8 +600,8 @@ class ChatClaudeModel(ClaudeModel):
         self.is_vision = False
 
 
-class ChatClaude3Model(ClaudeModel):
-    MODEL_MESSAGE = "chatClaude3"
+class ChatClaudeVision(ClaudeModel):
+    MODEL_MESSAGE = "chatClaude-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
 
     def __init__(self, model: str = 'anthropic.claude-3-sonnet-20240229-v1:0',
@@ -731,13 +731,13 @@ class LlamaModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] != 200:
             return {
                 'status': 'error',
                 'error_message': json.loads(response.get('body').read()),
                 'status_code': response['ResponseMetadata']['HTTPStatusCode']
             }
-        elif 'status_code' in response and response['status_code'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        elif 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -853,13 +853,13 @@ class NovaModel(GenerativeModel):
         :param response: Dict returned by  LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        if 'ResponseMetadata' in response and response['ResponseMetadata']['HTTPStatusCode'] != 200:
             return {
                 'status': 'error',
                 'error_message': json.loads(response.get('body').read()),
                 'status_code': response['ResponseMetadata']['HTTPStatusCode']
             }
-        elif 'status_code' in response and response['status_code'] in [400, 401, 403, 404, 408, 500, 502, 503]:
+        elif 'status_code' in response and response['status_code'] != 200:
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
@@ -977,7 +977,7 @@ class ChatNovaVision(NovaModel):
 
 
 class ManagerModel(object):
-    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaude3Model, ChatGPTvModel, LlamaModel, ChatNova, ChatNovaVision]
+    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision]
 
     @staticmethod
     def find_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:
@@ -1010,9 +1010,11 @@ class ManagerModel(object):
         ## backward compatibility        model_in = model_in.replace('pull', 'pool')
 
         available_models = available_models.get(platform_name, [])
+        pool = False
 
         if model_in in available_pools:
             selected_model = copy.deepcopy(random.choice(available_pools[model_in]))
+            pool = True
         else:
             selected_model = ManagerModel.find_model_in_available_models(model_in, available_models)
 
@@ -1025,7 +1027,10 @@ class ManagerModel(object):
                     selected_model.pop('model_pool', None)
                     selected_model.update(conf)
                     try:
-                        return model(**selected_model)
+                        model_object = model(**selected_model)
+                        if pool: 
+                            model_object.logger.debug(f"Model selected from pool: {model_object.model_name}.")
+                        return model_object
                     except TypeError as e:
                         raise PrintableGenaiError(400, f"Parameter:{str(e).split('argument')[1]} not supported in model: "
                                          f"'{selected_model.get('model')}'")

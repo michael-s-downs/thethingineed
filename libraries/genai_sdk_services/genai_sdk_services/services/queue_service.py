@@ -411,7 +411,7 @@ class AzureStorageQueueService(BaseQueueService):
             if not credentials:
                 if os.path.exists(self.secret_path):
                     with open(self.secret_path, "r") as file:
-                        conn_str = json.load(file).get('conn_str_queue', "")
+                        conn_str = json.load(file).get('conn_str_storage', "")
                         credentials = {'conn_str': conn_str, 'queue_name': url}
                 elif os.getenv(self.env_vars[0], ""):
                     credentials = {'conn_str': os.getenv(self.env_vars[0]), 'queue_name': url}

@@ -864,7 +864,7 @@ The response structure must be as follows:
   - lang (optional): String containing the language we want the LLM to respond. Options: es (spanish), en (english) or ja (japanese). It is necessary to previously define templates for each language. This means that we have a "base_template" without language specification (it will recognise the language from the query) and 3 more templates as "base_template_es", "base_template_en" and "base_template_ja". In this templates we will specify the language in the 'system' parameter.
 
 - llm_metadata (required):
-  - model (mandatory): Name of the model (or pool) to be used on each platform. These are the models available on each platform and their corresponding tokens limit.
+  - model (optional): Name of the model (or pool) to be used on each platform. These are the models available on each platform and their corresponding tokens limit. If this parameter is not provided, a default model is assigned based on the platform and the config file.
   - max_input_tokens (optional): Maximum number of tokens to be sent in the request. If the maximum size is exceeded, it will be cut from the context, leaving space for the model response.
   - max_tokens (optional): Maximum number of tokens to generate in the response.
   - temperature (optional): Temperature to use. Value between 0 and 2 (in Bedrock 0-1). Higher values like 0.8 make the output more random. Lower values like 0.2 make it more deterministic. By default 0.
@@ -901,7 +901,7 @@ Specifically for DALLE the request parameters are:
   - user: Helps Openai tracking the user
 
 - platform_metadata: Data related to the platform where the language model stays
-  - platform: Name of the platform that will be used [azure],
+  - platform: Name of the platform that will be used [azure, bedrock, openai]
   - timeout: Maximum waiting time of the request default as 60
 
 ### Persistence format
@@ -1151,6 +1151,11 @@ Some instructions to create templates to obtain better results from the LLM:
 The files-secrets architecture is:
 
 ![alt text](imgs/techhubgenaillmapi/genai-llmapi-v1.4.0-config.png)
+
+Also in case the model param is not provided, the files-secretes architecture would look like this:
+
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-flow-llmapi-config-without-model-param.png)
+
 #### Secrets
 
 All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 3 different secrets:
@@ -1196,7 +1201,7 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 
 #### Configuration files
 
-LLMAPI needs 2 config files to run.
+LLMAPI needs 3 config files to run.
 
 - **`Prompts templates`**: Stored in "src/LLM/prompts", in this directory we store the files containing the prompt templates like the following. When LLMAPI is initialized, reads all the files in the directory and loads to memory all the templates, removing duplicates. The name refered in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in json format and that contains query on its name.
 
@@ -1302,18 +1307,36 @@ LLMAPI needs 2 config files to run.
     - zone: place where the model has been deployed (used to get the api-keys)
     - message: type of message that will be used in order to adapt the input to the model requirements. It could be:
         - chatClaude: Claude models with text capabilities
-        - chatClaude3: Claude models with text and vision capabilities
+        - chatClaude-v: Claude models with text and vision capabilities
         - chatGPT: ChatGPT models with text capabilities
         - chatGPT-v: ChatGPT with text and vision capabilities
         - dalle3: Dall-E 3 models (image generation)
+        - chatLlama3: Llama 3 and 3-1 models
+        - chatNova-v: Nova models with text and vision capabilities
+        - chatNova: Nova models with text capabilities
     - api_version: version of the api (model) that is being used
     - model_pool: pools the model belongs to
+
+- **`default_llm_models.json`**: Stored in src/LLM/conf, this file contains the default models assigned based on the platform when the model parameter is not specified in the process call. The structure is as follows:
+
+  ```json
+  {
+    "azure":"techhub-pool-world-gpt-4o",
+    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0"
+  }
+  ```
     
 An example of where the data is extracted from the call is:
 
 ![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
+
+Another example, where the model parameter is not provided and the default Azure model gpt-3.5-pool-europe is used, is:
+
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-config-file-uses-without-model-param.png)
+
+In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as the default model for azure. This means that whenever the model parameter is not explicitly provided during the process call, the system will automatically select gpt-3.5-pool-europe as the default option for handling requests on the Azure platform.  This can be changed modifying the **`default_llm_models.json`** file
 
 ### Environment Variables
 - AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)

@@ -155,6 +155,16 @@ class TestLLMMetadata():
         with pytest.raises(ValidationError, match=re.escape("1 validation error for LLMMetadata\n  Value error, Internal error, functions is mandatory because you put the function_call param [type=value_error, input_value={'function_call': 'function1', 'model': 'ddd'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
             LLMMetadata(function_call="function1", model="ddd")
 
+    def test_validate_default_model(self):
+        metadata = LLMMetadata(default_model="techhubdev-pool-world-gpt-4o")
+        assert metadata.model == "techhubdev-pool-world-gpt-4o"
+
+        metadata = LLMMetadata(model="techhubdev-pool-world-gpt-3.5-turbo-16k")
+        assert metadata.model == "techhubdev-pool-world-gpt-3.5-turbo-16k"
+
+        with pytest.raises(ValidationError, match=r"1 validation error for LLMMetadata\n  Value error, Internal error, default model not founded \[type=value_error, input_value=\{\}, input_type=dict\]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error"):
+            LLMMetadata()
+
 class TestQueryMetadata():
     def test_validate_query(self):
         data_query = MagicMock(data={"is_vision_model": False})
