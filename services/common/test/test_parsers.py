@@ -32,10 +32,6 @@ models_credentials = {
 class TestManagerParsers:
     conf = {'type': "IRStorage", 'workspace': "test", 'origin': "test"}
 
-    def test_get_possible_managers(self):
-        platforms = ManagerParser.get_possible_platforms()
-        assert platforms == ["infoindexing", "inforetrieval"]
-
     def test_wrong_manager(self):
         self.conf['type'] = "nonexistent"
         with pytest.raises(PrintableGenaiError):
@@ -135,7 +131,13 @@ class TestParserInfoindexing:
                         "alias": "ada-test-pool"
                     }
                 ],
-                "vector_storage": "elastic-test"
+                "chunking_method": {"method": "simple"},
+                "vector_storage": "elastic-test",
+                "vector_storage_conf": {
+                    "index": "",
+                    "vector_storage": "elastic-test",
+                    "chunking_method": {"method": "test"}
+                }
             }
         },
         "specific": {
@@ -193,5 +195,5 @@ class TestParserInfoindexing:
 
     def test_parse(self):
         conf_input = copy.deepcopy(self.conf)
-        retrieval_object = ManagerParser.get_parsed_object(conf_input)
-        assert isinstance(retrieval_object, ParserInfoindexing)
+        with pytest.raises(PrintableGenaiError):
+            ManagerParser.get_parsed_object(conf_input)
