@@ -1,4 +1,5 @@
 ### This code is property of the GGAO ###
+
 import copy
 # Native imports
 import os, platform, json
@@ -52,7 +53,8 @@ class TestParserInforetrieval:
                 "filters": {
                 },
                 "models": [
-                ]
+                ],
+                "vector_storage_conf": {}
             }
         },
         "project_conf":  {
