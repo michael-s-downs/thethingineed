@@ -27,7 +27,6 @@
 - genai-llmapi:
     - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
     - [New] New logger in debug mode when selecting model from pool
-    - [New] Add optional Redis for sharing templates en memory without loading everytime from storage with env var 'USE_REDIS' (by deafult False)
     - [Improvement] Set default model for each platform (based on new config file 'src/LLM/conf/default_llm_models.json')
     - [Improvement] Refactor message 'chatClaude3' to 'chatClaude-v' (require update 'src/LLM/conf/models_config.json')
     - [Fix] Improve logic to set as error model responses
