@@ -213,6 +213,33 @@ def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
 
     return all(valid_list), messages_list
 
+def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
+    # Check chunking methods (simple not necessary as all mandatory params, have default ones)
+    messages = []
+    valid = True
+    valid_ocrs = ['azure-ocr', 'aws-ocr', 'llm-ocr', 'tesseract-ocr']
+    if 'ocr' in request_json['input_json'] and request_json['input_json']['ocr']:
+        if request_json['input_json']['ocr'] not in valid_ocrs:
+            valid = False
+            messages.append(f"The 'ocr' parameter must be one of the supported values: {valid_ocrs}")
+
+    if request_json['input_json'].get('ocr', "") == 'llm-ocr':
+        if request_json['input_json'].get('llm_ocr_call_conf'):
+            if not isinstance(request_json['input_json']['llm_ocr_call_conf'], dict):
+                valid = False
+                messages.append("The 'llm_ocr_call_conf' parameter must be a dictionary")
+            else:
+                if request_json['input_json']['llm_ocr_call_conf'].get('mode') not in ['api', 'queue']:
+                    valid = False
+                    messages.append("The 'mode' parameter in 'llm_ocr_call_conf' must be 'api' or 'queue'")
+        # TODO pending to check if its a valid model and platform for LLM (discuss it with david)
+    else:
+        if 'llm_ocr_call_conf' in request_json['input_json']:
+            valid = False
+            messages.append("The 'llm_ocr_call_conf' parameter is only valid when 'ocr' is 'llm-ocr'")
+
+
+    return valid, messages
 
 def _validate_chunking_method(request_json: dict) -> Tuple[bool, list]:
     # Check chunking methods (simple not necessary as all mandatory params, have default ones)
@@ -320,7 +347,7 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models, _validate_chunking_method]
+    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models, _validate_chunking_method, _validate_ocr]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)
@@ -332,7 +359,7 @@ def validate_input_delete(request_json: dict, input_files: list) -> Tuple[bool, 
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_response_url, _validate_delete]
+    validate_functions = [_validate_index, _validate_operation, _validate_response_url, _validate_delete,]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)

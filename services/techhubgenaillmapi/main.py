@@ -172,11 +172,12 @@ class LLMDeployment(BaseDeployment):
         """
         self.logger.info(f"Request received. Data: {json_input}")
         exc_info = get_exc_info()
+        queue_metadata = None
 
         try:
             self.get_redis_templates()
             # Adaptations for queue case
-            json_input = adapt_input_queue(json_input)
+            json_input, queue_metadata = adapt_input_queue(json_input)
 
             # Parse and check input
             query_metadata, model, platform, report_url = self.parse_input(json_input)
@@ -217,7 +218,7 @@ class LLMDeployment(BaseDeployment):
             self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
             raise ex
 
-        return ResponseObject(**result).get_response_predict()
+        return ResponseObject(**result).get_response_predict(queue_metadata)
 
     def set_redis_templates(self):
         if self.tenant == "LOCAL":

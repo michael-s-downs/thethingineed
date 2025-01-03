@@ -685,6 +685,9 @@ def indexing(request_json: dict) -> dict:
                 'tracking': request_json.get('tracking', {})
             }
 
+            if 'llm_ocr_call_conf' in request_json:
+                request_params['llm_ocr_call_conf'] = request_json['llm_ocr_call_conf']
+
             if os.getenv('API_QUEUE_PROCESS_URL', ""):
                 api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
                 logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index_conf']['vector_storage_conf']['index']}' {api_response}")

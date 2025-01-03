@@ -8,12 +8,12 @@ from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInf
 # Local imports
 from generatives import GenerativeModel
 from common.logging_handler import LoggerHandler
+from common.genai_controllers import storage_containers, load_file, upload_object
 
 # Create logger
 logger_handler = LoggerHandler("io_parsing", level=os.environ.get('LOG_LEVEL', "INFO"))
 logger = logger_handler.logger
 QUEUE_MODE = eval(os.getenv('QUEUE_MODE', "False"))
-
 
 #############################################################################################
 ####################################### INPUT PARSING #######################################
@@ -278,48 +278,122 @@ class ProjectConf(BaseModel):
         return v
 
 
+class QueueMetadata(BaseModel):
+    # Queue metadata
+    input_file: str
+    output_file: str
+    location: Literal['cloud', 'local']
+
+    class Config:
+        extra = 'forbid' # To not allow extra fields in the object
+    
+    @property
+    def origin(self) -> str:
+        return storage_containers.get('origin')
+
+    @field_validator('input_file')
+    def validate_input_file(cls, v, values: FieldValidationInfo):
+        if not v.lower().endswith('.json'):
+            raise ValueError("Input file must be a json file")
+        return v
+        
+    @field_validator('output_file')
+    def validate_output_file(cls, v, values: FieldValidationInfo):
+        if not v.lower().endswith('.json'):
+            raise ValueError("Output file must be a json file")
+        return v
+
+    def load_json_input(self) -> dict:
+        """ Load json input from file or cloud (must be a json file as it's a llmapi request)
+        
+        :return: Json input
+        """
+        if self.location == "cloud":
+            try:
+                json_input = json.loads(load_file(self.origin, self.input_file))
+            except:
+                raise ValueError(f"Unable to read json file '{self.input_file}' from {self.origin}")
+        else:
+            try:
+                with open(self.input_file, "r", encoding="utf-8") as file:
+                    json_input = json.load(file)
+            except:
+                raise ValueError(f"Unable to read json file '{self.input_file}'")
+        return json_input
+    
+    def upload_json_output(self, json_output: dict) -> None:
+        """ Upload json output to file or cloud (must be a json file as it's a llmapi response)
+        
+        :param json_output: Json output
+        """
+        if self.location == "cloud":
+            try:
+                upload_object(self.origin, json.dumps(json_output), self.output_file)
+            except:
+                raise ValueError(f"Unable to write json file '{self.output_file}' to {self.origin} with content: {json_output}")
+        else:
+            try:
+                with open(self.output_file, "w", encoding="utf-8") as file:
+                    json.dump(json_output, file)
+            except:
+                raise ValueError(f"Unable to write json file '{self.output_file}' with content {json_output}")
+
+
 def adapt_input_queue(json_input: dict) -> dict:
     """ Input adaptations for queue case
 
     :param json_input: Input data
     :return: Input data adapted
     """
-    if QUEUE_MODE:
-        apigw_params = json_input.get('headers', {})
-        json_input["project_conf"] = apigw_params
-
-    mount_path = os.getenv('DATA_MOUNT_PATH', "")
-    mount_key = os.getenv('DATA_MOUNT_KEY', "")
-
-    if not (mount_path and mount_key):
-        if QUEUE_MODE:
-            logger.warning("Mount path or mount key not found in environment variables")
+    if not QUEUE_MODE:
         return json_input
+    
+    apigw_params = json_input.get('headers', {})
+    queue_metadata = None
 
-    file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
-
-    if mount_path not in file_path:
-        logger.warning(f"Document path '{file_path}' not inside mounted path '{mount_path}'")
-        return json_input
-    logger.debug(f"Getting document from mount path '{mount_path}'")
-    if not os.path.exists(file_path):
-        logger.warning(f"Document path not found '{file_path}'")
-        return json_input
-    if not os.path.isfile(file_path):
-        logger.warning(f"Document path must be a file '{file_path}'")
-        return json_input
-    logger.debug(f"Getting document from path '{file_path}'")
-
-    try:
-        with open(file_path, "r") as f:
-            file_content = f.read()
-    except:
-        file_content = ""
-    if file_content:
-        json_input['query_metadata'][mount_key] = file_content
+    if 'queue_metadata' in json_input:
+        queue_metadata = QueueMetadata(**json_input.pop('queue_metadata'))
+        json_input = queue_metadata.load_json_input()
     else:
-        logger.error(f"Unable to read file '{file_path}'")
-    return json_input
+        mount_path = os.getenv('DATA_MOUNT_PATH', "")
+        mount_key = os.getenv('DATA_MOUNT_KEY', "")
+        
+        if not (mount_path and mount_key):
+            if QUEUE_MODE:
+                logger.warning("Mount path or mount key not found in environment variables")
+            return json_input
+
+        file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
+
+        if mount_path not in file_path:
+            logger.warning(f"Document path '{file_path}' not inside mounted path '{mount_path}'")
+            return json_input
+        logger.debug(f"Getting document from mount path '{mount_path}'")
+        if not os.path.exists(file_path):
+            logger.warning(f"Document path not found '{file_path}'")
+            return json_input
+        if not os.path.isfile(file_path):
+            logger.warning(f"Document path must be a file '{file_path}'")
+            return json_input
+        logger.debug(f"Getting document from path '{file_path}'")
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+        except:
+            file_content = ""
+        if file_content:
+            try:
+                # Vision queries
+                json_input['query_metadata'][mount_key] = json.loads(file_content)
+            except Exception:
+                # Non-vision queries
+                json_input['query_metadata'][mount_key] = file_content
+        else:
+            logger.error(f"Unable to read file '{file_path}'")
+    
+    json_input["project_conf"] = apigw_params
+    return json_input, queue_metadata
 
 ##############################################################################################
 ####################################### OUTPUT PARSING #######################################
@@ -341,7 +415,7 @@ class ResponseObject(BaseModel):
             raise ValueError("If status is 'finished', status_code must be 200")
         return v
 
-    def get_response_predict(self) -> Tuple[bool, dict, str]:
+    def get_response_predict(self, queue_metadata: QueueMetadata) -> Tuple[bool, dict, str]:
         output, status_code = self.get_response_base()
         if QUEUE_MODE:
             must_continue = True
@@ -354,6 +428,11 @@ class ResponseObject(BaseModel):
             output = json.loads(output).get('result', {})
         else:
             output = json.loads(output)
+
+        # Case when the output is written in a file
+        if queue_metadata:
+            queue_metadata.upload_json_output(output)
+            output = {"status": "finished", "status_code": 200, "result": queue_metadata.output_file}
 
         return must_continue, output, next_service
 

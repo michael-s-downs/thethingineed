@@ -123,6 +123,14 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
         }
     }
 
+    # Define params to configure ocr
+    # TODO hablar con david si esta bien lo modificar del client_profile
+    if 'ocr' in request_json['input_json']:
+        request_json['client_profile']['default_ocr'] = request_json['input_json']['ocr']
+    
+    if request_json['client_profile']['default_ocr'] == 'llm-ocr':
+        request_json['llm_ocr_call_conf'] = request_json['input_json'].get('llm_ocr_call_conf', {})
+
     return request_json, input_files
 
 def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[dict, list]:

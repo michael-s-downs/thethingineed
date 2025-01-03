@@ -6,12 +6,26 @@ Utils and common functions of Genai services
 """
 # Native imports
 import os, re
+import io
 import json
+import cv2
+import math
+from PIL import Image
 from shutil import rmtree
+from typing import Union
+
+# Custom imports
+from common.logging_handler import LoggerHandler
+from common.services import UTILS
+from common.genai_controllers import upload_files
+
 
 SECRETS_ROOT_PATH = '/secrets'
 ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
 
+# Create logger
+logger_handler = LoggerHandler(UTILS, level=os.environ.get('LOG_LEVEL', "INFO"))
+logger = logger_handler.logger
 
 def convert_service_to_queue(service_name: str, provider: str = "aws") -> str:
     """ Convert Genai service_name to Queue name
@@ -148,3 +162,105 @@ def get_models(available_models, available_pools, key, value):
         return models, pools
     else:
         raise ValueError(f"Key {key} not supported.")
+    
+# TODO see which resizing method is better
+# In notebook this one is faster but needs to write in disk
+def get_image_size(filename: str) -> float:
+    """ Get size of file
+
+    :param filename: name of file
+    :return: Size in MB
+    """
+    # We get the bytes of the image and we divide it by 1024 two times to get the MB
+    size = os.stat(filename).st_size / 1024 / 1024
+
+    return size
+
+
+def resize_image(filename: str, max_size_mb: float = 10.00, max_iterations: int = 10):
+    """ Resize images to convert with max size of 10MB by default
+
+    :param files: downloaded image path
+    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController
+    :param max_size_mb: size max of image
+    :param max_iterations: max retries
+    """
+    iterations = 0
+    current_size = get_image_size(filename)
+
+    while current_size > max_size_mb and iterations < max_iterations:
+        logger.debug(f"Resizing image {filename} to {max_size_mb} MB.")
+        image = Image.open(filename)
+        media_type = image.format
+
+        scale = math.sqrt(max_size_mb / current_size)  # smart scale to reduce near max size
+        width = int(image.size[0] * scale)
+        height = int(image.size[1] * scale)
+        dim = (width, height)
+
+        image = image.resize(dim, resample=Image.Resampling.BICUBIC)  # Equivalent to cv2.INTER_LINEAR
+        image.format = media_type
+        iterations += 1
+        image.save(filename, quality=95)
+
+        iterations += 1
+        current_size = get_image_size(filename)
+    if current_size > max_size_mb:
+        raise RuntimeError(f"Can't resize image to {max_size_mb} MB in {max_iterations} iterations.")
+   
+    return current_size
+
+
+#def get_image_size(image: Image) -> float:
+#    """ Get size of image
+#
+#    :param image: image
+#    :return: Size in MB
+#    """
+#    buffer = io.BytesIO()
+#    image.save(buffer, format=image.format, quality=95)  # Choose the appropriate format, e.g., JPEG, PNG
+#
+#    return buffer.tell() / (1024 * 1024)
+#
+#def resize_image(original_image, origin: Union[str, str] = None, max_size_mb: float = 10.00, max_iterations: int = 10):
+#    """ Resize images to convert with max size of 10MB by default
+#
+#    :param files: downloaded image path
+#    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController
+#    :param max_size_mb: size max of image
+#    :param max_iterations: max retries
+#    """
+#    iterations = 0
+#    resizing_done = False
+#    if isinstance(original_image, str):
+#        image = Image.open(original_image)
+#        size = get_size(original_image)
+#    else:
+#        image = original_image
+#    
+#    media_type = image.format
+#    current_size = get_image_size(image)
+#
+#    while current_size > max_size_mb and iterations < max_iterations:
+#        logger.debug(f"Resizing image {image} to {max_size_mb} MB.")
+#
+#        scale = math.sqrt(max_size_mb / current_size)  # smart scale to reduce near max size
+#        width = int(image.size[0] * scale)
+#        height = int(image.size[1] * scale)
+#        dim = (width, height)
+#
+#        image = image.resize(dim, resample=Image.Resampling.BICUBIC)  # Equivalent to cv2.INTER_LINEAR
+#        image.format = media_type
+#        iterations += 1
+#        current_size = get_image_size(image)
+#        resizing_done = True
+#
+#    if current_size > max_size_mb:
+#        raise RuntimeError(f"Can't resize image to {max_size_mb} MB in {max_iterations} iterations.")
+#    
+#    # If the image is a string, replace for the local one and upload it to the storage
+#    if resizing_done and isinstance(original_image, str):
+#        image.save(original_image, quality=95)
+#        logger.debug("Uploading resized image to storage.")
+#        upload_files(origin, [(original_image, original_image)])
+#    return image, current_size

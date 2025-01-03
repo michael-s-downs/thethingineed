@@ -283,6 +283,7 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
     template['dataset_conf']['dataset_path'] = request_params['folder']
     template['index_conf'] = request_params['index_conf']
 
+
     if 'force_ocr' in request_params:
         template['force_ocr'] = request_params['force_ocr']
     if 'ocr' in request_params:
@@ -297,6 +298,8 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
         template['preprocess_conf']['layout_conf'] = request_params['layout_conf']
     if request_params.get('models', {}):
         template['index_conf']['models'] = request_params['models']
+    if request_params.get('llm_ocr_call_conf', {}):
+        template['llm_ocr_call_conf'] = request_params['llm_ocr_call_conf']
     if request_params.get('integration', {}):
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
