@@ -163,6 +163,13 @@ steps:
 - bash: docker build -f '${{ parameters.defaultWorkingDirectory }}/uhis_docker/Dockerfile' --build-arg 'BASE_IMAGE=${{ parameters.registryServerName }}/${{ parameters.baseImage }}:${baseTag}' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
   displayName: Build image
 
+# Scan image with trivy
+- task: trivy@1
+  displayName: Trivy image scan
+  inputs:
+    image: ${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}
+    severities: CRITICAL,HIGH,UNKNOWN
+    exitCode: 0
 # Push image docker with tag numeric
 - bash: docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}'
   displayName: Push image (${{ parameters.tag }})
