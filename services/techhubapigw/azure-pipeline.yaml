@@ -48,6 +48,84 @@ variables:
   value: '$(feed_genai)'
 
 stages:
+- stage: SonarAnalysis
+  jobs:
+  - job:
+    continueOnError: false
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.11'
+          addToPath: true
+          architecture: 'x64'
+
+      - script: |
+          echo install magic 
+          sudo apt-get install libmagic1
+
+          python -m venv .venv
+          source .venv/bin/activate
+
+          echo installing genai_sdk_services
+          cd libraries/genai_sdk_services
+  
+          pip install --upgrade pip
+          python -m pip install -U setuptools wheel twine
+          python setup.py install
+
+          echo build package 
+          python setup.py build_ext --inplace
+          python setup.py bdist_wheel --python-tag=cp$(python_version)
+
+          echo $(serviceName)
+          cd /home/vsts/work/1/s/services/$(serviceName)/
+        
+          echo installing packages
+          # pip install pytest pytest-cov boto3 pillow flask pandas
+          pip install pytest pytest-cov flask pillow
+          pip install -r requirements_info.txt
+          pip install -r requirements.txt
+          
+          export PYTHONPATH=/home/vsts/work/1/s/services/
+          echo running coverage
+          coverage run --source=/home/vsts/work/1/s/services/$(serviceName)/ -m pytest -s
+          coverage report
+          coverage xml 
+        displayName: Coverage report
+
+
+      - task: SonarQubePrepare@7
+        inputs:
+          SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
+          scannerMode: 'cli'
+          configMode: 'manual'
+          cliProjectKey: $(System.DefinitionName)
+          cliSources: '$(System.DefaultWorkingDirectory)/services/$(serviceName)/'
+          extraProperties: |
+              sonar.projectVersion=1.0
+              sonar.sources=$(System.DefaultWorkingDirectory)/services/$(serviceName)/
+              sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/$(serviceName)/coverage.xml
+              sonar.exclusions=**/test/**
+
+      # removes sonar.branch.name variable as this is not supported by community edition
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w,/,-]*"\,?'
+                Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"      
+      - task: SonarQubeAnalyze@7
+        inputs:
+          jdkversion: 'JAVA_HOME_17_X64'
+
+      - task: SonarQubePublish@7
+        inputs:
+          pollingTimeoutSec: '300'
+
+
+          
 - stage: Building
   displayName: Build image
   jobs:
