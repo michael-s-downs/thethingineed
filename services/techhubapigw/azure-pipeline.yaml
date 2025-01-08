@@ -83,10 +83,7 @@ stages:
           cd /home/vsts/work/1/s/services/$(serviceName)/
         
           echo installing packages
-          # pip install pytest pytest-cov boto3 pillow flask pandas
           pip install pytest pytest-cov flask pillow
-          pip install -r requirements_info.txt
-          pip install -r requirements.txt
           
           export PYTHONPATH=/home/vsts/work/1/s/services/
           echo running coverage
