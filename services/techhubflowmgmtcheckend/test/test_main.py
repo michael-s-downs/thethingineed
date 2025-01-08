@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from main import FlowMgmtCheckEndDeployment
 from common.status_codes import PROCESS_FINISHED, ERROR
-from common.error_messages import PARSING_PARAMETERS_ERROR, GETTING_DATASET_STATUS_KEY_ERROR, SENDING_RESPONSE_ERROR, REPORTING_MESSAGE_ERROR
+from common.error_messages import PARSING_PARAMETERS_ERROR, SENDING_RESPONSE_ERROR, REPORTING_MESSAGE_ERROR
 
 @pytest.fixture
 def mock_deployment():
