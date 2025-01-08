@@ -4,8 +4,12 @@
 # Changelog
 
 ## v2.2.0 (2024-12-19)
-- genai-compose:
-    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+- integration-receiver:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
+- integration-sender:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
 - genai-infoindexing:
     - [New] Now several chunking methods available: 'simple' (current), 'recursive' (new), 'surrounding_context_window' (new)
     - [New] Added method to check that the same chunking method is always used
@@ -13,9 +17,6 @@
     - [Improvement] Modules distribution organized
     - [Improvement] Updated library 'llama-index'
     - [Improvement] Now field 'snippet_id' same as elasticsearch 'id_'
-- integration-sender:
-    - [New] Added new input parameters for the new chunking methods of infoindexing
-    - [Improvement] Input parameters communication between methods simplified
 - genai-inforetrieval:
     - [New] Added strategies for new chunking methods: 'recursive_genai_retrieval' for 'recursive' chunking, 'surrounding_genai_retrieval' for 'surrounding_context_window' chunking
     - [New] Added new library 'llama-index-retrievers-bm25' to support 'recursive_genai_retrieval' strategy
@@ -24,6 +25,9 @@
     - [Improvement] Modules distribution organized
     - [Improvement] Updated library 'llama-index'
     - [Improvement] Adaption of library 'llama-index-vector-stores-elasticsearch' updated to version 0.3.3 to stay aligned with library 'llama-index'
+- genai-compose:
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+    - [Improvement] Set 'techhubdev-pool-world-gpt-4o-mini' as default model for llmapi call
 - genai-llmapi:
     - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
     - [New] New logger in debug mode when selecting model from pool
