@@ -88,6 +88,7 @@ stages:
 
           echo "installing requirements from $(pwd)"
           pip install -r requirements_info.txt
+          pip install -r test/requirements.txt
           pip install pytest pytest-cov 
 
           export PYTHONPATH=/home/vsts/work/1/s/services/common/
