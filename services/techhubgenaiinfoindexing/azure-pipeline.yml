@@ -133,7 +133,7 @@ stages:
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      name: TechHub Pipelines
     steps:
     - template: ../ap-template.yml
       parameters:
