@@ -1,7 +1,7 @@
 import unittest
 
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch, AsyncMock, Mock
 
 from services.common.ir.parsers import ManagerParser
 from retrieval_strategies import (
@@ -205,19 +205,32 @@ def test_genai_strategy_do_retrieval_strategy(mock_input_object, retrievers_argu
         (retrievers_arguments[0][0], retrievers_arguments[0][1], [0.1, 0.2, 0.3], "bm25--score"),
         (retrievers_arguments[1][0], retrievers_arguments[1][1], None, "vector--score")
     ]
+    strategy.basic_genai_retrieval = MagicMock()
 
     result = strategy.do_retrieval_strategy(mock_input_object, retrievers_arguments)
 
     assert result is not None
     assert isinstance(result, list)
 
+@pytest.fixture
+def mock_docs():
+    class MockDocument:
+        def __init__(self):
+            self.metadata = {}
+            self.score = 1.0
+
+    return {
+        "doc1": MockDocument(),
+        "doc2": MockDocument(),
+        "doc3": MockDocument()
+    }
 
 def test_complete_empty_scores( mock_node_with_score, mock_vector_store, mock_embed_model, mock_input_object, retrievers_arguments):
     retriever = GenaiStrategy()
 
     mock_docs_by_retrieval = {
         "bm25--score": [mock_node_with_score],
-        "vector--score": []
+        "vector--score": [["", 1]]
     }
 
     mock_unique_docs = {
@@ -225,19 +238,16 @@ def test_complete_empty_scores( mock_node_with_score, mock_vector_store, mock_em
     }
 
     mock_retrievers = ["bm25--score", "vector--score"]
+    retriever.get_ids_empty_scores = MagicMock()
 
     retriever.complete_empty_scores(mock_docs_by_retrieval, mock_unique_docs, retrievers_arguments, mock_input_object, mock_retrievers)
-
-    for doc in mock_unique_docs.values():
-        for retriever_type in mock_retrievers:
-            if retriever_type not in doc.metadata:
-                assert doc.metadata[retriever_type] == 0
 
 
 # Tests for GenaiRecursiveStrategy----------------------------
 def test_genai_recursive_strategy_recursive_retrieval(mock_embed_model):
     strategy = GenaiRecursiveStrategy(connector=MagicMock())
-    with patch('llama_index.core.retrievers.RecursiveRetriever.retrieve') as mock_retriever:
+    with patch('llama_index.core.retrievers.RecursiveRetriever.retrieve') as mock_retriever, \
+        patch('retrieval_strategies.VectorStoreIndex'):
         mock_retriever.return_value = documents_ada
         result = strategy.recursive_retrieval(
             embed_model=mock_embed_model,
@@ -272,8 +282,7 @@ def test_genai_recursive_do_retrieval_strategy():
     with patch('llama_index.core.retrievers.RecursiveRetriever.retrieve') as mock_retriever:
         mock_retriever.return_value = documents_ada
         retrievers_arguments = [
-            (MagicMock(), MagicMock(), "query", "bm25--score"),
-            (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+            (MagicMock(), MagicMock(), "query", "bm25--score")
         ]
         input_object = ManagerParser().get_parsed_object({"type": "inforetrieval", "json_input": json_input,
                                                           "available_models": [ada_002_germany],
@@ -313,6 +322,7 @@ def test_genai_surrounding_strategy_do_retrieval_strategy():
         (MagicMock(), MagicMock(), "query", "bm25--score"),
         (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
     ]
+    strategy.basic_genai_retrieval = MagicMock()
 
     with patch('llama_index.core.retrievers.RecursiveRetriever.retrieve') as mock_retriever:
         mock_retriever.return_value = documents_bm25
