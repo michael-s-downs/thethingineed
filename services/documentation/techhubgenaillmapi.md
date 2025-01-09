@@ -167,7 +167,7 @@ This examples will be done by calling in localhost or deployed, so 'url' will be
 
 ### Simple prediction call:
 
-Now, we are going to use the */predict (POST)* method from the LLM API.
+Now, we are going to use the <i>/predict (POST)</i> method from the LLM API.
 
 A **simple call for a non-vision model** using persistence would be:
 
@@ -583,7 +583,7 @@ Images formats allowed: *jpeg, png, gif* and *webp*.
 
 ### Get models:
 
-Now, we are going to use the */get_models (GET)* method from the LLM API. 
+Now, we are going to use the <i>/get_models (GET)</i> method from the LLM API. 
 
 It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'Azure' platform would be like this:
 
@@ -708,102 +708,100 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 - **/predict (POST)**: This is the main endpoint used to call the LLM.
 - **/reloadconfig (GET)**: Used to reload the configuration read from the files like the models and prompt templates available. Returns the following JSON:
 
-```json
-{
-    "status": "ok",
-    "status_code": 200
-}
-```
+    ```json
+    {
+        "status": "ok",
+        "status_code": 200
+    }
+    ```
 
 - **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
-```json
-{
-    "status": "Service available"
-}
-```
-
-- **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
-
-
-Response:
-
-```json
-{
-    "models": {
-        "azure": [
-            "genai-gpt4o-EastUs",
-            "genai-gpt35-4k-france",
-            "genai-gpt35-16k-france",
-            "genai-gpt4-32k-france",
-            "genai-gpt4-8k-france",
-            "genai-gpt4o-Sweden",
-            "genai-gpt35-16k-sweden",
-            "genai-gpt35-4k-sweden",
-            "genai-gpt4-32k-sweden",
-            "genai-gpt4-8k-sweden",
-            "genai-gpt35-4k-westeurope"
-        ],
-        "pools": [
-            "gpt-3.5-pool-america",
-            "gpt-4-pool-ew-europe",
-            "gpt-3.5-16k-pool-europe",
-            "gpt-4-pool-europe",
-            "gpt-4o-pool-world",
-            "gpt-3.5-16k-pool-uk",
-            "gpt-4-32k-pool-ew-europe"
-        ]
+    ```json
+    {
+        "status": "Service available"
     }
-}
-```
+    ```
+
+- **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure.
+
+    Response:   
+    ```json
+    {
+        "models": {
+            "azure": [
+                "genai-gpt4o-EastUs",
+                "genai-gpt35-4k-france",
+                "genai-gpt35-16k-france",
+                "genai-gpt4-32k-france",
+                "genai-gpt4-8k-france",
+                "genai-gpt4o-Sweden",
+                "genai-gpt35-16k-sweden",
+                "genai-gpt35-4k-sweden",
+                "genai-gpt4-32k-sweden",
+                "genai-gpt4-8k-sweden",
+                "genai-gpt35-4k-westeurope"
+            ],
+            "pools": [
+                "gpt-3.5-pool-america",
+                "gpt-4-pool-ew-europe",
+                "gpt-3.5-16k-pool-europe",
+                "gpt-4-pool-europe",
+                "gpt-4o-pool-world",
+                "gpt-3.5-16k-pool-uk",
+                "gpt-4-32k-pool-ew-europe"
+            ]
+        }
+    }
+    ```
 
 - **/upload_prompt_template (POST)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
 
-```json
-{
-  "name": "example_template",
-  "content": "{\r\n    \"emptysystem_query\": {\r\n        \"system\": \"\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_query\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_context\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$context\"\r\n    },\r\n    \"fixed_system_query\": {\r\n        \"system\": \"You are a football player\",\r\n        \"user\": \"$query\"\r\n    }\r\n}"
-}
-```
+    ```json
+    {
+    "name": "example_template",
+    "content": "{\r\n    \"emptysystem_query\": {\r\n        \"system\": \"\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_query\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_context\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$context\"\r\n    },\r\n    \"fixed_system_query\": {\r\n        \"system\": \"You are a football player\",\r\n        \"user\": \"$query\"\r\n    }\r\n}"
+    }
+    ```
 
 - **/delete_prompt_template (POST)**: Used to delete a prompt template JSON file from cloud storage.
 
-```json
-{
-  "name": "example_template"
-}
-```
+    ```json
+    {
+    "name": "example_template"
+    }
+    ```
 
 - **/list_templates (GET)**: Used to get all the available templates.
-```json
-{
-    "status": "finished",
-    "status_code": 200,
-    "result": {
-        "genai_create_query_v.json": [
-            "system_query_v"
-        ],
-        "genai_lan_create_query.json": [
-            "emptysystem_query",
-            "emptysystem_query_es",
-            "emptysystem_query_en",
-            "system_query"
-        ]
+    ```json
+    {
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "genai_create_query_v.json": [
+                "system_query_v"
+            ],
+            "genai_lan_create_query.json": [
+                "emptysystem_query",
+                "emptysystem_query_es",
+                "emptysystem_query_en",
+                "system_query"
+            ]
+        }
     }
-}
-```
+    ```
 
-- **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
-```json
-{
-    "template": {
-        "system": "$system",
-        "user": "$query"
-    },
-}
-```
+- **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+    ```json
+    {
+        "template": {
+            "system": "$system",
+            "user": "$query"
+        },
+    }
+    ```
 
-### Request and Response Formats for */predict*
+### Request and Response Formats for <i>/predict</i>
 
 The requests structure must be as follows:
 
@@ -854,7 +852,7 @@ The response structure must be as follows:
 
 ### Parameters explanation
 
-- query_metadata (required):
+* query_metadata (required):
   - query (required): Question or task that you want to ask the model (now can be messages to read or images to analyze passed on a list in a new format).
   - context (optional): Context on which to base the question. By default, the model marks the field as empty.
   - system (optional): Variable for chat-based models. By default “You are a helpful assistant” is set.
@@ -863,7 +861,7 @@ The response structure must be as follows:
   - persistence (optional): List of previous interactions (user - system) to maintain a conversation with the model. If the chat is too long, the oldest ones will be deleted. If the number of tokens is exceeded, the persistence will be eliminated first and then the context if necessary. Passed in pairs of conversation.
   - lang (optional): String containing the language we want the LLM to respond. Options: es (spanish), en (english) or ja (japanese). It is necessary to previously define templates for each language. This means that we have a "base_template" without language specification (it will recognise the language from the query) and 3 more templates as "base_template_es", "base_template_en" and "base_template_ja". In this templates we will specify the language in the 'system' parameter.
 
-- llm_metadata (required):
+* llm_metadata (required):
   - model (optional): Name of the model (or pool) to be used on each platform. These are the models available on each platform and their corresponding tokens limit. If this parameter is not provided, a default model is assigned based on the platform and the config file.
   - max_input_tokens (optional): Maximum number of tokens to be sent in the request. If the maximum size is exceeded, it will be cut from the context, leaving space for the model response.
   - max_tokens (optional): Maximum number of tokens to generate in the response.
@@ -874,24 +872,24 @@ The response structure must be as follows:
   - seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
   - response_format (optional): The values available to manage the output format of the image generation models are [url, bs64_json] and for text generation models (only avaliable in selected ones by Azure OpenAI) is [json_object].
   - For image generation:
-    - quality (optional): quality of the output image [“standard”, “hd”] default as standard
-    - size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
-    - style (optional): Output style of the image [vivid, natural], default as vivid
+    + quality (optional): quality of the output image [“standard”, “hd”] default as standard
+    + size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
+    + style (optional): Output style of the image [vivid, natural], default as vivid
 
-- platform_metadata (required):
+* platform_metadata (required):
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
   - timeout (optional): Maximum time to response. By default is 30s if this value is not passed.
 
 Specifically for DALLE the request parameters are:
 
-- query_metadata: Data related to the query:
+* query_metadata: Data related to the query:
   - query: Data related with the photo to generate
   - template_name: Name of the template that will be used
   - template: Template that will be used
   - lang: Language of the query
   - persistence: memory of the chat with chatgpt
 
-- llm_metadata: Data related to the language model
+* llm_metadata: Data related to the language model:
   - model: Model used (can be a pool),
   - max_input_tokens: Max number of tokens used in the request
   - response_format: Output format of the image [url, bs64_json]
@@ -900,7 +898,7 @@ Specifically for DALLE the request parameters are:
   - style: Output style of the image [vivid, natural], default as vivid,
   - user: Helps Openai tracking the user
 
-- platform_metadata: Data related to the platform where the language model stays
+* platform_metadata: Data related to the platform where the language model stays
   - platform: Name of the platform that will be used [azure, bedrock, openai]
   - timeout: Maximum waiting time of the request default as 60
 
@@ -939,6 +937,7 @@ Furthermore, an example of persistence incluiding images in url format (the imag
   ...
 ]
 ```
+<br/>
 
 ### Error Handling
 
@@ -1015,57 +1014,58 @@ The template used in the example would be as follows:
     "user": "Context: $context \n===\nTask: Answer the question if the information is in the previous context otherwise answer 'Not found'\n===\nQuestion:\n$query \n===\nAnswer:"
 }
 ```
+<br/>
 
 ### Summarization
 
 - How to set up and use summarization
 
-For use cases in which we want the summary of a certain text you can create a template specifying the task of summarization of the query. You can define how long the summary should be, the language or if it should be written in a formal tone.
+    For use cases in which we want the summary of a certain text you can create a template specifying the task of summarization of the query. You can define how long the summary should be, the language or if it should be written in a formal tone.
 
 - Example configurations
 
-```json
-{
-    "query_metadata": {
-        "query": "NTT Data is a Japanese information technology services and consulting company. It offers a wide range of services, including software development, infrastructure management, cloud services, data analytics, security services, and business consulting. NTT Data is one of the world's largest IT services companies, with a presence in more than 50 countries and a broad customer base in various sectors, including finance, healthcare, government, manufacturing, and telecommunications.",
-        "template_name": "system_query_summarization"
-    },
-    "llm_metadata": {
-        "model": "gpt-3.5-pool-techhub-europe",
-        "temperature": 0
-    },
-    "platform_metadata": {
-        "platform":"azure",
-        "timeout":30
+    ```json
+    {
+        "query_metadata": {
+            "query": "NTT Data is a Japanese information technology services and consulting company. It offers a wide range of services, including software development, infrastructure management, cloud services, data analytics, security services, and business consulting. NTT Data is one of the world's largest IT services companies, with a presence in more than 50 countries and a broad customer base in various sectors, including finance, healthcare, government, manufacturing, and telecommunications.",
+            "template_name": "system_query_summarization"
+        },
+        "llm_metadata": {
+            "model": "gpt-3.5-pool-techhub-europe",
+            "temperature": 0
+        },
+        "platform_metadata": {
+            "platform":"azure",
+            "timeout":30
+        }
     }
-}
-```
+    ```
 
-The template used in the example would be as follows:
+    The template used in the example would be as follows:
 
-```json
-"system_query_summarization": {
-    "system":  "You are a helpful assistant.",
-    "user":  "Write a 10-20 words summary about the following text. Text: '$query'."
-}
-```
+    ```json
+    "system_query_summarization": {
+        "system":  "You are a helpful assistant.",
+        "user":  "Write a 10-20 words summary about the following text. Text: '$query'."
+    }
+    ```
 
-And the answer is:
+    And the answer is:
 
-```json
-{
-    "status": "finished",
-    "result": {
-        "answer": "NTT Data is a global IT services company offering software development, cloud services, data analytics, and more.",
-        "logprobs": [],
-        "n_tokens": 139,
-        "query_tokens": 100,
-        "input_tokens": 117,
-        "output_tokens": 22
-    },
-    "status_code": 200
-}
-```
+    ```json
+    {
+        "status": "finished",
+        "result": {
+            "answer": "NTT Data is a global IT services company offering software development, cloud services, data analytics, and more.",
+            "logprobs": [],
+            "n_tokens": 139,
+            "query_tokens": 100,
+            "input_tokens": 117,
+            "output_tokens": 22
+        },
+        "status_code": 200
+    }
+    ```
 
 ### Custom Use Cases
 
@@ -1142,7 +1142,7 @@ Some instructions to create templates to obtain better results from the LLM:
 4. In parallel, test out different foundation models and model providers using Vellum’s Sandbox. Maybe Claude or PaLM does better than GPT-4 for your use case.
 5. If you would like additional reasoning or explanation, use a more prescriptive approach:
 
-    Add detailed step by step instructions to the end of the prompt and ask the LLM to walk though those steps when creating it’s answer. e.g. (1) … (2) … (3) … … (6) Output a JSON with the following typescript schema. This is convenient because it’s simple to parse out the JSON blob from the LLM output. However this causes more tokens to be generated so is slower and costs more, but it’s not nearly as expensive and slow as chaining multiple calls.
+    Add detailed step by step instructions to the end of the prompt and ask the LLM to walk though those steps when creating it’s answer. e.g. (1) … (2) … (3) … … (6) Output a JSON with the following typescript schema. This is convenient because it’s simple to parse out the JSON blob from the LLM output. However this causes more tokens to be generated so is slower and costs more, but it’s not nearly as expensive and slow as chaining multiple calls.  
 
 ## Configuration
 
@@ -1454,9 +1454,9 @@ In the following diagram flows, each color will represent the following files:
 ![alt text](imgs/techhubgenaillmapi/flow4.png)
 
 5. To set the message properly, these are the things to keep in mind:
-    - To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
-    - The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
-    - The message must be adapted to the specific LLM so the adapters class is in charge of it.
+    * To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
+    * The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
+    * The message must be adapted to the specific LLM so the adapters class is in charge of it.
 
 ![alt text](imgs/techhubgenaillmapi/flow5.png)
 
@@ -1471,21 +1471,21 @@ In the following diagram flows, each color will represent the following files:
 
 Generative AI prompts have the following components:
 
-- **System Role**: The "system role" in a prompt refers to the role or function that the system plays in a conversation or interaction. In the context of a prompt, the system can act as a virtual assistant, chatbot, or any other type of AI agent designed to answer questions, provide information, or perform specific tasks.
-- **Context**: Context in a prompt refers to relevant, prior information that is considered when generating a response or performing an action. Context can include details about the previous conversation, the user's previous questions, information provided by the user, the current status of the interaction, and any other elements that are relevant to understanding and properly responding to the user's request.
-- **User query or task**: The user query or task in a prompt refers to the specific request or action that the user performs when interacting with the system. It can be a question, a request for information, a request to perform a task, or any other action that the user wants the system to perform.
-- **Instructions**: Instructions in a prompt refer to the prompts or guidelines that are provided to the system to guide its behavior and generate consistent and relevant responses. These instructions may include examples of dialogues, descriptions of the task to be performed, guidelines on tone or style of response, and any other information that helps the system to properly understand and respond to user queries.
-- **Constraints or rules**: Constraints or rules in a prompt refer to the specific limitations or conditions that are set to guide the behavior of the system during the interaction. These restrictions may include grammar rules, response length restrictions, prohibitions on certain topics, or inappropriate language, among others. Constraints or rules help ensure that the responses generated by the system are consistent, relevant, and meet certain predefined criteria. These constraints are important to maintain the quality and adequacy of the system's responses.
+* **System Role**: The "system role" in a prompt refers to the role or function that the system plays in a conversation or interaction. In the context of a prompt, the system can act as a virtual assistant, chatbot, or any other type of AI agent designed to answer questions, provide information, or perform specific tasks.
+* **Context**: Context in a prompt refers to relevant, prior information that is considered when generating a response or performing an action. Context can include details about the previous conversation, the user's previous questions, information provided by the user, the current status of the interaction, and any other elements that are relevant to understanding and properly responding to the user's request.
+* **User query or task**: The user query or task in a prompt refers to the specific request or action that the user performs when interacting with the system. It can be a question, a request for information, a request to perform a task, or any other action that the user wants the system to perform.
+* **Instructions**: Instructions in a prompt refer to the prompts or guidelines that are provided to the system to guide its behavior and generate consistent and relevant responses. These instructions may include examples of dialogues, descriptions of the task to be performed, guidelines on tone or style of response, and any other information that helps the system to properly understand and respond to user queries.
+* **Constraints or rules**: Constraints or rules in a prompt refer to the specific limitations or conditions that are set to guide the behavior of the system during the interaction. These restrictions may include grammar rules, response length restrictions, prohibitions on certain topics, or inappropriate language, among others. Constraints or rules help ensure that the responses generated by the system are consistent, relevant, and meet certain predefined criteria. These constraints are important to maintain the quality and adequacy of the system's responses.
 
 ### Prompting Tips
 
 Let’s take a look to several important practices to follow when writing prompts, such as:  
 
-- Keeping the prompt concise and clear, using simple and direct language, and avoiding unnecessary or redundant information. . In the same way, the instructions and rules should be neither general nor ambiguous, as this can cause the system to behave erratically or fail to meet all the requirements that are defined for it.
+- Keeping the prompt concise and clear, using simple and direct language, and avoiding unnecessary or redundant information. In the same way, the instructions and rules should be neither general nor ambiguous, as this can cause the system to behave erratically or fail to meet all the requirements that are defined for it.
 - Providing the LLM with sufficient and relevant context, using keywords, questions, instructions, examples, constraints, templates, and other cues that guide the LLM to generate the desired response.
 - Splitting the prompt into smaller sub-prompts, using separators, markers, or headings, and generating the text incrementally, rather than expecting the LLM to produce a long and complex text from a single prompt.
 - It is important that sentences are short and written in different lines. The rules should be clear, using the appropriate verbs for each of them (according to obligation, recommendation, etc.).
-- To "force" the system to rely on the information provided in the context we usually add the following line to the system prompt: "Answer the query if the information is in context, otherwise answer 'Not found'"
+- To "force" the system to rely on the information provided in the context we usually add the following line to the system prompt: "Answer the query if the information is in context, otherwise answer 'Not found'".
 - It's good to highlight with separators (\n #### ====) to differentiate the context from the rest of the prompt elements.
 - Evaluating and refining the prompt iteratively, using metrics, feedback, and samples, and testing the prompt with different LLMs, domains, and scenarios.
 
@@ -1526,6 +1526,7 @@ An example of the user prompt:
 ```json
 custom_user_prompt = "Here is some context that my friend sent me by linkedin the other day. {context} Now answer this question. {question}"
 ```
+<br/>
 
 ### Language and Model Specific Tips
 
@@ -1542,21 +1543,21 @@ The base action template, indicates the action without saying anything about the
 In the rest of the languages, the first approach is the following:
 
 - Add the language in the “system” key associated to the task, for the task of reformulate for example:  
-"system_prompt_reformulate": reformulate the question provided.
-"system_prompt_reformulate_ja": reformulate the question provided in Japanese
+**system_prompt_reformulate**: reformulate the question provided;
+**system_prompt_reformulate_ja**: reformulate the question provided in Japanese
 - In the part of the “user” key, write in the language that you want to get the response.
 
-With the release of Claude3, the API for Claude has been updated and the templates used for GPT’s can be used too for this models (deprecating the old templates in one string)
+With the release of Claude3, the API for Claude has been updated and the templates used for GPT’s can be used too for this models (deprecating the old templates in one string).
 
 A. NON-VISION
 
-Then, there are a few tips that can be used to improve prompts::
+Then, there are a few tips that can be used to improve prompts:
 
-- Force a response in JSON or CSV
+- Force a response in JSON or CSV.
 - Separate tasks and information with separators such as “###”, “$$$”, “\n\n”…
-- Use the context field
-- Include “Task: “in query field and specify the role
-- Set temperature to zero to obtain more deterministic and precise answer
+- Use the context field.
+- Include “Task: “in query field and specify the role.
+- Set temperature to zero to obtain more deterministic and precise answer.
 - Iterate on prompts based on model’s responses.
 
 B. VISION
