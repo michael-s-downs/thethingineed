@@ -161,7 +161,7 @@ Below is a list of all the parameters that can be included in the request body, 
 * **sub_window_overlap (<i>recursive method parameter</i>)** (required for method): Integer value to specify the window overlap for the sub-chunks.
 * **windows (<i>surrounding context window method parameter</i>)** (required for method): Number of the windows that will be taken in this method
 
-***For further information about the chunking methods, see the infoindexing component detailed information*
+*<i>For further information about the chunking methods, see the infoindexing component detailed information</i>
 
   
 ### Compose API specification
@@ -241,7 +241,7 @@ The output can be changed passing in the requests some attribute values:
 
 ### Compose
 
-- Process (POST)
+- **Process (POST)**
 
     This is the main endpoint, used to call the Compose Service.
 
@@ -269,19 +269,19 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- List templates (GET)
+- **List templates (GET)**
 
     Used to list all templates stored in cloud.
 
     URL: https://**\<deploymentdomain\>**/compose/list_templates  
 
-- List filter templates (GET)
+- **List filter templates (GET)**
 
     Used to list all filter templates stored in cloud.
 
     URL: https://**\<deploymentdomain\>**/compose/list_filter_templates  
 
-- Get compose template (POST)
+- **Get compose template (POST)**
 
     Used to get the content of a template json file stored in cloud.
 
@@ -293,7 +293,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get compose filter template (POST)
+- **Get compose filter template (POST)**
 
     Used to get the content of a filter template json file stored in cloud.
 
@@ -305,7 +305,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Upload template (POST)
+- **Upload template (POST)**
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
@@ -318,7 +318,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Upload filter template (POST)
+- **Upload filter template (POST)**
 
     Used to upload a filter template json file to the cloud storage the content value must be a json converted to string.
 
@@ -331,7 +331,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Delete template (POST)
+- **Delete template (POST)**
 
     Used to delete a template json file from cloud storage.
 
@@ -343,7 +343,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Delete filter template (POST)
+- **Delete filter template (POST)**
 
     Used to delete a filter template json file from cloud storage.
 
@@ -355,7 +355,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Load session (POST)
+- **Load session (POST)**
     
     Used to load a session by possibly inserting a conversation:
     
@@ -377,7 +377,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- healthcheck (GET)
+- **healthcheck (GET)**
   
   Used to check if the component is available. Returns:
 
@@ -388,9 +388,11 @@ The output can be changed passing in the requests some attribute values:
         "status": "Service available"
     }
     ```
+<br/>
+
 ### LLMAPI
 
-- Predict (POST)
+- **Predict (POST)**
   
     This is the main endpoint to call the LLM
 
@@ -410,7 +412,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Reload config (GET)
+- **Reload config (GET)**
 
     Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
 
@@ -423,7 +425,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models (GET)
+- **Get_models (GET)**
 
     URL: https://**\<deploymentdomain\>**/llm/get_models
 
@@ -460,7 +462,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Upload prompt template (POST)
+- **Upload prompt template (POST)**
 
     Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
 
@@ -473,7 +475,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Delete prompt template (POST)
+- **Delete prompt template (POST)**
 
     Used to delete a prompt template json file from cloud storage.
 
@@ -485,7 +487,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- List prompt templates (GET)
+- **List prompt templates (GET)**
 
     Used to list all the prompt templates stored in cloud.
 
@@ -510,7 +512,7 @@ The output can be changed passing in the requests some attribute values:
         }
     }
     ```
-- Get prompt template (GET)
+- **Get prompt template (GET)**
 
     Used to get the content of a prompt template. In the url, we have to send the template_name
 
@@ -523,7 +525,7 @@ The output can be changed passing in the requests some attribute values:
       "template": {"system": "$system", "user": "$query"}
     }
     ```
-- healthcheck (GET)
+- **healthcheck (GET)**
   
     Used to check if the component is available. Returns:
 
@@ -535,10 +537,11 @@ The output can be changed passing in the requests some attribute values:
         "status": "Service available"
     }
     ```
+<br/>
 
 ### INFORETRIEVAL
 
-- Process (POST)
+- **Process (POST)**
   
     This is the main endpoint.
 
@@ -560,7 +563,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Deletes document from index (POST)
+- **Deletes document from index (POST)**
 
     Used to delete document/s from an index. 
    
@@ -574,7 +577,7 @@ The output can be changed passing in the requests some attribute values:
         }
     }
     ```
-- Delete an index (POST)
+- **Delete an index (POST)**
 
     Used to delete an index from vector storage
 
@@ -585,7 +588,7 @@ The output can be changed passing in the requests some attribute values:
         "index": "myindex"
     }
     ```
-- Check if the component is available (GET)
+- **Check if the component is available (GET)**
     
     URL: https://**\<deploymentdomain\>**/retrieve/healthcheck
 
@@ -596,7 +599,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Retrieve full document from index (POST): 
+- **Retrieve full document from index (POST)**
 
     Used to retrieve the full document from an index.
 
@@ -611,7 +614,7 @@ The output can be changed passing in the requests some attribute values:
     ```
 
 
-- Retrieve filenames from index (POST)
+- **Retrieve filenames from index (POST)**
 
     Used to retrieve the documents filenames from an index.
     
@@ -623,7 +626,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- Get_models (GET)
+- **Get_models (GET)**
     
     URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
@@ -655,7 +658,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- list_indices (GET)
+- **list_indices (GET)**
   
     This endpoint is used to list Elasticsearch indices, grouping models under each index.
 
@@ -889,6 +892,7 @@ If the response looks like this, you are good to go.
     "status_code": 200
 }
 ```
+<br/>
 
 #### LLM execution
 To use the LLM without using the retrieval component, you just have to change the compose template used.
@@ -922,6 +926,7 @@ The request would like like below
     }
 }
 ```
+<br/>
 
 #### Retrieval execution
 To use the retrieval without generating content (that is, without using a LLM), you just have to change the compose template used.
@@ -947,6 +952,7 @@ The request would like like below
     }
 }
 ```
+<br/>
 
 ## Configuration
 
@@ -975,28 +981,29 @@ These are the following compose templates currently available.
  * **expand_query_lang_llm**: This template uses an LLM for retrieval by translating queries into different languages, along with content generation.
  * **dalle**: This template is used for calling the DALL-E model.
  
- #### Compose Template Expected parameters:
- 
- * **retrieve**: index, query, top_k, filters
- * **retrieve_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **retrieve_reference**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **multiple_retrieval**: index, query, top_k, filters
- * **llm_model**:  model, platform, query, system, llm_template
- * **multiple_retrieval_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **retrieve_embeddings**: index, query, top_k, filters, embedding_model (a single one)
- * **retrieve_embeddings_llm**: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template
- * **retrieve_hybrid_scoring**: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom
- * **retrieve_hybrid_scoring_llm**: index, query, top_k, filters, embedding_model (a single one), rescoring_function , model, platform, query, system, llm_template
- * **retrieve_hybrid_scoring_rrf**: index, query, top_k, filters, embedding_model (a single one), strategy_mode
- * **retrieve_hybrid_scoring_rrf_llm**: index, query, top_k, filters, embedding_model (a single one), strategy_mode , model, platform, query, system, llm_template
- * **retrieve_sort_llm**: index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template
- * **retrieve_merge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **retrieve_fulldocument**: index, query, top_k, filters
- * **retrieve_fulldoc_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **retrieve_batchmerge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template
- * **expand_query_lang_llm**: langs (list of languages to expand), index, query, model, platform, llm_template
- * **dalle**: style, size, quality, model, query
+ <br/>
 
+#### Compose Templates expected parameters
+ 
+* **retrieve**: index, query, top_k, filters.
+* **retrieve_llm**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **retrieve_reference**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **multiple_retrieval**: index, query, top_k, filters.
+* **llm_model**:  model, platform, query, system, llm_template.
+* **multiple_retrieval_llm**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **retrieve_embeddings**: index, query, top_k, filters, embedding_model (a single one).
+* **retrieve_embeddings_llm**: index, query, top_k, filters, embedding_model (a single one) , model, platform, query, system, llm_template.
+* **retrieve_hybrid_scoring**: index, query, top_k, filters, embedding_model (a single one), rescoring_functiom.
+* **retrieve_hybrid_scoring_llm**: index, query, top_k, filters, embedding_model (a single one), rescoring_function, model, platform, query, system, llm_template.
+* **retrieve_hybrid_scoring_rrf**: index, query, top_k, filters, embedding_model (a single one), strategy_mode.
+* **retrieve_hybrid_scoring_rrf_llm**: index, query, top_k, filters, embedding_model (a single one), strategy_mode, model, platform, query, system, llm_template.
+* **retrieve_sort_llm**: index, query, top_k, filters, sort_desc, sort_type, model, platform, query, system, llm_template.
+* **retrieve_merge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **retrieve_fulldocument**: index, query, top_k, filters.
+* **retrieve_fulldoc_llm**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **retrieve_batchmerge_llm**: index, query, top_k, filters, model, platform, query, system, llm_template.
+* **expand_query_lang_llm**: langs (list of languages to expand), index, query, model, platform, llm_template.
+* **dalle**: style, size, quality, model, query.
 
 ### Compose actions template
 
@@ -1105,7 +1112,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     - **Filer_conditions** (json/dict): Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
-    Example of 'filter' action using type **"related_to"**:
+    Example of <i>filter</i> action using type **"related_to"**:
 
     ```json
     {
@@ -1128,7 +1135,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    Example of 'filter' action using type **"metadata"**:
+    Example of <i>filter</i> action using type **"metadata"**:
 
     ```json
     {
@@ -1153,24 +1160,24 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    |Allowed date types|
-    | - |
-    |yyyy-mm-dd|
-    |yyyy/mm/dd|
-    |yyyy/mm|
-    |yyyy|
-    |yyyymmdd|
-    |mmddyy|
-    |mmddyyyy|
-    |mm/dd/yy|
-    |mm/dd/yyyy|
-    |mm-dd-yy|
-    |mm-dd-yyyy|
+    * Allowed date types:
+        - yyyy-mm-dd
+        - yyyy/mm/dd
+        - yyyy/mm
+        - yyyy
+        - yyyymmdd
+        - mmddyy
+        - mmddyyyy
+        - mm/dd/yy
+        - mm/dd/yyyy
+        - mm-dd-yy
+        - mm-dd-yyyy
 
 3. **Merge**
 
    This action merges the different streamchunks in a streamlist into a single streamchunk. Starts with 1 streambatch containing 1 streamlist with multiple streamchunks and it ends with a streambatch containing 1 streamlist with the merged content in 1 chunk. It is also possible to set a grouping key to get the result in different streamchunks, 1 streamchunk per group.
-   The result chunk will have the merged information in the content field, and the metadata common to all the merged chunks will be saved in the new chunk:  
+   The result chunk will have the merged information in the content field, and the metadata common to all the merged chunks will be saved in the new chunk:
+
     * **Type** (string): Merge type to execute. (meta)
 
     * **Template** (string): Template to used to set the structure of the result content, the words starting with “$” represents the value of metadata or attribute of each chunk.
@@ -1198,7 +1205,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
    This action merges the different streamlist in a streambatch into a single streamlist with non-repeated chunks. Starts with 1 streambatch containing multiple streamlist containing multiple chunks that can be repeated between streamlists and it ends with a streambatch containing 1 streamlist with unique chunks.
 
-   Example for action 'batchmerge' in template:
+   Example for <i>batchmerge</i> action in template:
 
    ```json
     {
@@ -1225,7 +1232,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
    * **Desc** (bool): Sort descendant or ascendant.
    * **Value**: Metadata to use while sorting the streamlist.
 
-   Example of action 'sort' with type **"length"**:
+   Example of <i>sort</i> action with type **"length"**:
 
    ```json
    {
@@ -1239,7 +1246,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
    ```
 
-   Example of action 'sort' with type **"meta"**:
+   Example of <i>sort</i> action with type **"meta"**:
 
    ```json
    {
@@ -1279,7 +1286,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     }
     ```
 
-    Example for 'groupby' action with type **date**:
+    Example for <i>groupby</i> action with type **date**:
 
     ```json
     {
@@ -1295,25 +1302,26 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
 7. **LLM_action**
 
-   This is the action that calls the LLM service (that is, it calls an LLM). This is the action where the LLM template (“template_name”) must be defined. Here we can also define the system and query that will be sent to the LLM.
+    This is the action that calls the LLM service (that is, it calls an LLM). This is the action where the LLM template (“template_name”) must be defined. Here we can also define the system and query that will be sent to the LLM.
 
-   Parameters of this action:
+    Parameters of this action:
 
-   * **Type** (string): Method to user while calling genai-llmapi. Options: llm_content, llm_segments.
+    * **Type** (string): Method to user while calling genai-llmapi. Options: llm_content, llm_segments.
 
-   * **Model** (string): LLM model to use.
+    * **Model** (string): LLM model to use.
 
-   * **Platform** (string): Platform hosting the LLM.
+    * **Platform** (string): Platform hosting the LLM.
 
-   * **Query** (string)
+    * **Query** (string)
 
-   * **Template_name** (string):  Template name to use while calling genai-llmapi.
+    * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
-   * **System** (string): Context and task that will be sent to the LLM.
+    * **System** (string): Context and task that will be sent to the LLM.
 
-   Within this action, there are two types:
+    Within this action, there are two types:
 
-   * **Llm_content**: This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved. The streamlist will be the answer generated by the LLM.
+    <string><u>llm_content</u></string><br/>
+    This gets all the document fragments retrieved and merges them into a single fragment that then is sent to the LLM. It returns a single response with a streambatch of one streamlist containing all the chunks retrieved. The streamlist will be the answer generated by the LLM.
 
     Example for <i>llm_action</i> action with type "llm_content":
 
@@ -1340,8 +1348,9 @@ Every sorting action has a boolean action param called “desc” to set if the 
         }
     ```
 
-   - **Llm_segments**: This takes each one of the document fragments and sends them individually to the LLM. Therefore, you will get as many responses as document fragments you sent. The response will contain a streambatch of one streamlist containing the chunks retrieved with each answer.
-
+    <br/>
+    <string><u>llm_segments</u></string><br/>
+    This takes each one of the document fragments and sends them individually to the LLM. Therefore, you will get as many responses as document fragments you sent. The response will contain a streambatch of one streamlist containing the chunks retrieved with each answer.
 
     Example for <i>llm_action</i> action with type "llm_segment":
 
@@ -1369,20 +1378,22 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ```
 
 8. **Query expansion**
+
     This action allows the user to expand the original query into multiple queries in order to improve the LLM response or the chunks retrieved.
 
-   - **Type** (string): Method to use for the expansion. (langs, steps)
-   - **Params** (dict): Params for the action.
+    * **Type** (string): Method to use for the expansion. (langs, steps)
+    * **Params** (dict): Params for the action.
 
-    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
+    <string><u>lang</u></string><br/>
+    This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". Param model is optional.
 
-   - **Langs** (string, list): Languages to translate the query while using the langs type.
-   - **Model** (string, optional): Model to use for the translation.
+    - **Langs** (string, list): Languages to translate the query while using the langs type.
+    - **Model** (string, optional): Model to use for the translation.
 
     Example:
 
     ```json
-   {
+    {
         "action": "expansion",
         "action_params":{
             "params": {
@@ -1395,38 +1406,39 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ```
 
     The available abbreviations are:
-    - "ja": "japanese",
-    - "es": "spanish",
-    - "en": "english",
-    - "fr": "french",
-    - "de": "german",
-    - "zh": "chinese",
-    - "it": "italian",
-    - "ko": "korean",
-    - "pt": "portuguese",
-    - "ru": "russian",
-    - "ar": "arabic",
-    - "hi": "hindi",
-    - "tr": "turkish",
-    - "nl": "dutch",
-    - "sv": "swedish",
-    - "pl": "polish",
-    - "el": "greek",
-    - "he": "hebrew",
-    - "vi": "vietnamese",
-    - "th": "thai",
+    - "ja": "japanese"
+    - "es": "spanish"
+    - "en": "english"
+    - "fr": "french"
+    - "de": "german"
+    - "zh": "chinese"
+    - "it": "italian"
+    - "ko": "korean"
+    - "pt": "portuguese"
+    - "ru": "russian"
+    - "ar": "arabic"
+    - "hi": "hindi"
+    - "tr": "turkish"
+    - "nl": "dutch"
+    - "sv": "swedish"
+    - "pl": "polish"
+    - "el": "greek"
+    - "he": "hebrew"
+    - "vi": "vietnamese"
+    - "th": "thai"
     - "ca": "catalan"
 
-    **2. Step Expansion**: This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
+    <string><u>expansion</u></string><br/>
+    This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
 
-   - **K_steps** (int): Max number of query to create. The max number of queries is 10.
-   - **Context** (string, optional): Context for the template to use while calling llmapi.
-   - **Model** (string, optional): Model to use for the translation.
+    - **K_steps** (int): Max number of query to create. The max number of queries is 10.
+    - **Context** (string, optional): Context for the template to use while calling llmapi.
+    - **Model** (string, optional): Model to use for the translation.
 
     Example:
 
     ```json
-   {
+    {
         "action": "expansion",
         "action_params":{
             "params": {
@@ -1439,15 +1451,11 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ```
 
 9. **Reformulate query**
-    This action allows the user to reformulate the original query to improve the quality of the responses.
 
-   Parameters of this action:
+    This action allows the user to reformulate the original query to improve the quality of the responses. Parameters of this action:
 
-   * **Type** (string): Method to use for the reformulate. (mix_queries)
-
-   Within this action, there is one type:
-
-   * **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+    * **Type** (string): Method to use for the reformulate. Within this action, there is one type:
+        - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
 
     Example:
 
@@ -1471,130 +1479,128 @@ Every sorting action has a boolean action param called “desc” to set if the 
       - Save_mod_query (bool): Used to save or not the original query.
 
 10. **filter query**
+
     This action allows the user to filter the query to protect the tool from malicious queries or not wanted topics. If the query is filtered, compose will cancel all the following actions. This action has the following parameters:
 
-    * **type** (string): method to use for the reformulate. The only possible value is <i>llm</i>.  
-
+    * **type** (string): method to use for the reformulate. The only possible value is <i>llm</i>:
         - **llm**: this type filters the query using the llmapi and a template with the different categories. The template must be stored in the following folder: <i>src/compose/filter_templates</i>.
 
-        Example:
+    Example:
 
-        ```json
-        {
-            "action": "filter_query",
-            "action_params":{
-                "params": {
-                    "template" : "query_filter"
-                },
-                "type": "llm"
-            }
+    ```json
+    {
+        "action": "filter_query",
+        "action_params":{
+            "params": {
+                "template" : "query_filter"
+            },
+            "type": "llm"
         }
-        ```
+    }
+    ```
 
     * **template**: Name of the template to use.
 
-        Filter template example:
+    Filter template example:
 
-        ```json
-        {
-            "filter_types": ["GPT"],
-            "substitutions_template": "Classifies the query into one of the following categories:
-                1) Drugs: when the query mentions drugs or drug dealers.
-                2) Politics: If the query mentions politicians...
-                3) Other: If the consultation does not mention any of the above topics.
-            Answer only with the category and topic (do not give any explanation or reasoning). Query: ",
-            "substitutions": [{
-                    "from": "Drugs",
-                    "to": "Always start the answer by saying that you are a very young AI and should not be asked about drugs and that you should be ashamed to ask such a question to someone so young, and that you prefer to talk about: ",
-                    "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
-                    "randpick": 3
-                }, {
-                    "from": "Politics",
-                    "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
-                    "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
-                    "randpick": 3
-                }
-        ]}
-        ```
+    ```json
+    {
+        "filter_types": ["GPT"],
+        "substitutions_template": "Classifies the query into one of the following categories:
+            1) Drugs: when the query mentions drugs or drug dealers.
+            2) Politics: If the query mentions politicians...
+            3) Other: If the consultation does not mention any of the above topics.
+        Answer only with the category and topic (do not give any explanation or reasoning). Query: ",
+        "substitutions": [{
+                "from": "Drugs",
+                "to": "Always start the answer by saying that you are a very young AI and should not be asked about drugs and that you should be ashamed to ask such a question to someone so young, and that you prefer to talk about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }, {
+                "from": "Politics",
+                "to": "Always start the answer by saying that you are an AI that has just been created and that there are many topics in politics that you are still learning about and you prefer not to give your opinion without knowing, and that you prefer to chat about: ",
+                "extra_words": ["climate", "nature", "landscapes", "flora and fauna"],
+                "randpick": 3
+            }
+    ]}
+    ```
 
-        Template parameters:
+    Template parameters:
 
-        + **filter_types**: Currently There is only one type of filter, GPT.
+    * **filter_types**: Currently There is only one type of filter, GPT.
 
-        + **substitutions_template**: It will be the prompt used for classification.
+    * **substitutions_template**: It will be the prompt used for classification.
 
-        + **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
 
-        + **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 11. **Filter response**
-    This action allows the user to filter the response to double-check if the answer is correct or if the topic of the answer is not desired.
 
-    Parameters of this action:
+    This action allows the user to filter the response to double-check if the answer is correct or if the topic of the answer is not desired. Parameters of this action:
 
-    * **Type** (string): Method to use for the reformulate. The only possible value is <i>llm</i>. 
-
+    * **Type** (string): Method to use for the reformulate. The only possible value is <i>llm</i>:
         - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder src/compose/filter_templates.
 
-        Example:
+    Example:
 
-        ```json
-            {
-            "action": "filter_response",
-            "action_params":{
-                "params": {
-                    "template" : "response_filter"
-                },
-                "type": "llm"
-            }
-        }
-        ```
-
-        Filter template example:
-
-        ```json
+    ```json
         {
-            "filter_types": [
-                "GPT"
-            ],
-            "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Incorrect: The 'Response' is not related to the 'query'. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, customer numbers, usernames, etc.",
-            "substitutions": [{
-                "from": "Correct",
-                "to": null
-                },
-                {
-                    "from": "Incorrect",
-                    "to": "Notify that a hallucination has been detected in the generated response and that the query cannot be answered.",
-                    "extra_words": [
-                        "weather",
-                        "nature"
-                    ],
-                    "randpick": 3
-                }, {
-                    "from": "Sensitive Information",
-                    "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
-                    "extra_words": [
-                        "weather",
-                        "nature",
-                        "landscapes",
-                        "flora and fauna",
-                        "geography"
-                    ],
-                    "randpick": 3
-                }
-            ]
+        "action": "filter_response",
+        "action_params":{
+            "params": {
+                "template" : "response_filter"
+            },
+            "type": "llm"
         }
-        ```
+    }
+    ```
 
-        Parameters:
+    Filter template example:
 
-        + **filter_types**: Currently There is only one type of filter, GPT.
+    ```json
+    {
+        "filter_types": [
+            "GPT"
+        ],
+        "substitutions_template": "Classify the 'Response' into one of the following categories: \n1) Correct: When the 'Response' is related to the 'query'. \n2) Incorrect: The 'Response' is not related to the 'query'. \n3) Sensitive Information: The 'Response' contains sensitive information such as ID numbers, customer numbers, usernames, etc.",
+        "substitutions": [{
+            "from": "Correct",
+            "to": null
+            },
+            {
+                "from": "Incorrect",
+                "to": "Notify that a hallucination has been detected in the generated response and that the query cannot be answered.",
+                "extra_words": [
+                    "weather",
+                    "nature"
+                ],
+                "randpick": 3
+            }, {
+                "from": "Sensitive Information",
+                "to": "Notify that sensitive information has been detected and that the query cannot be answered. Suggest discussing:",
+                "extra_words": [
+                    "weather",
+                    "nature",
+                    "landscapes",
+                    "flora and fauna",
+                    "geography"
+                ],
+                "randpick": 3
+            }
+        ]
+    }
+    ```
 
-        + **substitutions_template**: It will be the prompt used for classification.
+    Parameters:
 
-        + **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+    * **filter_types**: Currently There is only one type of filter, GPT.
 
-        + **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+    * **substitutions_template**: It will be the prompt used for classification.
+
+    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ### LLM Prompt Templates
 
@@ -1621,12 +1627,14 @@ LLM templates are used to configure the prompts that are sent to the generative 
 }
 ```
 
+<br/>
+
 ### Models embeddings
 
 The indexation pipeline uses various embedding models across different platforms (OpenAI's ADA model) deployed in various geographical regions, as well as different pools* of models to allow a more balanced deployment of models. It is important to know that a compatible model must be used in the retrieval process for the system to work correctly. The list of available models, along with the pool they belong to, is below.
 The available models depend on the region where the suscription is deployed. Make sure the model is available in the region you are using.
 
-- Japan region
+<strong>Japan region</strong><br/>
 
 | Model Name            | Pools                                                  | Platform |
 |-----------------------|--------------------------------------------------------|------|
@@ -1662,7 +1670,7 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhub-WestUS3-Ada-3-large|techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
-- Inc region
+<br/><strong>INC region</strong><br/>
 
 | Model Name | Pools | Platform |
 |--------|------|------|
@@ -1699,7 +1707,7 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubinc-WestUS3-Ada-3-large|techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 
-- Dev region
+<br/><strong>DEV region</strong><br/>
 
 | Model Name | Pools | Platform |
 |--------|------|------|
@@ -1758,61 +1766,60 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-cohere-multilingual-v3-London|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
 |techhubdev-cohere-multilingual-v3-Paris|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
 
-*A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
+*<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ### Models LLM
 
 There is a variety of generative language models available for different use cases within the retrieval pipeline. Below is the list of these models, including an example of a pool to which each below. A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployement of models.
 The available models depend on the region where the suscription is deployed. Make sure the model is available in the region you are using.
 
-- Japan region
+<strong>Japan region</strong><br/>
 
 | Model Name                    | Pools                                               | Platform |
 |-------------------------------|-----------------------------------------------------|------|
-techhub-AustraliaEast-DallE-3|techhub-pool-world-dalle3|azure|
-techhub-AustraliaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-AustraliaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-AustraliaEast-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
-techhub-BrazilSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-CanadaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-CanadaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-EastUS-DallE-3|techhub-pool-us-dalle3, techhub-pool-world-dalle3|azure|
-techhub-EastUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-EastUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-EastUS2-gpt-35-turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-EastUS2-gpt-4-turbo-2024-04-09|techhub-pool-us-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
-techhub-EastUS2-gpt-4o-2024-05-13|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-FranceCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-FranceCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-GermanyWestCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
-gpt-4o-judge|techhub-pool-world-gpt-4o|azure|
-gpt-35-turbo-16k|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-gpt-4o-mini|techhub-pool-world-gpt-4v|azure|
-techhub-KoreaCentral-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-NorthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-NorthCentralUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-NorwayEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-PolandCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-SouthAfricaNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-SouthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-SouthIndia-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-SouthIndia-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-SwedenCentral-DallE-3|techhub-pool-world-dalle3|azure|
-techhub-SwedenCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-SwedenCentral-GPT4-Turbo-202400409|techhub-pool-eu-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
-techhub-SwedenCentral-GPT4-Vision|techhub-pool-eu-gpt-4v, techhub-pool-world-gpt-4v|azure|
-techhub-SwitzerlandNorth-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
-techhub-SwitzerlandNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-UKSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
-techhub-UKSouth-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-WestEurope-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-WestUS-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
-techhub-WestUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
-techhub-WestUS-GPT4-Vision|techhub-pool-us-gpt-4v, techhub-pool-world-gpt-4v|azure|
-techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-AustraliaEast-DallE-3|techhub-pool-world-dalle3|azure|
+|techhub-AustraliaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-AustraliaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-AustraliaEast-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+|techhub-BrazilSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-CanadaEast-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-CanadaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-EastUS-DallE-3|techhub-pool-us-dalle3, techhub-pool-world-dalle3|azure|
+|techhub-EastUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-EastUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-EastUS2-gpt-35-turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-EastUS2-gpt-4-turbo-2024-04-09|techhub-pool-us-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhub-EastUS2-gpt-4o-2024-05-13|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-FranceCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-FranceCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-GermanyWestCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|gpt-4o-judge|techhub-pool-world-gpt-4o|azure|
+|gpt-35-turbo-16k|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|gpt-4o-mini|techhub-pool-world-gpt-4v|azure|
+|techhub-KoreaCentral-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-NorthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-NorthCentralUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-NorwayEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-PolandCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-SouthAfricaNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-SouthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-SouthIndia-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-SouthIndia-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-SwedenCentral-DallE-3|techhub-pool-world-dalle3|azure|
+|techhub-SwedenCentral-GPT35Turbo-1106|techhub-pool-eu-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-SwedenCentral-GPT4-Turbo-202400409|techhub-pool-eu-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhub-SwedenCentral-GPT4-Vision|techhub-pool-eu-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhub-SwitzerlandNorth-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+|techhub-SwitzerlandNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-UKSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-UKSouth-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-WestEurope-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-WestUS-GPT35Turbo-1106|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-WestUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-WestUS-GPT4-Vision|techhub-pool-us-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
 
-
-- Inc region
+<br/><strong>INC region</strong><br/>
 
 | Model Name | Pools | Platform |
 |--------|------|------|
@@ -1879,8 +1886,8 @@ techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o
 |techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo|azure|
 |techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o|azure|
 
-- Dev region
-  
+<br/><strong>DEV region</strong><br/>
+
 | Model Name | Pools | Platform |
 |--------|------|------|
 |techhubdev-AustraliaEast-dall-e-3|techhubdev-pool-world-dalle3|azure|
@@ -1987,7 +1994,7 @@ techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o
 |techhubdev-claude-3-sonnet-v1:0-London|techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
 |techhubdev-claude-3-sonnet-v1:0-Paris|techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
 
-*A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
+*<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ## Examples
 
@@ -3061,6 +3068,8 @@ Example for <i>llm_action</i> action with <u>llm_segment</u> type:
 }
 ```
 
+<br/>
+
 #### Secrets
     
 All necessary credentials for the components are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). The different secrets that are used in the components are:
@@ -3498,6 +3507,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Using actions
 

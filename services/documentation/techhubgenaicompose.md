@@ -238,6 +238,7 @@ If the response looks like this, you are good to go.
     "status_code": 200
 }
 ```
+<br/>
 
 ## API Reference
 
@@ -394,6 +395,7 @@ Response structure must be as follows
     "status_code": 200
 }
 ```
+<br/>
 
 ### Parameters explanation
 
@@ -560,6 +562,7 @@ An example of the filter configuration file is as follow:
     ]
 }
 ```
+<br/>
 
 #### Reformulate query
 
@@ -626,6 +629,7 @@ Body example:
     }
 }
 ```
+<br/>
 
 #### Retrieval
 
@@ -679,29 +683,15 @@ On the other hand, we have the option of multiple retrieval by query or by filte
 
     Parameters:
 
-  - **index**: The name of the storage index for the chunks.
+    - **index**: The name of the storage index for the chunks.
 
-  Optional parameters:
+    Optional parameters:
 
-  - **query:** The text used to retrieve documents, such as "who is the CEO of NTT?" or "project management", if there is no query it must be a filter to use in the retrieval process and obtain the entire documents.
+    - **query:** The text used to retrieve documents, such as "who is the CEO of NTT?" or "project management", if there is no query it must be a filter to use in the retrieval process and obtain the entire documents.
 
-  - **top_k:** Number of chunks to be returned.
+    - **top_k:** Number of chunks to be returned.
 
-  - **rescoring_function:** Optional = "loglength" → It can be mean or loglength, it changes the way to ponderate semantic search vs bm25 to improve results. The default value for this operation will be “mean” type (compute the mean of all models). The different rescoring functions that can be chosen are:
-
-    |**rescoring\_function**|**Explanation**|
-    | :- | :- |
-    |mean|It will compute the mean of all models|
-    |posnorm|It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one a 0. The global score of the model will be the mean of each snippet's score.|
-    |pos|It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one the minimum of the scores. The global score of the model will be the mean of each snippet's score.|
-    |length|<p> </p><p>It will compute a combined score depending on the query length. </p><p></p><p>final\_score = [transformers\_models\_score \* query\_len + bm25\_score ] / [query\_len + 1]</p>|
-    |***loglength***|<p>It will compute a combined score depending on the query length's logarithm in base 2</p><p></p><p>[transformers\_models\_score \* log2(query\_len) + bm25\_score ] / [log2(query\_len) + 1]</p>|
-    |***norm***|It will normalize each model's scores between 0 and 1. Then computes the mean.|
-    |***nll (norm – loglength)***|It will normalize each model's scores between 0 and 1. Then computes the loglegth function.|
-
-    ** *The italic ones are the best options*
-
-  - **filters**: For each key it will only return keys that are contained in the list. For example in the JSON example, the system will return only passages from: “12 sustainable New Year's resolutions_EN” filename or the full document if the template is like the second example of template (retrieve full document)
+    - **filters**: For each key it will only return keys that are contained in the list. For example in the JSON example, the system will return only passages from: “12 sustainable New Year's resolutions_EN” filename or the full document if the template is like the second example of template (retrieve full document)
 
     ```json
     "filters": {
@@ -709,7 +699,21 @@ On the other hand, we have the option of multiple retrieval by query or by filte
     }
     ```
 
-  - **models**: If specified, only these models will be used for retrieval. Otherwise, all models will be used.
+    - **models**: If specified, only these models will be used for retrieval. Otherwise, all models will be used.
+
+    - **rescoring_function:** Optional = "loglength" → It can be mean or loglength, it changes the way to ponderate semantic search vs bm25 to improve results. The default value for this operation will be “mean” type (compute the mean of all models). The different rescoring functions that can be chosen are:
+
+|rescoring\_function | Explanation |
+| :- | :- |
+|mean|It will compute the mean of all models|
+|posnorm|It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one a 0. The global score of the model will be the mean of each snippet's score.|
+|pos|It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one the minimum of the scores. The global score of the model will be the mean of each snippet's score.|
+|length|<p> </p><p>It will compute a combined score depending on the query length. </p><p></p><p>final\_score = [transformers\_models\_score \* query\_len + bm25\_score ] / [query\_len + 1]</p>|
+|**<i>loglength</i>**|<p>It will compute a combined score depending on the query length's logarithm in base 2</p><p></p><p>[transformers\_models\_score \* log2(query\_len) + bm25\_score ] / [log2(query\_len) + 1]</p>|
+|**<i>norm</i>**|It will normalize each model's scores between 0 and 1. Then computes the mean.|
+|**<i>nll (norm – loglength)</i>**|It will normalize each model's scores between 0 and 1. Then computes the loglegth function.|
+
+*<i>The italic ones are the best options</i>
 
 ### Context processing
 
@@ -745,6 +749,7 @@ To work with date types use “_date” in the filter condition name like in the
 {"lt_date": ["date", "2023-12-19"]}: Lesser than the date specified.
 {"eq_date": ["date", "2023-12-19"]}: Equeal than the date specified.
 ```
+<br/>
 
 ### Error Handling
 
@@ -827,7 +832,7 @@ The following would be an example of a query containing the three types:
 ]
 ```
 
-*Images formats allowed: jpeg, png, gif and webp*
+*Images formats allowed: jpeg, png, gif and webp.*
 
 ### Examples
 
@@ -919,6 +924,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Retrieve and LLMAPI
 
@@ -1120,6 +1126,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Retrieve document by metadata and call LLM
 
@@ -1293,6 +1300,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Retrieve all document
   
@@ -1375,6 +1383,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Persistence and LLM with vision model
 
@@ -1471,6 +1480,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Image generation with Dalle3
 
@@ -1719,6 +1729,7 @@ Response
     "status_code": 200
 }
 ```
+<br/>
 
 #### Filter action
 
@@ -1863,6 +1874,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Merge action
 
@@ -1988,6 +2000,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Batchmerge action
 
@@ -2126,6 +2139,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Sort action
 
@@ -2271,6 +2285,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Groupby action
 
@@ -2404,6 +2419,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 ##### Reformulate action
 
@@ -2587,6 +2603,7 @@ Session saved with the reformulated query:
     }
 ]
 ```
+<br/>
 
 ##### Filter query action
 
@@ -2737,6 +2754,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 ##### Filter response action
 
@@ -2889,6 +2907,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 #### Combining actions
 
@@ -3005,6 +3024,7 @@ Response:
     "status_code": 200
 }
 ```
+<br/>
 
 ## Concepts and Definitions
 
@@ -3079,7 +3099,9 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
     "port": "redis port"
   }
   ```
-  
+
+<br/>
+
 ### Local installation for devs
 
 To get started with COMPOSE service on your local machine, you need to have Retrieval and LLMAPI services running and a template stored in azure blob storage in the path "src/compose/templates".
@@ -3143,7 +3165,7 @@ To get started with COMPOSE service on your local machine, you need to have Retr
 * **LANGFUSE ("true", "false")**: Variable used to set if COMPOSE uses langfuse per default.
 * **DEFAULT_LLM_MODEL**: Model name or pool used for the default templates for reformulate, filter, translate...
 
-<i>When the provider is **azure**, the aws variables can be empty and the same when using *aws** with the azure variable</i>
+<i>When the provider is **azure**, the aws variables can be empty and the same when using **aws** with the azure variable</i>
 
 ## Code Overview
 
@@ -3360,20 +3382,18 @@ Every sorting action has a boolean action param called “desc” to set if the 
         }
     }
     ```
-
-    |Allowed date types|
-    | - |
-    |Yyyy-mm-dd|
-    |Yyyy/mm/dd|
-    |Yyyy/mm|
-    |yyyy|
-    |Yyyymmdd|
-    |Mmddyy|
-    |Mmddyyyy|
-    |Mm/dd/yy|
-    |Mm/dd/yyyy|
-    |Mm-dd-yy|
-    |Mm-dd-yyyy|
+    * **Allowed date types**:
+        - Yyyy-mm-dd
+        - Yyyy/mm/dd
+        - Yyyy/mm
+        - yyyy
+        - Yyyymmdd
+        - Mmddyy
+        - Mmddyyyy
+        - Mm/dd/yy
+        - Mm/dd/yyyy
+        - Mm-dd-yy
+        - Mm-dd-yyyy
 
 3. **Merge**
 
@@ -3586,36 +3606,32 @@ Every sorting action has a boolean action param called “desc” to set if the 
     ```
 
 8. **Query expansion**
-    This action allows the user to expand the original query in multiple queries in order to improve the LLM response or the chunks retrieved.
+    This action allows the user to expand the original query in multiple queries in order to improve the LLM response or the chunks retrieved. Parameters of this action:
 
-   Parameters of this action:
+    * **Type** (string): Method to use for the expansion. Possible values are: langs or steps.
+    * **Params** (dict): Params for the action.
 
-   * **Type** (string): Method to use for the expansion. (langs, steps).
-   * **Params** (dict): Params for the action.
+    Possible values of <i>type</i> parameter: <br/>
+    <strong>a) <u>Lang</u></strong> <br/>
+    This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In <i>languages</i> list the user can specify the entire language or an abbreviation like "en" or "ja". <i>Model</i> param is optional. Parameter definitions:
+     - **Langs (string, list)**: Languages to translate the query while using the langs type.
+     - **Model (string, optional)**: Model to use for the translation.
 
-   Possible values of <i>type</i> parameter:
+    Example:
+    ```json
+    {
+         "action": "expansion",
+         "action_params":{
+          "params": {
+           "langs" : ["es", "ja", "chinese"],
+           "model": "techhub-pool-world-gpt-3.5-turbo-16k"
+          },
+          "type": "lang"
+         }
+    }
+    ```
 
-    **1. Lang Expansion**: This expansion method, translates the original query to the received languages by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each query. In languages list the user can specify the entire language or an abbreviation like "en" or "ja". <i>Model</i> param is optional.  
-
-    * **Langs** (string, list): Languages to translate the query while using the langs type.
-    * **Model** (string, optional): Model to use for the translation.
-
-        Example:
-
-        ```json
-        {
-            "action": "expansion",
-            "action_params":{
-                "params": {
-                    "langs" : ["es", "ja", "chinese"],
-                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
-                },
-                "type": "lang"
-            }
-        }
-        ```
-
-        The available abbreviations are:
+    The available abbreviations are:
         - "ja": "japanese",
         - "es": "spanish",
         - "en": "english",
@@ -3637,38 +3653,37 @@ Every sorting action has a boolean action param called “desc” to set if the 
         - "vi": "vietnamese",
         - "th": "thai",
         - "ca": "catalan"
+      
+    <strong>b) <u>Step</u></strong><br/>
+    This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query. Parameter definitions:
+    
+     - **K_steps** (int): Max number of query to create. The max number of queries is 10.
+     - **Context** (string, optional): Context for the template to use while calling llmapi.
+     - **Model** (string, optional): Model to use for the translation.
 
-    **2. Step Expansion**: This expansion method, splits the original query to new more simple queries for each step/topic of the original query by calling genai-llmapi and creates new retrieve action steps in order to call genai-inforetrieval with each new query.
+    Example:
 
-    * **K_steps** (int): Max number of query to create. The max number of queries is 10.
-    * **Context** (string, optional): Context for the template to use while calling llmapi.
-    * **Model** (string, optional): Model to use for the translation.
-
-        Example:
-
-        ```json
-        {
-            "action": "expansion",
-            "action_params":{
-                "params": {
-                    "k_steps": 2,
-                    "model": "techhub-pool-world-gpt-3.5-turbo-16k"
-                },
-                "type": "steps"
-            }
+    ```json
+    {
+        "action": "expansion",
+        "action_params":{
+            "params": {
+                "k_steps": 2,
+                "model": "techhub-pool-world-gpt-3.5-turbo-16k"
+            },
+            "type": "steps"
         }
-        ```
+    }
+    ```
 
 9. **Reformulate query**
     This action allows the user to reformulate the original query to improve the quality of the responses.
 
-   Parameters of this action:
+    Parameters of this action:
 
-   * **Type** (string): Method to use for the reformulate. (mix_queries)
+    * **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
-   Within this action, there is one type:
-
-   * **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
+        - **Mix_queries**: This type reformulates the query using the session context to make a better query for the LLM. For example, the first query is "What is the capital of Spain?" and the second query could be "How many people live there?". The reformulate method will change the second query to something like this: "How many people live in Madrid?".
 
     Example:
 
@@ -3694,9 +3709,9 @@ Every sorting action has a boolean action param called “desc” to set if the 
 10.  **filter query**
     This action allows the user to filter the query to protect the tool from malicious queries or not wanted topics. The possible parameters of this action are:
     
-* **type** (string): method to use for the reformulate. Within this action, there is one type:
+    * **type** (string): method to use for the reformulate. Within this action, there is one type:
 
-    - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
+        - **llm**: this type filters the query using the llmapi and a template with the different categories. the template must be stored in the folder src/compose/filter_templates.
 
     Example:
 
@@ -3754,9 +3769,9 @@ Every sorting action has a boolean action param called “desc” to set if the 
 11.  **Filter response**
     This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired. The parameters of this action are:
 
-* **Type** (string): Method to use for the reformulate. Within this action, there is one type:
+    * **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
-    - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
+        - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
 
     Example action:
 
