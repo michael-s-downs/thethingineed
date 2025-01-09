@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.4.14
+genai-sdk-services==0.5.0
 Werkzeug==3.0.4
 flask==3.0.3
 gunicorn==23.0.0
