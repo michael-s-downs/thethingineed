@@ -1719,24 +1719,44 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-JapanEast-Ada-002|techhubdev-pool-world-ada-002|azure|
 |techhubdev-JapanEast-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
 |techhubdev-JapanEast-Ada-3-small|techhubdev-pool-world-ada-3-small|azure|
-|techhubdev-NorthCentralUS-Ada-002|techhubdev-pool-world-ada-002|azure|
 |techhubdev-NorwayEast-Ada-002|techhubdev-pool-world-ada-002|azure|
 |techhubdev-NorwayEast-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
 |techhubdev-SouthAfricaNorth-Ada-002|techhubdev-pool-world-ada-002|azure|
 |techhubdev-SouthCentralUS-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
-|techhubdev-SouthIndia-Ada-002|techhubdev-pool-world-ada-002|azure|
-|techhubdev-SouthIndia-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
 |techhubdev-SwedenCentral-Ada-002|techhubdev-pool-eu-ada-002, techhubdev-pool-world-ada-002|azure|
 |techhubdev-SwedenCentral-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
 |techhubdev-SwitzerlandNorth-Ada-002|techhubdev-pool-world-ada-002|azure|
-|techhubdev-UKSouth-Ada-002 |techhubdev-pool-world-ada-002|azure|
+|techhubdev-UKSouth-Ada-002|techhubdev-pool-world-ada-002|azure|
 |techhubdev-UKSouth-Ada-3-large|techhubdev-pool-world-ada-3-large|azure|
 |techhubdev-WestEurope-Ada-002|techhubdev-pool-eu-ada-002, techhubdev-pool-world-ada-002|azure|
 |techhubdev-WestUS-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
-|techhubdev-WestUS3-Ada-3-large|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
-|techhubdev-WestUS3-Ada-002|techhubdev-pool-us-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-WestUS3-Ada-3-large|techhubdev-pool-us-ada-3-large, techhubdev-pool-world-ada-3-large|azure|
+|techhubdev-WestUS3-Ada-002|techhubdev-pool-us-ada-002, techhubdev-pool-world-ada-002|azure|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 |dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
+|techhubdev-titan-v2:0-NorthVirginia|techhubdev-pool-us-titan-v2:0, techhubdev-pool-world-titan-v2:0|bedrock|
+|techhubdev-titan-v2:0-Ohio|techhubdev-pool-us-titan-v2:0, techhubdev-pool-world-titan-v2:0|bedrock|
+|techhubdev-titan-v2:0-Oregon|techhubdev-pool-us-titan-v2:0, techhubdev-pool-world-titan-v2:0|bedrock|
+|techhubdev-titan-v2:0-Frankfurt|techhubdev-pool-ue-titan-v2:0, techhubdev-pool-world-titan-v2:0|bedrock|
+|techhubdev-titan-v2:0-London|techhubdev-pool-ue-titan-v2:0, techhubdev-pool-world-titan-v2:0|bedrock|
+|techhubdev-titan-v1:0-NorthVirginia|techhubdev-pool-us-titan-v1:0, techhubdev-pool-world-titan-v1:0|bedrock|
+|techhubdev-titan-v1:0-Oregon|techhubdev-pool-us-titan-v1:0, techhubdev-pool-world-titan-v1:0|bedrock|
+|techhubdev-titan-v1:0-Tokyo|techhubdev-pool-ap-titan-v1:0, techhubdev-pool-world-titan-v1:0|bedrock|
+|techhubdev-titan-v1:0-Frankfurt|techhubdev-pool-ue-titan-v1:0, techhubdev-pool-world-titan-v1:0|bedrock|
+|techhubdev-cohere-english-v3-NorthVirginia|techhubdev-pool-us-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-Oregon|techhubdev-pool-us-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-Tokyo|techhubdev-pool-ap-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-Singapore|techhubdev-pool-ap-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-Frankfurt|techhubdev-pool-ue-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-London|techhubdev-pool-ue-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-english-v3-Paris|techhubdev-pool-ue-cohere-english-v3, techhubdev-pool-world-cohere-english-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-NorthVirginia|techhubdev-pool-us-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-Oregon|techhubdev-pool-us-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-Tokyo|techhubdev-pool-ap-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-Singapore|techhubdev-pool-ap-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-Frankfurt|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-London|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
+|techhubdev-cohere-multilingual-v3-Paris|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3|bedrock|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 
@@ -1923,6 +1943,49 @@ techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o
 |techhubdev-WestUS-gpt-4-vision-preview|techhubdev-pool-us-gpt-4v, techhubdev-pool-world-gpt-4v|azure|
 |techhubdev-WestUS3-gpt-4-turbo-2024-04-09|techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo|azure|
 |techhubdev-WestUS3-gpt-4o-2024-08-06|techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o|azure|
+|techhubdev-amazon.nova-micro-v1-NorthVirginia|techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0|bedrock|
+|techhubdev-amazon.nova-micro-v1-Ohio|techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0|bedrock|
+|techhubdev-amazon.nova-micro-v1-Oregon|techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0|bedrock|
+|techhubdev-amazon.nova-lite-v1-NorthVirginia|techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0|bedrock|
+|techhubdev-amazon.nova-lite-v1-Ohio|techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0|bedrock|
+|techhubdev-amazon.nova-lite-v1-Oregon|techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0|bedrock|
+|techhubdev-amazon.nova-pro-v1:0-NorthVirginia|techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0|bedrock|
+|techhubdev-amazon.nova-pro-v1-Ohio|techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0|bedrock|
+|techhubdev-amazon.nova-pro-v1-Oregon|techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0|bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-NorthVirginia|techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0|bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-NorthVirginia|techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0|bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-Oregon|techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0|bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-Oregon|techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0|bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-London|techhubdev-pool-eu-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0|bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-London|techhubdev-pool-eu-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0|bedrock|
+|techhubdev-meta-llama-3-1-405b-v1:0-Oregon|techhubdev-pool-us-llama3-1-405b-1:0, techhubdev-pool-world-llama3-1-405b-1:0|bedrock|
+|techhubdev-meta-llama-3-1-70b-v1:0-NorthVirginia|techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0|bedrock|
+|techhubdev-meta-llama-3-1-70b-v1:0-Oregon|techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0|bedrock|
+|techhubdev-meta-llama-3-1-8b-v1:0-NorthVirginia|techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0|bedrock|
+|techhubdev-meta-llama-3-1-8b-v1:0-Oregon|techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia|techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Ohio|techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Oregon|techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Tokyo|techhubdev-pool-ap-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Frankfurt|techhubdev-pool-eu-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Paris||bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-NorthVirginia|techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-Ohio|techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-Oregon|techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v2:0-NorthVirginia|techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhubdev-claude-3-5-sonnet-v2:0-Oregon|techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-Ohio|techhubdev-pool-us-claude-3-haiku-1:0, techhubdev-pool-world-claude-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-Oregon|techhubdev-pool-us-claude-3-haiku-1:0, techhubdev-pool-world-claude-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-Tokyo|techhubdev-pool-ap-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-Frankfurt|techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-London|techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-haiku-v1:0-Paris|techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Oregon|techhubdev-pool-us-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Tokyo||bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Singapore||bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Frankfurt|techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubdev-claude-3-sonnet-v1:0-London|techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Paris|techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0|bedrock|
 
 *A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.*
 

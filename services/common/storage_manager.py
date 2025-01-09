@@ -122,7 +122,7 @@ class LLMStorageManager(BaseStorageManager):
     def get_default_models(self):
         s3_models_file = self.load_file(self.workspace, self.default_models_file_path)
         if s3_models_file is None or len(s3_models_file) <= 0:
-            raise PrintableGenaiError(400, f"Default models can't be downloaded because {self.models_file_path} not found in {self.workspace}")
+            raise PrintableGenaiError(400, f"Default models can't be downloaded because {self.default_models_file_path} not found in {self.workspace}")
         else:
             if json.loads(s3_models_file):
                 return json.loads(s3_models_file)
