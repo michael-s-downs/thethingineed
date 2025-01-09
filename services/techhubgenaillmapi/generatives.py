@@ -55,6 +55,8 @@ class GenerativeModel(ABC):
         :param config: Dict with the message to be used
         """
         config['message'] = self.MODEL_MESSAGE
+        if hasattr(self, 'max_img_size_mb'):
+            config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
@@ -419,7 +421,8 @@ class ChatGPTVision(GPTModel):
                  models_credentials: dict = None,
                  top_p : int = 0,
                  seed: int = None,
-                 response_format: str = None):
+                 response_format: str = None,
+                 max_img_size_mb: float = 20.00):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used in the gpt3_5 endpoint
@@ -445,6 +448,7 @@ class ChatGPTVision(GPTModel):
         super().__init__(model, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                          temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = True
+        self.max_img_size_mb = max_img_size_mb
 
 class ClaudeModel(GenerativeModel):
     MODEL_MESSAGE = None
@@ -491,6 +495,8 @@ class ClaudeModel(GenerativeModel):
         :param config: Dict with the message to be used
         """
         config['message'] = self.MODEL_MESSAGE
+        if hasattr(self, 'max_img_size_mb'):
+            config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
@@ -614,7 +620,8 @@ class ChatClaudeVision(ClaudeModel):
                  api_version: str = "",
                  temperature: float = 0,
                  stop: List = ["end_turn"],
-                 models_credentials: dict = None):
+                 models_credentials: dict = None,
+                 max_img_size_mb: float = 5.00):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to verify the model
@@ -634,6 +641,7 @@ class ChatClaudeVision(ClaudeModel):
         super().__init__(model, model_id, model_type, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                          temperature, stop, models_credentials)
         self.is_vision = True
+        self.max_img_size_mb = max_img_size_mb
 
 
 class LlamaModel(GenerativeModel):
@@ -689,6 +697,8 @@ class LlamaModel(GenerativeModel):
         :param config: Dict with the message to be used
         """
         config['message'] = self.MODEL_MESSAGE
+        if hasattr(self, 'max_img_size_mb'):
+            config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
@@ -821,6 +831,8 @@ class NovaModel(GenerativeModel):
         :param config: Dict with the message to be used
         """
         config['message'] = self.MODEL_MESSAGE
+        if hasattr(self, 'max_img_size_mb'):
+            config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
@@ -952,7 +964,8 @@ class ChatNovaVision(NovaModel):
                  top_p: float = 0.9, 
                  temperature: float = 0.7, 
                  stop: List = ["end_turn"], 
-                 models_credentials: dict = None):
+                 models_credentials: dict = None,
+                 max_img_size_mb: float = 20.00):
             """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
             :param model: Model name used to specify model
@@ -974,6 +987,7 @@ class ChatNovaVision(NovaModel):
             super().__init__(model, model_id, model_type, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
                              top_k, temperature, stop, models_credentials)
             self.is_vision = True
+            self.max_img_size_mb = max_img_size_mb
 
 
 class ManagerModel(object):

@@ -187,7 +187,7 @@ class ChatGPTvMessage(Message):
     MODEL_FORMAT = "chatGPT-v"
 
     def __init__(self, query: list, template: dict, template_name: str = "system_query", context: str = "",
-                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=(), max_img_size_mb=20.00):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -214,7 +214,7 @@ class ChatGPTvMessage(Message):
         self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
-        adapter = ManagerAdapters.get_adapter({'adapter': "gpt4v", 'message': self})
+        adapter = ManagerAdapters.get_adapter({'adapter': "gpt4v", 'message': self, 'max_img_size_mb': max_img_size_mb})
         adapter.adapt_query_and_persistence()
         self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
 
@@ -292,7 +292,7 @@ class Claude3Message(Message):
     MODEL_FORMAT = "chatClaude-v"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query_v", context: str = "",
-                 system='I am a helpful assistant', persistence=()):
+                 system='I am a helpful assistant', persistence=(), max_img_size_mb=5.00):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -313,7 +313,7 @@ class Claude3Message(Message):
         self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
-        adapter = ManagerAdapters.get_adapter({'adapter': "claude", 'message': self})
+        adapter = ManagerAdapters.get_adapter({'adapter': "claude", 'message': self, 'max_img_size_mb': max_img_size_mb})
         adapter.adapt_query_and_persistence()
         self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
 
@@ -406,7 +406,7 @@ class NovaVMessage(Message):
     MODEL_FORMAT = "chatNova-v"
 
     def __init__(self, query: str, template: dict, template_name: str = "system_query_v", context: str = "",
-                 system='I am a helpful assistant', persistence=()):
+                 system='I am a helpful assistant', persistence=(), max_img_size_mb=20.00):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -427,7 +427,7 @@ class NovaVMessage(Message):
         self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
-        adapter = ManagerAdapters.get_adapter({'adapter': "nova", 'message': self})
+        adapter = ManagerAdapters.get_adapter({'adapter': "nova", 'message': self, 'max_img_size_mb': max_img_size_mb})
         adapter.adapt_query_and_persistence()
         self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
     

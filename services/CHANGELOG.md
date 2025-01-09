@@ -3,9 +3,43 @@
 
 # Changelog
 
+## vX.X.X (XXXX-XX-XX)
+- integration-receiver
+  - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
+  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+  - [Fix] When error while processing request, return 400 instead of 200
+  - [Fix] When error while processing request, delete base64 to not surpass queue size
+- integration-sender:
+  - [New] Input JSON refactor to separate parameters between indexation and preprocess
+  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+- preprocess-start:
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+- preprocess-extract:
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+- preprocess-ocr:
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.0 )
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+  - [Improvement] Resize image method generalization and moved to 'utils.py'
+- genai-infoindexing:
+  - [Improvement] JSON flow body refactor
+- genai-llmapi:
+  - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
+  - [New] Added resize for an image that exceeds the max allowed by the LLM vision model.
+    - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model.
+    - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
+  - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
+  - [Improvement] Add support for vision in 'MOUNT_KEY' feature
+
+
 ## v2.2.0 (2024-12-19)
-- genai-compose:
-    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+- integration-receiver:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
+- integration-sender:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
 - genai-infoindexing:
     - [New] Now several chunking methods available: 'simple' (current), 'recursive' (new), 'surrounding_context_window' (new)
     - [New] Added method to check that the same chunking method is always used
@@ -13,9 +47,6 @@
     - [Improvement] Modules distribution organized
     - [Improvement] Updated library 'llama-index'
     - [Improvement] Now field 'snippet_id' same as elasticsearch 'id_'
-- integration-sender:
-    - [New] Added new input parameters for the new chunking methods of infoindexing
-    - [Improvement] Input parameters communication between methods simplified
 - genai-inforetrieval:
     - [New] Added strategies for new chunking methods: 'recursive_genai_retrieval' for 'recursive' chunking, 'surrounding_genai_retrieval' for 'surrounding_context_window' chunking
     - [New] Added new library 'llama-index-retrievers-bm25' to support 'recursive_genai_retrieval' strategy
@@ -24,6 +55,9 @@
     - [Improvement] Modules distribution organized
     - [Improvement] Updated library 'llama-index'
     - [Improvement] Adaption of library 'llama-index-vector-stores-elasticsearch' updated to version 0.3.3 to stay aligned with library 'llama-index'
+- genai-compose:
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+    - [Improvement] Set 'techhubdev-pool-world-gpt-4o-mini' as default model for llmapi call
 - genai-llmapi:
     - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
     - [New] New logger in debug mode when selecting model from pool

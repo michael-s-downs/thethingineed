@@ -30,8 +30,7 @@ data_bunch_c = DataBunchController()
 db_credentials_redis = {
     'status': os.getenv('REDIS_DB_STATUS'),
     'timeout': os.getenv('REDIS_DB_TIMEOUT'),
-    'session': os.getenv('REDIS_DB_SESSION'),
-    'templates': os.getenv('REDIS_DB_TEMPLATES')
+    'session': os.getenv('REDIS_DB_SESSION')
 }
 
 # Global variables
@@ -277,7 +276,7 @@ def get_images_from_file(filename: str, num_pag_ini: int, page_limit: int) -> li
     return fc.extract_images(filename, num_pag_ini=num_pag_ini, page_limit=page_limit)
 
 
-def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: bool, do_lines_ocr: bool, bytes_mode: bool = False) -> Tuple[list, list, list, list, list, list]:
+def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: bool, do_lines_ocr: bool, bytes_mode: bool = False, **kwargs) -> Tuple[list, list, list, list, list, list]:
     """ Extract all files with OCR
 
     :param files: <list> List of files to extract
@@ -289,7 +288,7 @@ def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: b
     :return: <tuple> Files, blocks, paragraphs, words, tables, lines
     """
 
-    texts, cells, paragraphs, words, tables, lines = fc.extract_multiple_text(files, ocr_origin=origin, do_cells=do_cells_ocr, extract_tables=do_tables, do_lines=do_lines_ocr, bytes_mode=bytes_mode)
+    texts, cells, paragraphs, words, tables, lines = fc.extract_multiple_text(files, ocr_origin=origin, do_cells=do_cells_ocr, extract_tables=do_tables, do_lines=do_lines_ocr, bytes_mode=bytes_mode, **kwargs)
     return texts, cells, paragraphs, words, tables, lines
 
 

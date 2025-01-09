@@ -12,6 +12,7 @@ from typing import Tuple, Union
 
 # Installed imports
 import pandas as pd
+from mergedeep import merge
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
@@ -76,8 +77,6 @@ class PreprocessStartDeployment(BaseDeployment):
 
         dataset_conf = json_input.get('dataset_conf', {})
 
-        preprocess_conf = json_input.get('preprocess_conf', {})
-
         if dataset_conf.get('dataset_id', ""):
             process_id = dataset_conf.get('dataset_id', "")
         else:
@@ -89,24 +88,22 @@ class PreprocessStartDeployment(BaseDeployment):
         generic['project_conf']['timeout_id'] = f"timeout_id_{tenant}:{process_id}"
         generic['project_conf']['process_type'] = process_type
         generic['project_conf']['department'] = department
-        generic['project_conf']['project_type'] = project_type
         generic['project_conf']['report_url'] = report_url
+        generic['project_conf']['tenant'] = tenant
+        generic['project_conf']['project_type'] = project_type
         generic['project_conf']['url_sender'] = json_input.get('url_sender', "")
         generic['project_conf']['timeout_sender'] = json_input.get('timeout_sender', 5)
+        
         generic['dataset_conf'] = dataset_conf
-        generic['preprocess_conf'] = preprocess_conf
 
-        if "origins" in json_input:
-            generic['origins'] = json_input.get('origins', {})
+        
         if "csv" in json_input:
             generic['project_conf']['csv'] = json_input.get('csv', False)
-        if "force_ocr" in json_input:
-            generic['project_conf']['force_ocr'] = json_input.get('force_ocr', False)
-        if "extract_tables" in json_input:
-            generic['project_conf']['extract_tables'] = json_input.get('extract_tables', False)
 
         if process_type == "ir_index":
-            generic['index_conf'] = json_input.get('index_conf', {})
+            merge(generic.get('indexation_conf', {}), json_input.get('indexation_conf', {}))
+        
+        merge(generic.get('preprocess_conf', {}), json_input.get('preprocess_conf', {}))
 
         return generic
 

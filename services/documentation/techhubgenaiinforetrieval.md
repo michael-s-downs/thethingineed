@@ -798,13 +798,16 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
     ```
 
     The different parameters (only for elastic as is the available one) are:
-    - vector_storage_name: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
-    - vector_storage_type: Type of the vector storage selected (currently, only "elastic" is allowed).
-    - vector_storage_host: Host of the vector storage
-    - vector_storage_schema: Schema of the vector storage
-    - vector_storage_port: Port where the vector storage is located.
-    - vector_storage_username: Username to access to the vector storage
-    - vector_storage_password: Password to access to the vector storage
+    - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE).
+    - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
+    - **vector_storage_host**: Host of the vector storage.
+    - **vector_storage_schema**: Schema of the vector storage.
+    - **vector_storage_port**: Port where the vector storage is located.
+    - **vector_storage_username**: Username to access to the vector storage.
+    - **vector_storage_password**: Password to access to the vector storage.
+
+<br/>
+
 #### Configuration files
 
 Inforetrieval requires two configuration files and one optional file:
@@ -848,22 +851,25 @@ Inforetrieval requires two configuration files and one optional file:
     ```
 
     In this config file, each model (separated by platforms) need different parameters:
-    - azure:
+    * **azure**:
         - embedding_model_name: name of the model, decided by the user and used to distinguish between models.
-        - embedding_model: type of embedding model that uses the model
-        - zone: place where the model has been deployed (used to get the api-keys)
-        - azure_api_version: version of the api (embedding model) that is being used
-        - azure_deployment_name: deployment name of the embedding model in azure
-        - model_pool: pools the model belongs to
-    - bedrock:
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - zone: place where the model has been deployed
-        - model_pool: pools the model belongs to
-    - huggingface. This type of model is not deployed anywhere, so there is no region or pool to specify:
-        - embedding_model_name: same as before
-        - embedding_model: same as before
-        - retriever_model: model used when retrieving information (in hugging-face models normally are different)
+        - embedding_model: type of embedding model that uses the model.
+        - zone: place where the model has been deployed (used to get the api-keys).
+        - azure_api_version: version of the api (embedding model) that is being used.
+        - azure_deployment_name: deployment name of the embedding model in azure.
+        - model_pool: pools the model belongs to.
+
+    * **bedrock**:
+        - embedding_model_name: same as before.
+        - embedding_model: same as before.
+        - zone: place where the model has been deployed.
+        - model_pool: pools the model belongs to.
+
+    * **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
+        - embedding_model_name: same as before.
+        - embedding_model: same as before.
+        - retriever_model: model used when retrieving information (in hugging-face models normally are different).
+
 - **`default_embedding_models.json`**: This config file is needed to specify which model is going to be used when in the retrieval call, no models are passed and the retrieval is going to be done with all the embedding models used in indexation. The file is stored in "src/ir/conf" and it has to be based on the previous file. The bm25 field is mandatory as it's used always in the indexation process:
     ```json
     {
@@ -897,40 +903,45 @@ For the index parameter, the associated json file (same name but ended in .json)
 
 ### Environment Variables
 
-- AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
-- AWS_SECRET_KEY: AWS Secret access key to the project.(if not in secrets)
-- AZ_CONN_STR_STORAGE: Azure connection string. (if not in secrets)
-- PROVIDER: Cloud service to use to load the configuration files (aws or azure).
-- STORAGE_BACKEND: Tenant backend name. Example: "dev-backend".
-- SECRETS_PATH: Path to the secrets folder in the pod
-- VECTOR_STORAGE: Alias of the elastic that will be used in the deployment to retrieve documents from
+- **AWS_ACCESS_KEY**: AWS Public access key to the project. (if not in secrets).
+- **AWS_SECRET_KEY**: AWS Secret access key to the project.(if not in secrets).
+- **AZ_CONN_STR_STORAGE**: Azure connection string. (if not in secrets).
+- **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
+- **STORAGE_BACKEND**: Tenant backend name. Example: "dev-backend".
+- **SECRETS_PATH**: Path to the secrets folder in the pod.
+- **VECTOR_STORAGE**: Alias of the elastic that will be used in the deployment to retrieve documents from.
+
 
 ## Code Overview
 
 ### Files and Classes
 
-
 **main.py (`InfoRetrievalDeployment`)**
+
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
 ![alt text](imgs/techhubgenaiinforetrieval/inforetrievalDeployment.png)
 
 **parsers.py (`ManagerParser`,`Parser`, `InforetrievalParser`)**
+
 This class parses the input json request received from the api request, getting all the necessary parameters. The parameters parsed can be found in [Parameters explanation](#parameters-explanation).
 
 ![alt text](imgs/techhubgenaiinforetrieval/parsers.png)
 
 **storage_manager.py (`ManagerStorage`, `BaseStorageManager`, `IRStorageManager`)**
+
 This class is responsible of managing the operations with the cloud storage of all files associated with the inforetrieval process; this includes [configuration files](#configuration-files) and the file associated to an index if the index has been stored in a different vector storage than the default one.
 
 ![alt text](imgs/techhubgenaiinforetrieval/storage_manager.png)
 
 **connectors.py ( `ManagerConnector`, `Connector`, `ElasticSearchConnector`)**
+
 This class manages the connection with the vector database, the main thing in this component is to do queries to the vector database.
 
 ![alt text](imgs/techhubgenaiinforetrieval/connectors.png)
 
 **retrieval_strategies.py ( `ManagerRetrievalStrategies`, `SimpleStrategy`, `GenaiStrategy`, `RecursiveGenaiStrategy`, `SurroundingGenaiStrategy`, `LlamaIndexFusionStrategy`)**
+
 This class manages the retrieval strategies implemented, getting the documents in the final format (rescored) to give the response to the call. 
 
 ![alt text](imgs/techhubgenaiinforetrieval/retrieval_strategies.png)
@@ -944,58 +955,65 @@ Genai-inforetrieval component is the module in charge of extracting the informat
 
 In the following diagram flows, each color will represent the following files:
 
-<img src="imgs/techhubgenaiinforetrieval/flow1.png" width="150">
+<img src="imgs/techhubgenaiinforetrieval/flow1.png" width="250">
 
-<ol>
-    <li>Load the configuration files and secrets (pools, models, and vector_storage details) to know which ones are available (when the service is initialized).
-    <img src="imgs/techhubgenaiinforetrieval/flow2.png" width="900"></li>
-    <li>Parse the input from the call to get all the parameters.
-    <img src="imgs/techhubgenaiinforetrieval/flow3.png" width="750"></li>
-    <li>Get the connector for the index referred in the call. If there is file for the index with the structure explained above this will be the vector storage (reacheable), if not the program will get the one from the "VECTOR_STORAGE" environment variable.
-    <img src ="imgs/techhubgenaiinforetrieval/flow4.png"></li>
-    <li>This process manages the embedding models that will be used in the retrieval. If there are models on the call, will be matched with the ones available (to know if it is possible to do the retrieval), if not, the retrieval will be done with all models availables (all used during indexing process)
-    <img src= "imgs/techhubgenaiinforetrieval/flow5.png"></li>
-    <li>Once all the embedding models are matched, the retrieval will be done with the specified strategy.
-    <img src="imgs/techhubgenaiinforetrieval/flow6.png"></li>
-    <li>Depending on the strategy, one or another flow is used in order to retrieve the documents (in the llamaindex_fusion strategy the LlamaIndex QueryFusionRetriever does all the process (scoring, retrieval...) while genai_retrieval will be explained below). In all strategies the adaptation of the llamaindex-elasticsearch is used (elasticsearch_adaption) as it does the retrieval using the connection with ElasticSearch. This adaption is mandatory as the library itself does not support multiple filters while doing retrieval. 
-    <img src="imgs/techhubgenaiinforetrieval/flow7.png"> Finally the genai_strategy is as follows:</li>
-    <ol type="a">
-        <li>In this step, the first retrieval is done using a llamaindex-elasticsearch adaption for each model. Different retrieval methods and retrievers are used to get the chunks: 
-        <ul>
-            <li><b>GenaiStrategy:</b> Base retriever from  llamaindex-elasticsearch connection object (llamaindex library adapted by us as theirs do not allow multiple filters in a query).</li>
-            <li><b>SurroundingGenaiStrategy:</b> Same retriever as 'GenaiStrategy' but after retrieval, the text field is replaced by the surrounding text stored in 'metadata.window' (with front and rear chunks indicated while indexing). </li>
-            <li><b>RecursiveGenaiStrategy:</b> Different retriever from 'GenaiStrategy' as it needs a recursive one. Another thing that is mandatory is the full index with its chunks in a LlamaIndex 'Node' format in the cache.</li>
-        </ul>
-    <li>In this step, all chunks that doesn't have scores for all models (have not been retrieved with every model), will be chosen by their id to do a retrieval with the remaining models. 
-    <img src="imgs/techhubgenaiinforetrieval/flow8.png" width="300"></li>
-    <li>The retrieval adding in the filters field the "snippet_id" of the chunks to retrieve in order to get the full scores is done. This retrieval is done to complete the scores it means that a single chunk, has individual scores for all models selected in the call to do the retrieval.
-    <img src="imgs/techhubgenaiinforetrieval/flow9.png" width="300"></li>
-    <li>When the passages are obtained, the chunks with the same content will be merged to get unique chunks with all models scores, then the rescoring function (if passed, if not, the mean of all scores is estimated by default) will be done. 
-    <img src="imgs/techhubgenaiinforetrieval/flow10.png" width="250"></li>
+1. Load the configuration files and secrets (pools, models, and vector_storage details) to know which ones are available (when the service is initialized).
 
-The available rescoring functions are:
-    
-| Rescoring Function | Explanation       |
-|-------|-------------|
-| mean     | It will compute the mean of all models|
-| posnorm     | It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one a 0. The global score of the model will be the mean of each snippet's score.|
-| pos     | It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one the minimum of the scores. The global score of the model will be the mean of each snippet's score.|
-| length     | It will compute a combined score depending on the query length. <br><br> final_score = [transformers_models_score * query_len + bm25_score ] / [query_len + 1]|
-| loglength     | It will compute a combined score depending on the query length's logarithm in base 2 <br><br>[transformers_models_score * log2(query_len) + bm25_score ] / [log2(query_len) + 1]|
-| norm     | It will normalize each model's scores between 0 and 1. Then computes the mean.|
-| nll (norm-loglength)     | It will normalize each model's scores between 0 and 1. Then computes the loglegth function.|
-| rrf (reciprocal-rerank-fusion) | Uses the formula explained in the [paper](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) 
-</li>
-</ol>
+    <img src="imgs/techhubgenaiinforetrieval/flow2.png" width="900">
 
-<li>Report the tokens used to the api by calling apigw that stores the result in the database (number of tokens by api-key).
+2. Parse the input from the call to get all the parameters.
 
-<img src="imgs/techhubgenaiinforetrieval/flow11.png" width="250"></li>
+    <img src="imgs/techhubgenaiinforetrieval/flow3.png" width="750">
 
-<li>Returns the result to the user and end the process for the call
+3. Get the connector for the index referred in the call. If there is file for the index with the structure explained above this will be the vector storage (reacheable), if not the program will get the one from the "VECTOR_STORAGE" environment variable.
 
-<img src="imgs/techhubgenaiinforetrieval/flow12.png"></li>
-</ol>
+    <img src ="imgs/techhubgenaiinforetrieval/flow4.png">
+
+4. This process manages the embedding models that will be used in the retrieval. If there are models on the call, will be matched with the ones available (to know if it is possible to do the retrieval), if not, the retrieval will be done with all models availables (all used during indexing process)
+
+    <img src= "imgs/techhubgenaiinforetrieval/flow5.png">
+
+5. Once all the embedding models are matched, the retrieval will be done with the specified strategy.
+
+    <img src="imgs/techhubgenaiinforetrieval/flow6.png" width="300">
+
+6. Depending on the strategy, one or another flow is used in order to retrieve the documents (in the llamaindex_fusion strategy the LlamaIndex QueryFusionRetriever does all the process (scoring, retrieval...) while genai_retrieval will be explained below). In all strategies the adaptation of the llamaindex-elasticsearch is used (elasticsearch_adaption) as it does the retrieval using the connection with ElasticSearch. This adaption is mandatory as the library itself does not support multiple filters while doing retrieval. 
+
+    <img src="imgs/techhubgenaiinforetrieval/flow7.png">
+
+7. Report the tokens used to the api by calling apigw that stores the result in the database (number of tokens by api-key).
+    <img src="imgs/techhubgenaiinforetrieval/flow11.png" width="250">
+
+8. Returns the result to the user and end the process for the call.
+    <img src="imgs/techhubgenaiinforetrieval/flow12.png">
+
+9. Finally the genai_strategy is as follows:
+    * In this step, the first retrieval is done using a llamaindex-elasticsearch adaption for each model. Different retrieval methods and retrievers are used to get the chunks:
+        - **GenaiStrategy**: Base retriever from  llamaindex-elasticsearch connection object (llamaindex library adapted by us as theirs do not allow multiple filters in a query).
+        - **SurroundingGenaiStrategy**: Same retriever as 'GenaiStrategy' but after retrieval, the text field is replaced by the surrounding text stored in 'metadata.window' (with front and rear chunks indicated while indexing).
+        - **RecursiveGenaiStrategy**: Different retriever from 'GenaiStrategy' as it needs a recursive one. Another thing that is mandatory is the full index with its chunks in a LlamaIndex 'Node' format in the cache.
+    * In this step, all chunks that doesn't have scores for all models (have not been retrieved with every model), will be chosen by their id to do a retrieval with the remaining models. 
+        <img src="imgs/techhubgenaiinforetrieval/flow8.png" width="300">
+
+    * The retrieval adding in the filters field the "snippet_id" of the chunks to retrieve in order to get the full scores is done. This retrieval is done to complete the scores it means that a single chunk, has individual scores for all models selected in the call to do the retrieval.
+        <img src="imgs/techhubgenaiinforetrieval/flow9.png" width="300">
+
+    * When the passages are obtained, the chunks with the same content will be merged to get unique chunks with all models scores, then the rescoring function (if passed, if not, the mean of all scores is estimated by default) will be done. 
+        <img src="imgs/techhubgenaiinforetrieval/flow10.png" width="200">
+
+    * The available rescoring functions are:
+
+    | Rescoring Function | Explanation |
+    |-------|-------------|
+    | mean     | It will compute the mean of all models|
+    | posnorm     | It will compute the position based on the position of every snippet. The first one will have a 1 score and the last one a 0. The global score of the model will be the mean of each snippet's score.|
+    | pos     | It wil compute the position based on the position of every snippet. The first one will have a 1 score and the last one the minimum of the scores. The global score of the model will be the mean of each snippet's score.|
+    | length     | It will compute a combined score depending on the query length. <br/><br/> final_score = [transformers_models_score * query_len + bm25_score ] / [query_len + 1]|
+    | loglength     | It will compute a combined score depending on the query length's logarithm in base 2 <br/><br/>[transformers_models_score * log2(query_len) + bm25_score ] / [log2(query_len) + 1]|
+    | norm     | It will normalize each model's scores between 0 and 1. Then computes the mean.|
+    | nll (norm-loglength)     | It will normalize each model's scores between 0 and 1. Then computes the loglegth function.|
+    | rrf (reciprocal-rerank-fusion) | Uses the formula explained in the [paper](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf)|
+
 
 To conclude, here is an example about how the managing of the scores completion is done with "bm25" and "text-embedding-ada-002" models and a top_k=3. In this case, a same chunk has been extracted with both models and the retrieval is re-done with the rest of them, the two remaining ones from "bm25" and the two remaining ones from "text-embedding-ada-002".
 

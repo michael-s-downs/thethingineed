@@ -96,9 +96,9 @@ For a successful configuration, the response must look like this:
 
 To understand the indexing module, there are a few concepts that we need to define beforehand:
 
-- **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
-- **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
-- **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
+* **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
+* **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
+* **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
 
 ## Chunking Methods
 
@@ -108,14 +108,13 @@ To do the chunking an important concept that will be done indistinctly in all ch
 
 Once explained the overlapping, there are 3 chunking methods to split the text in smaller parts:
 
-- **Simple:** The method simply splits the chunks one at a time, in a sequential way using the 'window_length' and 'window_overlap' parameters.
+* **Simple:** The method simply splits the chunks one at a time, in a sequential way using the 'window_length' and 'window_overlap' parameters.
 
-  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-simple.png)
+  ![alt text](https://satechhubdevjapaneast001.blob.core.windows.net/workflows/Global%20RAG%20(indexing%20+%20retrieval%20+%20LLM)/2.0/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-simple.png)
 
+* **Surrounding Context Window:** This method divides the chunks as the previous one but in the metadata field 'window' will insert the content of the front and back chunks depending on the window param (if is two, the two front and two back chunks content will be inserted). The structure of the text is as follows:
 
-- **Surrounding Context Window:** This method divides the chunks as the previous one but in the metadata field 'window' will insert the content of the front and back chunks depending on the window param (if is two, the two front and two back chunks content will be inserted). The structure of the text is as follows:
-
-  ```
+  ```sh
   window * front_chunks_content + actual_chunk_content + window * back_chunks_content
   ```
 
@@ -125,13 +124,14 @@ Once explained the overlapping, there are 3 chunking methods to split the text i
 
   Finally a short and simple example with text would be:
 
-  | Chunk number | Chunk content | Window field (metadata) |
-  |--------------|---------------|-------------------------|
-  | 1            | Is Zaragoza   | Is Zaragoza a good city |
-  | 2            | a good city   | Is Zaragoza a good city to live in? |
-  | 3            | to live in?   | a good city to live in? |
+| Chunk number | Chunk content | Window field (metadata) |
+|--------------|---------------|-------------------------|
+| 1            | Is Zaragoza   | Is Zaragoza a good city |
+| 2            | a good city   | Is Zaragoza a good city to live in? |
+| 3            | to live in?   | a good city to live in? |
 
-- **Recursive:** The recursive chunking method will do a first simple split and then a second split of the obtained chunks using the 'sub_window_length' and 'sub_window_overlap' parameters. In the following image there are divided in two sub-chunks as the sub window overlap and length are the half of the window overlap and length parameters.
+
+* **Recursive:** The recursive chunking method will do a first simple split and then a second split of the obtained chunks using the 'sub_window_length' and 'sub_window_overlap' parameters. In the following image there are divided in two sub-chunks as the sub window overlap and length are the half of the window overlap and length parameters.
 
   ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
 
@@ -267,7 +267,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
       ```
       In the case that infoindexing is not used with integration, can be whatever written by the user.
   - **paths**
-    - **text**: This is the place where the document explained in [Writing message in queue (developer functionality)](#writing-message-in-queue-developer-functionality) has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
+    - **text**: This is the place where the document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality))  has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
       ```json
       {
         "text": "username/dataset_key/txt/username/request_id/"
@@ -549,7 +549,7 @@ This class manages the main flow of the component by parsing the input, calling 
 
 This class parses the input json request received from the queue, getting all the necessary parameters.
 
-Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Writing-message-in-queue-(Developer-functionality))), while others are internal parameters introduced by the integration service.
+Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Using-with-integration)), while others are internal parameters introduced by the integration service.
 
 * **Project conf:** Configuration of project.
     - **force_ocr:** <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
