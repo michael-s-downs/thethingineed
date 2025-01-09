@@ -271,7 +271,7 @@ class ProjectConf(BaseModel):
 
     @field_validator('x_limits')
     def validate_x_limits(cls, v, values: FieldValidationInfo):
-        if not v:
+        if not v and not eval(os.getenv('TESTING', "False")):
             url = values.data.get('x_reporting') + "/list"
             logger.debug(f"No x-limits found, proceeding to get them from reporting service: {url}")
             response = requests.get(url=url)

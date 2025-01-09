@@ -34,7 +34,7 @@ class PreprocessStartDeployment(BaseDeployment):
         set_storage(storage_containers)
         set_db(db_dbs)
 
-        self.json_base = json.loads(load_file(storage_containers['workspace'], "src/layout_new.json").decode())
+        self.json_base = json.loads(load_file(storage_containers['workspace'], "src/layout.json").decode())
         self.sep = ":"
         self.q_preprocess_extract = (provider, convert_service_to_queue(PREPROCESS_EXTRACT_SERVICE, provider))
         self.q_preprocess_end = (provider, convert_service_to_queue(PREPROCESS_END_SERVICE, provider))
