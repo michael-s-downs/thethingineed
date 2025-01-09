@@ -49,8 +49,8 @@ def classification_sync(request_json: dict) -> dict:
 
     # Params to fill call template
     request_params = {}
-    request_params['ocr'] = request_json['client_profile']['default_ocr']
-    request_params['force_ocr'] = request_json.get('force_ocr', request_json['client_profile'].get('force_ocr', False))
+    request_params['ocr'] = request_json.get('preprocess_conf').get('ocr_conf', {}).get('ocr', request_json['client_profile']['default_ocr'])
+    request_params['force_ocr'] = request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile'].get('force_ocr', False))
     request_params['folder'] = folder
     request_params.update(conf_utils.get_model(request_json['client_profile']['model']))
 
@@ -364,8 +364,8 @@ def preprocess_async(request_json: dict) -> dict:
     if files_need_preprocess:
         request_params = {
             'folder': folder,
-            'ocr': request_json['client_profile']['default_ocr'],
-            'force_ocr': request_json.get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
+            'ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('ocr', request_json['client_profile']['default_ocr']),
+            'force_ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
             'timeout': round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0),
             'tracking': request_json.get('tracking', {})
         }
@@ -435,8 +435,8 @@ def classification_async(request_json: dict) -> dict:
         # Params to fill call template
         request_params = {}
         request_params['folder'] = folder
-        request_params['ocr'] = request_json['client_profile']['default_ocr']
-        request_params['force_ocr'] = request_json.get('force_ocr', request_json['client_profile'].get('force_ocr', False))
+        request_params['ocr'] = request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile']['default_ocr'])
+        request_params['force_ocr'] = request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile'].get('force_ocr', False))
         request_params['timeout'] = round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0)
         request_params['tracking'] = request_json.get('tracking', {})
         request_params.update(model_conf)
@@ -656,7 +656,7 @@ def indexing(request_json: dict) -> dict:
     """
     apigw_params = request_json['apigw_params']
     folder = request_json['documents_folder']
-    models = request_json['index_conf']['models']
+    models = request_json['indexation_conf']['models']
     files = request_json.get('documents', [])
     metadata = request_json.setdefault('documents_metadata', {})
     models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
@@ -674,26 +674,25 @@ def indexing(request_json: dict) -> dict:
         if files_need_indexing:
             request_params = {
                 'folder': folder,
-                'ocr': request_json['client_profile']['default_ocr'],
-                'force_ocr': request_json.get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
                 'timeout': round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0),
-                'models': [models_map[model] for model in models],
-                'index_conf': request_json['index_conf'],
-                'layout_conf': request_json['preprocess_conf']['layout_conf'],
+                'indexation_conf': request_json['indexation_conf'],
+                'preprocess_conf': request_json['preprocess_conf'],
                 'integration': request_json,
                 'process_id': f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}",
                 'tracking': request_json.get('tracking', {})
             }
 
-            if 'llm_ocr_call_conf' in request_json:
-                request_params['llm_ocr_call_conf'] = request_json['llm_ocr_call_conf']
+            request_params['indexation_conf']['models'] = [models_map[model] for model in models]
+            request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('ocr', request_json['client_profile']['default_ocr'])
+            request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', request_json['client_profile'].get('force_ocr', False))
+
 
             if os.getenv('API_QUEUE_PROCESS_URL', ""):
                 api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['index_conf']['vector_storage_conf']['index']}' {api_response}")
+                logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['indexation_conf']['vector_storage_conf']['index']}' {api_response}")
             else:
                 api_response = core_api.async_indexing_request(apigw_params, request_params, files_need_indexing)
-                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['index_conf']['vector_storage_conf']['index']}' {api_response}")
+                logger.info(f"- Calling {len(files_need_indexing)} ASYNC INDEXING for request '{request_json['integration_id']}' for index '{request_params['indexation_conf']['vector_storage_conf']['index']}' {api_response}")
 
             process_id = api_response.get('process_id', "")
             process_ids = request_json.setdefault('process_ids', {})
@@ -704,7 +703,7 @@ def indexing(request_json: dict) -> dict:
                 file_name = docs_utils.parse_file_name(file_path, folder)
                 file_metadata = metadata.setdefault(file_name, {})
                 file_metadata.update(api_response)
-                file_metadata['ocr_used'] = request_params['ocr']
+                file_metadata['ocr_used'] = request_params['preprocess_conf']['ocr_conf']['ocr']
                 file_metadata['async'] = "queue" if os.getenv('API_QUEUE_PROCESS_URL', "") else True
 
         for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status in ["ready", "error"]]:

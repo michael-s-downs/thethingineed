@@ -19,7 +19,6 @@ from common.status_codes import *
 from common.services import *
 from common.error_messages import *
 from common.utils import remove_local_files, resize_image
-from common.storage_manager import ManagerStorage
 
 
 class PreprocessOCRDeployment(BaseDeployment):
@@ -30,10 +29,6 @@ class PreprocessOCRDeployment(BaseDeployment):
         set_queue(self.Q_IN)
         set_storage(storage_containers)
         set_db(db_dbs)
-        
-        self.storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": storage_containers['workspace'], "origin": storage_containers['origin']})
-        self.available_pools = self.storage_manager.get_available_pools()
-        self.available_models = self.storage_manager.get_available_models()
 
         self.PERIOD = 60
 
@@ -115,16 +110,13 @@ class PreprocessOCRDeployment(BaseDeployment):
                 process_type = project_conf['process_type']
                 url = project_conf['report_url']
                 department = project_conf['department']
-                limits = project_conf['limits']
                 tenant = project_conf['tenant']
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error parsing JSON. No configuration of project defined", exc_info=get_exc_info())
                 raise Exception(PARSING_PARAMETERS_ERROR)
 
             try:
-                origins = get_origins(generic=generic)
                 workspace = storage_containers['workspace']
-                ocr = origins['ocr']
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error parsing JSON. No credentials OCR defined", exc_info=get_exc_info())
                 raise Exception(GETTING_CREDENTIALS_OCR_ERROR)
@@ -146,18 +138,15 @@ class PreprocessOCRDeployment(BaseDeployment):
                 ocr_files_size = ocr_conf['files_size']
                 ocr_batch_length = ocr_conf['batch_length']
                 ocr_calls_per_minute = ocr_conf['calls_per_minute']
-                # Adding headers to llm_ocr_call_conf
-                if isinstance(ocr_conf.get('llm_ocr_call_conf'), dict) and ocr == "llm-ocr":
-                        llm_ocr_call_conf = copy.deepcopy(ocr_conf.get('llm_ocr_call_conf', {}))
-                        llm_ocr_call_conf['headers'] = {
-                            "x-department": department,
-                            "x-limits": limits,
-                            "x-tenant": tenant,
-                            "x-reporting": url,
-                        }
-                        llm_ocr_call_conf['available_models'] = self.available_models
-                        llm_ocr_call_conf['available_pools'] = self.available_pools
-                        llm_ocr_call_conf['url'] = os.getenv("LLM_URL")
+                ocr = ocr_conf['ocr']
+                # Adding headers to llm_ocr_conf
+                if isinstance(ocr_conf.get('llm_ocr_conf'), dict) and ocr == "llm-ocr":
+                    llm_ocr_conf = copy.deepcopy(ocr_conf.get('llm_ocr_conf', {}))
+                    llm_ocr_conf['headers'] = {
+                        "x-department": department,
+                        "x-tenant": tenant,
+                        "x-reporting": url
+                    }
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error parsing JSON. No configuration ocr defined", exc_info=get_exc_info())
                 raise Exception(GETTING_CREDENTIALS_OCR_ERROR)
@@ -176,7 +165,7 @@ class PreprocessOCRDeployment(BaseDeployment):
             try:
                 do_cells_ocr = get_do_cells_ocr(generic=generic)
                 do_lines_ocr = get_do_lines_ocr(generic=generic)
-                do_tables = generic['project_conf'].get('extract_tables', False)
+                do_tables = generic['preprocess_conf']['ocr_conf'].get('extract_tables', False)
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error getting params to extract cells or lines", exc_info=get_exc_info())
                 raise Exception(GETTING_LINES_AND_CELLS_ERROR)
@@ -193,7 +182,9 @@ class PreprocessOCRDeployment(BaseDeployment):
                 else:
                     logger.info("Resizing images if is necesary.")
                     for file in files:
-                        resize_image(file, workspace)
+                        _, resized = resize_image(file)
+                        if resized:
+                            upload_files(workspace, [(file, file)])
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error resizing images", exc_info=get_exc_info())
                 raise Exception(RESIZING_IMAGE_ERROR)
@@ -223,13 +214,13 @@ class PreprocessOCRDeployment(BaseDeployment):
                     #ocr_rates[ocr] = requests
 
                     files_to_process = [image['filename'] for image in batch]
-                    # TODO sum x-limits in each call for headers (we don't have model_type in this service)
-                    extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **{"llm_ocr_call_conf":llm_ocr_call_conf})
-
+                    if ocr == "llm-ocr":
+                        extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **{"llm_ocr_conf":llm_ocr_conf})
+                    else:
+                        extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode)
                     for key, value in extract_docs.items():
                         if key in upload_docs:
                             upload_docs[key] += value
-                message['generic']['project_conf']['limits'] = llm_ocr_call_conf['headers']['x-limits']
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error where extract files with ocr", exc_info=get_exc_info())
                 raise Exception(EXTRACTING_TEXT_OCR_ERROR)

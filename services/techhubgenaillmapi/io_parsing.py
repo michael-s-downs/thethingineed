@@ -1,6 +1,7 @@
 # Native imports
 import json, os
 from typing import Literal, Optional, Union, Tuple
+import requests
 
 # Installed imports
 from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInfo, model_validator, Field, confloat
@@ -255,8 +256,28 @@ class ProjectConf(BaseModel):
     x_reporting: str = Field(alias="x-reporting")
     x_limits: dict = Field(alias="x-limits")
 
+    @staticmethod
+    def parse_x_limits_reporting(x_limits: str):
+        x_limits = json.loads(x_limits)
+        x_limits_formatted = {}
+        for limit in x_limits['limits']:
+            if limit['limit'] != 0:
+                x_limits_formatted[limit['resource']] = {
+                    "Current": limit['current'],
+                    "Limit": limit['limit']
+                }
+        return x_limits_formatted
+
+
     @field_validator('x_limits')
     def validate_x_limits(cls, v, values: FieldValidationInfo):
+        if not v:
+            url = values.data.get('x_reporting') + "/list"
+            logger.debug(f"No x-limits found, proceeding to get them from reporting service: {url}")
+            response = requests.get(url=url)
+            if response.status_code != 200:
+                raise ValueError(f"Error getting limits from reporting service: {response.reason}")
+            v = cls.parse_x_limits_reporting(response.text)
         # check if input is correct
         for model, limits in v.items():
             if limits:
@@ -282,14 +303,14 @@ class QueueMetadata(BaseModel):
     # Queue metadata
     input_file: str
     output_file: str
-    location: Literal['cloud', 'local']
+    location_type: Literal['cloud', 'local']
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
     
     @property
-    def origin(self) -> str:
-        return storage_containers.get('origin')
+    def workspace(self) -> str:
+        return storage_containers.get('workspace')
 
     @field_validator('input_file')
     def validate_input_file(cls, v, values: FieldValidationInfo):
@@ -308,11 +329,11 @@ class QueueMetadata(BaseModel):
         
         :return: Json input
         """
-        if self.location == "cloud":
+        if self.location_type == "cloud":
             try:
-                json_input = json.loads(load_file(self.origin, self.input_file))
+                json_input = json.loads(load_file(self.workspace, self.input_file))
             except:
-                raise ValueError(f"Unable to read json file '{self.input_file}' from {self.origin}")
+                raise ValueError(f"Unable to read json file '{self.input_file}' from {self.workspace}")
         else:
             try:
                 with open(self.input_file, "r", encoding="utf-8") as file:
@@ -326,11 +347,11 @@ class QueueMetadata(BaseModel):
         
         :param json_output: Json output
         """
-        if self.location == "cloud":
+        if self.location_type == "cloud":
             try:
-                upload_object(self.origin, json.dumps(json_output), self.output_file)
+                upload_object(self.workspace, json.dumps(json_output), self.output_file)
             except:
-                raise ValueError(f"Unable to write json file '{self.output_file}' to {self.origin} with content: {json_output}")
+                raise ValueError(f"Unable to write json file '{self.output_file}' to {self.workspace} with content: {json_output}")
         else:
             try:
                 with open(self.output_file, "w", encoding="utf-8") as file:
@@ -346,7 +367,7 @@ def adapt_input_queue(json_input: dict) -> dict:
     :return: Input data adapted
     """
     if not QUEUE_MODE:
-        return json_input
+        return json_input, None
     
     apigw_params = json_input.get('headers', {})
     queue_metadata = None
@@ -417,22 +438,20 @@ class ResponseObject(BaseModel):
 
     def get_response_predict(self, queue_metadata: QueueMetadata) -> Tuple[bool, dict, str]:
         output, status_code = self.get_response_base()
+        output = json.loads(output)
         if QUEUE_MODE:
             must_continue = True
             next_service = os.getenv('Q_GENAI_LLMQUEUE_OUTPUT')
         else:
             must_continue = False
             next_service = ""
-
-        if status_code == 200:
-            output = json.loads(output).get('result', {})
-        else:
-            output = json.loads(output)
+            if status_code == 200:
+                output = output.get('result', {})
 
         # Case when the output is written in a file
         if queue_metadata:
-            queue_metadata.upload_json_output(output)
-            output = {"status": "finished", "status_code": 200, "result": queue_metadata.output_file}
+            queue_metadata.upload_json_output(output)            
+            output['result'] = queue_metadata.output_file
 
         return must_continue, output, next_service
 

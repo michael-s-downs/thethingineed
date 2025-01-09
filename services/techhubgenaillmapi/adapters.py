@@ -120,7 +120,7 @@ class BaseAdapter(ABC):
         # Resize the image and get the base64
         resized_image_route = "image." + media_type.lower()
         img.save(resized_image_route, quality=95)
-        size = resize_image(resized_image_route, max_size_mb=self.max_img_size_mb)
+        size, _ = resize_image(resized_image_route, max_size_mb=self.max_img_size_mb)
         with open(resized_image_route, "rb") as f: # Faster to read from file than from Image and BytesIO
             base64_img = base64.b64encode(f.read()).decode("utf-8")
         img.close()

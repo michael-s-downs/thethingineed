@@ -185,21 +185,6 @@ def get_dataset_counter_key(json_input: Optional[GenaiInput] = None, specific: O
     return dataset['dataset_counter_key']
 
 
-def get_origins(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> OriginsConfig:
-    """ Get origins for uhis controllers
-
-    :param json_input: Json input of genai processes
-    :param generic: (optional) If defined, generic configuration of genai processes
-    :return: (dict) Origins conf
-    """
-    assert json_input or generic
-
-    if json_input and not generic:
-        generic = get_generic(json_input)
-
-    return generic['origins']
-
-
 def get_project_config(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> ProjectConfig:
     """ Get config of project
 
@@ -257,7 +242,7 @@ def get_ocr_config(json_input: Optional[GenaiInput] = None, generic: Optional[Ge
     if json_input and not generic:
         generic = get_generic(json_input)
 
-    return generic['ocr_conf']
+    return generic['preprocess_conf']['ocr_conf']
 
 
 def get_project_type(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> str:
@@ -287,7 +272,7 @@ def get_force_ocr(json_input: Optional[GenaiInput] = None, generic: Optional[Gen
     if json_input and not generic:
         generic = get_generic(json_input)
 
-    return generic['project_conf'].get('force_ocr', False)
+    return generic['preprocess_conf']['ocr_conf'].get('force_ocr', False)
 
 
 def get_languages(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> List[str]:
@@ -389,7 +374,7 @@ def get_index_conf(json_input: Optional[GenaiInput] = None, generic: Optional[Ge
     if json_input and not generic:
         generic = get_generic(json_input)
 
-    return generic['index_conf']
+    return generic['indexation_conf']
 
 
 def get_metadata_conf(json_input: Optional[GenaiInput] = None) -> dict:

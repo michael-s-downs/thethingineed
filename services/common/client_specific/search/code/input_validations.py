@@ -10,7 +10,8 @@ from typing import Tuple
 # Custom imports
 import conf_utils
 import docs_utils
-
+from common.storage_manager import ManagerStorage
+from common.genai_controllers import storage_containers
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
     """ Validate if param exist, correct type and no empty
@@ -63,12 +64,16 @@ def _validate_index(request_json: dict) -> Tuple[bool, list]:
     :param request_json: Request JSON with all information
     :return: True or False if param is valid and error messages
     """
-    valid, messages = _validate_param(request_json['input_json'], 'index', str)
+    json_body = request_json['input_json']
+    if request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf', {}):
+        json_body = request_json['input_json']['indexation_conf']['vector_storage_conf']
+
+    valid, messages = _validate_param(json_body, 'index', str)
 
     if valid:
         pattern = "[a-z0-9_]"
 
-        if not bool(re.search(f"^{pattern}+$", request_json['input_json']['index'])):
+        if not bool(re.search(f"^{pattern}+$", json_body['index'])):
             valid = False
             messages.append(f"Forbidden chars in param 'index', only allowed {pattern}")
 
@@ -97,15 +102,19 @@ def _validate_models(request_json: dict) -> Tuple[bool, list]:
     valid = True
     messages = []
 
-    if "models" in request_json['input_json']:
-        valid, messages = _validate_param(request_json['input_json'], 'models', list)
+    json_body = request_json['input_json']
+    if request_json['input_json'].get('indexation_conf', {}).get('models', {}):
+        json_body = request_json['input_json']['indexation_conf']
+
+    if "models" in json_body:
+        valid, messages = _validate_param(json_body, 'models', list)
 
         if valid:
             valid_list = []
             messages_list = []
             models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
 
-            for model in request_json['input_json']['models']:
+            for model in json_body['models']:
                 if model in models_map:
                     valid_list.append(True)
                 else:
@@ -214,63 +223,90 @@ def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
     return all(valid_list), messages_list
 
 def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
-    # Check chunking methods (simple not necessary as all mandatory params, have default ones)
+    # Check ocr and llm_ocr_conf parameters
     messages = []
     valid = True
     valid_ocrs = ['azure-ocr', 'aws-ocr', 'llm-ocr', 'tesseract-ocr']
-    if 'ocr' in request_json['input_json'] and request_json['input_json']['ocr']:
-        if request_json['input_json']['ocr'] not in valid_ocrs:
-            valid = False
-            messages.append(f"The 'ocr' parameter must be one of the supported values: {valid_ocrs}")
 
-    if request_json['input_json'].get('ocr', "") == 'llm-ocr':
-        if request_json['input_json'].get('llm_ocr_call_conf'):
-            if not isinstance(request_json['input_json']['llm_ocr_call_conf'], dict):
+    if not request_json['input_json'].get('preprocess_conf', {}).get('ocr_conf'):
+        return valid, messages
+    ocr_conf = request_json['input_json'].get('preprocess_conf', {}).get('ocr_conf')
+
+    if ocr_conf.get('ocr') not in valid_ocrs:
+        valid = False
+        messages.append(f"The 'ocr' parameter must be one of the supported values: {valid_ocrs}")
+
+    if ocr_conf.get('ocr', "") == 'llm-ocr':
+        if ocr_conf.get('llm_ocr_conf'):
+            if not isinstance(ocr_conf['llm_ocr_conf'], dict):
                 valid = False
-                messages.append("The 'llm_ocr_call_conf' parameter must be a dictionary")
+                messages.append("The 'llm_ocr_conf' parameter must be a dictionary")
+            llm_ocr_conf = ocr_conf['llm_ocr_conf']
+            storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": storage_containers.get('workspace'), "origin": storage_containers.get('origin')})
+            available_pools = storage_manager.get_available_pools()
+            available_models = storage_manager.get_available_models()
+            # Check if the platform is valid
+            if llm_ocr_conf.get('platform') and llm_ocr_conf.get('platform') not in available_models:
+                valid = False
+                messages.append(f"The 'platform' parameter must be one of the supported values: {available_models.keys()}")
             else:
-                if request_json['input_json']['llm_ocr_call_conf'].get('mode') not in ['api', 'queue']:
-                    valid = False
-                    messages.append("The 'mode' parameter in 'llm_ocr_call_conf' must be 'api' or 'queue'")
-        # TODO pending to check if its a valid model and platform for LLM (discuss it with david)
+                # Check if the model is valid (for a valid model there must be a valid platform)
+                if llm_ocr_conf.get('model') not in available_pools:
+                    found = False
+                    for model in available_models.get(llm_ocr_conf.get('platform'), []):
+                        if llm_ocr_conf.get('model') == model.get('model'):
+                            found = True
+                            break
+                    if not found:
+                        valid = False
+                        messages.append(f"The 'model': '{llm_ocr_conf.get('model')}' parameter must be in the LLM models config file for the platform '{llm_ocr_conf.get('platform')}'")           
     else:
-        if 'llm_ocr_call_conf' in request_json['input_json']:
+        if 'llm_ocr_conf' in ocr_conf:
             valid = False
-            messages.append("The 'llm_ocr_call_conf' parameter is only valid when 'ocr' is 'llm-ocr'")
-
-
+            messages.append("The 'llm_ocr_conf' parameter is only valid when 'ocr' is 'llm-ocr'")
     return valid, messages
+
 
 def _validate_chunking_method(request_json: dict) -> Tuple[bool, list]:
     # Check chunking methods (simple not necessary as all mandatory params, have default ones)
     messages = []
     valid = True
-    if isinstance(request_json['input_json'].get('chunking_method'), dict):
-        request_json['input_json'] |= request_json['input_json']['chunking_method']
-    method = request_json['input_json'].get('method', "simple")
+
+    json_body = {}
+    if request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}):
+        json_body = request_json['input_json']['indexation_conf']['chunking_method']
+    else:
+        if request_json['input_json'].get('chunking_method', {}):
+            json_body = request_json['input_json']['chunking_method']
+        if request_json['input_json'].get('window_length'):
+            json_body['window_length'] = request_json['input_json']['window_length']
+        if request_json['input_json'].get('window_overlap'):
+            json_body['window_overlap'] = request_json['input_json']['window_overlap']
+
+    method = json_body.get('method', "simple")
     if method != "simple":
         if method == "recursive": 
-            sub_window_overlap = request_json['input_json'].get('sub_window_overlap') 
-            sub_window_length = request_json['input_json'].get('sub_window_length')
-            if not (sub_window_overlap and sub_window_length) or request_json['input_json'].get('windows'):
+            sub_window_overlap = json_body.get('sub_window_overlap') 
+            sub_window_length = json_body.get('sub_window_length')
+            if not (sub_window_overlap and sub_window_length) or json_body.get('windows'):
                 valid = False
                 messages.append("The 'recursive' chunking method must only have the 'sub_window_overlap' and 'sub_window_length' key")
             else:
-                if sub_window_length > request_json['input_json'].get('window_length', 300):
+                if sub_window_length > json_body.get('window_length', 300):
                     valid = False
                     messages.append("The 'sub_window_length' must be less than 'window_length' (300 by default)")
-                if sub_window_overlap > request_json['input_json'].get('window_overlap', 10):
+                if sub_window_overlap > json_body.get('window_overlap', 10):
                     valid = False
                     messages.append("The 'sub_window_overlap' must be less than 'window_overlap' (10 by default)")
         elif method == "surrounding_context_window":
-            if not request_json['input_json'].get('windows') or (request_json['input_json'].get('sub_window_overlap') or request_json['input_json'].get('sub_window_length')):
+            if not json_body.get('windows') or (json_body.get('sub_window_overlap') or json_body.get('sub_window_length')):
                 valid = False
                 messages.append("The 'surrounding_context_window' chunking method must only have the 'windows' key")
         else:
             valid = False
             messages.append(f"Method '{method}' is not a valid chunking type")
     else:
-        if request_json['input_json'].get('sub_window_overlap') or request_json['input_json'].get('sub_window_length') or request_json['input_json'].get('windows'):
+        if json_body.get('sub_window_overlap') or json_body.get('sub_window_length') or json_body.get('windows'):
             valid = False
             messages.append("The 'simple' chunking method does not need 'sub_window_overlap', 'sub_window_length' or 'windows' parameters")
     return valid, messages

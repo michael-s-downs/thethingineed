@@ -209,7 +209,7 @@ def queue_write_message(message: dict, queue: str = queue_url) -> bool:
     try:
         response = qc.write((provider, queue), message)
         status = response.get('ResponseMetadata', {}).get('HTTPStatusCode', 0) == 200 if provider == "aws" else response
-    except:
+    except Exception as ex:
         status = False
 
     return status

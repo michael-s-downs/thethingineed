@@ -187,6 +187,7 @@ def resize_image(filename: str, max_size_mb: float = 10.00, max_iterations: int 
     """
     iterations = 0
     current_size = get_image_size(filename)
+    resized = False
 
     while current_size > max_size_mb and iterations < max_iterations:
         logger.debug(f"Resizing image {filename} to {max_size_mb} MB.")
@@ -205,10 +206,13 @@ def resize_image(filename: str, max_size_mb: float = 10.00, max_iterations: int 
 
         iterations += 1
         current_size = get_image_size(filename)
+
+        if not resized:
+            resized = True
     if current_size > max_size_mb:
         raise RuntimeError(f"Can't resize image to {max_size_mb} MB in {max_iterations} iterations.")
    
-    return current_size
+    return current_size, resized
 
 
 #def get_image_size(image: Image) -> float:
