@@ -162,7 +162,7 @@ class ParserInfoindexing(Parser):
         self.do_tables = get_do_tables(generic=self.generic)
 
     def get_index_conf(self):
-        self.index_conf = self.generic['index_conf']
+        self.index_conf = self.generic['indexation_conf']
 
     def get_vector_storage_conf(self, vector_storages):
         vector_storage_conf = self.index_conf['vector_storage_conf']

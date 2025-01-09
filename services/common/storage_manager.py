@@ -62,11 +62,11 @@ class BaseStorageManager(ABC):
         """ Get the equivalences for the default embeddings models """
         pass
 
-    def get_available_models(self):
+    def get_available_models(self) -> dict:
         """ Get the models that can be used """
         pass
 
-    def get_available_pools(self):
+    def get_available_pools(self) -> dict:
         """ Get the pools that can be used """
         pass
 

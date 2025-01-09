@@ -241,6 +241,7 @@ def receive_request(request: object) -> Tuple[dict, dict]:
         else:
             msg_error = f"Bad input: {msg}"
             logger.warning(msg_error)
+            request_json['input_json'].pop('documents_metadata', None) # Avoid message too long error
             result = {'status': "error", 'error': msg_error}
     except:
         msg_error = "Internal error"

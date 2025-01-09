@@ -3,6 +3,36 @@
 
 # Changelog
 
+## vX.X.X (XXXX-XX-XX)
+- integration-receiver
+  - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
+  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+  - [Fix] When error while processing request, return 400 instead of 200
+  - [Fix] When error while processing request, delete base64 to not surpass queue size
+- integration-sender:
+  - [New] Input JSON refactor to separate parameters between indexation and preprocess
+  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+- preprocess-start:
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+- preprocess-extract:
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+- preprocess-ocr:
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.0 )
+  - [Improvement] JSON flow body refactor (preprocess and indexation)
+  - [Improvement] Resize image method generalization and moved to 'utils.py'
+- genai-infoindexing:
+  - [Improvement] JSON flow body refactor
+- genai-llmapi:
+  - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
+  - [New] Added resize for an image that exceeds the max allowed by the LLM vision model.
+    - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model.
+    - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
+  - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
+  - [Improvement] Add support for vision in 'MOUNT_KEY' feature
+
+
 ## v2.2.0 (2024-12-19)
 - integration-receiver:
     - [New] Added new input parameters for the new chunking methods of infoindexing

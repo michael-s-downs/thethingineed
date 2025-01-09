@@ -54,8 +54,30 @@ def adapt_input_base(request_json: dict, input_files: list) -> Tuple[dict, list]
     else:
         request_json['client_profile']['custom_functions'].pop('response_async')
 
+    # Define preprocess configuration
+    request_json['preprocess_conf'] = input_json.pop('preprocess_conf', {})
+
+
+    # Define layout_conf
+    layout_conf = request_json['preprocess_conf'].get('layout_conf', {})
+    layout = input_json.get('layout', request_json.get('preprocess_conf', {}).get('layout', False)) # Retrocompatibility (must stay inside preprocess_conf)
+    request_json['preprocess_conf']['layout_conf'] = {
+        'do_lines_text': layout_conf.get('do_lines_text', layout),
+        'do_lines_ocr': layout_conf.get('do_lines_ocr', layout),
+        'lines_conf': {
+            'do_lines_result': layout_conf.get('lines_conf', {}).get('do_lines_result', False),
+            'model': "checkpoint-41806"
+        },
+        'do_titles': layout_conf.get('do_titles', layout),
+        'do_tables': layout_conf.get('do_tables', layout),
+        'tables_conf': {
+            'sep': layout_conf.get('tables_conf', {}).get('sep', "\t")
+        }
+    }
+
+    # Retrocompatibility for force_ocr
     if 'force_ocr' in input_json:
-        request_json['force_ocr'] = input_json.pop('force_ocr')
+        request_json['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', input_json.pop('force_ocr'))
 
     request_json['apigw_params'].update(input_json.get('headers', {}))
     request_json['documents_folder'] = input_json.get('documents_folder', request_json['documents_folder'])
@@ -78,50 +100,49 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
     if request_json['input_json']['operation'] == "indexing":
         request_json['client_profile']['pipeline'] = ["indexing"]
 
-    # Define params to configure index
-    request_json['index_conf'] = {}
-    request_json['index_conf']['vector_storage_conf'] = {
-        'index': request_json['input_json'].get('index'),
-        'modify_index_docs': request_json['input_json'].get('modify_index', {}),
-        'vector_storage': request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
-    }
-
-    if not isinstance(request_json['input_json'].get('chunking_method'), dict):
-        # Add to dictionary format to retrocompatibility with older versions
-        request_json['input_json']['chunking_method'] = {
-            'method': request_json['input_json'].get('method', "simple"),
-            'sub_window_overlap': request_json['input_json'].get('sub_window_overlap'),
-            'sub_window_length': request_json['input_json'].get('sub_window_length'),
-            'window_overlap': request_json['input_json'].get('window_overlap', 10),
-            'window_length': request_json['input_json'].get('window_length', 300),
-            'windows': request_json['input_json'].get('windows')
+    # Define params to vector storage configuration
+    if request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf'):
+        request_json['indexation_conf'] = {}
+        request_json['indexation_conf']['vector_storage_conf'] = request_json['input_json']['indexation_conf']['vector_storage_conf']
+    else:
+        # Retrocompatibility mode
+        request_json['indexation_conf'] = {}
+        request_json['indexation_conf']['vector_storage_conf'] = {
+            'index': request_json['input_json'].get('index'),
+            'modify_index_docs': request_json['input_json'].get('modify_index', {})
         }
+    request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+
+    # Define params to chunking method configuration
+    if request_json['input_json'].get('indexation_conf', {}):
+        request_json['input_json']['chunking_method'] = request_json['input_json']['indexation_conf'].get('chunking_method', {})
+        # Overwrite if exists, but default values if not
+        request_json['input_json']['chunking_method']['method'] = request_json['input_json']['indexation_conf']['chunking_method'].get('method', "simple")
+        request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json']['indexation_conf']['chunking_method'].get('window_overlap', 10)
+        request_json['input_json']['chunking_method']['window_length'] = request_json['input_json']['indexation_conf']['chunking_method'].get('window_length', 300)
+    else:
+        # Retrocompatibility mode
+        request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
+        # Overwrite if exists, but default values if not
+        request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
+        request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
+        request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
+        request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
+        request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
+        request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
     
-    # Delete none items from dicts
-    request_json['index_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+    # Delete none items from dicts and add chunking method to indexation_conf
+    request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
     request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
     
     # Add metadata and models
-    request_json['index_conf']['metadata'] = request_json['input_json'].get('metadata', {})
-    request_json['index_conf']['models'] = request_json['input_json'].get('models', ["azure_openai_ada"])
-
-
-    # Define params to configure layout
-    layout = request_json['input_json'].get('layout', False)
-    request_json['preprocess_conf'] = {}
-    request_json['preprocess_conf']['layout_conf'] = {
-        'do_lines_text': request_json['input_json'].get('do_lines_text', layout),
-        'do_lines_ocr': request_json['input_json'].get('do_lines_ocr', layout),
-        'lines_conf': {
-            'do_lines_result': request_json['input_json'].get('do_lines_result', False),
-            'model': "checkpoint-41806"
-        },
-        'do_titles': request_json['input_json'].get('do_titles', layout),
-        'do_tables': request_json['input_json'].get('do_tables', layout),
-        'tables_conf': {
-            'sep': request_json['input_json'].get('tables_conf', "\t")
-        }
-    }
+    if request_json['input_json'].get('indexation_conf', {}):
+        request_json['indexation_conf']['metadata'] = request_json['input_json']['indexation_conf'].get('metadata', {})
+        request_json['indexation_conf']['models'] = request_json['input_json']['indexation_conf'].get('models', ["azure_openai_ada"])
+    else:
+        # Retrocompatibility mode
+        request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
+        request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["azure_openai_ada"])
 
     return request_json, input_files
 

@@ -35,3 +35,5 @@ GENAI_LLM_ADAPTERS = "adapters"
 PREPROCESS_TRANSLATION_SERVICE = "preprocess_translation"
 PREPROCESS_SEGMENTATION_SERVICE = "preprocess_segmentation"
 PREPROCESS_LAYOUT_SERVICE = "preprocess_layout"
+# Utils
+UTILS = "utils"

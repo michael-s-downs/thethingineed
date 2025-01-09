@@ -24,7 +24,7 @@ logger = logger_handler.logger
 WAIT_TIME = 0.5
 
 
-def get_ocr_files(files_to_extract: list, ocr: str, prefix_map: dict, do_cells_ocr: bool = True, do_tables: bool = False, do_lines_ocr: bool = False, bytes_mode: bool = False) -> dict:
+def get_ocr_files(files_to_extract: list, ocr: str, prefix_map: dict, do_cells_ocr: bool = True, do_tables: bool = False, do_lines_ocr: bool = False, bytes_mode: bool = False, **kwargs) -> dict:
     """ Extract text from image files using the OCR.
 
     :param files_to_extract: List of files to be processed by OCR
@@ -40,7 +40,7 @@ def get_ocr_files(files_to_extract: list, ocr: str, prefix_map: dict, do_cells_o
     extract_docs = {}
 
     try:
-        files, cells, paragraphs, words, tables, lines = extract_ocr_files(files_to_extract, ocr, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode)
+        files, cells, paragraphs, words, tables, lines = extract_ocr_files(files_to_extract, ocr, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **kwargs)
 
         extract_docs['text'] = format_path_files(files, prefix_map['images'], prefix_map['text'])
         extract_docs['cells'] = format_path_files(cells, prefix_map['images'], prefix_map['cells'])
@@ -87,18 +87,6 @@ def sum_up_size(sizes: list) -> float:
     return round(sum(sizes) / (1024 * 1024), 2)
 
 
-def get_size(filename: str) -> float:
-    """ Get size of file
-
-    :param filename: name of file
-    :return: Size in MB
-    """
-    # We get the bytes of the image and we divide it by 1024 two times to get the MB
-    size = os.stat(filename).st_size / 1024 / 1024
-
-    return size
-
-
 def insert_at_rate(requests: list, count: int, rate: int, period: int) -> list:
     """ Insert request controller
 
@@ -143,44 +131,6 @@ def insert_at_rate(requests: list, count: int, rate: int, period: int) -> list:
     insert_requests(requests, count)
 
     return requests
-
-
-def resize_images(files: list, origin: Union[str, str], max_size_mb: float = 10.00, max_iterations: int = 10):
-    """ Resize images to convert with max size of 10MB
-
-    :param files: list of images
-    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController
-    :param max_size_mb: size max of image
-    :param max_iterations: max retries
-    """
-    try:
-        for file in files:
-            download_files(origin, [(file, file)])
-            iterations = 0
-            current_size = get_size(file)
-
-            while current_size > max_size_mb and iterations < max_iterations:
-                logger.debug(f"Resizing image {file} to {max_size_mb} MB.")
-                img = cv2.imread(file, cv2.IMREAD_UNCHANGED)
-
-                scale = math.sqrt(max_size_mb / current_size)  # smart scale to reduce near max size
-                width = int(img.shape[1] * scale)
-                height = int(img.shape[0] * scale)
-                dim = (width, height)
-
-                image_rescaled = cv2.resize(img, dim, interpolation=cv2.INTER_LINEAR)
-                Image.fromarray(image_rescaled).save(file, quality=95)
-
-                iterations += 1
-                current_size = get_size(file)
-
-                logger.debug("Uploading images to storage.")
-                upload_files(origin, [(file, file)])
-
-            if current_size > max_size_mb:
-                raise RuntimeError(f"Can't resize image to {max_size_mb} MB in {max_iterations} iterations.")
-    except:
-        logger.error("Error resizing images.", exc_info=get_exc_info())
 
 
 def format_path_files(files: list, prefix_image: str, prefix_folder: str, replace_path: str = "") -> list:
