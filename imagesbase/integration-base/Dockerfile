@@ -15,7 +15,8 @@ COPY ./pypackages /packages
 
 # INSTALL DEPENDENCIES
 RUN apt-get update && apt-get --no-install-recommends install -y \
-    build-essential git libpq-dev \
+    build-essential git libpq-dev libmagic1 imagemagick \
+    ffmpeg libsm6 libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
 # ADD REQUIREMENTS AND POLICY TO IMAGEMAGICK
