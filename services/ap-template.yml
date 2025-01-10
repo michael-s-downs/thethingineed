@@ -65,12 +65,12 @@ steps:
 #  displayName: Install GitTools
 
 # Clean space in agent
-- script: df -h
-  displayName: Disk space before
-- script: docker rmi -f $(docker images -aq)
-  displayName: Clean disk space
-- script: df -h
-  displayName: Disk space after
+#- script: df -h
+#  displayName: Disk space before
+#- script: docker rmi -f $(docker images -aq)
+#  displayName: Clean disk space
+#- script: df -h
+#  displayName: Disk space after
 
 # Create helm project
 - task: CmdLine@2
