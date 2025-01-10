@@ -112,14 +112,14 @@ steps:
   displayName: Authenticate feed
 
 # Use python to compile
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '${{ parameters.pythonVersion }}'
-  displayName: Use Python ${{ parameters.pythonVersion }}
+# - task: UsePythonVersion@0
+#   inputs:
+#     versionSpec: '${{ parameters.pythonVersion }}'
+#   displayName: Use Python ${{ parameters.pythonVersion }}
 
 # Update pip
-- script: pip install --upgrade pip
-  displayName: Upgrade PIP
+# - script: pip install --upgrade pip
+#   displayName: Upgrade PIP
 
 # Create variable to tag services by branch
 - script: |
