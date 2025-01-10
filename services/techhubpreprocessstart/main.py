@@ -101,13 +101,9 @@ class PreprocessStartDeployment(BaseDeployment):
             generic['project_conf']['csv'] = json_input.get('csv', False)
 
         if process_type == "ir_index":
-            if 'indexation_conf' not in generic:
-                generic['indexation_conf'] = {}
-            merge(generic['indexation_conf'], json_input.get('indexation_conf', {}))
-        
-        if 'preprocess_conf' not in generic:
-            generic['preprocess_conf'] = {}
-        merge(generic['preprocess_conf'], json_input.get('preprocess_conf', {}))
+            merge(generic.setdefault('indexation_conf', {}), json_input.get('indexation_conf', {}))
+            
+        merge(generic.setdefault('preprocess_conf', {}), json_input.get('preprocess_conf', {}))
 
         return generic
 
