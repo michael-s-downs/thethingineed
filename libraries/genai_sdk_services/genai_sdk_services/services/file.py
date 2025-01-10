@@ -39,7 +39,7 @@ from wand.color import Color
 from wand.image import Image
 
 # Custom imports
-from genai_sdk_services.resources.vision.BaseOCR import  Textract, TesseractOCR, BaseOCR, FormRecognizer
+from genai_sdk_services.resources.vision.BaseOCR import  Textract, TesseractOCR, BaseOCR, FormRecognizer, LLMOCR
 from genai_sdk_services.resources.vision.ocr2visionfeatures import detect_document, runOCR, get_blocks_cells
 
 
@@ -119,7 +119,7 @@ class BaseFileService:
 
 class ImageService(BaseFileService):
     TYPE_FILE = ["jpeg", "jpg", "png", "svg", "tiff", "ps"]
-    OCR_SERVICES = [Textract(), TesseractOCR(), FormRecognizer()]
+    OCR_SERVICES = [Textract(), TesseractOCR(), FormRecognizer(), LLMOCR()]
 
     ocr_credentials = {}
 
