@@ -5,6 +5,10 @@
 import os
 import json
 import re
+import io
+import base64
+import requests
+from PIL import Image
 from typing import Tuple
 from abc import ABC, abstractmethod
 from functools import partial
@@ -17,6 +21,7 @@ import numpy as np
 # from genai_sdk_services.resources.vision.ocr2visionfeatures import runOCR, get_blocks_cells
 from genai_sdk_services.resources.vision.utils_vision import translate
 from genai_sdk_services.storage import StorageController
+from genai_sdk_services.queue_controller import QueueController
 from pytesseract import Output, image_to_data
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.documentintelligence import DocumentIntelligenceClient
@@ -810,3 +815,175 @@ class FormRecognizer(BaseOCR):
                 returning_paragraphs.append([paragraphs])
 
         return returning_texts, returning_blocks, returning_paragraphs, words_blocks, returning_tables, lines_blocks
+
+
+class LLMOCR(BaseOCR):
+    ORIGIN_TYPE = "llm-ocr"
+    credentials = {}
+    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "QUEUE_MODE", "STORAGE_BACKEND"]
+
+    def _set_credentials(self):
+        self.provider = os.environ[self.env_vars[0]]
+        self.queue_input_url = os.environ[self.env_vars[1]]
+        self.queue_output_url = os.environ[self.env_vars[2]]
+        self.url_llm = os.environ[self.env_vars[3]]
+        self.queue_mode = eval(os.environ[self.env_vars[4]])
+        self.storage_backend = os.environ[self.env_vars[5]]
+
+
+        self.sc = StorageController()
+        self.qc = QueueController()
+
+        self.sc.set_credentials((self.provider, self.storage_backend))
+        self.qc.set_credentials((self.provider, self.queue_input_url), url=self.queue_input_url)
+        self.qc.set_credentials((self.provider, self.queue_output_url), url=self.queue_output_url)
+
+                
+
+    def _call_llm(self, template, headers):
+        """Given the template and headers, call the LLM service.
+
+        Args:
+            template (dict): The JSON to call the LLM service.
+            headers (dict): The verification headers to make the call.
+
+        Returns:
+            dict: The LLM response.
+        """
+        try:
+            r = requests.post(self.url_llm, json=template, headers=headers, verify=True)
+        except Exception as ex:
+            raise Exception("Error calling GENAI-LLMAPI: {ex}")
+
+        if r.status_code != 200:
+            raise Exception(f"Error from GENAI-LLMAPI: {r.text}")
+
+        return json.loads(r.text)['result']
+
+
+    def _write_llm_request(self, file, body, headers):
+        filename, extension = os.path.splitext(file) # Get extension and filename
+        filename = filename.replace("imgs", "llm")
+        input_llm_file = f"{filename}_input.json"
+        output_llm_file = f"{filename}_output.json"
+
+        # Write in storage
+        try:
+            self.sc.upload_object((self.provider, self.storage_backend), json.dumps(body), input_llm_file)
+        except:
+            raise Exception(f"Error writing to storage ({self.provider}, {self.storage_backend}): {input_llm_file}")
+        
+        # Write in queue
+        message = {
+            "queue_metadata": {
+                "input_file": input_llm_file,
+                "output_file": output_llm_file,
+                "location_type": "cloud"
+            },
+            "headers": headers
+        }
+        response = self.qc.write((self.provider, self.queue_input_url), message)
+        status = response.get('ResponseMetadata', {}).get('HTTPStatusCode', 0) == 200 if self.provider == "aws" else response
+        if not status:
+            raise Exception(f"Error writing to queue {self.queue_input_url}: {response} in {self.provider}")
+
+
+    def _read_llm_responses(self, num_files) -> dict:
+        responses = []
+        while len(responses) != num_files:
+            try:
+                messages, messages_metadata = self.qc.read((self.provider, self.queue_output_url), 1, True)
+                messages = [] if not messages else messages # Library return None when len=0
+                responses.extend(messages)
+            except Exception as ex:
+                raise Exception(f"Error reading from queue: {ex}")
+        
+        final_responses = []
+        for response in responses:
+            if response.get('status_code') != 200:
+                raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
+            try:
+                loaded_file = self.sc.load_file((self.provider, self.storage_backend), response['result'])
+            except Exception as ex:
+                raise Exception(f"Error loading response file {response['result']} from storage: {ex}")
+
+            if len(loaded_file) <= 0:
+                raise Exception(f"Error loading response file {response['result']} from storage")
+            else:
+                final_responses.append(json.loads(loaded_file)['result'])
+        return final_responses
+
+
+    def run_ocr(self, credentials: dict, files: list, **kwargs: dict) -> Tuple[list, list, list, list, list, list]:
+        """ Run the OCR
+
+        :param credentials: (dict) Credentials to use
+        :param files: (list) List of files to run the OCR
+        :param kwargs: (dict) Extra parameters
+        :return: (tuple) Lists with several files with information of file
+        """
+        self._set_credentials()
+        llm_params = kwargs.get('llm_ocr_conf', {})
+        query = llm_params.get('query', "Generates the text of the page, including the detailed description of the images / diagrams / graphs that appear on the page. Explain in detail the graphs shown in the image, listing the different series and their values. Extract all content from the tables. If the table has rows or merge columns, write in each cell the corresponding content. Returns the content of each table in markdown format. The generated text should be easily understandable for a semantic search engine. Your goal is to transform the page content into text that is best suited for use in a RAG generative AI system. Write the text without mentioning anything else.")
+        system = llm_params.get('system', "You are a bot that extracts information from pages as if you were an OCR. On the pages you can find text, images, graphs, diagrams and tables. Tables must be extracted in markdown format.")
+        model = llm_params.get('model', "techhub-pool-world-gpt-4o")
+        max_tokens = llm_params.get('max_tokens', 1000)
+        platform = llm_params.get('platform', "azure")
+        headers = llm_params.get('headers', {})
+
+        body = {
+            "query_metadata": {
+                "system": system
+            },
+            "llm_metadata":{
+                "model": model,
+                "max_tokens": max_tokens
+            },
+            "platform_metadata": {
+                "platform": platform
+            }
+        }
+        
+        returning_texts = []
+        returning_blocks = []
+        returning_paragraphs = []
+        words_blocks = []
+        lines_blocks = []
+        returning_tables = []
+        responses = []
+        for file in files:
+            image = Image.open(file)
+            buffer = io.BytesIO()
+            image.save(buffer, format=image.format.lower())
+            buffer.seek(0)
+            body['query_metadata']['query'] = [
+                {
+                    "type": "text",
+                    "text": query
+                },{
+                    "type": "image_b64",
+                    "image": {
+                        "base64": base64.b64encode(buffer.read()).decode("utf-8")
+                    }
+                }
+            ]
+            if self.queue_mode:
+                self._write_llm_request(file, body, headers)
+            else:
+                responses.append(self._call_llm(body, headers))
+        
+        if self.queue_mode:
+            responses = self._read_llm_responses(len(files))
+
+        for response in responses:
+            returning_texts.append(response['answer'])
+            lines_blocks.append([[]])
+            words_blocks.append([[]])
+            num_pag = int(file.split("_pag_")[1].split(".")[0])
+            returning_paragraphs.append([[{'text': paragraph, 'r0': 0, 'c0': 0, 'r1': 0, 'c1': 0, 'page': num_pag} for paragraph in response['answer'].split("\n")]])
+
+        return returning_texts, returning_blocks, returning_paragraphs, words_blocks, returning_tables, lines_blocks
+    
+
+        
+            
