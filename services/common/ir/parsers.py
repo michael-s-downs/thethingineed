@@ -243,7 +243,7 @@ class ParserInforetrieval(Parser):
         try:
             if json_input.get("generic"):
                 # Retrocompatibility with older infoindexing calls
-                self.index_conf = get_index_conf(generic=json_input.get("generic"))
+                self.index_conf = json_input["generic"].get("index_conf")
             else:
                 self.index_conf = json_input.get("index_conf")
 
