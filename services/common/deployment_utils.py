@@ -242,7 +242,8 @@ class BaseDeployment(ABC):
                             self.logger.info(f"Document: {file} Time: {time.time() - s_time}.")
                         except Exception:
                             self.logger.exception(f"Exception for {dat}.", exc_info=get_exc_info())
-                            delete_from_queue(self.Q_IN, entries)
+                            if not eval(os.getenv('QUEUE_DELETE_ON_READ', "False")):
+                                delete_from_queue(self.Q_IN, entries)
             except TypeError:
                 self.logger.debug("Waiting messages.", exc_info=get_exc_info())
 
