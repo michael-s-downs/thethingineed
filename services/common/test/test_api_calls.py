@@ -19,6 +19,7 @@ def base_request_json():
         "documents_folder": "/test/folder",
         "documents": ["doc1.pdf", "doc2.pdf"],
         "documents_metadata": {},
+        "preprocess_conf": {},
         "process_ids": {'test_pid1':{}},
         "ts_init": datetime.now().timestamp(),
         "client_profile": {"default_ocr": True, "model": "test_model"},
@@ -589,7 +590,7 @@ def test_indexing_successful(base_request_json, mock_dependencies):
         "doc1.pdf": {"status": "new"},
         "doc2.pdf": {"status": "new"}
     }
-    base_request_json['index_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
+    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
     base_request_json['preprocess_conf'] = {'layout_conf': {}}
     
     mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
@@ -608,7 +609,7 @@ def test_indexing_successful(base_request_json, mock_dependencies):
 def test_indexing_no_files(base_request_json, mock_dependencies):
     # Simulate request with no files to index
     base_request_json["documents"] = []
-    base_request_json['index_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
+    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
     base_request_json['preprocess_conf'] = {'layout_conf': {}}
     mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
 
@@ -625,7 +626,7 @@ def test_indexing_queue_mode(base_request_json, mock_dependencies):
         "doc1.pdf": {"status": "new"}
     }
     base_request_json['preprocess_conf'] = {'layout_conf': {}}
-    base_request_json['index_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
+    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
     mock_api_response = {"status": "waiting", "process_id": "queue_index123"}
     mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
 

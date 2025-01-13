@@ -824,8 +824,8 @@ class LLMOCR(BaseOCR):
 
     def _set_credentials(self):
         self.provider = os.environ[self.env_vars[0]]
-        self.queue_input_url = os.environ[self.env_vars[1]]
-        self.queue_output_url = os.environ[self.env_vars[2]]
+        self.queue_input_url = os.getenv(self.env_vars[1])
+        self.queue_output_url = os.getenv(self.env_vars[2])
         self.url_llm = os.environ[self.env_vars[3]]
         self.queue_mode = eval(os.environ[self.env_vars[4]])
         self.storage_backend = os.environ[self.env_vars[5]]

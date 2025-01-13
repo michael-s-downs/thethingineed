@@ -39,19 +39,17 @@ class TestManagerParsers:
 
 class TestParserInforetrieval:
     json_input = {
-        "generic": {
-            "index_conf": {
-                "index": "test",
-                "rescoring_function": "posnorm",
-                "strategy": "genai_retrieval",
-                "query": "Señores Ponce, Diez, Campos y Alvera?",
-                "top_k": 5,
-                "filters": {
-                },
-                "models": [
-                ],
-                "vector_storage_conf": {}
-            }
+        "index_conf": {
+            "index": "test",
+            "rescoring_function": "posnorm",
+            "strategy": "genai_retrieval",
+            "query": "Señores Ponce, Diez, Campos y Alvera?",
+            "top_k": 5,
+            "filters": {
+            },
+            "models": [
+            ],
+            "vector_storage_conf": {}
         },
         "project_conf":  {
             "x-reporting": "test_config"
@@ -97,8 +95,7 @@ class TestParserInforetrieval:
 
         # Models passed and not generic
         conf_input = copy.deepcopy(self.conf)
-        conf_input['json_input']['index_conf'] = conf_input['json_input']['generic'].pop('index_conf')
-        conf_input['json_input'].pop('generic')
+        conf_input['json_input']['index_conf'] = conf_input['json_input'].pop('index_conf')
         conf_input['json_input']['index_conf']['models'] = ["bm25", "ada-test-1"]
         retrieval_object = ManagerParser.get_parsed_object(conf_input)
         assert isinstance(retrieval_object, ParserInforetrieval)
@@ -119,7 +116,7 @@ class TestParserInfoindexing:
                     "do_tables": True,
                 }
             },
-            "index_conf": {
+            "indexation_conf": {
                 "index": "test_indexing",
                 "windows_overlap": 10,
                 "windows_length": 300,

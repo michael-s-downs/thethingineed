@@ -31,6 +31,8 @@
     - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
   - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
+- genai-inforetrieval
+  - [Improvement] Adapt input JSON for coherence purposes with json body refactor
 
 
 ## v2.2.0 (2024-12-19)

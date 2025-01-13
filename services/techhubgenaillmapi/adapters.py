@@ -100,7 +100,7 @@ class BaseAdapter(ABC):
             content = image_dict['image']['url']
             downloaded_image = requests.get(content)
             if downloaded_image.status_code != 200:
-                raise PrintableGenaiError(downloaded_image.status_code, f"Error downloading the image: + {downloaded_image.reason}")
+                raise PrintableGenaiError(downloaded_image.status_code, f"Error downloading the image: {downloaded_image.reason}")
             try:
                 img = Image.open(io.BytesIO(downloaded_image.content))
             except Exception as ex:

@@ -10,7 +10,7 @@ from typing import Dict, Union, List, Optional
 from genai_json_parser import (
     get_credentials, get_generic, get_specific, get_department, get_document,
     get_dataset_keys, get_exc_info, get_dataset_status_key,
-    generate_dataset_status_key, get_headers, get_dataset_counter_key, get_origins,
+    generate_dataset_status_key, get_headers, get_dataset_counter_key,
     get_dataset_config, get_dataset_id, get_ocr_config, get_project_type, get_force_ocr, get_languages, get_train_conf,
     get_models_config, select_model, get_model_parameters, get_index_conf,get_metadata_conf, get_compose_conf, get_elastic_params, get_layout_conf,
     get_do_cells_text, get_do_lines_text, get_do_cells_ocr, get_do_lines_ocr, get_do_tables, get_do_titles, get_prediction_multilabel,
@@ -31,11 +31,8 @@ class TestGenaiConfig(unittest.TestCase):
                     'generic':"", 'dataset_id': '1234', 'other_param': 'value'},
                 'dataset_conf': {'generic':"", 'dataset_id': '1234', 'other_param': 'value'},
                 'process_type': 'test_process',
-                'ocr_conf': {'param1': 10},
-                'origins': {'origin_key': 'origin_value'},
                 'project_conf': {
                     'project_type': 'text',
-                    'force_ocr': True,
                     'languages': ['en', 'fr']
                 },
                 'train_conf': 
@@ -50,12 +47,16 @@ class TestGenaiConfig(unittest.TestCase):
                         ]
                     }
                 ,
-                'index_conf': {'index_param': 'index_value'},
+                'indexation_conf': {'index_param': 'index_value'},
                 'compose_conf': {'compose_key': 'compose_value'},
                 'elastic_params': {'elastic_key': 'elastic_value'},
                 'predict_conf': {'param1': 'value1'},
-                'preprocess_conf': {'parameters_pretext': "", 'layout_conf': {'param1': 'layout_value'},
-                                    'do_cells_text': True,
+                'preprocess_conf': {
+                    'parameters_pretext': "", 
+                    'layout_conf': {
+                        'param1': 'layout_value'
+                    },
+                    'do_cells_text': True,
                     'do_lines_text': False,
                     'do_cells_ocr': True,
                     'do_lines_ocr': False,
@@ -65,8 +66,12 @@ class TestGenaiConfig(unittest.TestCase):
                         'do_segments': True,
                         'segmenters': ['seg1', 'seg2']
                     },
+                    'ocr_conf': {
+                        'force_ocr': True,
+                        'param1': 10
+                    },
                     'predict_conf': {'param1': 'value1'}
-                                    }
+                }
             },
             'specific': {
                 'document': {'name': 'doc1', 'version': 1},
@@ -139,10 +144,6 @@ class TestGenaiConfig(unittest.TestCase):
         result = get_dataset_counter_key(json_input=self.json_input)
         self.assertEqual(result, 'counter_key1')
 
-    def test_get_origins(self):
-        result = get_origins(json_input=self.json_input)
-        self.assertEqual(result['origin_key'], 'origin_value')
-
     def test_get_dataset_config(self):
         result = get_dataset_config(json_input=self.json_input)
         self.assertEqual(result['dataset_id'], '1234')
@@ -190,7 +191,7 @@ class TestGenaiConfig(unittest.TestCase):
         self.assertEqual(model_language, 'en')
         self.assertEqual(model_params['model_conf']['lr'], 0.01)
 
-    def test_get_index_conf(self):
+    def test_get_indexation_conf(self):
         result = get_index_conf(json_input=self.json_input)
         self.assertEqual(result['index_param'], 'index_value')
     
