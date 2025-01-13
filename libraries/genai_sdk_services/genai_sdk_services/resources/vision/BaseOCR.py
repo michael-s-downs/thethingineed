@@ -820,15 +820,23 @@ class FormRecognizer(BaseOCR):
 class LLMOCR(BaseOCR):
     ORIGIN_TYPE = "llm-ocr"
     credentials = {}
-    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "QUEUE_MODE", "STORAGE_BACKEND"]
+    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND"]
 
     def _set_credentials(self):
         self.provider = os.environ[self.env_vars[0]]
         self.queue_input_url = os.getenv(self.env_vars[1])
         self.queue_output_url = os.getenv(self.env_vars[2])
-        self.url_llm = os.environ[self.env_vars[3]]
-        self.queue_mode = eval(os.environ[self.env_vars[4]])
-        self.storage_backend = os.environ[self.env_vars[5]]
+        self.url_llm = os.getenv(self.env_vars[3])
+        self.storage_backend = os.getenv(self.env_vars[4])
+
+        if self.url_llm:
+            self.queue_mode = False
+        else:
+            if self.queue_input_url and self.queue_output_url and self.storage_backend:
+                self.queue_mode = True
+            else:
+                raise ValueError("Queue and storage not defined by environment variables")
+        
 
 
         self.sc = StorageController()

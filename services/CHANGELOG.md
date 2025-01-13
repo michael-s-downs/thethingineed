@@ -19,7 +19,10 @@
 - preprocess-extract:
   - [Improvement] JSON flow body refactor (preprocess and indexation)
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.0 )
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.2)
+    - New required environment variables:
+      - Queue: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT'
+      - API: 'URL_LLM'
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
 - genai-infoindexing:
@@ -33,6 +36,7 @@
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval
   - [Improvement] Adapt input JSON for coherence purposes with json body refactor
+
 
 
 ## v2.2.0 (2024-12-19)

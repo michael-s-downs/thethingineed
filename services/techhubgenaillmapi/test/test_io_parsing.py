@@ -11,7 +11,7 @@ from unittest import mock
 from pydantic import ValidationError
 
 # Local imports
-from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata
+from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
 
 
 gpt_v_model = {
@@ -272,6 +272,13 @@ class TestMultimodalObject():
         with pytest.raises(ValueError, match=re.escape("'text' parameter must be for 'text' type")):
             MultimodalObject.validate_text("", data_image)
 
+class TestProjectConf():
+    def test_x_limits_empty(self):
+        with patch("requests.get") as patch_requests:
+            patch_requests.return_value = MagicMock(text='{"limits": []}')
+            project_conf = ProjectConf(**{"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"})
+
+
 @patch("io_parsing.QUEUE_MODE", True)
 def test_adapt_input_queue():
     json_input = copy.deepcopy(azure_call)
@@ -316,7 +323,3 @@ def test_adapt_input_queue():
         mock_isfile.return_value = True
         result, _  = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "key"
-
-
-
-
