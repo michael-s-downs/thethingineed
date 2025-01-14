@@ -18,13 +18,19 @@
   - [Improvement] JSON flow body refactor (preprocess and indexation)
 - preprocess-extract:
   - [Improvement] JSON flow body refactor (preprocess and indexation)
+  - [Improvement] If 'force_ocr' specified avoid extra processes:
+    - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
+    - If text has been extracted (for language detection) it will not be uploaded
+  - [Improvement] When exception if temporal files created, those are deleted
 - preprocess-ocr:
   - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.2)
     - New required environment variables:
       - Queue: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT'
       - API: 'URL_LLM'
+    - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
+  - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
   - [Improvement] JSON flow body refactor
 - genai-llmapi:

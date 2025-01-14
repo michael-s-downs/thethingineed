@@ -242,6 +242,9 @@ def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
                 valid = False
                 messages.append("The 'llm_ocr_conf' parameter must be a dictionary")
             llm_ocr_conf = ocr_conf['llm_ocr_conf']
+            if llm_ocr_conf.get('system') and not llm_ocr_conf.get('query'):
+                valid = False
+                messages.append("The 'query' parameter is mandatory when 'system' is specified")
             storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": storage_containers.get('workspace'), "origin": storage_containers.get('origin')})
             available_pools = storage_manager.get_available_pools()
             available_models = storage_manager.get_available_models()

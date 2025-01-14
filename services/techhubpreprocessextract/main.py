@@ -55,6 +55,7 @@ class PreprocessExtractDeployment(BaseDeployment):
         """
         self.logger.debug(f"Data entry: {json_input}")
         message = json_input
+        filename = ""
         next_service = PREPROCESS_END_SERVICE
         msg = json.dumps({'status': ERROR, 'msg': "Error while extracting text and images"})
         redis_status = db_dbs['status']
@@ -159,59 +160,64 @@ class PreprocessExtractDeployment(BaseDeployment):
             self.logger.info(f"Extracting text from file: {filename}")
             is_text_project = project_type == "text"
             text_extracted = False
-            files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
+            if generic.get('preprocess_conf', {}).get('ocr_conf',{}).get('llm_ocr_conf', {}).get('query') and force_ocr:
+                self.logger.info("Force OCR is enabled, text extraction will be skipped.")
+                files_extracted = {'lang': "default"}
+            else:
+                files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
 
-            try:
-                process_timeout = 5  # Minutes
-                return_dict = Manager().dict({'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []})
-                p = Process(target=extract_text, args=(filename, num_pags, generic, specific, do_cells_text, do_lines_text, return_dict))
-                p.start()
-                p.join(process_timeout * 60)  # Timeout
-                if p.is_alive():
-                    self.logger.info(f"Extract process exceeded {process_timeout}min, terminating...")
-                    p.terminate()
+                try:
+                    process_timeout = 5  # Minutes
+                    return_dict = Manager().dict({'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []})
+                    p = Process(target=extract_text, args=(filename, num_pags, generic, specific, do_cells_text, do_lines_text, return_dict))
+                    p.start()
+                    p.join(process_timeout * 60)  # Timeout
+                    if p.is_alive():
+                        self.logger.info(f"Extract process exceeded {process_timeout}min, terminating...")
+                        p.terminate()
 
-                files_extracted.update(return_dict)
+                    files_extracted.update(return_dict)
 
-                text_extracted = files_extracted['text'] != ""
-                self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: '{num_pags}'.")
-            except Exception:
-                self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
+                    text_extracted = files_extracted['text'] != ""
+                    self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: '{num_pags}'.")
+                except Exception:
+                    self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
 
-            # Save text
-            path_IRStorage_txt = ""
-            self.logger.info("Uploading files of text.")
-            try:
-                folder_file_txt = folder_file + ".txt"
-                for key in files_extracted['extraction']:
-                    if key != "text":
-                        path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, "pags", f"{os.path.basename(folder_file)}_{key}.txt")
-                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
-                    else:
-                        path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
-                        upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
-                if files_extracted['text']:
-                    path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
-                    upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
-            except Exception:
-                self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
+            if not force_ocr and text_extracted: # To not upload files if OCR is forced (only language extraction is needed)
+                # Save text
+                path_IRStorage_txt = ""
+                self.logger.info("Uploading files of text.")
+                try:
+                    folder_file_txt = folder_file + ".txt"
+                    for key in files_extracted['extraction']:
+                        if key != "text":
+                            path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, "pags", f"{os.path.basename(folder_file)}_{key}.txt")
+                            upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
+                        else:
+                            path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
+                            upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
+                    if files_extracted['text']:
+                        path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
+                        upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
+                except Exception:
+                    self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
 
-            # Save cells
-            path_IRStorage_cells = ""
-            self.logger.info("Uploading files of cells, boxes and lines.")
-            try:
-                path_IRStorage_cells = os.path.join(specific['path_cells'], "txt", folder_file)
-                if files_extracted['boxes']:
-                    filename_blocks = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_paragraphs.txt")
-                    upload_object(workspace, json.dumps(files_extracted['boxes']), filename_blocks)
-                if files_extracted['cells']:
-                    filename_cells = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_words.txt")
-                    upload_object(workspace, json.dumps(files_extracted['cells']), filename_cells)
-                if files_extracted['lines']:
-                    filename_lines = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_lines.txt")
-                    upload_object(workspace, json.dumps(files_extracted['lines']), filename_lines)
-            except Exception:
-                self.logger.warning(f"[Process {dataset_status_key}] Error uploading cells.", exc_info=get_exc_info())
+                # Save cells
+                path_IRStorage_cells = ""
+                self.logger.info("Uploading files of cells, boxes and lines.")
+                try:
+                    path_IRStorage_cells = os.path.join(specific['path_cells'], "txt", folder_file)
+                    if files_extracted['boxes']:
+                        filename_blocks = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_paragraphs.txt")
+                        upload_object(workspace, json.dumps(files_extracted['boxes']), filename_blocks)
+                    if files_extracted['cells']:
+                        filename_cells = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_words.txt")
+                        upload_object(workspace, json.dumps(files_extracted['cells']), filename_cells)
+                    if files_extracted['lines']:
+                        filename_lines = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_lines.txt")
+                        upload_object(workspace, json.dumps(files_extracted['lines']), filename_lines)
+                except Exception:
+                    self.logger.warning(f"[Process {dataset_status_key}] Error uploading cells.", exc_info=get_exc_info())
 
             # Extract images
             self.logger.info("Checking if necesary to extract images.")
@@ -250,14 +256,6 @@ class PreprocessExtractDeployment(BaseDeployment):
                 'n_pags': num_pags,
                 'language': files_extracted['lang']
             })
-
-            # Remove local files
-            self.logger.info("Deleting local files temporary.")
-            try:
-                os.remove(filename)
-                remove_local_files(filename)
-            except Exception:
-                self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
 
             self.logger.info("Creating message status for update Redis and decide next step.")
             if not text_extracted and not img_extracted:
@@ -299,6 +297,15 @@ class PreprocessExtractDeployment(BaseDeployment):
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess extract", exc_info=get_exc_info())
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
+
+        if filename:
+            # Remove local files
+            self.logger.info("Deleting local files temporary.")
+            try:
+                os.remove(filename)
+                remove_local_files(filename)
+            except Exception:
+                self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
 
         update_status(redis_status, dataset_status_key, msg)
         return self.must_continue, message, next_service

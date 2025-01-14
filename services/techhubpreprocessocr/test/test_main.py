@@ -46,19 +46,23 @@ def test_process_success(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, True))
+    mocker.patch('main.upload_files')
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
@@ -110,12 +114,12 @@ def test_merge_files_text(mocker, preprocess_deployment):
     preprocess_deployment.merge_files_text(upload_docs, path_file_txt, path_file_text, filename, num_pags, metadata)
 
 
-    m.assert_any_call('dummy_page1.txt', 'r', encoding='utf8')
-    m.assert_any_call('dummy_page2.txt', 'r', encoding='utf8')
+    m.assert_any_call('dummy_page1.txt', 'r', encoding='utf-8')
+    m.assert_any_call('dummy_page2.txt', 'r', encoding='utf-8')
 
 
-    m.assert_any_call(path_file_text, 'a')
-    m.assert_any_call(path_file_txt, 'a')
+    m.assert_any_call(path_file_text, 'a', encoding='utf-8')
+    m.assert_any_call(path_file_txt, 'a', encoding='utf-8')
 
     handle = m()
     handle.write.assert_any_call('formatted_metadata')
@@ -177,10 +181,6 @@ def test_get_origns_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={
-        #  'ocr' not included
-        'another_key': 'value'
-    })
 
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
@@ -218,7 +218,6 @@ def test_get_documents_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
 
@@ -255,7 +254,6 @@ def test_ocr_conf_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={'another_key': 'value'})
@@ -289,7 +287,6 @@ def test_path_images_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -332,7 +329,6 @@ def test_getting_lines_and_cells_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -377,7 +373,6 @@ def test_resize_image_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -387,7 +382,7 @@ def test_resize_image_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images', side_effect=Exception)
+    mocker.patch('main.resize_image', side_effect=Exception)
 
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
@@ -425,7 +420,6 @@ def test_get_sizes_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -435,7 +429,7 @@ def test_get_sizes_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes',side_effect=Exception)
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
@@ -473,7 +467,6 @@ def test_extracting_text_ocr_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -483,7 +476,7 @@ def test_extracting_text_ocr_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', side_effect=Exception)
@@ -524,7 +517,6 @@ def test_repor_ocr_pages(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -534,7 +526,7 @@ def test_repor_ocr_pages(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
@@ -582,7 +574,6 @@ def test_merge_files_exception(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -592,7 +583,7 @@ def test_merge_files_exception(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
@@ -637,7 +628,6 @@ def test_upoading_files_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -647,7 +637,7 @@ def test_upoading_files_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes',
                  return_value=[{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
@@ -697,7 +687,6 @@ def test_getting_languages_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -707,7 +696,7 @@ def test_getting_languages_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
@@ -759,7 +748,6 @@ def test_remove_local_files_error(mocker, preprocess_deployment):
         'process_type': 'test',
         'report_url': 'http://test.url'
     })
-    mocker.patch('main.get_origins', return_value={'ocr': 'test_ocr'})
     mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
@@ -769,7 +757,7 @@ def test_remove_local_files_error(mocker, preprocess_deployment):
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
-    mocker.patch('main.resize_images')
+    mocker.patch('main.resize_image', return_value=(None, False))
     mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
