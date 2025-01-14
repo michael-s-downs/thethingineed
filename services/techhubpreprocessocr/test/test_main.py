@@ -90,6 +90,76 @@ def test_process_success(mocker, preprocess_deployment):
     assert message == json_input
     assert next_service == 'preprocess_end'
 
+
+def test_process_llm_ocr_error_extracting(mocker, preprocess_deployment):
+    mocker.patch('main.get_generic', return_value={
+        'project_conf': {
+            'department': 'DEPARTMENT_NAME',
+            'extract_tables': False,
+        }
+    })
+    mocker.patch('main.get_specific', return_value={
+          'paths': {
+            'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
+            'text': 'path_to_text',
+            'cells': 'path_to_cells',
+            'tables': 'path_to_tables',
+            'txt': 'path_to_txt'
+        },
+        'path_img': 'path_to_image',
+        'path_cells': 'path_to_cells',
+        'path_text': 'path_to_text',
+        'path_txt': 'path_to_txt',
+        'path_tables': 'path_to_tables'
+    })
+    mocker.patch('main.get_project_config', return_value={
+        'process_id': '123',
+        'process_type': 'test',
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
+    })
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
+    mocker.patch('main.get_metadata_conf', return_value={})
+    mocker.patch('main.get_ocr_config', return_value={
+        'files_size': 10,
+        'batch_length': 5,
+        'calls_per_minute': 10,
+        'ocr': 'llm-ocr',
+        'extract_tables': False,
+        'llm_ocr_conf': {
+            "model": "test",
+            "platform": "test",  
+            "query": "test:",
+            "system": "test",
+            "max_tokens": 1000
+        }
+    })
+    mocker.patch('main.get_do_cells_ocr')
+    mocker.patch('main.get_do_lines_ocr')
+    mocker.patch('main.resize_image', return_value=(None, True))
+    mocker.patch('main.upload_files')
+    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_ocr_files', side_effect=Exception)
+    mocker.patch('main.chunk', return_value=[
+        [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
+    ])
+    mocker.patch('main.remove_local_files', side_effect=Exception)
+    mocker.patch('main.update_status')
+
+    preprocess_deployment = PreprocessOCRDeployment()
+
+    json_input = {'input': 'data'}  # Datos de entrada de prueba
+
+
+    must_continue, message, next_service = preprocess_deployment.process(json_input)
+
+
+    assert must_continue is True
+    assert message == json_input
+    assert next_service == 'preprocess_end'
+
+
 def test_merge_files_text(mocker, preprocess_deployment):
     upload_docs = {
         'text': [
@@ -155,42 +225,6 @@ def test_get_project_config_error(mocker, preprocess_deployment):
     assert message == json_input_invalid
     assert next_service == 'preprocess_end'
 
-def test_get_origns_error(mocker, preprocess_deployment):
-    mocker.patch('main.get_generic', return_value={
-        'project_conf': {
-            'department': 'DEPARTMENT_NAME',
-            'extract_tables': False,
-        }
-    })
-    mocker.patch('main.get_specific', return_value={
-        'paths': {
-            'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
-            'text': 'path_to_text',
-            'cells': 'path_to_cells',
-            'tables': 'path_to_tables',
-            'txt': 'path_to_txt'
-        },
-        'path_img': 'path_to_image',
-        'path_cells': 'path_to_cells',
-        'path_text': 'path_to_text',
-        'path_txt': 'path_to_txt',
-        'path_tables': 'path_to_tables'
-    })
-    mocker.patch('main.get_project_config', return_value={
-        'process_id': '123',
-        'process_type': 'test',
-        'report_url': 'http://test.url'
-    })
-
-    mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
-    mocker.patch('main.update_status')
-
-    json_input_invalid = {'key': 'value'}
-
-    must_continue, message, next_service = preprocess_deployment.process(json_input_invalid)
-    assert must_continue is True
-    assert message == json_input_invalid
-    assert next_service == 'preprocess_end'
 
 def test_get_documents_error(mocker, preprocess_deployment):
     mocker.patch('main.get_generic', return_value={
@@ -216,8 +250,49 @@ def test_get_documents_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
+    mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
+    mocker.patch('main.update_status')
+
+    json_input_invalid = {'key': 'value'}
+
+    must_continue, message, next_service = preprocess_deployment.process(json_input_invalid)
+    assert must_continue is True
+    assert message == json_input_invalid
+    assert next_service == 'preprocess_end'
+
+def test_storage_containers_error(mocker, preprocess_deployment):
+    mocker.patch('main.get_generic', return_value={
+        'project_conf': {
+            'department': 'DEPARTMENT_NAME',
+            'extract_tables': False,
+        }
+    })
+    mocker.patch('main.get_specific', return_value={
+        'paths': {
+            'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
+            'text': 'path_to_text',
+            'cells': 'path_to_cells',
+            'tables': 'path_to_tables',
+            'txt': 'path_to_txt'
+        },
+        'path_img': 'path_to_image',
+        'path_cells': 'path_to_cells',
+        'path_text': 'path_to_text',
+        'path_txt': 'path_to_txt',
+        'path_tables': 'path_to_tables'
+    })
+    mocker.patch('main.get_project_config', return_value={
+        'process_id': '123',
+        'process_type': 'test',
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
+    })
+    mocker.patch('main.storage_containers', {'wrong_key': 'wrong_value'})
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
 
@@ -252,9 +327,11 @@ def test_ocr_conf_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={'another_key': 'value'})
 
@@ -267,6 +344,7 @@ def test_ocr_conf_error(mocker, preprocess_deployment):
     assert must_continue is True
     assert message == json_input_invalid
     assert next_service == 'preprocess_end'
+
 def test_path_images_error(mocker, preprocess_deployment):
     mocker.patch('main.get_generic', return_value={
         'project_conf': {
@@ -285,14 +363,18 @@ def test_path_images_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
 
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
@@ -304,7 +386,6 @@ def test_path_images_error(mocker, preprocess_deployment):
     assert must_continue is True
     assert message == json_input_invalid
     assert next_service == 'preprocess_end'
-
 
 def test_getting_lines_and_cells_error(mocker, preprocess_deployment):
     mocker.patch('main.get_generic', return_value={
@@ -327,14 +408,18 @@ def test_getting_lines_and_cells_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
@@ -371,14 +456,18 @@ def test_resize_image_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -418,14 +507,18 @@ def test_get_sizes_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -465,14 +558,18 @@ def test_extracting_text_ocr_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -515,14 +612,18 @@ def test_repor_ocr_pages(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -572,14 +673,18 @@ def test_merge_files_exception(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -626,14 +731,18 @@ def test_upoading_files_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -685,14 +794,18 @@ def test_getting_languages_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
@@ -746,14 +859,18 @@ def test_remove_local_files_error(mocker, preprocess_deployment):
     mocker.patch('main.get_project_config', return_value={
         'process_id': '123',
         'process_type': 'test',
-        'report_url': 'http://test.url'
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
     })
-    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf'})
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
     mocker.patch('main.get_metadata_conf', return_value={})
     mocker.patch('main.get_ocr_config', return_value={
         'files_size': 10,
         'batch_length': 5,
-        'calls_per_minute': 10
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
     })
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
