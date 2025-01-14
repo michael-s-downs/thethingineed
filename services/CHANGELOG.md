@@ -36,6 +36,8 @@
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval
   - [Improvement] Adapt input JSON for coherence purposes with json body refactor
+- ALL
+  - [New] Sonarqube and test coverage check in azure pipeline
 
 
 

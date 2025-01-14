@@ -120,8 +120,8 @@ class TestLlamaIndex(unittest.TestCase):
 
     def test_is_platform_type(self):
         """Test the is_platform_type method."""
-        self.assertTrue(LlamaIndex.is_platform_type("LlamaIndex"))
-        self.assertFalse(LlamaIndex.is_platform_type("OtherType"))
+        self.assertTrue(LlamaIndex.is_vector_database_type("LlamaIndex"))
+        self.assertFalse(LlamaIndex.is_vector_database_type("OtherType"))
 
     def test_get_processed_data_success(self):
         # Configuración de mocks
@@ -195,7 +195,7 @@ class TestLlamaIndex(unittest.TestCase):
         # Asegurarse de que el error se registró
         mock_logger.error.assert_called_with(
             "Connection to elastic failed. Check if the elastic service is running.",
-            exc_info=True
+            exc_info=False
         )
 
         # Verificar que el código de error y el mensaje de la excepción son correctos
@@ -239,7 +239,7 @@ class TestLlamaIndex(unittest.TestCase):
         mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
 
         # Mock del modelo de embedding
-        mock_embed_model.return_value = MagicMock()
+        mock_embed_model.return_value = None
 
         # Mock del storage context y vector index
         mock_storage_context.return_value = MagicMock()
@@ -466,7 +466,7 @@ class TestManagerVectorDB(unittest.TestCase):
 
     def test_get_possible_platforms(self):
         """Test get_possible_platforms."""
-        platforms = ManagerVectorDB.get_possible_platforms()
+        platforms = ManagerVectorDB.get_possible_vector_databases()
         self.assertIn("LlamaIndex", platforms)
 
 
