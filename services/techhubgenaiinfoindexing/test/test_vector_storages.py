@@ -239,7 +239,7 @@ class TestLlamaIndex(unittest.TestCase):
         mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
 
         # Mock del modelo de embedding
-        mock_embed_model.return_value = MagicMock()
+        mock_embed_model.return_value = None
 
         # Mock del storage context y vector index
         mock_storage_context.return_value = MagicMock()
