@@ -85,7 +85,6 @@ stages:
           echo installing packages
           # pip install pytest pytest-cov boto3 pillow flask pandas
           pip install pytest pytest-cov flask pillow langdetect
-          pip install -r requirements_info.txt
           pip install -r requirements.txt
     
           export PYTHONPATH=/home/vsts/work/1/s/services/
@@ -129,7 +128,7 @@ stages:
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      name: TechHub Pipelines
     steps:
     - template: ../ap-template.yml
       parameters:

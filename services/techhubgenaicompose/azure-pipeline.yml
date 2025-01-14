@@ -127,6 +127,8 @@ stages:
       - task: SonarQubePublish@7
         inputs:
           pollingTimeoutSec: '300'
+
+          
 - stage: Building
   displayName: Build image
   jobs:
