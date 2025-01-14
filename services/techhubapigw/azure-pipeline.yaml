@@ -51,10 +51,10 @@ stages:
 - stage: SonarAnalysis
   jobs:
   - job:
-    continueOnError: true
+    continueOnError: false
     pool:
       vmImage: $(vmImageName)
-
+    steps:
       - task: SonarQubePrepare@7
         inputs:
           SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
