@@ -120,8 +120,8 @@ class TestLlamaIndex(unittest.TestCase):
 
     def test_is_platform_type(self):
         """Test the is_platform_type method."""
-        self.assertTrue(LlamaIndex.is_platform_type("LlamaIndex"))
-        self.assertFalse(LlamaIndex.is_platform_type("OtherType"))
+        self.assertTrue(LlamaIndex.is_vector_database_type("LlamaIndex"))
+        self.assertFalse(LlamaIndex.is_vector_database_type("OtherType"))
 
     def test_get_processed_data_success(self):
         # Configuración de mocks
@@ -466,7 +466,7 @@ class TestManagerVectorDB(unittest.TestCase):
 
     def test_get_possible_platforms(self):
         """Test get_possible_platforms."""
-        platforms = ManagerVectorDB.get_possible_platforms()
+        platforms = ManagerVectorDB.get_possible_vector_databases()
         self.assertIn("LlamaIndex", platforms)
 
 
