@@ -11,7 +11,7 @@ from unittest import mock
 from pydantic import ValidationError
 
 # Local imports
-from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue
+from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
 
 
 gpt_v_model = {
@@ -143,9 +143,11 @@ class TestResponseObject():
         response_object = ResponseObject(**{"status_code": 200, "status": "finished", "result": "result"})
         os.environ['Q_GENAI_LLMQUEUE_OUTPUT'] = "techhubragemeal--q-local-output" 
         with mock.patch("io_parsing.QUEUE_MODE", True):
-            must_continue, output, next_service = response_object.get_response_predict()
+            mock_object = MagicMock(output_file="output.json")
+            mock_object.upload_json_output.return_value = None
+            must_continue, output, next_service = response_object.get_response_predict(mock_object)
             assert must_continue
-            assert output == 'result'
+            assert output.get('result') == 'output.json'
             assert next_service == "techhubragemeal--q-local-output"
 
 class TestLLMMetadata():
@@ -206,6 +208,39 @@ class TestQueryMetadata():
         with pytest.raises(ValueError, match=re.escape("1 validation error for QueryMetadata\n  Value error, Error, in dalle3 the maximum number of characters in the prompt is 4000 (query + persistence is longer) [type=value_error, input_value={'is_vision_model': False...e_name': 'system_query'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
             QueryMetadata(is_vision_model=False, model_type="dalle3", query=base64, template=template, template_name="system_query")
 
+class TestQueueMetadata():
+    def test_init(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        assert queue_metadata.input_file == "input.json"
+        assert queue_metadata.output_file == "output.json"
+        assert queue_metadata.location_type == "cloud"
+    
+    def test_init_wrong(self):
+        with pytest.raises(ValueError):
+            QueueMetadata(input_file="input.json", output_file="output", location_type="cloud")
+        
+        with pytest.raises(ValueError):
+            QueueMetadata(input_file="input", output_file="output.json", location_type="cloud")
+    
+    def test_load_json_input_wrong(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        with patch("common.genai_controllers.load_file", return_value='asedf'):
+            with pytest.raises(ValueError):
+                queue_metadata.load_json_input()
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="local")
+        with patch('builtins.open', mock_open(read_data='asdf')):
+            with pytest.raises(ValueError):
+                queue_metadata.load_json_input()
+
+    def test_upload_json_output_wrong(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        with pytest.raises(ValueError):
+            queue_metadata.upload_json_output(MagicMock())
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="local")
+        with pytest.raises(ValueError):
+            queue_metadata.upload_json_output(MagicMock())
+
+
 
 class TestPersistenceElement():
     def test_validate_content(self):
@@ -237,6 +272,13 @@ class TestMultimodalObject():
         with pytest.raises(ValueError, match=re.escape("'text' parameter must be for 'text' type")):
             MultimodalObject.validate_text("", data_image)
 
+class TestProjectConf():
+    def test_x_limits_empty(self):
+        with patch("requests.get") as patch_requests:
+            patch_requests.return_value = MagicMock(text='{"limits": []}')
+            project_conf = ProjectConf(**{"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"})
+
+
 @patch("io_parsing.QUEUE_MODE", True)
 def test_adapt_input_queue():
     json_input = copy.deepcopy(azure_call)
@@ -245,7 +287,7 @@ def test_adapt_input_queue():
 
     os.environ["DATA_MOUNT_PATH"] = ""
     os.environ["DATA_MOUNT_KEY"] = ""
-    result = adapt_input_queue(json_input)
+    result, _ = adapt_input_queue(json_input)
     assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     os.environ["DATA_MOUNT_PATH"] = "C:"
@@ -254,14 +296,14 @@ def test_adapt_input_queue():
     # Path does not exist
     with patch('os.path.exists') as mock_exists:
         mock_exists.return_value = False
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # File does not exist
     with (patch('os.path.exists') as mock_exists, patch('os.path.isfile') as mock_isfile):
         mock_exists.return_value = True
         mock_isfile.return_value = False
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # Error reading file
@@ -271,7 +313,7 @@ def test_adapt_input_queue():
         mock_isfile.return_value = True
         mock_func_open.side_effect = Exception("Error reading file")
 
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # Working propertly
@@ -279,9 +321,5 @@ def test_adapt_input_queue():
           patch('builtins.open', mock_open(read_data="key"))):
         mock_exists.return_value = True
         mock_isfile.return_value = True
-        result = adapt_input_queue(json_input)
+        result, _  = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "key"
-
-
-
-

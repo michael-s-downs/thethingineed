@@ -245,7 +245,7 @@ class ParserInforetrieval(Parser):
                 # Retrocompatibility with older inforetrieval calls
                 self.index_conf = json_input["generic"].get("index_conf")
             else:
-                self.index_conf = json_input.get("index_conf")
+                self.index_conf = json_input["indexation_conf"]
 
             self.get_index(self.index_conf)
             self.get_filters(self.index_conf)

@@ -21,3 +21,6 @@ Q_PREPROCESS_END=uhis-cdac-develop--q-preprocess-end
 QUEUE_DELETE_ON_READ=True
 #TRACKING_INPUT_URL=uhis-cdac-develop--q-all-tracking
 #TRACKING_OUTPUT_URL=uhis-cdac-develop--q-all-tracking
+#Q_GENAI_LLMQUEUE_INPUT=uhis-cdac-develop--q-llmqueue-input
+#Q_GENAI_LLMQUEUE_OUTPUT=uhis-cdac-develop--q-llmqueue-output
+#URL_LLM=http://llmapi/predict

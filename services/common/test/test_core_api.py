@@ -258,8 +258,8 @@ mock_async_extraction_template = {
 
 mock_async_indexing_template = {
     "dataset_conf": {"dataset_csv_path": "", "dataset_path": ""},
-    "index_conf": {"metadata": {}, "models": {}},
-    "preprocess_conf": {"layout_conf": {}},
+    "indexation_conf": {"metadata": {}, "models": {}},
+    "preprocess_conf": {"layout_conf": {"layout": "value"}},
     "languages": [],
     "timeout_sender": 0,
     "force_ocr": False,
@@ -340,7 +340,8 @@ def test_async_indexing_request_generate(mock_generate_dataset, mock_file):
 
     request_params = {
         "folder": "/test_folder",
-        "index_conf": {"metadata": {"meta1": "value1"}, "models": {"model1": "path/to/model"}},
+        "indexation_conf": {"metadata": {"meta1": "value1"}, "models": {"model1": "path/to/model"}},
+        "preprocess_conf": {},
         "layout_conf": {"layout": "value"},
         "force_ocr": True,
         "ocr": "ocr_engine",
@@ -355,8 +356,8 @@ def test_async_indexing_request_generate(mock_generate_dataset, mock_file):
 
     assert result["dataset_conf"]["dataset_csv_path"] == "mocked_dataset_path"
     assert result["dataset_conf"]["dataset_path"] == "/test_folder"
-    assert result["index_conf"]["metadata"] == {"meta1": "value1"}
-    assert result["index_conf"]["models"] == {"model1": "path/to/model"}
+    assert result["indexation_conf"]["metadata"] == {"meta1": "value1"}
+    assert result["indexation_conf"]["models"] == {"model1": "path/to/model"}
     assert result["preprocess_conf"]["layout_conf"] == {"layout": "value"}
     assert result["languages"] == ["en"]
     assert result["timeout_sender"] == 120

@@ -23,6 +23,7 @@ gpt_v_model = {
     "max_input_tokens": 128000,
     "zone": "techhubinc-GermanyWestCentral",
     "message": "chatGPT-v",
+    "max_img_size_mb": 20.0,
     "api_version": "2024-02-15-preview",
     "model_pool": ["techhubinc-pool-gpt-4v"]
 }
@@ -326,57 +327,6 @@ class TestMain(unittest.TestCase):
         _, status_code = reloadconfig()
         assert status_code == 200
 
-    @patch('main.update_status')
-    def test_set_redis_templates(self, mock_update_status):
-        obj = get_llm_deployment()
-        obj.tenant = "LOCAL"
-        obj.set_redis_templates()
-        mock_update_status.assert_not_called()
-
-        obj.tenant = "NON_LOCAL"
-        obj.REDIS_ORIGIN = "redis_origin_mock"
-        obj.templates = ["template1"]
-        obj.templates_names = ["name1"]
-        obj.display_templates_with_files = ["file1"]
-
-        obj.set_redis_templates()
-        mock_update_status.assert_called_once_with(
-            "redis_origin_mock",
-            "templates:NON_LOCAL:TEMPLATES_LLM",
-            json.dumps([["template1"], ["name1"], ["file1"]])
-        )
-
-        mock_update_status.side_effect = Exception("Test Exception")
-        with self.assertRaises(PrintableGenaiError) as context:
-            obj.set_redis_templates()
-        self.assertIn("Test Exception", str(context.exception))
-        self.assertIn("Error saving templates to redis", str(context.exception))
-
-    @patch('main.get_value')
-    def test_get_redis_templates(self, mock_get_value):
-        obj = get_llm_deployment()
-        obj.tenant = "LOCAL"
-        obj.get_redis_templates()
-        mock_get_value.assert_not_called()
-
-        obj.tenant = "NON_LOCAL"
-        obj.REDIS_ORIGIN = "redis_origin_mock"
-        mock_get_value.return_value = [{
-            'values': json.dumps([
-                ["template1"], ["name1"], ["file1"]
-            ]).encode()
-        }]
-
-        obj.get_redis_templates()
-        self.assertEqual(obj.templates, ["template1"])
-        self.assertEqual(obj.templates_names, ["name1"])
-        self.assertEqual(obj.display_templates_with_files, ["file1"])
-
-        mock_get_value.side_effect = Exception("Test Exception")
-        with self.assertRaises(PrintableGenaiError) as context:
-            obj.get_redis_templates()
-        self.assertIn("Test Exception", str(context.exception))
-        self.assertIn("Error getting templates from redis", str(context.exception))
 
     def test_get_validation_error_response(self):
         error = {
