@@ -39,7 +39,7 @@ class TestManagerParsers:
 
 class TestParserInforetrieval:
     json_input = {
-        "index_conf": {
+        "indexation_conf": {
             "index": "test",
             "rescoring_function": "posnorm",
             "strategy": "genai_retrieval",
@@ -95,8 +95,8 @@ class TestParserInforetrieval:
 
         # Models passed and not generic
         conf_input = copy.deepcopy(self.conf)
-        conf_input['json_input']['index_conf'] = conf_input['json_input'].pop('index_conf')
-        conf_input['json_input']['index_conf']['models'] = ["bm25", "ada-test-1"]
+        conf_input['json_input']['indexation_conf'] = conf_input['json_input'].pop('indexation_conf')
+        conf_input['json_input']['indexation_conf']['models'] = ["bm25", "ada-test-1"]
         retrieval_object = ManagerParser.get_parsed_object(conf_input)
         assert isinstance(retrieval_object, ParserInforetrieval)
 
