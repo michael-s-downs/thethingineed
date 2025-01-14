@@ -32,12 +32,6 @@ class ExpansionMethod(ABC):
         """
         self.query = query
 
-    @abstractmethod
-    def process(self) -> List:
-        """
-        Process the query given the expansion method.
-
-        """
 
     def get_retrieve_action(self, actions_confs):
         retrieve_action = []
@@ -78,7 +72,7 @@ class StepSplitExpansion(ExpansionMethod):
 
         return LLMP.parse_response(r)
 
-    def process(self, params, actions_confs):
+    def process(self, params: dict, actions_confs: dict):
         headers = params.pop("headers")
         
         retrieve_action = self.get_retrieve_action(actions_confs)

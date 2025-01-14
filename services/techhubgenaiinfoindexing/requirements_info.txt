@@ -4,8 +4,8 @@
 genai-sdk-services==0.5.3
 elasticsearch==8.13.2
 langdetect==1.0.9
-python-magic-bin==0.4.14
-pydantic==1.10.8
+# python-magic-bin==0.4.14
+pydantic==2.7
 
 llama-index-embeddings-azure-openai==0.2.5
 llama-index-embeddings-bedrock==0.3.1

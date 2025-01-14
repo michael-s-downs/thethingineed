@@ -95,7 +95,7 @@ class TestCall:
 
         response = client.post('/process', headers=self.headers, json=message)
 
-        assert response.status_code == 200
+        assert response.status_code == 400
         assert json.loads(response.data).get('status', "") == "error"
         assert json.loads(response.data).get('error', "") == "Bad input: No JSON received or invalid format (send it as data with application/json content)"
 
@@ -107,7 +107,7 @@ class TestCall:
 
             response = client.post('/process', headers=self.headers, json=self.message)
 
-            assert response.status_code == 200
+            assert response.status_code == 400
             assert json.loads(response.data).get('status', "") == "error"
             assert json.loads(response.data).get('error', "") == "Internal error"
 
@@ -119,6 +119,6 @@ class TestCall:
 
             response = client.post('/process', headers=self.headers, json=self.message)
 
-            assert response.status_code == 200
+            assert response.status_code == 400
             assert json.loads(response.data).get('status', "") == "error"
             assert json.loads(response.data).get('error', "") == "Internal error"

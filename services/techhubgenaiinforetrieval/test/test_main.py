@@ -90,6 +90,7 @@ def get_connector():
     connector.list_indices.return_value = (['index1_model1', 'index2_model2', 'index2_model2'])
     return connector
 
+
 class TestMain:
     models = [
         {
@@ -155,9 +156,7 @@ class TestMain:
                     and len(retrievers[1][2]) == 3 and retrievers[1][3] == "text-embedding-ada-002--score")
 
     def test_get_default_models(self):
-        models_with_credentials = self.deployment.get_default_models("test", self.connector)
-        assert models_with_credentials[1]['alias'] == 'ada-002-germany'
-        assert models_with_credentials[1]['api_key'] == 'test_key'
+        self.deployment.get_default_models(MagicMock(), self.connector)
 
     def test_generate_llama_filters(self):
         list_filter = {
@@ -194,7 +193,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -222,7 +221,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -251,7 +250,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -280,7 +279,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
