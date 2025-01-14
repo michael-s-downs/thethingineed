@@ -74,7 +74,7 @@ def get_indexing_deployment():
 
 def get_connector():
     connector = MagicMock(scheme="https", host="localhost", port=9200, username="test", password="test", MODEL_FORMAT="elastic")
-    connector.assert_correct_index_conf = MagicMock(return_value=None)
+    connector.assert_correct_indexation_conf = MagicMock(return_value=None)
     connector.close.return_value = None
     connector.connect.return_value = None
     return connector
@@ -95,7 +95,7 @@ class TestInfoIndexationDeployment():
                     "do_tables": True,
                 }
             },
-            "index_conf": {
+            "indexation_conf": {
                 "index": "test_indexing",
                 "windows_overlap": 10,
                 "windows_length": 300,

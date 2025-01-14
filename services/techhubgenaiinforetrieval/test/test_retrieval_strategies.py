@@ -269,7 +269,7 @@ def test_genai_recursive_do_retrieval_strategy():
             "x-department": "main",
             "x-reporting": "",
         },
-        "index_conf": {
+        "indexation_conf": {
             "top_k": 1,
             "filters": {},
             "query": "query",
@@ -304,7 +304,7 @@ def test_genai_surrounding_strategy_do_retrieval_strategy():
             "x-department": "main",
             "x-reporting": "",
         },
-        "index_conf": {
+        "indexation_conf": {
             "top_k": 1,
             "filters": {},
             "query": "query",

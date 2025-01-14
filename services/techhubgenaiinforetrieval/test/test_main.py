@@ -193,7 +193,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -221,7 +221,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -250,7 +250,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
@@ -279,7 +279,7 @@ class TestMain:
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
                     mock_retrieve.return_value = documents_bm25
                     json_input = {
-                        "index_conf": {
+                        "indexation_conf": {
                             "top_k": 3,
                             "filters": {},
                             "query": "query",
