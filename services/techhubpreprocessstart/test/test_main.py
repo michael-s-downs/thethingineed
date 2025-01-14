@@ -1,6 +1,7 @@
 ### This code is property of the GGAO ###
 
 import pytest
+import os
 import pandas as pd
 from copy import deepcopy
 from unittest.mock import patch, MagicMock
@@ -34,13 +35,15 @@ def deployment():
                 pdm.json_base = {
                     "generic": {
                         "project_conf": {
-                            "force_ocr": False,
                             "laparams": "none"
                         },
-                        "ocr_conf": {
-                            "batch_length": 16,
-                            "files_size": 10485760,
-                            "calls_per_minute": 400
+                        "preprocess_conf": {
+                            "ocr_conf": {
+                                "force_ocr": False,
+                                "batch_length": 16,
+                                "files_size": 10485760,
+                                "calls_per_minute": 400
+                            }
                         }
                     }
                 }
@@ -227,16 +230,17 @@ def test_list_documents_empty_df(mock_update_status, mock_write_to_queue, deploy
     with pytest.raises(Exception):
         deployment.list_documents({}, df, 'status_key', {}, message, csv_method=False)
 
-
 @patch('main.get_dataset')
 def test_get_dataset_files_csv(mock_get_dataset, deployment):
     """Test get_dataset_files when dataset is of type 'csv'."""
     dataset_conf = {'dataset_csv_path': 'sample_path.csv'}
     mock_get_dataset.return_value = pd.DataFrame() 
-
-    df = deployment.get_dataset_files(dataset_conf, 'dataset_status_key')
     
-    mock_get_dataset.assert_called_once_with(origin=('azure', None), dataset_type='csv', path_name='sample_path.csv')
+    os.environ['PROVIDER'] = "azure"
+    os.environ['STORAGE_DATA'] = "test"
+    df = deployment.get_dataset_files(dataset_conf, 'dataset_status_key')
+
+    mock_get_dataset.assert_called_once_with(origin=('azure', 'test'), dataset_type='csv', path_name='sample_path.csv')
     assert isinstance(df, pd.DataFrame), "Expected a DataFrame to be returned"
 
 @patch('main.get_dataset')

@@ -14,6 +14,7 @@ from utils import (
     get_error_word_from_exception,
     get_models,
     ELASTICSEARCH_INDEX,
+    resize_image
 )
 
 # Mock constants
@@ -128,3 +129,21 @@ def test_get_models_with_key_dict_error():
 def test_elasticsearch_index():
     assert ELASTICSEARCH_INDEX("index", "model") == "index_model"
     assert ELASTICSEARCH_INDEX("index:name", "model") == "index_name_model"
+
+@patch("PIL.Image.open")
+@patch("os.stat")
+def test_resize_image(mock_stat, mock_image_open):
+    mock_stat.return_value = MagicMock(st_size=20000.00)
+    mock_image = MagicMock(format="PNG", size=(27893, 73829))
+    mock_image.resize.return_value = mock_image
+    mock_image.save.return_value = None
+    mock_image_open.return_value = mock_image
+
+    current_size, resized = resize_image("test")
+    assert current_size == 0.019073486328125
+    assert not resized
+
+    mock_stat.return_value = MagicMock(st_size=20000000.00)
+
+    with pytest.raises(RuntimeError):
+        resize_image("test")

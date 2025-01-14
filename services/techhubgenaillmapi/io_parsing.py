@@ -382,20 +382,20 @@ def adapt_input_queue(json_input: dict) -> dict:
         if not (mount_path and mount_key):
             if QUEUE_MODE:
                 logger.warning("Mount path or mount key not found in environment variables")
-            return json_input
+            return json_input, queue_metadata
 
         file_path = json_input.setdefault('query_metadata', {}).get(mount_key, "")
 
         if mount_path not in file_path:
             logger.warning(f"Document path '{file_path}' not inside mounted path '{mount_path}'")
-            return json_input
+            return json_input, queue_metadata
         logger.debug(f"Getting document from mount path '{mount_path}'")
         if not os.path.exists(file_path):
             logger.warning(f"Document path not found '{file_path}'")
-            return json_input
+            return json_input, queue_metadata
         if not os.path.isfile(file_path):
             logger.warning(f"Document path must be a file '{file_path}'")
-            return json_input
+            return json_input, queue_metadata
         logger.debug(f"Getting document from path '{file_path}'")
 
         try:

@@ -109,7 +109,7 @@ def test_queue_write_message(mock_queue_controller):
     assert queue_write_message({"key": "value"})
 
     mock_queue_controller.write.return_value = {"ResponseMetadata": {"HTTPStatusCode": 500}}
-    assert not queue_write_message({"key": "value"})
+    assert queue_write_message({"key": "value"}) == {"ResponseMetadata": {"HTTPStatusCode": 500}}
 
     mock_queue_controller.write.side_effect = Exception
     assert not queue_write_message({"key": "value"})

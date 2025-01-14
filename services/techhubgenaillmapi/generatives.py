@@ -697,8 +697,6 @@ class LlamaModel(GenerativeModel):
         :param config: Dict with the message to be used
         """
         config['message'] = self.MODEL_MESSAGE
-        if hasattr(self, 'max_img_size_mb'):
-            config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
