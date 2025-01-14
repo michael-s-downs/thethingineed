@@ -195,7 +195,7 @@ class TestLlamaIndex(unittest.TestCase):
         # Asegurarse de que el error se registró
         mock_logger.error.assert_called_with(
             "Connection to elastic failed. Check if the elastic service is running.",
-            exc_info=True
+            exc_info=False
         )
 
         # Verificar que el código de error y el mensaje de la excepción son correctos
