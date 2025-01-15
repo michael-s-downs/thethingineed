@@ -18,7 +18,7 @@ from common.preprocess.preprocess_utils import get_language
 from common.status_codes import *
 from common.services import *
 from common.error_messages import *
-from common.utils import remove_local_files, resize_image
+from common.utils import remove_local_files, resize_image, get_image_size
 
 
 class PreprocessOCRDeployment(BaseDeployment):
@@ -194,7 +194,9 @@ class PreprocessOCRDeployment(BaseDeployment):
                 raise Exception(RESIZING_IMAGE_ERROR)
 
             try:
-                file_sizes = get_sizes(workspace, files)
+                file_sizes = []
+                for file in files:
+                    file_sizes.append(get_image_size(file))
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error getting sizes of images from storage", exc_info=get_exc_info())
                 raise Exception(GETTING_FILES_SIZE_ERROR)
