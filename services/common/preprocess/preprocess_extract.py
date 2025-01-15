@@ -210,7 +210,6 @@ def extract_images_conditional(generic: dict, specific: dict, workspace: Union[s
 
         upload_files(workspace, [(remote_file, image['filename'])])
 
-        os.remove(image['filename'])
         image['filename'] = remote_file
 
     logger.debug(f"End to extract and uploaded images. Time: {round(time.time() - i_time, 2)}.")
