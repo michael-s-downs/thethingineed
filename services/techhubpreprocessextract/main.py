@@ -157,13 +157,13 @@ class PreprocessExtractDeployment(BaseDeployment):
                 raise Exception(GETTING_NUM_PAGES_ERROR)
 
             # Extract cells and text from PDF if possible
-            self.logger.info(f"Extracting text from file: {filename}")
             is_text_project = project_type == "text"
             text_extracted = False
             if generic.get('preprocess_conf', {}).get('ocr_conf',{}).get('llm_ocr_conf', {}).get('query') and force_ocr:
                 self.logger.info("Force OCR is enabled, text extraction will be skipped.")
                 files_extracted = {'lang': "default"}
             else:
+                self.logger.info(f"Extracting text from file: {filename}")
                 files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
 
                 try:
