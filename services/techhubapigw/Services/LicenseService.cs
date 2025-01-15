@@ -22,16 +22,16 @@ namespace techhubapigw.Services
         Task<ApiKey> CreateApiKey(string tenantId, ApiKey apiKey);
 
         Task<bool> DeleteApiKey(string apiKey);
-        Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enable);
-        Task<ApiKeyDTO> ListApiKey(string apiKey);
+        Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enable, bool isApiKey);
+        Task<ApiKeyDTO> ListApiKey(string apiKey, bool isApiKey);
 
-        Task<ApiKeyDTO> RenewApiKey(string apiKey);
-        Task<ApiKeyDTO> ResetApiKey(string apiKey);
+        Task<ApiKeyDTO> RenewApiKey(string apiKey, bool isApiKey);
+        Task<ApiKeyDTO> ResetApiKey(string apiKey, bool isApiKey);
 
         Task<IEnumerable<Tenant>> ListTenants();
         Task<IEnumerable<Tenant>> ListTenants(bool includeKeys);
 
-        Task ReportUsage(UsageReport report);
+        Task ReportUsage(UsageReport report, bool isApiKey);
         Task<IEnumerable<MetricList>> GetMetrics(string tenantId, DateTime start, DateTime end, string? apikey);
     }
 
@@ -124,9 +124,9 @@ namespace techhubapigw.Services
             return tenants;
         }
 
-        public async Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enable)
+        public async Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enable, bool isApiKey)
         {
-            var ak = await _apiKeyService.EnableApiKey(apiKey, enable);
+            var ak = await _apiKeyService.EnableApiKey(apiKey, enable, isApiKey);
 
             _dbContext.Update(ak);
 
@@ -135,18 +135,18 @@ namespace techhubapigw.Services
             return ak;
         }
 
-        public async Task<ApiKeyDTO> ListApiKey(string apiKey)
+        public async Task<ApiKeyDTO> ListApiKey(string apiKey, bool isApiKey)
         {
-            var ak = await _apiKeyService.Execute(apiKey);
+            var ak = await _apiKeyService.Execute(apiKey, isApiKey);
             
             return ak;
         }
 
-        public async Task<ApiKeyDTO> RenewApiKey(string apiKey)
+        public async Task<ApiKeyDTO> RenewApiKey(string apiKey, bool isApiKey)
         {
 
             // Old apikey values
-            var akOld = await _apiKeyService.Execute(apiKey);
+            var akOld = await _apiKeyService.Execute(apiKey, isApiKey);
 
             // Create new apikey
             var ak = new ApiKeyDTO
@@ -181,7 +181,7 @@ namespace techhubapigw.Services
             _dbContext.Metrics.UpdateRange(lm);
 
             // Disable old key
-            var akOldDisabled = await _apiKeyService.EnableApiKey(apiKey, false);
+            var akOldDisabled = await _apiKeyService.EnableApiKey(apiKey, false, isApiKey);
 
             _dbContext.ApiKeys.Update(akOldDisabled);
             
@@ -189,15 +189,15 @@ namespace techhubapigw.Services
             await _dbContext.SaveChangesAsync();
 
             // Get new apikey to return
-            var akNew = await _apiKeyService.Execute(ak.Key);
+            var akNew = await _apiKeyService.Execute(ak.Key, isApiKey);
             
             return akNew;
         }
 
-        public async Task<ApiKeyDTO> ResetApiKey(string apiKey)
+        public async Task<ApiKeyDTO> ResetApiKey(string apiKey, bool isApiKey)
         {
            
-           var ak = await _apiKeyService.EnableApiKey(apiKey, true);
+           var ak = await _apiKeyService.EnableApiKey(apiKey, true, isApiKey);
 
             _dbContext.Update(ak);
             await _dbContext.SaveChangesAsync();
@@ -219,9 +219,9 @@ namespace techhubapigw.Services
             return true;
         }
 
-        private async Task<ApiKeyDTO> LoadApiKeyUsages(string reportId)
+        private async Task<ApiKeyDTO> LoadApiKeyUsages(string reportId, bool isApiKey)
         {
-            var ak = await _apiKeyService.GetByReportId(reportId);
+            var ak = await _apiKeyService.GetByReportId(reportId, isApiKey);
             foreach (var us in ak?.Limits)
             {
                 _usages.TryAdd(GetUsageIndex(ak.ReportId, us.Resource), us);
@@ -230,12 +230,12 @@ namespace techhubapigw.Services
             return ak;
         }
 
-        public async Task ReportUsage(UsageReport report)
+        public async Task ReportUsage(UsageReport report, bool isApiKey)
         {
            if (!_usages.TryGetValue(GetUsageIndex(report.ReportId, report.Resource), out var usage))
            {
 
-                var ak = await LoadApiKeyUsages(report.ReportId);
+                var ak = await LoadApiKeyUsages(report.ReportId, isApiKey);
 
                 usage = new UsageLimit
                 {

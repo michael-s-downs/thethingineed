@@ -112,7 +112,7 @@ namespace techhubapigw.Controllers
         {
             _logger.LogInformation($"Enable ApiKey {akId}");
 
-            var ak = await _licenseService.EnableApiKey(akId, true);
+            var ak = await _licenseService.EnableApiKey(akId, true, true);
 
             _logger.LogInformation($"End enable ApiKey {akId}");
 
@@ -125,7 +125,7 @@ namespace techhubapigw.Controllers
         {
             _logger.LogInformation($"Disable ApiKey {akId}");
 
-            var ak = await _licenseService.EnableApiKey(akId, false);
+            var ak = await _licenseService.EnableApiKey(akId, false, true);
 
             _logger.LogInformation($"End disable ApiKey {akId}");
 
@@ -138,7 +138,7 @@ namespace techhubapigw.Controllers
         {
             _logger.LogInformation($"Listing limits of ApiKey: {id}");
 
-            var ak = await _licenseService.ListApiKey(id);
+            var ak = await _licenseService.ListApiKey(id, true);
 
             _logger.LogInformation($"End listing limits of ApiKey: {id}");
 
@@ -151,7 +151,7 @@ namespace techhubapigw.Controllers
         {
             _logger.LogInformation($"Renew ApiKey: {id}");
 
-            var ak = await _licenseService.RenewApiKey(id);
+            var ak = await _licenseService.RenewApiKey(id, true);
 
             _logger.LogInformation($"End renew ApiKey: {id}");
 
@@ -164,7 +164,7 @@ namespace techhubapigw.Controllers
         {
             _logger.LogInformation($"Reset ApiKey: {id}");
 
-            var ak = await _licenseService.ResetApiKey(id);
+            var ak = await _licenseService.ResetApiKey(id, true);
 
             _logger.LogInformation($"End reset of ApiKey: {id}");
 
@@ -184,7 +184,7 @@ namespace techhubapigw.Controllers
             // Only insert metrics if called from inside the cluster (yeah, thats a little permissive/fakeable)
             if (this.Request.Host.Host.EndsWith(_options.Namespace))
             {
-                await _licenseService.ReportUsage(report);
+                await _licenseService.ReportUsage(report, true);
                 await _metricsQueue.PushMetricAsync(report);
             }
 
@@ -192,6 +192,18 @@ namespace techhubapigw.Controllers
             _logger.LogInformation($"End to reporting to Id: {id}");
 
             return Ok();
+        }
+
+        [HttpGet("report/{id}/list")]
+        public async Task<IActionResult> ListApiKeyByReporId(CancellationToken cancellationToken, string id)
+        {
+            _logger.LogInformation($"Listing apikey of ReportId: {id}");
+
+            var ak = await _licenseService.ListApiKey(id, false);
+
+            _logger.LogInformation($"End listing apikey of ReportId: {id}");
+
+            return Ok(ak);
         }
 
         [HttpGet("metrics/{id}")]
