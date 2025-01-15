@@ -1,7 +1,7 @@
 {{/* vim: set filetype=mustache: */}}
 {{/*Expand the name of the chart.*/}}
 {{- define "name" -}}
-{{- default .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- default .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*Create a default fully qualified app name.
