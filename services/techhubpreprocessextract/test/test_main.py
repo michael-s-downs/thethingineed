@@ -732,45 +732,69 @@ class TestPreprocessExtractDeployment:
         assert must_continue is True
         assert next_service == PREPROCESS_END_SERVICE
 
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
     @patch("main.remove_local_files")
     @patch("os.remove")
-    @patch("main.Process")
-    @patch("main.get_num_pages", return_value=101)
-    @patch("main.download_file")
-    @patch("main.get_do_segments")
-    @patch("main.get_do_lines_text", return_value=True)
-    @patch("main.get_do_cells_text")
-    @patch("main.get_languages")
-    @patch("main.get_force_ocr", return_value=False)
-    @patch("main.get_project_type", return_value="text")
-    @patch("main.get_document")
     @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
     @patch("main.extract_text")
-    @patch("main.extract_images_conditional", return_value=(["",""]))
-    def test_to_end(
-        self,
-        mock_extract_images_conditional,
-        mock_extract_text,
-        mock_update_status,
-        mock_get_document,
-        mock_get_project_type,
-        mock_get_force_ocr,
-        mock_get_languages,
-        mock_get_do_cells_text,
-        mock_get_do_lines_text,
-        mock_get_do_segments,
-        mock_download_file,
-        mock_get_num_pages,
-        mock_process,
-        mock_remove,
-        mock_remove_local_files,
-        monkeypatch,
-    ):
-        """Test process method for Exception during file download"""
+    def test_upload_files(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
         json_input = {
-            "generic": {"preprocess_conf": {"page_limit": {}}},
-            "specific": {"path_cells": {}, 'document': {}},
-            "document": {"filename": "example.pdf"},
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
         }
         mock_proc = MagicMock()
         mock_proc.start = MagicMock()
@@ -783,20 +807,651 @@ class TestPreprocessExtractDeployment:
         mock_return_dict = {
             'lang': "en", 
             'text': "Some extracted text", 
-            'extraction': {}, 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == "preprocess_end"
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object", side_effect=Exception("Error"))
+    @patch("main.extract_text")
+    def test_upload_files_wrong(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == "preprocess_end"
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=101)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
+    @patch("main.extract_text")
+    def test_num_pags_and_not_force_ocr_do_lines(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == "preprocess_end"
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=101)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
+    @patch("main.extract_text")
+    def test_do_lines_and_img_extracted(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": True,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == PREPROCESS_LAYOUT_SERVICE
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
+    @patch("main.extract_text")
+    def test_do_segments(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "segmentation_conf": {"do_segments": True},
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == PREPROCESS_SEGMENTATION_SERVICE
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
+    @patch("main.extract_text")
+    def test_do_translation(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["test"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == PREPROCESS_TRANSLATION_SERVICE
+
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.upload_object")
+    @patch("main.extract_text")
+    def test_not_project_type(self, 
+                          mock_extract_text, 
+                          mock_upload_object,
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "none",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": False,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text", "test": "test"}, 
+            'boxes': ["dd"], 
+            'cells': ["dd"], 
+            'lines': ["dd"]
+        }
+
+        mock_extract_images_conditional.return_value = ["a","b"]
+        mock_extract_text.return_value = mock_return_dict
+        with(patch("multiprocessing.managers.SyncManager.dict", return_value=mock_return_dict)):
+            must_continue, _, next_service = self.deployment.process(json_input)
+
+            assert must_continue is True
+            assert next_service == PREPROCESS_END_SERVICE
+
+
+
+
+
+    @patch("main.extract_images_conditional")
+    @patch("main.get_num_pages", return_value=10)
+    @patch("main.remove_local_files")
+    @patch("os.remove")
+    @patch("main.update_status")
+    @patch("main.download_file")
+    @patch("main.Process")
+    @patch("main.extract_text")
+    def test_query_passed(self, 
+                          mock_extract_text, 
+                          mock_process, 
+                          mock_download_file, 
+                          mock_update_status, 
+                          mock_remove, 
+                          mock_remove_local_files,
+                          mock_num_images,
+                          mock_extract_images_conditional):
+        json_input = {
+            "generic": {
+                "project_conf":{
+                    "project_type": "text",
+                    "languages": ["*"]
+                },
+                "preprocess_conf": {
+                    "num_pag_ini": 0,
+                    "page_limit": 1000,
+                    "layout_conf": {
+                        "do_lines_text": False,
+                        "do_lines_ocr": False,
+                        "lines_conf": {
+                            "do_lines_result": False,
+                            "model": "checkpoint-41806"
+                        },
+                        "do_titles": False,
+                        "do_tables": False,
+                        "tables_conf": {
+                            "sep": "\t"
+                        }
+                    },
+                    "ocr_conf": {
+                        "force_ocr": True,
+                        "ocr": "llm-ocr",
+                        "batch_length": 16,
+                        "files_size": 10485760,
+                        "calls_per_minute": 400,
+                        "llm_ocr_conf": {
+                            "model": "test",
+                            "query": "test",
+                            "platform": "test",  
+                            "max_tokens": 1000
+                        }
+                    }
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+                "paths": {}
+            }
+        }
+        mock_proc = MagicMock()
+        mock_proc.start = MagicMock()
+        mock_proc.join = MagicMock()
+        mock_proc.is_alive = MagicMock()
+        mock_proc.terminate = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = True
+    
+        mock_return_dict = {
+            'lang': "en", 
+            'text': "Some extracted text", 
+            'extraction': {"text": "Some extracted text"}, 
             'boxes': [], 
             'cells': [], 
             'lines': []
         }
 
+        mock_extract_images_conditional.return_value = ["a","b"]
         mock_extract_text.return_value = mock_return_dict
-        monkeypatch.setattr(os.path, "join", lambda x, y: "example_path")
-
         must_continue, _, next_service = self.deployment.process(json_input)
 
         assert must_continue is True
         assert next_service == "preprocess_ocr"
-    
 
     @patch("main.remove_local_files")
     @patch("os.remove")
@@ -813,7 +1468,7 @@ class TestPreprocessExtractDeployment:
     @patch("main.update_status")
     @patch("main.extract_text", return_value="Some extracted text")
     @patch("main.extract_images_conditional", return_value=(["",""]))
-    def test_to_end_img_extracted(
+    def test_to_ocr_img_extracted(
         self,
         mock_extract_images_conditional,
         mock_extract_text,
@@ -856,74 +1511,11 @@ class TestPreprocessExtractDeployment:
         }
 
         mock_extract_text.return_value = mock_return_dict
-        monkeypatch.setattr(os.path, "join", lambda x, y: "example_path")
+        #monkeypatch.setattr(os.path, "join", lambda x, y: "example_path")
 
         must_continue, _, next_service = self.deployment.process(json_input)
 
         assert must_continue is True
         assert next_service == "preprocess_ocr"
 
-    @patch("main.remove_local_files")
-    @patch("os.remove")
-    @patch("main.Process")
-    @patch("main.get_num_pages", return_value=2)
-    @patch("main.download_file")
-    @patch("main.get_do_segments")
-    @patch("main.get_do_lines_text", return_value=False)
-    @patch("main.get_do_cells_text")
-    @patch("main.get_languages")
-    @patch("main.get_force_ocr", return_value=False)
-    @patch("main.get_project_type", return_value="otro")
-    @patch("main.get_document")
-    @patch("main.update_status")
-    @patch("main.extract_text", return_value="Some extracted text")
-    @patch("main.extract_images_conditional", return_value=(["",""]))
-    def test_numpags_force_ocr_do_lines_text(
-        self,
-        mock_extract_images_conditional,
-        mock_extract_text,
-        mock_update_status,
-        mock_get_document,
-        mock_get_project_type,
-        mock_get_force_ocr,
-        mock_get_languages,
-        mock_get_do_cells_text,
-        mock_get_do_lines_text,
-        mock_get_do_segments,
-        mock_download_file,
-        mock_get_num_pages,
-        mock_process,
-        mock_remove,
-        mock_remove_local_files,
-        monkeypatch,
-    ):
-        """Test process method for Exception during file download"""
-        json_input = {
-            "generic": {"preprocess_conf": {"page_limit": {}}},
-            "specific": {"path_cells": {}, 'document': {}},
-            "document": {"filename": "example.pdf"},
-        }
-        mock_proc = MagicMock()
-        mock_proc.start = MagicMock()
-        mock_proc.join = MagicMock()
-        mock_proc.is_alive = MagicMock()
-        mock_proc.terminate = MagicMock()
-        mock_process.return_value = mock_proc
-        mock_proc.is_alive.return_value = True
-    
-        mock_return_dict = {
-            'lang': "en", 
-            'text': "Some extracted text", 
-            'extraction': {"text": "Some extracted text"}, 
-            'boxes': [], 
-            'cells': [], 
-            'lines': []
-        }
 
-        mock_extract_text.return_value = mock_return_dict
-        monkeypatch.setattr(os.path, "join", lambda x, y: "example_path")
-
-        must_continue, _, next_service = self.deployment.process(json_input)
-
-        assert must_continue is True
-        assert next_service == "preprocess_ocr"

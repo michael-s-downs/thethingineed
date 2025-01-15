@@ -183,9 +183,10 @@ class PreprocessExtractDeployment(BaseDeployment):
                 except Exception:
                     self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
 
+            path_IRStorage_cells = ""
+            path_IRStorage_txt = ""
             if not force_ocr and text_extracted: # To not upload files if OCR is forced (only language extraction is needed)
-                # Save text
-                path_IRStorage_txt = ""
+                # Save text    
                 self.logger.info("Uploading files of text.")
                 try:
                     folder_file_txt = folder_file + ".txt"
@@ -203,7 +204,6 @@ class PreprocessExtractDeployment(BaseDeployment):
                     self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
 
                 # Save cells
-                path_IRStorage_cells = ""
                 self.logger.info("Uploading files of cells, boxes and lines.")
                 try:
                     path_IRStorage_cells = os.path.join(specific['path_cells'], "txt", folder_file)
