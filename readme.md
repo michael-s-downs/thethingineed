@@ -28,7 +28,7 @@
       - [Retrieval execution](#retrieval-execution)
   - [Configuration](#configuration)
     - [Compose Templates](#compose-templates)
-      - [Compose Template Expected parameters:](#compose-template-expected-parameters)
+      - [Compose Templates expected parameters](#compose-templates-expected-parameters)
     - [Compose actions template](#compose-actions-template)
     - [LLM Prompt Templates](#llm-prompt-templates)
     - [Models embeddings](#models-embeddings)
@@ -2299,7 +2299,7 @@ payload = {
         "name": "techhub_llm_model",
         "params": {
           "system": system,
-          "query_llm": query,
+          "query": query,
           "platform": platform,
           "model": model,
           "llm_template": template_name          
@@ -2350,7 +2350,7 @@ payload = {
         "name": "techhub_llm_model",
         "params": {
           "system": system,
-          "query_llm": query,
+          "query": query,
           "platform": platform,
           "model": model,
           "llm_template": template_name   
@@ -2377,7 +2377,7 @@ payload = {
         "name": "techhub_llm_model",
         "params": {
           "system": system,
-          "query_llm": query,
+          "query": query,
           "platform": platform,
           "model": model,
           "llm_template": template_name 
