@@ -12,9 +12,9 @@ import time
 import pandas as pd
 
 # Custom imports
-from genai_controllers import load_file, get_dataset, list_files, upload_object, delete_file
-from logging_handler import LoggerHandler
-from errors.genaierrors import PrintableGenaiError
+from common.genai_controllers import load_file, get_dataset, list_files, upload_object, delete_file
+from common.logging_handler import LoggerHandler
+from common.errors.genaierrors import PrintableGenaiError
 
 
 class BaseStorageManager(ABC):
