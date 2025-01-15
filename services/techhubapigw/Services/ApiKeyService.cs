@@ -17,10 +17,10 @@ namespace techhubapigw.Services
 {
     public interface IApiKeyService
     {
-        Task<ApiKeyDTO> Execute(string providedApiKey);
-        Task<ApiKeyDTO> GetByReportId(string reportId);
+        Task<ApiKeyDTO> Execute(string providedValue, bool isApiKey);
+        Task<ApiKeyDTO> GetByReportId(string reportId, bool isApiKey);
 
-        Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enabled);
+        Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enabled, bool isApiKey);
 
         Task<List<UsageLimit>> GetUsageLimitsByApiKeyAsync(string apiKey);
         Task<List<Metric>> GetMetricsByApiKeyAsync(string apiKey);
@@ -47,30 +47,37 @@ namespace techhubapigw.Services
             _state = state;
         }
 
-        public async Task<ApiKeyDTO> Execute(string providedApiKey)
+        public async Task<ApiKeyDTO> Execute(string providedValue, bool isApiKey)
         {
-            if (!_apiKeys.TryGetValue(providedApiKey, out var apiKey))
+            ApiKeyDTO apiKey = new ApiKeyDTO();
+
+            if(isApiKey)
             {
-                apiKey = await _dbContext.ApiKeys
-                    .Include(e => e.Limits)
-                    .FirstOrDefaultAsync(e => e.Key == providedApiKey);
+                apiKey = await GetCurrentApiKeyValues(providedValue);
+            }
+            else
+            {
+                string apiKeyCached;
 
-                if (apiKey != null)
+                if (!_apiKeysByUsage.TryGetValue(providedValue, out apiKeyCached))
                 {
-                    apiKey = _apiKeys.AddOrUpdate(providedApiKey, apiKey, (providedApiKey, old) => old);
-
-                    if (!string.IsNullOrWhiteSpace(apiKey.ReportId))
-                    {
-                        _apiKeysByUsage.TryAdd(apiKey.ReportId, providedApiKey);
-                    }
+                    apiKey = await _dbContext.ApiKeys
+                            .Include(e => e.Limits)
+                            .FirstOrDefaultAsync(e => e.ReportId == providedValue);
+                    
+                    apiKeyCached = apiKey.Key;
+                    
                 }
+                
+                apiKey = await GetCurrentApiKeyValues(apiKeyCached);
+                
             }
 
+            // Update last access to dictionary in memory
             if (apiKey != null)
             {
-                _apiKeysLastAccess.AddOrUpdate(providedApiKey, DateTime.UtcNow, (key, old) => DateTime.UtcNow);
+                _apiKeysLastAccess.AddOrUpdate(providedValue, DateTime.UtcNow, (key, old) => DateTime.UtcNow);
             }
-            
             return apiKey;
         }
 
@@ -90,7 +97,7 @@ namespace techhubapigw.Services
             return lm;
         }
 
-        public async Task<ApiKeyDTO> GetByReportId(string reportId)
+        public async Task<ApiKeyDTO> GetByReportId(string reportId, bool isApiKey)
         {
             if (!_apiKeysByUsage.TryGetValue(reportId, out var key))
             {
@@ -99,16 +106,16 @@ namespace techhubapigw.Services
 
             if (!string.IsNullOrWhiteSpace(key))
             {
-                var apiKey = await Execute(key);
+                var apiKey = await Execute(key, isApiKey);
                 return apiKey;
             }
 
             return null;
         }
 
-        public async Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enabled)
+        public async Task<ApiKeyDTO> EnableApiKey(string apiKey, bool enabled, bool isApiKey)
         {
-            var ak = await Execute(apiKey);
+            var ak = await Execute(apiKey, isApiKey);
 
             if (ak != null)
             {
@@ -140,6 +147,35 @@ namespace techhubapigw.Services
                     //await _dbContext.ApiKeys.Add(apiKey);
                 }
             }
+        }
+
+        private async Task<ApiKeyDTO> GetCurrentApiKeyValues(string providedValue)
+        {
+            ApiKeyDTO apiKey;
+            // Try recover apikey of dictionary in memory
+            if (!_apiKeys.TryGetValue(providedValue, out apiKey))
+            {
+                // Don´t exist in dictionary in memory then recover of BBDD
+                apiKey = await _dbContext.ApiKeys
+                    .Include(e => e.Limits)
+                    .FirstOrDefaultAsync(e => e.Key == providedValue);
+
+                // If exists apikey
+                if (apiKey != null)
+                {   
+                    // Add to dictionary in memory or keep if exists
+                    apiKey = _apiKeys.AddOrUpdate(providedValue, apiKey, (providedValue, old) => old);
+
+                    // If apikey has reportId
+                    if (!string.IsNullOrWhiteSpace(apiKey.ReportId))
+                    {
+                        // Add to dictionary in memory of usage with report id as key
+                        _apiKeysByUsage.TryAdd(apiKey.ReportId, providedValue);
+                    }
+                }
+            }
+
+            return apiKey;
         }
     }
 }

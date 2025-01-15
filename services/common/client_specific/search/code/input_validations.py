@@ -10,8 +10,8 @@ from typing import Tuple
 # Custom imports
 import conf_utils
 import docs_utils
-from storage_manager import ManagerStorage
-from genai_controllers import storage_containers
+from common.storage_manager import ManagerStorage
+from common.genai_controllers import storage_containers
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
     """ Validate if param exist, correct type and no empty

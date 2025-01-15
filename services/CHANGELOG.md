@@ -4,7 +4,7 @@
 # Changelog
 
 ## vX.X.X (XXXX-XX-XX)
-- integration-receiver
+- integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
@@ -40,12 +40,13 @@
     - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
   - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
-- genai-inforetrieval
+- genai-inforetrieval:
   - [Improvement] Adapt input JSON for coherence purposes with json body refactor
-- ALL
+- apigw:
+  - [New] Endpoint '/report/{{report_id}}/list' to get limits by report id without api-key header
+- ALL:
   - [New] Sonarqube and test coverage check in azure pipeline
-
-
+  - [Improvement] Helm code, update function 'shortname' get value of release name
 
 ## v2.2.0 (2024-12-19)
 - integration-receiver:
