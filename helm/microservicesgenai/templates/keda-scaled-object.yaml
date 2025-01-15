@@ -2,11 +2,11 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: {{ .Chart.Name }}--keda
+  name: {{ .Release.Name }}--keda
   namespace: {{ .Values.namespace }}
 spec:
   scaleTargetRef:
-    name: {{ .Chart.Name }}
+    name: {{ .Release.Name }}
   minReplicaCount: {{ .Values.keda.min_replicas }}
   maxReplicaCount: {{ .Values.keda.max_replicas }}
   pollingInterval: 10
