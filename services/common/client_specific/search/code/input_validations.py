@@ -254,7 +254,7 @@ def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
                 messages.append(f"The 'platform' parameter must be one of the supported values: {available_models.keys()}")
             else:
                 # Check if the model is valid (for a valid model there must be a valid platform)
-                if llm_ocr_conf.get('model') not in available_pools:
+                if llm_ocr_conf.get('model') and llm_ocr_conf.get('model') not in available_pools:
                     found = False
                     for model in available_models.get(llm_ocr_conf.get('platform'), []):
                         if llm_ocr_conf.get('model') == model.get('model'):
