@@ -50,6 +50,7 @@ def get_ocr_files(files_to_extract: list, ocr: str, prefix_map: dict, do_cells_o
         extract_docs['lines'] = format_path_files(lines, prefix_map['images'], prefix_map['cells'])
     except Exception as ex:
         logger.error("Error extracting files from OCR with library.", exc_info=get_exc_info())
+        raise ex
 
     return extract_docs
 

@@ -69,10 +69,11 @@ class Parser(ABC):
 
 class ParserInfoindexing(Parser):
     OPTIONAL_PARAMS = {
-        'window_overlap': 100,
+        'method': "simple",
+        'window_overlap': 10,
         'window_length': 300,
-        "windows": 1,
-        'sub_window_overlap': 50,
+        'windows': 1,
+        'sub_window_overlap': 5,
         'sub_window_length': 100,
         'modify_index_docs': {}
     }
@@ -179,8 +180,8 @@ class ParserInfoindexing(Parser):
         raise PrintableGenaiError(400, f"Vector storage {vector_storage} not available")
 
     def get_chunking_method(self):
-        self.chunking_method = self.index_conf['chunking_method']
-        if self.chunking_method.get('method') in self.INDEXING_MODES:
+        self.chunking_method = self.index_conf.get('chunking_method', {})
+        if self.chunking_method.setdefault('method', self.OPTIONAL_PARAMS['method']) in self.INDEXING_MODES:
             # If exists get the value if not, set the default value
             self.chunking_method.setdefault('window_overlap', self.OPTIONAL_PARAMS['window_overlap'])
             self.chunking_method.setdefault('window_length', self.OPTIONAL_PARAMS['window_length'])

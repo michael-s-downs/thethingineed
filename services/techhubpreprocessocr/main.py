@@ -91,6 +91,8 @@ class PreprocessOCRDeployment(BaseDeployment):
         """
         self.logger.debug(f"Data entry: {json_input}")
         message = json_input
+        origin_txt_path = ""
+        filename = ""
         next_service = PREPROCESS_END_SERVICE
         msg = json.dumps({'status': ERROR, 'msg': "Error while extracting text in OCR"})
         redis_status = db_dbs['status']
@@ -125,6 +127,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 document = get_document(specific=specific)
                 num_pags = document['n_pags']
                 filename = document['filename']
+                language = document['language']
                 metadata = get_metadata_conf(json_input)
                 file_folder = os.path.splitext(filename)[0]
                 file_folder_txt = f"{file_folder}.txt"
@@ -147,6 +150,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                         "x-tenant": tenant,
                         "x-reporting": url
                     }
+                    llm_ocr_conf['language'] = "en" if language =="default" else language
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error parsing JSON. No configuration ocr defined", exc_info=get_exc_info())
                 raise Exception(GETTING_CREDENTIALS_OCR_ERROR)
@@ -165,7 +169,7 @@ class PreprocessOCRDeployment(BaseDeployment):
             try:
                 do_cells_ocr = get_do_cells_ocr(generic=generic)
                 do_lines_ocr = get_do_lines_ocr(generic=generic)
-                do_tables = generic['preprocess_conf']['ocr_conf'].get('extract_tables', False)
+                do_tables = ocr_conf.get('extract_tables', False)
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error getting params to extract cells or lines", exc_info=get_exc_info())
                 raise Exception(GETTING_LINES_AND_CELLS_ERROR)
@@ -258,19 +262,20 @@ class PreprocessOCRDeployment(BaseDeployment):
             specific['paths']['text'] = f"{prefix_map['txt']}/{os.path.splitext(filename)[0]}.txt"
             document['language'] = language
 
-            # Remove local files
-            self.logger.info("Deleting local files temporary.")
-            try:
-                remove_local_files(prefix_map['txt'])
-            except Exception:
-                self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
-
             msg = json.dumps({'status': DOCUMENT_PROCESSED, 'msg': "Document processed successfully"})
         except Exception as ex:
             dataset_status_key = get_dataset_status_key(json_input=json_input)
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess ocr.", exc_info=get_exc_info())
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
+
+        if origin_txt_path and filename:
+            # Remove local files
+            self.logger.info("Deleting local files temporary.")
+            try:
+                remove_local_files(origin_txt_path)
+            except Exception:
+                self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
 
         update_status(redis_status, dataset_status_key, msg)
         return self.must_continue, message, next_service

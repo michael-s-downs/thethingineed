@@ -3,7 +3,7 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## v3.0.0 (2025-01-17)
 - integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
@@ -15,22 +15,26 @@
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
 - preprocess-start:
-  - [Improvement] JSON flow body refactor (preprocess and indexation)
+  - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
 - preprocess-extract:
   - [Improvement] JSON flow body refactor (preprocess and indexation)
+  - [Improvement] If 'force_ocr' specified avoid extra processes:
+    - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
+    - If text has been extracted (for language detection) it will not be uploaded
+  - [Improvement] When exception if temporal files created, those are deleted
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.2)
-    - New required environment variables:
-      - Queue: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT'
-      - API: 'URL_LLM'
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.3)
+    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT' and 'Q_GENAI_LLMQUEUE_OUTPUT' for queue mode, 'URL_LLM' for API mode
+    - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
+  - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
   - [Improvement] JSON flow body refactor
 - genai-llmapi:
   - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
-  - [New] Added resize for an image that exceeds the max allowed by the LLM vision model.
-    - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model.
+  - [New] Added resize for an image that exceeds the max allowed by the LLM vision model
+    - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model
     - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
   - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature

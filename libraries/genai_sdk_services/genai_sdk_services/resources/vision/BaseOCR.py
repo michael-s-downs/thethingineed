@@ -821,6 +821,7 @@ class LLMOCR(BaseOCR):
     ORIGIN_TYPE = "llm-ocr"
     credentials = {}
     env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND"]
+    llm_template_name = "preprocess_ocr"
 
     def _set_credentials(self):
         self.provider = os.environ[self.env_vars[0]]
@@ -932,8 +933,9 @@ class LLMOCR(BaseOCR):
         """
         self._set_credentials()
         llm_params = kwargs.get('llm_ocr_conf', {})
-        query = llm_params.get('query', "Generates the text of the page, including the detailed description of the images / diagrams / graphs that appear on the page. Explain in detail the graphs shown in the image, listing the different series and their values. Extract all content from the tables. If the table has rows or merge columns, write in each cell the corresponding content. Returns the content of each table in markdown format. The generated text should be easily understandable for a semantic search engine. Your goal is to transform the page content into text that is best suited for use in a RAG generative AI system. Write the text without mentioning anything else.")
-        system = llm_params.get('system', "You are a bot that extracts information from pages as if you were an OCR. On the pages you can find text, images, graphs, diagrams and tables. Tables must be extracted in markdown format.")
+        query = llm_params.get('query')
+        language = llm_params.get('language', "en")
+        system = llm_params.get('system')
         model = llm_params.get('model', "techhub-pool-world-gpt-4o")
         max_tokens = llm_params.get('max_tokens', 1000)
         platform = llm_params.get('platform', "azure")
@@ -941,7 +943,8 @@ class LLMOCR(BaseOCR):
 
         body = {
             "query_metadata": {
-                "system": system
+                "template_name": self.llm_template_name,
+                "lang": language
             },
             "llm_metadata":{
                 "model": model,
@@ -951,6 +954,10 @@ class LLMOCR(BaseOCR):
                 "platform": platform
             }
         }
+        if query:
+            body["query_metadata"]["template_name"] = "system_query_v"
+        if system:
+            body["query_metadata"]["system"] = system
         
         returning_texts = []
         returning_blocks = []
@@ -964,17 +971,19 @@ class LLMOCR(BaseOCR):
             buffer = io.BytesIO()
             image.save(buffer, format=image.format.lower())
             buffer.seek(0)
-            body['query_metadata']['query'] = [
-                {
+            query_vision = []
+            if query:
+                query_vision.append({
                     "type": "text",
                     "text": query
-                },{
-                    "type": "image_b64",
-                    "image": {
-                        "base64": base64.b64encode(buffer.read()).decode("utf-8")
-                    }
+                })
+            query_vision.append({
+                "type": "image_b64",
+                "image": {
+                    "base64": base64.b64encode(buffer.read()).decode("utf-8")
                 }
-            ]
+            })
+            body['query_metadata']['query'] = query_vision
             if self.queue_mode:
                 self._write_llm_request(file, body, headers)
             else:
