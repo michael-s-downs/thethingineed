@@ -19,6 +19,7 @@ from common.status_codes import *
 from common.services import *
 from common.error_messages import *
 from common.utils import remove_local_files, resize_image, get_image_size
+from genai_sdk_services.resources.vision.BaseOCR import LLMOCR
 
 
 class PreprocessOCRDeployment(BaseDeployment):
@@ -208,25 +209,35 @@ class PreprocessOCRDeployment(BaseDeployment):
                 path_file_txt = os.path.join(prefix_map['txt'], file_folder_txt).replace("\\", "/")
                 path_file_text = os.path.join(prefix_map['text'], "ocr", file_folder, merge_filename).replace("\\", "/")
 
-                for batch_idx, batch in enumerate(chunk(files, file_sizes, ocr_files_size, ocr_batch_length)):
-                    self.logger.debug(f"Batch {batch_idx} of size {sum_up_size([x['size'] for x in batch])}MiB containing {len(batch)} files: {[x['filename'] for x in batch]}.")
+                if ocr == "llm-ocr" and LLMOCR.get_queue_mode():
+                    try:
+                        extract_docs = get_ocr_files(files, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **{"llm_ocr_conf":llm_ocr_conf})
+                        for key, value in extract_docs.items():
+                            if key in upload_docs:
+                                upload_docs[key] += value
+                    except Exception:
+                        self.logger.error(f"[Process {dataset_status_key}] Error while writing in LLM OCR queue", exc_info=get_exc_info())
+                        raise Exception(OCR_ERROR)
+                else:
+                    for batch_idx, batch in enumerate(chunk(files, file_sizes, ocr_files_size, ocr_batch_length)):
+                        self.logger.debug(f"Batch {batch_idx} of size {sum_up_size([x['size'] for x in batch])}MiB containing {len(batch)} files: {[x['filename'] for x in batch]}.")
 
-                    # OCR rate control for Google Cloud so now unused
-                    #self.logger.debug("Calculating requests by size and to send ocr.")
-                    #count = len(batch)
-                    #ocr_rates = {}
-                    #requests = ocr_rates.get(ocr, [])
-                    #requests = insert_at_rate(requests, count, ocr_calls_per_minute, self.PERIOD)
-                    #ocr_rates[ocr] = requests
+                        # OCR rate control for Google Cloud so now unused
+                        #self.logger.debug("Calculating requests by size and to send ocr.")
+                        #count = len(batch)
+                        #ocr_rates = {}
+                        #requests = ocr_rates.get(ocr, [])
+                        #requests = insert_at_rate(requests, count, ocr_calls_per_minute, self.PERIOD)
+                        #ocr_rates[ocr] = requests
 
-                    files_to_process = [image['filename'] for image in batch]
-                    if ocr == "llm-ocr":
-                        extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **{"llm_ocr_conf":llm_ocr_conf})
-                    else:
-                        extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode)
-                    for key, value in extract_docs.items():
-                        if key in upload_docs:
-                            upload_docs[key] += value
+                        files_to_process = [image['filename'] for image in batch]
+                        if ocr == "llm-ocr":
+                            extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode, **{"llm_ocr_conf":llm_ocr_conf})
+                        else:
+                            extract_docs = get_ocr_files(files_to_process, ocr, prefix_map, do_cells_ocr, do_tables, do_lines_ocr, bytes_mode)
+                        for key, value in extract_docs.items():
+                            if key in upload_docs:
+                                upload_docs[key] += value
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error where extract files with ocr", exc_info=get_exc_info())
                 raise Exception(EXTRACTING_TEXT_OCR_ERROR)
