@@ -12,7 +12,6 @@ from basemanager import AbstractManager
 from pcutils.persist import PersistManager
 from pcutils.template import TemplateManager
 from langfusemanager import LangFuseManager
-from common.preprocess.preprocess_utils import get_language
 from common.genai_controllers import load_file, storage_containers
 
 from lingua import Language, LanguageDetectorBuilder
@@ -95,7 +94,7 @@ class ConfManager(AbstractManager):
                 model_template = models_in_template[0]
             else:
                 model_template = ""
-        except:
+        except Exception:
             if name:
                 self.raise_PrintableGenaiError(404, f"Template file doesn't exists for name {name}")
             else:
@@ -114,7 +113,7 @@ class ConfManager(AbstractManager):
 
         model = self.clean_model(model)
         if session_id is None or not session_id:
-            session_id = f"{self.department}/session_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}/{model}"
+            session_id = f"{self.department}/session_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(6)])}/{model}"
             self.logger.debug(f"Generated session: {session_id}")
         else:
             session_id = session_id + "/" + model

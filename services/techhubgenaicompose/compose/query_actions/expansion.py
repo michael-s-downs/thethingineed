@@ -3,8 +3,7 @@
 
 import os
 import requests
-from abc import abstractmethod, ABC
-from typing import List
+from abc import ABC
 from common.errors.genaierrors import PrintableGenaiError
 from common.errors.LLM import LLMParser
 from ..utils.defaults import TRANSLATE_TEMPLATE, STEP_TEMPLATE
@@ -247,7 +246,7 @@ class ExpansionFactory:
         Args:
             expansion_type (str): Type of the query expansion method.
         """
-        self.expansionmethod: ExpansionMethod = None
+        self.expansionmethod = None
         for expansionmethod in self.EXPANSIONS:
             if expansionmethod.TYPE == expansion_type:
                 self.expansionmethod = expansionmethod

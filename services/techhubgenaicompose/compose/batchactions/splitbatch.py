@@ -3,7 +3,6 @@
 
 from typing import List
 from copy import deepcopy
-from itertools import repeat
 
 from ..utils.defaults import EMPTY_STREAM
 from ..utils.split_sentences import split_by_word_respecting_sent_boundary as split_phrase
@@ -11,7 +10,7 @@ from ..streamlist import StreamList
 from common.errors.genaierrors import GenaiError
 
 class SplitBatchMethod:
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streambatch: list) -> None:
         """Instantiate streambatch
@@ -60,10 +59,10 @@ class SplitBatchFactory:
             splitbatch_type (str): one of the available Splitbatchs
         """
 
-        self.splitbatchmethod: SplitBatchMethod = None
-        for Splitbatchmethod in self.SPLITBATCHES:
-            if Splitbatchmethod.TYPE == splitbatch_type:
-                self.splitbatchmethod = Splitbatchmethod
+        self.splitbatchmethod = None
+        for splitbatchmethod in self.SPLITBATCHES:
+            if splitbatchmethod.TYPE == splitbatch_type:
+                self.splitbatchmethod = splitbatchmethod
                 break
 
         if self.splitbatchmethod is None:

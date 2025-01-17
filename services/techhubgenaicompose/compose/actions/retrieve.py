@@ -15,7 +15,7 @@ class RetrieveMethod(ABC):
     Abstract base class for retrieve methods.
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, params: Union[List, Dict]) -> None:
         """
@@ -240,7 +240,7 @@ class RetrieverFactory:
         Args:
             filter_type (str): The type of the filter.
         """
-        self.retrievermethod: RetrieveMethod = None
+        self.retrievermethod = None
         for retrievermethod in self.FILTERS:
             if retrievermethod.TYPE == filter_type:
                 self.retrievermethod = retrievermethod

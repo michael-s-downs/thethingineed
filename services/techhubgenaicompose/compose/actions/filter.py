@@ -18,7 +18,7 @@ LLMP = LLMParser()
 
 
 class FilterMethod(ABC):
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streamlist: list) -> None:
         """Instantiate streamlist
@@ -55,7 +55,7 @@ class TopKFilter(FilterMethod):
     """
     TYPE = "top_k"
 
-    def process(self, params: dict):
+    def process(self, params: dict = {}):
         """Process the streamlist given the method
         """
         top_k = params.get('top_k', None)
@@ -77,10 +77,10 @@ class PermissionFilter(FilterMethod):
     HEADERS = {'Content-type': 'application/json'}
     BODY = {}
 
-    def process(self, params):
+    def process(self, params = {}):
         """Process the streamlist and filter unauthorized chunks. 
         """
-        headers, template = self.update_params(params)
+        headers, _ = self.update_params(params)
         # Get input documents IDs
         document_ids = []
         for sc in self.streamlist:
@@ -98,8 +98,6 @@ class PermissionFilter(FilterMethod):
         asyncio.set_event_loop(loop)
         result = loop.run_until_complete(self.send_post_request(self.URL, self.BODY, self.HEADERS))
         loop.close()
-        # TODO: Add logs
-        # Get list of permitted ids
         permitted_docs = [k for k, v in result["allowed"].items() if v]
 
         # Filter non permitted streamchunks
@@ -165,7 +163,7 @@ class RelatedToFilter(FilterMethod):
     TEXT_KEY = "content"
     HEADERS = {'Content-type': 'application/json'}
 
-    def process(self, params):
+    def process(self, params = {}):
         """Process the streamlist given the method. This method filters the streamlist given the context
             of the text. It uses the LLMApi service to make the call and check if the text is related with
             the context.  If the output of the call is Yes, the streamlist is added to next phase.
@@ -297,14 +295,11 @@ class MetadataFilter(FilterMethod):
                 float_ = float(metadata.get(value[0]))
                 if float_ < value[1]:
                     return True
-            elif key == "in":
+            elif key == "in" or key == "metaintext":
                 if metadata.get(value[0]) in value[1]:
                     return True
             elif key == "textinmeta":
                 if value[1] in metadata.get(value[0]):
-                    return True
-            elif key == "metaintext":
-                if metadata.get(value[0]) in value[1]:
                     return True
             elif key == "eq_date":
                 metadata_date = self.metadata_to_datetime(metadata.get(value[0]))
@@ -385,7 +380,6 @@ class MetadataFilter(FilterMethod):
             boolean = and_subfilter
             if "or" in filter_dict:
                 or_subfilter = any(self.apply_subfilter(metadata, sub_filter) for sub_filter in filter_dict["or"])
-                boolean = and_subfilter and or_subfilter
                 boolean = self.operator(and_subfilter, or_subfilter, operator)
 
         elif "or" in filter_dict:
@@ -412,7 +406,7 @@ class MetadataFilter(FilterMethod):
                 filtered_data.append(item)
         return filtered_data
 
-    def process(self, params: dict):
+    def process(self, params: dict = {}):
         """Process the streamlist given the method.
 
         Args:
@@ -463,7 +457,7 @@ class FilterFactory:
             filter_type (str): one of the available filters
         """
 
-        self.filtermethod: FilterMethod = None
+        self.filtermethod = None
         for filtermethod in self.FILTERS:
             if filtermethod.TYPE == filter_type:
                 self.filtermethod = filtermethod

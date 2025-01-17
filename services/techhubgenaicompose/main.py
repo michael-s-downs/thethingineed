@@ -5,17 +5,21 @@ import json
 
 # Intalled imports
 from flask import Flask, request
+from datetime import datetime
+from typing import Dict, Tuple
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
 from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file, list_files, load_file
-from common.genai_json_parser import *
 from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_COMPOSE_SERVICE
 from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.genai_status_control import update_status
 from director import Director
 
+
+TEMPLATES_PATH = "src/compose/templates/"
+FILTER_TEMPLATES_PATH = "src/compose/filter_templates/"
 
 class ComposeDeployment(BaseDeployment):
     def __init__(self):
@@ -171,9 +175,9 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = "src/compose/templates/"
+            path = TEMPLATES_PATH
             if template_filter:
-                path = "src/compose/filter_templates/"
+                path = FILTER_TEMPLATES_PATH
             upload_object(storage_containers['workspace'], content, path + name + ".json")
 
         except Exception as ex:
@@ -223,9 +227,9 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = "src/compose/templates/"
+            path = TEMPLATES_PATH
             if template_filter:
-                path = "src/compose/filter_templates/"
+                path = FILTER_TEMPLATES_PATH
             delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:
@@ -248,9 +252,9 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = "src/compose/filter_templates/"
+            str_path = FILTER_TEMPLATES_PATH
         else:
-            str_path = "src/compose/templates/"
+            str_path = TEMPLATES_PATH
         self.logger.info("List templates request received")
         try:
             flows_templates = list_files(storage_containers['workspace'], str_path)
@@ -273,9 +277,9 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = "src/compose/filter_templates/"
+            str_path = FILTER_TEMPLATES_PATH
         else:
-            str_path = "src/compose/templates/"
+            str_path = TEMPLATES_PATH
         self.logger.info("List templates request received")
         try:
             template_name = json_input['name']

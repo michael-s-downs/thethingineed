@@ -59,7 +59,7 @@ class PersistManager(AbstractManager):
     def get_param(self, params:dict, param_name: str, param_type):
         return super().get_param(params, param_name, param_type, self.defaults_dict)
 
-    def run(self, template, session_id, PD, reformulated=False):
+    def run(self, template, session_id, pd, reformulated=False):
         """Executes the persistence logic based on the provided template and session data.
 
         Args:
@@ -80,8 +80,8 @@ class PersistManager(AbstractManager):
         max_persistence = self.get_param(self.params, "max_persistence", int)
 
         # Initialize PD to fix the max_persistence
-        PD.add({}, session_id=session_id, max_persistence=max_persistence)
-        self.logger.debug(f"PersitDict init with {PD}")
+        pd.add({}, session_id=session_id, max_persistence=max_persistence)
+        self.logger.debug(f"PersitDict init with {pd}")
         return template
 
 

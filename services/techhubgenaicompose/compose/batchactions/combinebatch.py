@@ -13,7 +13,7 @@ from common.errors.genaierrors import GenaiError
 
 
 class CombineBatchMethod:
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streambatch: list) -> None:
         """Instantiate streambatch
@@ -44,12 +44,12 @@ class JoinCombine2(CombineBatchMethod):
 
         self.streambatch = streambatch
 
-    def process(self, template: str, SEP: str = "\n") -> StreamList:
+    def process(self, template: str = "", sep: str = "\n") -> StreamList:
         """Process the streambatch given the method
         """
         sl1, sl2 = self.streambatch
-        s1 = SEP.join([sl.content for sl in sl1])
-        s2 = SEP.join([sl.content for sl in sl2])
+        s1 = sep.join([sl.content for sl in sl1])
+        s2 = sep.join([sl.content for sl in sl2])
         content = Template(template).substitute(s1=s1, s2=s2)
 
         es = deepcopy(EMPTY_STREAM)
@@ -83,13 +83,13 @@ class CombineJoin2(CombineBatchMethod):
 
         return sl1, sl2
 
-    def process(self, template, unique_streamlist: bool = False, SEP: str = "\n") -> List:
+    def process(self, template = "", unique_streamlist: bool = False, sep: str = "\n") -> StreamList:
         """Process the streambatch given the method
         """
         sl1, sl2 = self.streambatch
         contents = [Template(template).substitute(s1=s1.content, s2=s2.content) for s1, s2 in zip(sl1, sl2)]
         if unique_streamlist:
-            content = SEP.join(contents)
+            content = sep.join(contents)
             es = deepcopy(EMPTY_STREAM)
             es.update({"content": content})
             new_streamlist = StreamList()
@@ -115,7 +115,7 @@ class CombineBatchFactory:
             combinebatch_type (str): one of the available combinebatchs
         """
 
-        self.combinebatchmethod: CombineBatchMethod = None
+        self.combinebatchmethod = None
         for combinebatchmethod in self.MERGEBATCHES:
             if combinebatchmethod.TYPE == combinebatch_type:
                 self.combinebatchmethod = combinebatchmethod

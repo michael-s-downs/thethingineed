@@ -290,7 +290,7 @@ class Director(AbstractManager):
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
         template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
-        template = re.sub(r'\$([A-Za-z0-9_]+)', r'"$\1"', template)
+        template = re.sub(r'\$(\w+)', r'"$\1"', template)
         template = self.fix_merge(template)
         try:
             template = json.loads(template)

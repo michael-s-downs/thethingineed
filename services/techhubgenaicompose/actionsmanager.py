@@ -30,7 +30,7 @@ class ActionsManager(AbstractManager):
         self.actions_confs = []
         if len(self.params.get('retrieve', [])) > 0:
             for action in self.compose_confs:
-                if action.get('action') == 'retrieve' and not 'retrieve' in [a.get('action') for a in
+                if action.get('action') == 'retrieve' and 'retrieve' not in [a.get('action') for a in
                                                                              self.actions_confs]:
                     for retrieve_params in self.params.get('retrieve', []):
                         retrieve_params = self.default_template_params(retrieve_params)
@@ -110,17 +110,16 @@ class ActionsManager(AbstractManager):
             if action['action'] == "llm_action":
                 action_params = action['action_params']
                 if action_params.get("params") is not None:
-                    query_metadata = action_params['params'].get('query_metadata')
-                    template = query_metadata.get('template')
+                    template = action_params['params'].get('query_metadata').get('template')
                     if template:
                         try:
                             template_dict = eval(template)
                         except SyntaxError:
                             self.raise_PrintableGenaiError(500,
                                                             "Template is not well formed, must be a dict {} structure")
-
                         if "$query" not in template_dict.get("user"):
                             self.raise_PrintableGenaiError(500, "Template must contain $query to be replaced")
+
 
     def safe_substitute(self, template, template_params, clear_quotes):
         """Replaces the placeholders with its param value
