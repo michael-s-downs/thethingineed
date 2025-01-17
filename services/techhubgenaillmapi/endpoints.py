@@ -129,8 +129,7 @@ class GPTPlatform(Platform):
             self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
 
             answer = requests.post(url=self.url, headers=self.headers, data=data_call, timeout=self.timeout)
-            if answer.status_code == 200 and delta <2:
-                raise requests.exceptions.Timeout
+
             if delta < self.num_retries:
                 if answer.status_code == 429:
                     self.logger.warning(f"OpenAI rate limit exceeded, retrying, try {delta + 1}/{self.num_retries}")
