@@ -23,8 +23,9 @@
     - If text has been extracted (for language detection) it will not be uploaded
   - [Improvement] When exception if temporal files created, those are deleted
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.3)
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.4)
     - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT' and 'Q_GENAI_LLMQUEUE_OUTPUT' for queue mode, 'URL_LLM' for API mode
+    - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
     - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] File sizes now calculated from local files instead storage
@@ -37,6 +38,9 @@
   - [New] Added resize for an image that exceeds the max allowed by the LLM vision model
     - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model
     - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
+  - [Improvement] Better logic to do retries when a model call fails 
+    - Added new optional parameter 'num_retries' in platform metadata to indicate the number of retries.
+    - When a model fails in timeout or rate limit the call is done with another model (if the model passed was a pool if not with the same)
   - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval:
