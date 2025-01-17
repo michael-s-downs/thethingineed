@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 import boto3
 import botocore
 from botocore.config import Config
+import urllib3
 
 # Custom imports
 from generatives import GenerativeModel
@@ -372,7 +373,7 @@ class BedrockPlatform(Platform):
             answer = self.parse_response(answer)
             return answer
 
-        except requests.exceptions.Timeout:
+        except urllib3.exceptions.ReadTimeoutError:
             self.logger.error(REQUEST_TIMED_OUT_MSG)
             if delta < self.num_retries:
                 self.logger.warning(f"Timeout, retrying, try {delta + 1}/{self.num_retries}")
