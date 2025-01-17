@@ -144,7 +144,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 ocr_calls_per_minute = ocr_conf['calls_per_minute']
                 ocr = ocr_conf['ocr']
                 # Adding headers to llm_ocr_conf
-                if isinstance(ocr_conf.get('llm_ocr_conf'), dict) and ocr == "llm-ocr":
+                if ocr == "llm-ocr":
                     llm_ocr_conf = copy.deepcopy(ocr_conf.get('llm_ocr_conf', {}))
                     llm_ocr_conf['headers'] = {
                         "x-department": department,
