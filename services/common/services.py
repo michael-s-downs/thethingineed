@@ -19,6 +19,7 @@ RETRIEVAL_STRATEGIES = "retrieval_strategies"
 PARSERS_SERVICE = "parsers"
 PREPROCESS_EXTRACT_COMMON = "preprocess_extract_common"
 PREPROCESS_OCR_COMMON = "preprocess_ocr_common"
+MANAGER_MODELS = "manager_models_conf"
 # Genai
 GENAI_INFO_RETRIEVAL_SERVICE = "genai_inforetrieval"
 GENAI_INFO_DELETION_SERVICE = "genai_infodeletion"

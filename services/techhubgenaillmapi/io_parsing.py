@@ -227,6 +227,7 @@ class PlatformMetadata(BaseModel):
     # Platform metadata
     timeout: Optional[PositiveInt] = None
     platform: Literal['azure', 'bedrock', 'openai']
+    num_retries: Optional[PositiveInt] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object

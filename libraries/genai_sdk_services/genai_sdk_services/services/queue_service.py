@@ -321,7 +321,7 @@ class AzureServiceBusService(BaseQueueService):
         data = []
 
         self.logger.debug("Receiving messages")
-        resp = receiver.receive_messages(max_message_count=max_num)
+        resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=60)
         if len(resp) != 0:
             for msg in resp:
                 data.append(json.loads(format(msg)))
@@ -349,7 +349,7 @@ class AzureServiceBusService(BaseQueueService):
         self.logger.debug(f"Writing in queue: {data}")
         try:
             message = ServiceBusMessage(json.dumps(data))
-            sender.send_messages(message)
+            sender.send_messages(message, timeout=60)
         except Exception as ex:
             raise ex
         else:
@@ -467,7 +467,7 @@ class AzureStorageQueueService(BaseQueueService):
         data = []
         entries = []
         self.logger.debug("Receiving messages")
-        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5)
+        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5, timeout=60)
 
         for msg in resp:
             data.append(json.loads(msg.content))
@@ -495,7 +495,7 @@ class AzureStorageQueueService(BaseQueueService):
 
         self.logger.debug(f"Writing in queue: {data}")
         try:
-            queue_client.send_message(content=json.dumps(data), time_to_live=-1)
+            queue_client.send_message(content=json.dumps(data), time_to_live=-1, timeout=60)
         except Exception as ex:
             raise ex
         else:
