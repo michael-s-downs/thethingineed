@@ -959,6 +959,7 @@ class LLMOCR(BaseOCR):
         max_tokens = llm_params.get('max_tokens', 1000)
         platform = llm_params.get('platform', "azure")
         headers = llm_params.get('headers', {})
+        num_retries = llm_params.get('num_retries', self.num_retries)
 
         body = {
             "query_metadata": {
@@ -971,7 +972,7 @@ class LLMOCR(BaseOCR):
             },
             "platform_metadata": {
                 "platform": platform,
-                "num_retries": self.num_retries
+                "num_retries": num_retries
             }
         }
         if query:
