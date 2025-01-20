@@ -22,7 +22,12 @@ from common.genai_status_control import create_status, update_status
 from common.genai_json_parser import get_exc_info, get_dataset_status_key, get_project_config, get_dataset_config, generate_dataset_status_key
 from common.services import PREPROCESS_START_SERVICE, PREPROCESS_EXTRACT_SERVICE, PREPROCESS_END_SERVICE
 from common.status_codes import ERROR, BEGIN_LIST, END_LIST, BEGIN_DOCUMENT
-from common.error_messages import *
+from common.error_messages import (
+    CREATING_STATUS_REDIS_ERROR,
+    PARSING_PARAMETERS_ERROR,
+    GETTING_DATASET_STATUS_KEY_ERROR,
+    CHECKING_FILES_STORAGE_ERROR,
+)
 from common.utils import convert_service_to_queue
 
 
@@ -80,7 +85,7 @@ class PreprocessStartDeployment(BaseDeployment):
         if dataset_conf.get('dataset_id', ""):
             process_id = dataset_conf.get('dataset_id', "")
         else:
-            process_id = process_type + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f_") + "".join([choice(string.ascii_lowercase + string.digits) for i in range(6)])
+            process_id = process_type + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f_") + "".join([choice(string.ascii_lowercase + string.digits) for _ in range(6)])
 
         dataset_conf.setdefault('dataset_id', process_id)
 
@@ -230,7 +235,7 @@ class PreprocessStartDeployment(BaseDeployment):
         })
 
         try:
-            self.logger.info(f"Creating timeout and counter status for timeout")
+            self.logger.info("Creating timeout and counter status for timeout")
             create_status(db_provider['timeout'], timeout_id, json_timeout, None)
         except Exception:
             self.logger.debug(f"[Process {dataset_status_key}] Error creating timeout status", exc_info=get_exc_info())
