@@ -250,6 +250,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
     - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
     - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
+  - **index_metadata**:  This parameter, which can be either true to include only the filename metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings.
 
 - **specific**
   - **dataset**
@@ -309,7 +310,8 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
                     "platform":"openai",
                     "alias": "ada-002-pool-europe"
                 }
-            ]
+            ], 
+            "index_metadata": true
         }
     },
     "specific": {
