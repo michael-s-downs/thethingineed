@@ -15,7 +15,8 @@ from azure.storage.queue import QueueClient
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 
-timeout = os.getenv('QUEUE_TIMEOUT', 180)  # seconds
+timeout_connector = os.getenv('QUEUE_TIMEOUT_CONECTOR', 1)  # seconds
+timeout_operation = os.getenv('QUEUE_TIMEOUT_OPERATION', None)  # seconds
 
 
 class SingletonABCMeta(ABCMeta):
@@ -309,7 +310,7 @@ class AzureServiceBusService(BaseQueueService):
         :return: (tuple) Data of the message
         """
         queue_client = self.get_session(origin)
-        receiver = queue_client.get_queue_receiver(origin)
+        receiver = queue_client.get_queue_receiver(origin, socket_timeout=timeout_connector)
         self.receiver[origin] = receiver
 
         self.logger.debug("Reading messages from queue")
@@ -324,7 +325,7 @@ class AzureServiceBusService(BaseQueueService):
         data = []
 
         self.logger.debug("Receiving messages")
-        resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=timeout)
+        resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=timeout_operation)
         if len(resp) != 0:
             for msg in resp:
                 data.append(json.loads(format(msg)))
@@ -347,12 +348,12 @@ class AzureServiceBusService(BaseQueueService):
         :return: (bool) Response of the method
         """
         queue_client = self.get_session(origin)
-        sender = queue_client.get_queue_sender(queue_name=origin)
+        sender = queue_client.get_queue_sender(queue_name=origin, socket_timeout=timeout_connector)
 
         self.logger.debug(f"Writing in queue: {data}")
         try:
             message = ServiceBusMessage(json.dumps(data))
-            sender.send_messages(message, timeout=timeout)
+            sender.send_messages(message, timeout=timeout_operation)
         except Exception as ex:
             raise ex
         else:
@@ -470,7 +471,7 @@ class AzureStorageQueueService(BaseQueueService):
         data = []
         entries = []
         self.logger.debug("Receiving messages")
-        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5, timeout=timeout)
+        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5, timeout=timeout_operation)
 
         for msg in resp:
             data.append(json.loads(msg.content))
@@ -498,7 +499,7 @@ class AzureStorageQueueService(BaseQueueService):
 
         self.logger.debug(f"Writing in queue: {data}")
         try:
-            queue_client.send_message(content=json.dumps(data), time_to_live=-1, timeout=timeout)
+            queue_client.send_message(content=json.dumps(data), time_to_live=-1, timeout=timeout_operation)
         except Exception as ex:
             raise ex
         else:
