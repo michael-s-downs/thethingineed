@@ -146,7 +146,7 @@ class EmbeddingsModelsConfigManager(BaseModelConfigManager):
         pass
 
     @staticmethod
-    def is_manager_model_type(model_type: str, platform) -> bool:
+    def is_manager_model_type(model_type: str) -> bool:
         return model_type == EmbeddingsModelsConfigManager.MODEL_FORMAT
 
 class ManagerModelsConfig(object):
