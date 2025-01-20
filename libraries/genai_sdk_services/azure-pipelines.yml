@@ -10,8 +10,10 @@ trigger:
   branches:
     include: 
     - develop
-    - main
-    - feature/python311
+    - master
+  paths:
+    include:
+    - 'genai_sdk_services/__init__.py'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -57,9 +59,9 @@ steps:
 - task: TwineAuthenticate@1
   inputs:
     artifactFeed: '${{ variables.projectFeed }}'
-  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Configure twine authentication
 
 - script: twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
-  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish to artifacts feed

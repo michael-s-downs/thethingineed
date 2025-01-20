@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 import boto3
 import botocore
 from botocore.config import Config
+import urllib3
 
 # Custom imports
 from generatives import GenerativeModel
@@ -22,6 +23,7 @@ from common.logging_handler import LoggerHandler
 from common.genai_controllers import provider
 from common.services import GENAI_LLM_ENDPOINTS
 from common.errors.genaierrors import PrintableGenaiError
+from common.models_manager import BaseModelConfigManager
 
 SETTING_MODEL_MSG = "Setting model to use."
 
@@ -35,7 +37,7 @@ REQUEST_TIMED_OUT_MSG = "The request timed out."
 class Platform(ABC):
     MODEL_FORMAT = "Platform"
 
-    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30, num_retries=3, models_config_manager: BaseModelConfigManager = None):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
@@ -50,9 +52,11 @@ class Platform(ABC):
         self.url = None
         self.headers = None
         self.timeout = timeout
+        self.num_retries = num_retries
 
         self.aws_credentials = aws_credentials
         self.models_urls = models_urls
+        self.models_config_manager = models_config_manager
 
     @abstractmethod
     def parse_response(self, answer: dict) -> dict:
@@ -63,7 +67,7 @@ class Platform(ABC):
         """
 
     @abstractmethod
-    def call_model(self, delta=0, max_retries=3) -> dict:
+    def call_model(self, delta=0) -> dict:
         """ Method to send the query to the endpoint
         """
 
@@ -85,7 +89,7 @@ class Platform(ABC):
 class GPTPlatform(Platform):
     MODEL_FORMAT = "GPTPlatform"
 
-    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30, num_retries=3, models_config_manager: BaseModelConfigManager = None):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
@@ -93,13 +97,32 @@ class GPTPlatform(Platform):
         :param timeout: Timeout for the request
         """
 
-        super().__init__(aws_credentials, models_urls, timeout)
+        super().__init__(aws_credentials, models_urls, timeout, num_retries, models_config_manager)
 
-    def call_model(self, delta=0, max_retries=3) -> dict:
+    def set_model_retry(self):
+        """Set the model and configure urls when a retry has to be done.
+        """
+        if hasattr(self, "generativeModel"):
+            selected_model = self.models_config_manager.get_different_model_from_pool(self.generativeModel.pool_name, 
+                                                                                      self.generativeModel.model_name,
+                                                                                      self.MODEL_FORMAT)
+            if selected_model:
+                self.generativeModel.model_name = selected_model.get('model')
+                self.generativeModel.zone = selected_model.get('zone')
+                self.generativeModel.api_version = selected_model.get('api_version')
+                self.generativeModel.api_key = self.models_config_manager.get_model_api_key_by_zone(self.generativeModel.zone,
+                                                                                                    self.MODEL_FORMAT)
+                self.set_model(self.generativeModel)
+            else:
+                self.logger.debug(f"Model not found in the pool for retry, retrying with: {self.generativeModel.model_name}")
+        else:
+            self.logger.error("Not 'generativeModel' param the model cannot be set for retry.")
+            raise PrintableGenaiError(400, "Not 'generativeModel' param the model cannot be set for retry.")
+
+    def call_model(self, delta=0) -> dict:
         """ Method to send the query to the endpoint
 
         :param delta: Number of retries
-        :param max_retries: Maximum number of retries
         :return: Endpoint response
         """
         try:
@@ -108,13 +131,13 @@ class GPTPlatform(Platform):
 
             answer = requests.post(url=self.url, headers=self.headers, data=data_call, timeout=self.timeout)
 
-            if delta < max_retries:
+            if delta < self.num_retries:
                 if answer.status_code == 429:
-                    self.logger.warning(f"OpenAI rate limit exceeded, retrying, try {delta + 1}/{max_retries}")
+                    self.logger.warning(f"OpenAI rate limit exceeded, retrying, try {delta + 1}/{self.num_retries}")
                     raise ConnectionError("OpenAI rate limit exceeded")
 
                 if answer.status_code == 500 and "Internal server error" in answer.text:
-                    self.logger.warning(f"Internal server error, retrying, try {delta + 1}/{max_retries}")
+                    self.logger.warning(f"Internal server error, retrying, try {delta + 1}/{self.num_retries}")
                     raise ConnectionError("Internal server error")
 
             if answer.status_code in [503, 502, 500, 404, 400, 429]:
@@ -129,26 +152,39 @@ class GPTPlatform(Platform):
 
         except requests.exceptions.Timeout:
             self.logger.error(REQUEST_TIMED_OUT_MSG)
-            return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
+            if delta < self.num_retries:
+                self.logger.warning(f"Timeout, retrying, try {delta + 1}/{self.num_retries}")
+                try:
+                    self.set_model_retry()
+                    time.sleep(random.randrange(1, 10))
+                    return self.call_model(delta + 1)
+                except:
+                    return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
+            else:
+                return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}
         except ConnectionError:
-            time.sleep(random.random())
-            return self.call_model(delta + 1, max_retries)
+            try:
+                self.set_model_retry()
+                time.sleep(random.randrange(1, 10))
+                return self.call_model(delta + 1)
+            except:
+                return {"error": "Internal server error", "msg": "Internal server error", "status_code": 500}
 
 
 class OpenAIPlatform(GPTPlatform):
     MODEL_FORMAT = "openai"
 
-    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30, num_retries=3, models_config_manager: BaseModelConfigManager = None):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
         :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_urls, timeout)
+        super().__init__(aws_credentials, models_urls, timeout, num_retries, models_config_manager)
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -197,14 +233,14 @@ class OpenAIPlatform(GPTPlatform):
 class AzurePlatform(GPTPlatform):
     MODEL_FORMAT = "azure"
 
-    def __init__(self, aws_credentials, models_urls, timeout: int = 60):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 60, num_retries=3, models_config_manager: BaseModelConfigManager = None):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
         :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_urls, timeout)
+        super().__init__(aws_credentials, models_urls, timeout, num_retries, models_config_manager)
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -262,14 +298,35 @@ class AzurePlatform(GPTPlatform):
 class BedrockPlatform(Platform):
     MODEL_FORMAT = "bedrock"
 
-    def __init__(self, aws_credentials, models_urls, timeout: int = 30):
+    def __init__(self, aws_credentials, models_urls, timeout: int = 30, num_retries=3, models_config_manager: BaseModelConfigManager = None):
         """Platform that sustains the model to be used
 
         :param aws_credentials: AWS credentials
         :param models_urls: Models credentials
         :param timeout: Timeout for the request
         """
-        super().__init__(aws_credentials, models_urls, timeout)
+        super().__init__(aws_credentials, models_urls, timeout, num_retries, models_config_manager)
+
+    def set_model_retry(self):
+        """Set the model and configure urls when a retry has to be done.
+        """
+        if hasattr(self, "generativeModel"):
+            selected_model = self.models_config_manager.get_different_model_from_pool(self.generativeModel.pool_name, 
+                                                                                      self.generativeModel.model_name,
+                                                                                      self.MODEL_FORMAT)
+            if selected_model:
+                self.generativeModel.model_name = selected_model.get('model')
+                self.generativeModel.model_id = selected_model.get('model_id')
+                self.generativeModel.zone = selected_model.get('zone')
+                self.generativeModel.api_version = selected_model.get('api_version')
+                self.generativeModel.api_key = self.models_config_manager.get_model_api_key_by_zone(self.generativeModel.zone,
+                                                                                                    self.MODEL_FORMAT)
+                self.set_model(self.generativeModel)
+            else:
+                self.logger.debug(f"Model not found in the pool for retry, retrying with: {self.generativeModel.model_id}")
+        else:
+            self.logger.error("Not 'generativeModel' param the model cannot be set for retry.")
+            raise PrintableGenaiError(400, "Not 'generativeModel' param the model cannot be set for retry.")
 
     def parse_response(self, answer):
         """ Test if response is correct (token number issue)
@@ -290,15 +347,14 @@ class BedrockPlatform(Platform):
         self.logger.debug(SETTING_MODEL_MSG)
         super().set_model(generativeModel)
 
-    def call_model(self, delta=0, max_retries=3) -> dict:
+    def call_model(self, delta=0) -> dict:
         """ Method to send the query to the endpoint
 
         :param delta: Number of retries
-        :param max_retries: Maximum number of retries
         :return: Endpoint response
         """
         try:
-            if delta > max_retries:
+            if delta > self.num_retries:
                 return {"error": "Max retries reached", "msg": "Max retries reached", "status_code": 500}
             data_call = self.generativeModel.parse_data()
             self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
@@ -317,9 +373,18 @@ class BedrockPlatform(Platform):
             answer = self.parse_response(answer)
             return answer
 
-        except requests.exceptions.Timeout:
+        except urllib3.exceptions.ReadTimeoutError:
             self.logger.error(REQUEST_TIMED_OUT_MSG)
-            return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
+            if delta < self.num_retries:
+                self.logger.warning(f"Timeout, retrying, try {delta + 1}/{self.num_retries}")
+                try:
+                    self.set_model_retry()
+                    time.sleep(random.randrange(1, 10))
+                    return self.call_model(delta + 1)
+                except:
+                    return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
+            else:
+                return {"error": REQUEST_TIMED_OUT_MSG, "msg": REQUEST_TIMED_OUT_MSG, "status_code": 408}
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}
@@ -329,8 +394,12 @@ class BedrockPlatform(Platform):
             status_code = error.response['ResponseMetadata']['HTTPStatusCode']
             return {"error": error, "msg": message, "status_code": status_code}
         except ConnectionError:
-            time.sleep(random.random())
-            return self.call_model(delta + 1, max_retries)
+            try:
+                self.set_model_retry()
+                time.sleep(random.randrange(1, 10))
+                return self.call_model(delta + 1)
+            except:
+                return {"error": "Internal server error", "msg": "Internal server error", "status_code": 500}
 
 
 class ManagerPlatform(object):

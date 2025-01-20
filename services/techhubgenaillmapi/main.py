@@ -17,6 +17,7 @@ from common.deployment_utils import BaseDeployment
 from common.services import GENAI_LLM_SERVICE
 from common.utils import load_secrets
 from common.errors.genaierrors import PrintableGenaiError
+from common.models_manager import ManagerModelsConfig
 from endpoints import ManagerPlatform, Platform
 from generatives import ManagerModel, GenerativeModel
 from common.storage_manager import ManagerStorage
@@ -38,6 +39,10 @@ class LLMDeployment(BaseDeployment):
         self.available_models = self.storage_manager.get_available_models()
         self.default_models = self.storage_manager.get_default_models()
         self.models_credentials, self.aws_credentials = load_secrets(vector_storage_needed=False)
+        self.models_config_manager = ManagerModelsConfig().get_models_config_manager({"type": "llm", 
+                                                                                      "available_pools": self.available_pools, 
+                                                                                      "available_models":self.available_models,
+                                                                                      "models_credentials": self.models_credentials})
 
         self.templates, self.templates_names, self.display_templates_with_files = self.storage_manager.get_templates(return_files=True)
 
@@ -45,7 +50,10 @@ class LLMDeployment(BaseDeployment):
         default_templates = set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
         if not default_templates.issubset(self.templates_names):
             raise PrintableGenaiError(400, f"Default templates not found: {default_templates}")
-        self.logger.info("llmapi initialized")
+        if eval(os.getenv('QUEUE_MODE', "False")):
+            self.logger.info("llmqueue initialized")
+        else:
+            self.logger.info("llmapi initialized")
 
     @property
     def must_continue(self) -> bool:
@@ -88,6 +96,7 @@ class LLMDeployment(BaseDeployment):
         parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(exclude_unset=True, exclude_none=True)
         parsed_platform_metadata['aws_credentials'] = self.aws_credentials
         parsed_platform_metadata['models_urls'] = self.models_credentials.get('URLs')
+        parsed_platform_metadata['models_config_manager'] = self.models_config_manager
         return ManagerPlatform.get_platform(parsed_platform_metadata)
 
     def parse_model(self, llm_metadata: dict, platform: Platform):
@@ -95,8 +104,8 @@ class LLMDeployment(BaseDeployment):
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
         parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
                                                                                                 {})
-        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT, self.available_models,
-                                       self.available_pools)
+        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT,
+                                       self.available_pools, self.models_config_manager)
         # Check max_tokens in dalle
         if model.model_type == "dalle3" and model.max_input_tokens > 4000:
             raise PrintableGenaiError(400, "Error, in dalle3 the maximum number of characters in the prompt is 4000")

@@ -12,6 +12,7 @@ from PIL import Image
 from typing import Tuple
 from abc import ABC, abstractmethod
 from functools import partial
+import time
 
 # Installed import
 import boto3
@@ -820,8 +821,21 @@ class FormRecognizer(BaseOCR):
 class LLMOCR(BaseOCR):
     ORIGIN_TYPE = "llm-ocr"
     credentials = {}
-    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND"]
+    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND", "LLM_NUM_RETRIES"]
     llm_template_name = "preprocess_ocr"
+
+    @staticmethod
+    def get_queue_mode() -> bool:
+        """Check if the OCR is in queue mode"""
+        
+        if os.getenv(LLMOCR.env_vars[3]):
+            return False
+        else:
+            if os.getenv(LLMOCR.env_vars[1]) and os.getenv(LLMOCR.env_vars[2]) and os.getenv(LLMOCR.env_vars[4]):
+                return True
+            else:
+                raise Exception("Queue and storage not defined by environment variables")
+
 
     def _set_credentials(self):
         self.provider = os.environ[self.env_vars[0]]
@@ -829,17 +843,10 @@ class LLMOCR(BaseOCR):
         self.queue_output_url = os.getenv(self.env_vars[2])
         self.url_llm = os.getenv(self.env_vars[3])
         self.storage_backend = os.getenv(self.env_vars[4])
-
-        if self.url_llm:
-            self.queue_mode = False
-        else:
-            if self.queue_input_url and self.queue_output_url and self.storage_backend:
-                self.queue_mode = True
-            else:
-                raise ValueError("Queue and storage not defined by environment variables")
-        
+        self.num_retries = os.getenv(self.env_vars[5], 10)
 
 
+        self.queue_mode = self.get_queue_mode()
         self.sc = StorageController()
         self.qc = QueueController()
 
@@ -871,8 +878,8 @@ class LLMOCR(BaseOCR):
 
 
     def _write_llm_request(self, file, body, headers):
-        filename, extension = os.path.splitext(file) # Get extension and filename
-        filename = filename.replace("imgs", "llm")
+        filename, extension = os.path.splitext(file) # Get extension and filepath
+        filename = filename.replace(f"{os.sep}imgs{os.sep}", f"{os.sep}llm{os.sep}")
         input_llm_file = f"{filename}_input.json"
         output_llm_file = f"{filename}_output.json"
 
@@ -897,29 +904,41 @@ class LLMOCR(BaseOCR):
             raise Exception(f"Error writing to queue {self.queue_input_url}: {response} in {self.provider}")
 
 
-    def _read_llm_responses(self, num_files) -> dict:
+    def _read_llm_responses(self, files) -> dict:
         responses = []
-        while len(responses) != num_files:
-            try:
-                messages, messages_metadata = self.qc.read((self.provider, self.queue_output_url), 1, True)
-                messages = [] if not messages else messages # Library return None when len=0
-                responses.extend(messages)
-            except Exception as ex:
-                raise Exception(f"Error reading from queue: {ex}")
-        
         final_responses = []
-        for response in responses:
-            if response.get('status_code') != 200:
-                raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
-            try:
-                loaded_file = self.sc.load_file((self.provider, self.storage_backend), response['result'])
-            except Exception as ex:
-                raise Exception(f"Error loading response file {response['result']} from storage: {ex}")
+        if files:        
+            base_filename = os.path.basename(files[0]).split("_pag_")[0]
+            timestamp = 0.0 
+            while len(responses) != len(files):
+                try:
+                    messages, messages_metadata = self.qc.read((self.provider, self.queue_output_url), 1, True)
+                    if messages:
+                        filename = os.path.basename(messages[0]['result']).split("_pag_")[0]
+                        if filename == base_filename:
+                            timestamp = time.time()
+                            responses.append(messages[0])
+                        else:
+                            self.qc.write((self.provider, self.queue_output_url), messages[0])
+                            time.sleep(0.5)
+                    if timestamp != 0.0 and time.time() - timestamp > 180.0:
+                        raise Exception(f"Timeout reading file {base_filename} from llmqueue")
+                except Exception as ex:
+                    raise Exception(f"Error reading from queue: {ex}")
 
-            if len(loaded_file) <= 0:
-                raise Exception(f"Error loading response file {response['result']} from storage")
-            else:
-                final_responses.append(json.loads(loaded_file)['result'])
+            for response in responses:
+                if response.get('status_code') != 200:
+                    raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
+                try:
+                    loaded_file = self.sc.load_file((self.provider, self.storage_backend), response['result'])
+                except Exception as ex:
+                    raise Exception(f"Error loading response file {response['result']} from storage: {ex}")
+
+                if len(loaded_file) <= 0:
+                    raise Exception(f"Error loading response file {response['result']} from storage")
+                else:
+                    final_responses.append(json.loads(loaded_file)['result'])
+
         return final_responses
 
 
@@ -940,6 +959,7 @@ class LLMOCR(BaseOCR):
         max_tokens = llm_params.get('max_tokens', 1000)
         platform = llm_params.get('platform', "azure")
         headers = llm_params.get('headers', {})
+        num_retries = llm_params.get('num_retries', self.num_retries)
 
         body = {
             "query_metadata": {
@@ -951,7 +971,8 @@ class LLMOCR(BaseOCR):
                 "max_tokens": max_tokens
             },
             "platform_metadata": {
-                "platform": platform
+                "platform": platform,
+                "num_retries": num_retries
             }
         }
         if query:
@@ -990,9 +1011,9 @@ class LLMOCR(BaseOCR):
                 responses.append(self._call_llm(body, headers))
         
         if self.queue_mode:
-            responses = self._read_llm_responses(len(files))
+            responses = self._read_llm_responses(files)
 
-        for response in responses:
+        for response, file in zip(responses, files):
             returning_texts.append(response['answer'])
             lines_blocks.append([[]])
             words_blocks.append([[]])
