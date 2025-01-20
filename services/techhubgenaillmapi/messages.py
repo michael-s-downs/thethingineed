@@ -14,7 +14,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from adapters import ManagerAdapters
 
 DEFAULT_SYSTEM_MSG = 'You are a helpful assistant'
-
+VCONTEXT_NOT_ALLOWED = "Context param not allowed in vision models"
 
 class Message(ABC):
     MODEL_FORMAT = "Message"
@@ -202,7 +202,7 @@ class ChatGPTvMessage(Message):
         super().__init__()
         self.query = query
         if context != "" and isinstance(self.query, list):
-            raise PrintableGenaiError(400, "Context param not allowed in vision models")
+            raise PrintableGenaiError(400, VCONTEXT_NOT_ALLOWED)
         self.context = context
         if functions is None:
             functions = []
@@ -305,7 +305,7 @@ class Claude3Message(Message):
         super().__init__()
         self.query = query
         if context != "" and isinstance(self.query, list):
-            raise PrintableGenaiError(400, "Context param not allowed in vision models")
+            raise PrintableGenaiError(400, VCONTEXT_NOT_ALLOWED)
         self.context = context
         self.template_name = template_name
         self.template = template
@@ -419,7 +419,7 @@ class NovaVMessage(Message):
         super().__init__() # super to Message to avoid claude3 format query and persistence adaptation  
         self.query = query
         if context != "" and isinstance(self.query, list):
-            raise PrintableGenaiError(400, "Context param not allowed in vision models")
+            raise PrintableGenaiError(400, VCONTEXT_NOT_ALLOWED)
         self.context = context
         self.template_name = template_name
         self.template = template

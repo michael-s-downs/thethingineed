@@ -6,7 +6,6 @@ import os
 import re
 import copy
 import json
-import random
 from typing import List
 from abc import ABC, abstractmethod
 
@@ -32,7 +31,7 @@ USER_AND_SYSTEM_KEY_ALLOWED_MSG = "Template can only have user and system key"
 USER_KEY_MANDATORY_MSG = "Template must contain the user key"
 
 TEMPLATE_IS_NOT_DICT_MSG = "Template is not well formed, must be a dict {} structure"
-
+NO_RESPONSE_FROM_MODEL = "There is no response from the model for the request"
 
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
@@ -59,11 +58,11 @@ class GenerativeModel(ABC):
         if hasattr(self, 'max_img_size_mb'):
             config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": "azure"})
-        self.message = queryLimiter.get_message()
+        self.message = query_limiter.get_message()
 
     @abstractmethod
     def get_result(self, response: dict) -> dict:
@@ -509,11 +508,11 @@ class ClaudeModel(GenerativeModel):
         if hasattr(self, 'max_img_size_mb'):
             config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": "bedrock"})
-        self.message = queryLimiter.get_message()
+        self.message = query_limiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -554,7 +553,7 @@ class ClaudeModel(GenerativeModel):
         if len(answer) == 0:
             return {
                 'status': 'error',
-                'error_message': "There is no response from the model for the request",
+                'error_message': NO_RESPONSE_FROM_MODEL,
                 'status_code': 400
             }
         self.logger.info(f"LLM response: {answer}.")
@@ -716,11 +715,11 @@ class LlamaModel(GenerativeModel):
         """
         config['message'] = self.MODEL_MESSAGE
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": "bedrock"})
-        self.message = queryLimiter.get_message()
+        self.message = query_limiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -773,7 +772,7 @@ class LlamaModel(GenerativeModel):
         if len(answer) == 0:
             return {
                 'status': 'error',
-                'error_message': "There is no response from the model for the request",
+                'error_message': NO_RESPONSE_FROM_MODEL,
                 'status_code': 400
             }
         self.logger.info(f"LLM response: {answer}.")
@@ -852,11 +851,11 @@ class NovaModel(GenerativeModel):
         if hasattr(self, 'max_img_size_mb'):
             config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": "nova"})
-        self.message = queryLimiter.get_message()
+        self.message = query_limiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -900,7 +899,7 @@ class NovaModel(GenerativeModel):
         if len(answer) == 0:
             return {
                 'status': 'error',
-                'error_message': "There is no response from the model for the request",
+                'error_message': NO_RESPONSE_FROM_MODEL,
                 'status_code': 400
             }
         self.logger.info(f"LLM response: {answer}.")

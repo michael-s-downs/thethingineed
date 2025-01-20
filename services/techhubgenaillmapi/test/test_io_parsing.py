@@ -282,7 +282,7 @@ class TestProjectConf():
 @patch("io_parsing.QUEUE_MODE", True)
 def test_adapt_input_queue():
     json_input = copy.deepcopy(azure_call)
-    json_input['headers'] = {'Content-Type': 'application/json'}
+    json_input['headers'] = {'Content-Type': 'application/json',"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"}
     json_input['query_metadata']["C:\\users"] = "C:\\users\\lkl"
 
     os.environ["DATA_MOUNT_PATH"] = ""

@@ -15,7 +15,7 @@ from common.genai_controllers import storage_containers, set_storage, set_queue,
 from common.genai_json_parser import get_exc_info
 from common.deployment_utils import BaseDeployment
 from common.services import GENAI_LLM_SERVICE
-from common.utils import load_secrets
+from common.utils import load_secrets, get_error_word_from_exception
 from common.errors.genaierrors import PrintableGenaiError
 from common.models_manager import ManagerModelsConfig
 from endpoints import ManagerPlatform, Platform
@@ -128,7 +128,12 @@ class LLMDeployment(BaseDeployment):
         return parsed_query_metadata
 
     def parse_project_conf(self, project_conf: dict, model: GenerativeModel, platform: Platform):
-        project_conf['x-limits'] = json.loads(project_conf.get('x-limits', "{}"))
+        try:
+            xlimit = project_conf.get('x-limits', "{}")
+            project_conf['x-limits'] = json.loads(xlimit)
+        except json.decoder.JSONDecodeError as ex:
+            error_param = get_error_word_from_exception(ex, xlimit)
+            raise PrintableGenaiError(500, f"X-limits is not json serializable please check near param: <{error_param}>. String: {xlimit}")
         project_conf['platform'] = platform.MODEL_FORMAT
         project_conf['model'] = model
         return ProjectConf(**project_conf).model_dump(exclude_unset=True, exclude_none=True)

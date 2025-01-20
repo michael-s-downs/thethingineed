@@ -122,7 +122,7 @@ class FlowMgmtCheckEndDeployment(BaseDeployment):
                 self.logger.debug(f"Checking status of process of {dataset_status_key}")
                 error = get_status_code(redis_status, dataset_status_key, format_json=True) == ERROR
                 self.logger.info(f"Status of process of {dataset_status_key} is an error -> '{error}'")
-            except:
+            except Exception:
                 self.logger.error(f"Process {dataset_status_key} not exists in Redis.", exc_info=get_exc_info())
                 error = True
 
@@ -134,7 +134,7 @@ class FlowMgmtCheckEndDeployment(BaseDeployment):
                     update_full_status(redis_status, dataset_status_key, status_code, message_to_send)
 
                     delete_status(redis_timeout, timeout_id)
-                except:
+                except Exception:
                     message_to_send = "No defined message error in Redis"
                     status_code = ERROR if error else PROCESS_FINISHED
                     self.logger.error(f"[Process {dataset_status_key}] Error to read of Redis '{timeout_id}'", exc_info=get_exc_info())

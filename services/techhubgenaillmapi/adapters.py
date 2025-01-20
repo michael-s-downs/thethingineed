@@ -110,7 +110,7 @@ class BaseAdapter(ABC):
             content = image_dict['image']['base64']
             try:
                 img = Image.open(io.BytesIO(base64.decodebytes(bytes(content, "utf-8"))))
-            except:
+            except Exception:
                 raise PrintableGenaiError(400, "Image must be a valid base64 format")
 
         media_type = img.format
@@ -211,7 +211,7 @@ class GPT4VAdapter(BaseAdapter):
         :return: int - Number of tokens
         """
         # Get the base64 image resized and the size
-        base64_img, size, resized_image_route, resized_image  = self._get_base64_image(image_dict)
+        base64_img, _, resized_image_route, resized_image  = self._get_base64_image(image_dict)
         
         if not image_dict.get('n_tokens'):
             if image_dict['image'].get('detail') == "low":
@@ -340,7 +340,7 @@ class Claude3Adapter(BaseAdapter):
             raise PrintableGenaiError(400, "Detail parameter not allowed in Claude vision model")
 
         # Get the base64 image resized and the size
-        base64_img, size, resized_image_route, resized_image  = self._get_base64_image(image_dict)
+        base64_img, _, resized_image_route, resized_image  = self._get_base64_image(image_dict)
 
         #TODO - Check what are they doing with image tokens calculation (this way appears in the api)
         if not image_dict.get('n_tokens'):
@@ -424,7 +424,7 @@ class NovaAdapter(BaseAdapter):
             raise PrintableGenaiError(400, "Detail parameter not allowed in Nova vision model")
 
         # Get the base64 image resized and the size
-        base64_img, size, resized_image_route, resized_image  = self._get_base64_image(image_dict)
+        base64_img, _, resized_image_route, resized_image  = self._get_base64_image(image_dict)
 
         #TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
         if not image_dict.get('n_tokens'):
