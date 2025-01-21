@@ -29,6 +29,7 @@
     - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] File sizes now calculated from local files instead storage
+  - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
   - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:

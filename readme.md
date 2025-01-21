@@ -171,6 +171,7 @@ Below is a list of all the parameters that can be included in the request body, 
       * <b>system</b> (optional): Variable for chat-based models
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
       * <b>num_retries</b> (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 10 by default
+      * <b>force_continue</b> (optional): If an error is raised by the LLM component in a particular page, force the document to index the rest of the pages received. If not, the 'llm-ocr' process is stopped and an error is raised.
 * <b>response_url</b> (required): Accessible endpoint to receive asynchronous response as callback when indexing process finishes. The service will send a POST message with these parameters:
   - <b>status</b>: Indicates if the final status of the indexing process, the value can be “Finished” or “Error”.
   - <b>error</b>: Description of the error; this parameter is only sent when an error occurs.

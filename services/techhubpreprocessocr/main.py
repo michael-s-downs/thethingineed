@@ -259,7 +259,9 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.info("Uploading files to storage.")
                 upload_docs['text'].append((path_file_text, path_file_text))
                 upload_docs['txt'].append((path_file_txt, path_file_txt))
-                for paths in upload_docs.values():
+                for key, paths in upload_docs.items():
+                    if ocr == "llm-ocr" and key not in ["text", "txt"]:
+                        continue # In llm-ocr cells paragraphs words tables and lines are not extracted 
                     upload_files(workspace, paths)
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error uploading files to storage", exc_info=get_exc_info())

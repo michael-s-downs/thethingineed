@@ -127,7 +127,7 @@ class GPTPlatform(Platform):
         """
         try:
             data_call = self.generativeModel.parse_data()
-            self.logger.info(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
+            self.logger.debug(f"Calling {self.MODEL_FORMAT} service with data {data_call}")
 
             answer = requests.post(url=self.url, headers=self.headers, data=data_call, timeout=self.timeout)
 
