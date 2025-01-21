@@ -15,8 +15,8 @@ from azure.storage.queue import QueueClient
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 
-timeout_connector = os.getenv('QUEUE_TIMEOUT_CONECTOR', 1)  # seconds
-timeout_operation = int(os.getenv('QUEUE_TIMEOUT_OPERATION', 0)) or None  # seconds
+timeout_connector = int(os.getenv('QUEUE_TIMEOUT_CONECTOR', "1"))  # seconds
+timeout_operation = int(os.getenv('QUEUE_TIMEOUT_OPERATION', "0")) or None  # seconds
 
 class SingletonABCMeta(ABCMeta):
     _instances = {}
