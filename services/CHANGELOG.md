@@ -24,7 +24,7 @@
   - [Improvement] When exception if temporal files created, those are deleted
 - preprocess-ocr:
   - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.8)
-    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT' and 'Q_GENAI_LLMQUEUE_OUTPUT' for queue mode, 'URL_LLM' for API mode
+    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
     - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
     - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
