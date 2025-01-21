@@ -233,7 +233,7 @@ class TestMain(unittest.TestCase):
         os.environ['Q_GENAI_LLMQUEUE_INPUT'] = "test_q"
         with patch('main.QUEUE_MODE', True):
             deploy = get_llm_deployment()
-            assert deploy.Q_IN == ('aws', 'test_q')
+            assert deploy.Q_IN == (os.getenv('PROVIDER', 'aws'), 'test_q')
             assert len(deploy.templates_names) > 0
 
     def test_x_limits_passed(self):

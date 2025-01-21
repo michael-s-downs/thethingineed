@@ -6,6 +6,7 @@ import re, copy, json
 
 import botocore.exceptions
 # Installed imports
+import urllib3
 import pytest
 from unittest.mock import MagicMock, patch, mock_open
 import requests
@@ -129,7 +130,10 @@ class TestManagerPlatform:
 
 class TestAzurePlatform:
     def setup_method(self):
-        self.azure_platform = AzurePlatform(aws_credentials, models_urls, timeout=60)  # Initialize your class here
+        models_config_manager = MagicMock()
+        models_config_manager.get_different_model_from_pool.return_value = model
+        models_config_manager.get_model_api_key_by_zone.return_value = "mock_api"
+        self.azure_platform = AzurePlatform(aws_credentials, models_urls, timeout=60,num_retries=1,models_config_manager=models_config_manager)  # Initialize your class here
 
     def test_init(self):
         assert self.azure_platform.aws_credentials == aws_credentials
@@ -238,7 +242,10 @@ class TestAzurePlatform:
 
 class TestBedrockPlatform:
     def setup_method(self):
-        self.bedrock_platform = BedrockPlatform(aws_credentials, models_urls, timeout=60)
+        models_config_manager = MagicMock()
+        models_config_manager.get_different_model_from_pool.return_value = claude_model
+        models_config_manager.get_model_api_key_by_zone.return_value = "mock_api"
+        self.bedrock_platform = BedrockPlatform(aws_credentials, models_urls, timeout=60, num_retries=1, models_config_manager=models_config_manager)  # Initialize your class here
 
     def test_init(self):
         assert self.bedrock_platform.aws_credentials == aws_credentials
@@ -279,10 +286,12 @@ class TestBedrockPlatform:
             body = MagicMock()
             body.read.return_value = json.dumps({"output": {"message": {"content": [{"text": "asdf"}]}}, "usage": {"totalTokens": 1000, "input_tokens": 454, "output_tokens": 5454}})
             mock_post.return_value.invoke_model.return_value = {"body": body}
-            generative_model = ChatNova(**nova_model)
-            generative_model.set_message(message_dict)
-            self.bedrock_platform.set_model(generative_model)
-            result = generative_model.get_result(self.bedrock_platform.call_model())
+            model = copy.deepcopy(nova_model)
+            model['pool_name'] = None
+            generativeModel = ChatNova(**model)
+            generativeModel.set_message(message_dict)
+            self.bedrock_platform.set_model(generativeModel)
+            result = generativeModel.get_result(self.bedrock_platform.call_model())
             assert result['status_code'] == 200
             assert result['result']['answer'] == "asdf"
     @patch("endpoints.provider", "azure")
@@ -321,7 +330,7 @@ class TestBedrockPlatform:
         generative_model.set_message(message_dict)
         self.bedrock_platform.set_model(generative_model)
         with patch('boto3.client') as mock_func:
-            mock_func.side_effect = requests.exceptions.Timeout
+            mock_func.side_effect = urllib3.exceptions.ReadTimeoutError(MagicMock(), "test", "test")
             response = self.bedrock_platform.call_model()
             result = generative_model.get_result(response)
         assert result['status_code'] == 408

@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 # Local imports
 from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
-
+from generatives import ChatGPTVision
 
 gpt_v_model = {
     "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
@@ -275,8 +275,9 @@ class TestMultimodalObject():
 class TestProjectConf():
     def test_x_limits_empty(self):
         with patch("requests.get") as patch_requests:
-            patch_requests.return_value = MagicMock(text='{"limits": []}')
-            project_conf = ProjectConf(**{"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"})
+            patch_requests.return_value = MagicMock(text='{"limits": [{\"limit\": 23, \"resource": \"aa\", \"current\": 0}]}', status_code=200,)
+            model = ChatGPTVision(**gpt_v_model)
+            project_conf = ProjectConf(**{"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": {}, "model": model, "platform": "azure"})
 
 
 @patch("io_parsing.QUEUE_MODE", True)

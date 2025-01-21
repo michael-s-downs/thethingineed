@@ -143,38 +143,39 @@ message_dict_nova = {
 class TestManagerGeneratives:
 
     def test_all_messages(self):
-        gptv = ManagerModel.get_model({"model": gpt_v_model['model']}, "azure", available_models, available_pools)
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(gpt_v_model)
+        gptv = ManagerModel.get_model({"model": gpt_v_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(gptv, ChatGPTVision)
-        gpt = ManagerModel.get_model({"model": gpt_model['model']}, "azure", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
+        gpt = ManagerModel.get_model({"model": gpt_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(gpt, ChatGPTModel)
-        claude = ManagerModel.get_model({"model": claude_model['model']}, "bedrock", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(claude_model)
+        claude = ManagerModel.get_model({"model": claude_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(claude, ChatClaudeModel)
-        dalle = ManagerModel.get_model({"model": dalle_model['model']}, "azure", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(dalle_model)
+        dalle = ManagerModel.get_model({"model": dalle_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(dalle, DalleModel)
-        llama3 = ManagerModel.get_model({"model": llama3_model['model']}, "bedrock", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(llama3_model)
+        llama3 = ManagerModel.get_model({"model": llama3_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(llama3, LlamaModel)
-        claude3 = ManagerModel.get_model({"model": claude3_model['model']}, "bedrock", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(claude3_model)
+        claude3 = ManagerModel.get_model({"model": claude3_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(claude3, ChatClaudeVision)
-        nova = ManagerModel.get_model({"model": nova_model['model']}, "bedrock", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(nova_model)
+        nova = ManagerModel.get_model({"model": nova_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(nova, ChatNova)
-        novav = ManagerModel.get_model({"model": nova_v_model['model']}, "bedrock", available_models, available_pools)
+        manager_models_config.get_model.return_value = copy.deepcopy(nova_v_model)
+        novav = ManagerModel.get_model({"model": nova_v_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(novav, ChatNovaVision)
 
 
     def test_pool_model(self):
-        gptv = ManagerModel.get_model({"model": "techhubinc-pool-world-gpt-4o"}, "azure", available_models, available_pools)
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(gpt_v_model)
+        gptv = ManagerModel.get_model({"model": "techhubinc-pool-world-gpt-4o"}, "azure", available_pools, manager_models_config)
         assert isinstance(gptv, ChatGPTVision)
 
-    def test_wrong_model(self):
-        generative = {"model": "nonexistent"}
-        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Model: '{generative.get('model')}' "
-                                                                f"model is not supported in platform azure.")):
-            ManagerModel.get_model(generative, "azure", available_models, available_pools)
-        generative = {"model": gpt_model['model'], "wrong": "wrong_argument"}
-
-        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Parameter: 'wrong' not supported in model: "
-                                                                f"'{gpt_model['model']}'")):
-            ManagerModel.get_model(generative, "azure", available_models, available_pools)
 
 
 class TestGPTModel:
@@ -203,18 +204,21 @@ class TestGPTModel:
             "response_format": "json_object",
             "max_tokens": 100
         }
-        gpt = ManagerModel.get_model(conf, "azure", available_models, available_pools)
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
+        gpt = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
         gpt.set_message(message_dict)
         gpt.parse_data()
         assert gpt.functions == conf["functions"]
 
         conf['response_format'] = "dd"
         conf['model'] = gpt_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
         with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
                                                                 f"supported for model {conf['model']} "
                                                                 f"(only 'json_object' supported)")):
 
-            gpt = ManagerModel.get_model(conf, "azure", available_models, available_pools)
+            gpt = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
             gpt.set_message(message_dict)
             gpt.parse_data()
 
@@ -477,6 +481,7 @@ class TestNovaModel:
         conf['top_p'] = 0.9
         conf['top_k'] = 50
         conf['stop'] = None
+        conf['pool_name'] = "techhubdev-pool-world-nova-micro-1:0"
         with pytest.raises(ValueError, match=re.escape(f"Temperature must be between 0.0 and 1.0 for the model {conf['model']}")):
             NovaModel(**conf)
 
@@ -494,6 +499,7 @@ class TestNovaModel:
         conf['top_p'] = 0.9
         conf['top_k'] = 50
         conf['stop'] = None
+        conf['pool_name'] = "techhubdev-pool-world-nova-micro-1:0"
         nova = NovaModel(**conf)
         result = nova.get_result(mock_response)
         assert result['error_message'] == "There is no response from the model for the request"

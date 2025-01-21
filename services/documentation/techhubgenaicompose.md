@@ -632,7 +632,22 @@ Body example:
 <br/>
 
 #### Retrieval
+<b>(<i>Warning!</i>):</b> The API specification for genai-inforetrieval action call will be deprecated in the next version. The new format is:
 
+```json
+{
+    "indexation_conf": {
+        "index": "myindex",
+        "rescoring_function": "loglength",
+        "query": "What is the function of retrieval?",
+        "top_k": 2,
+        "filters": {
+        },
+        "models": [
+        ]
+    }
+}
+```
 The retrieval system call's configuration is performed within the compose configuration template for the corresponding index. While retrieval is an action internally, its significance has led to the creation of a dedicated section. It can obtain chunks from the documents related to the query or just get the entire documents.
 
 For example, in the base_template, the retrieval configuration part is as follows:
@@ -835,7 +850,22 @@ The following would be an example of a query containing the three types:
 *Images formats allowed: jpeg, png, gif and webp.*
 
 ### Examples
+<b>(<i>Warning!</i>):</b> The API specification for genai-inforetrieval action call will be deprecated in the next version. The new format is:
 
+```json
+{
+    "indexation_conf": {
+        "index": "myindex",
+        "rescoring_function": "loglength",
+        "query": "What is the function of retrieval?",
+        "top_k": 2,
+        "filters": {
+        },
+        "models": [
+        ]
+    }
+}
+```
 #### Calling the LLM without retrieval
 
 This use case corresponds to the simplest request, this is calling for the LLM with a query and without retrieval.

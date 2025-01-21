@@ -51,7 +51,7 @@ The RETRIEVAL module is designed to facilitate the extraction of documents or in
 ### Key features
 
 - Synchronous Document Retrieval: Collect documents or information from documents previously indexed in a vector database.
-- Configurable Parameters: Customize retrieval operations with various parameters like index_conf, rescoring_function, top_k, and filters.
+- Configurable Parameters: Customize retrieval operations with various parameters like indexation_conf, rescoring_function, top_k, and filters.
 - Model Utilization: Specify models for retrieval, including BM25, sentence-transformers, and text-embedding models.
 - Rescoring Functions: Improve search results with different rescoring functions such as mean, loglength, norm, etc.
 
@@ -96,7 +96,7 @@ Calling Retrievals needs at least an index to refer to and the question from the
 
 ```json
 {
-    "index_conf": {
+    "indexation_conf": {
         "index": "myindex",
         "rescoring_function": "loglength",
         "query": "What is the function of retrieval?",
@@ -210,7 +210,7 @@ The following is the body request for a retrieval:
 
 ```json
 {
-    "index_conf": {
+    "indexation_conf": {
         "index": "myindex",
         "rescoring_function": "loglength",
         "query": "What is the function of retrieval?",
@@ -564,7 +564,7 @@ The response would be a list of index names along with the models associated wit
 
     ```json
     {
-        "index_conf": {
+        "indexation_conf": {
             "index": "myindex",
             "query": "How many employees does NTT DATA have?",
             "top_k": 2,
@@ -657,7 +657,7 @@ Returns:
 
 ### Parameters explanation
 
-* **index_conf** (required): configuration of the index:
+* **indexation_conf** (required): configuration of the index:
   - **index** (required): Name of index.
   - **query** (required): This is the question we want the retrieval to get information of.
   - **rescoring_function** (optional): It changes the way to ponderate semantic search vs bm25 to improve results. It can be:
