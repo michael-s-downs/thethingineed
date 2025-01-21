@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.5.6
+genai-sdk-services==0.5.7
 elasticsearch==8.13.2
 langdetect==1.0.9
 # python-magic-bin==0.4.14
