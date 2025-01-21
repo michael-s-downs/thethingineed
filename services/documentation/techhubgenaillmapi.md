@@ -857,6 +857,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
     ```
 
 - **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+
     ```json
     {
         "template": {
