@@ -168,7 +168,7 @@ class TemplateManager(AbstractManager):
 
     def load_template(self):
         """
-        Loads the template stored in S3 that's going to be used.
+        Loads the template stored in cloud that's going to be used.
         """
         name = self.name
         if isinstance(self.name, list):
