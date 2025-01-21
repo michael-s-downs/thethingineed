@@ -23,12 +23,13 @@
     - If text has been extracted (for language detection) it will not be uploaded
   - [Improvement] When exception if temporal files created, those are deleted
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.6)
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.8)
     - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT' and 'Q_GENAI_LLMQUEUE_OUTPUT' for queue mode, 'URL_LLM' for API mode
     - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
     - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] File sizes now calculated from local files instead storage
+  - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
   - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
