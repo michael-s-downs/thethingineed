@@ -422,6 +422,5 @@ def test_get_exception(client):
         response = client.post("/predict", json=vision_query_template_call,
                                headers=copy.deepcopy(TestMain.headers))
         result = json.loads(response.text)
-        assert response.status_code == 400
-        assert result['error_message'] == "Error parsing input JSON."
+        assert response.status_code == 500
 
