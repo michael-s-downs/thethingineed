@@ -222,7 +222,7 @@ class ParserInfoindexing(Parser):
             unique_embedding_models.append(model.get('embedding_model'))
 
     def get_index_metadata(self):
-       self.index_metadata= self.index_conf['index_metadata']
+       self.index_metadata= self.index_conf.get('index_metadata')
 
 
 
