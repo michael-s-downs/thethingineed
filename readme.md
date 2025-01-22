@@ -160,6 +160,8 @@ Below is a list of all the parameters that can be included in the request body, 
 
   * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map-searchmodels_mapjson). 
   * <b>metadata</b> (optional): Custom metadata to associate to all documents sent in this call. Currently, if you want to specify different values for each document, you will have to send each document individually in different calls.
+  * <b>index_metadata</b> (optional):  This parameter, which can be either true to include only the filename and users` metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings generation.
+
 * <b>preprocess_conf</b>
   * <b>ocr_conf</b>
     * <b>ocr</b> (optional): OCR type that will be used if is necessary (or 'force_ocr' passed as 'True'). The available types are: 'azure-ocr' (FormRecognizer), 'aws-ocr' (Amazon Textract), 'tesseract-ocr' (TesseractOCR) 'llm-ocr' (llm vision based OCR using LLMAPI component)

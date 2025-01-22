@@ -33,6 +33,10 @@
   - [Improvement] Resize image method generalization and moved to 'utils.py'
   - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
+  - [New] New parameter 'index_metadata'
+    - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
+    - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
+    - If omitted or set to 'false', no metadata will be included
   - [Improvement] JSON flow body refactor
 - genai-llmapi:
   - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)

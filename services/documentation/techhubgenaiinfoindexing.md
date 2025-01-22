@@ -135,6 +135,99 @@ Once explained the overlapping, there are 3 chunking methods to split the text i
 
   ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
 
+## Embeddings Generation
+Embeddings are vector representations of the input text, created from the content of individual chunks. They can optionally be enriched with metadata, ensuring that the embeddings capture both the textual content and relevant contextual information.
+
+The process of creating embeddings involves several steps:
+
+* **Text chunking:** When dealing with large text, the first step is to divide it into smaller manegeable chunks using the methods mentioned above: `Simple`, `Surrounding Context Window` or `Recursive`. These methods ensure that each chunk preserves contextual information through the use of chunk overlap, which unifies portions of consecutive chunks.
+* **Metadata Integration:** After the text is chunked, metadata can be attached to each chunk if desired in order to provide additional context about the source or attributes of the text. The metadata added can either be the one defined by the user (using the `metadata` parameter) or the metadata of the chunk ( such as `uri`, `document_id`, `snippet_number`...).  This step is controlled by the `index_metadata` parameter:
+  * If set to `true`, only basic metadata, such as the filename and the metadata provided by the user, will be included.
+  * If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.
+  * And if omitted or set to `false`, no additional metadata will be included.
+* **Embedding Generation:** Each chunk, potentially enriched with metadtaa, is then passed through an embedding model that will be responsible for converting each chunk into a numerical vector that will represent its semantic meaning
+
+
+In this example the user provides some metadata such as `year` `category` and `day`, but index_metadata is set as false:
+````json
+"indexation_conf": {
+      "vector_storage_conf": {
+        "index": "example",
+        "vector_storage": "elastic-develop-local",
+        "modify_index_docs": {}
+      },
+      "chunking_method": {
+        "method": "simple",
+        "window_overlap": 10,
+        "window_length": 300
+      },
+      "models": [
+        {
+          "alias": "techhub-pool-world-ada-002",
+          "embedding_model": "text-embedding-ada-002",
+          "platform": "azure"
+        }
+      ],
+      "metadata": {
+        "year": "2024",
+        "category": "turism",
+        "day": "monday"
+      }
+    }
+    "index_metadata": false
+},
+
+````
+So in this case only the text content of the chunk will be processed by the embedding model:
+
+```
+['{chunk_content}]
+```
+For the upper case would be:
+```
+['Living in Zaragoza today is a blend of rich history and modern vibrancy. As one of Spain\'s largest cities, it offers a high quality of life with a relatively low cost compared to bigger cities like Madrid or Barcelona. The city boasts a mix of historic landmarks, such as the Basilica del Pilar and the Aljaferia Palace, alongside contemporary architecture and urban development. Zaragoza\'s streets are alive with cultural events, festivals, and a thriving culinary scene, where tapas and local specialties like "ternasco" are celebrated. Its strategic location between Madrid, Barcelona, Valencia, and Bilbao makes it an important transport hub, yet it retains the charm of a city that\'s easy to navigate and welcoming to both locals and visitors.\nIn recent years, Zaragoza has embraced sustainability and innovation, becoming a smart city focused on renewable energy and efficient urban planning. The riverbanks of the Ebro have been revitalized into green spaces, perfect for walking, cycling, or enjoying outdoor activities. The city\'s public transport, including trams and buses, is modern and reliable, making it easy to commute. Zaragoza is also home to a vibrant student population, thanks to its renowned university, adding youthful energy to its streets. Despite its modernization, the city retains a strong sense of community and tradition, with warm and friendly people who value their heritage while looking forward to the future.']
+```
+
+In this other example the `index_metadata` parameter includes `filename`,  `year` and  `snippet_number`:
+
+````json
+"indexation_conf": {
+      "vector_storage_conf": {
+        "index": "example",
+        "vector_storage": "elastic-develop-local",
+        "modify_index_docs": {}
+      },
+      "chunking_method": {
+        "method": "simple",
+        "window_overlap": 10,
+        "window_length": 300
+      },
+      "models": [
+        {
+          "alias": "techhub-pool-world-ada-002",
+          "embedding_model": "text-embedding-ada-002",
+          "platform": "azure"
+        }
+      ],
+      "metadata": {
+        "year": "2024",
+        "category": "turism",
+        "day": "monday"
+      }
+    }
+    "index_metadata": ["filename", "year", "snnipet_number"]
+},
+
+````
+So in this case the content that will be processed by the embedding model will include the metadata fields specified in the `index_metadata` parameter:
+```
+['{metadata_key_0}: {metadata_value_0}\n{metadata_key_n}: {metadata_value_n}\n\n{chunk_content}']
+```
+For the upper case would be:
+````
+['year: 2024\nfilename: nowadays_zaragoza_simple.txt\nsnippet_number: 0\n\nLiving in Zaragoza today is a blend of rich history and modern vibrancy. As one of Spain\'s largest cities, it offers a high quality of life with a relatively low cost compared to bigger cities like Madrid or Barcelona. The city boasts a mix of historic landmarks, such as the Basilica del Pilar and the Aljaferia Palace, alongside contemporary architecture and urban development. Zaragoza\'s streets are alive with cultural events, festivals, and a thriving culinary scene, where tapas and local specialties like "ternasco" are celebrated. Its strategic location between Madrid, Barcelona, Valencia, and Bilbao makes it an important transport hub, yet it retains the charm of a city that\'s easy to navigate and welcoming to both locals and visitors.\nIn recent years, Zaragoza has embraced sustainability and innovation, becoming a smart city focused on renewable energy and efficient urban planning. The riverbanks of the Ebro have been revitalized into green spaces, perfect for walking, cycling, or enjoying outdoor activities. The city\'s public transport, including trams and buses, is modern and reliable, making it easy to commute. Zaragoza is also home to a vibrant student population, thanks to its renowned university, adding youthful energy to its streets. Despite its modernization, the city retains a strong sense of community and tradition, with warm and friendly people who value their heritage while looking forward to the future.']
+````
+
 ## Component Reference
 If infoindexing is working with the whole toolkit, the request will be done by API call to integration and the response will be given by checkend as an async callback (also written in redis database).
 
@@ -250,7 +343,10 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
     - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
     - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
-  - **index_metadata**:  This parameter, which can be either true to include only the filename metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings.
+  - **index_metadata**: This parameter can have various values to specify how metadata will be included in the embeddings:  
+    - If set to `true`, only the filename metadata and the metadata provided by the user will be included.  
+    - If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.  
+    - If omitted or set to `false`, no metadata will be included. 
 
 - **specific**
   - **dataset**
@@ -571,6 +667,9 @@ There are several parameters that the indexing service receives in the queue req
         - **alias:** Model or pool of models to index (equivalent to name in config file).
         - **embedding_model:** Type of embedding that will calculate the vector of embeddings.
         - **platform:** Provider used to store and get the information.
+    - **metadata**: This parameter allows users to add custom metadata
+    - **index_metadata**:  This parameter, which can be either true to include the filename and users` metadata or a list specifying the metadata fields to include. Is used to add metadata to the embeddings generation.
+
     
 
 However, the necessary ones are detailed in the readme file.
