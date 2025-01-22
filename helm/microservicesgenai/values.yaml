@@ -119,3 +119,5 @@ keda:
   keda_type:
   min_replicas:
   max_replicas:
+  polling_interval: 10
+  cooldown_period: 30
