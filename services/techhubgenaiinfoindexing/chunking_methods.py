@@ -65,10 +65,11 @@ class ChunkingMethod(ABC):
             # Must be added here as in titles_tables text is changed
             ids_node = self._add_ids(titles_tables_node, counter)
             # Exclude when embedding generation
-            if index_metadata is True:
-                ids_node.excluded_embed_metadata_keys = mandatory_metadata_keys
-            elif isinstance(index_metadata, list):
+
+            if isinstance(index_metadata, list):
                 ids_node.excluded_embed_metadata_keys = list(set(ids_node.metadata.keys()) - set(index_metadata))
+            elif index_metadata:
+                ids_node.excluded_embed_metadata_keys = mandatory_metadata_keys
             else:
                 ids_node.excluded_embed_metadata_keys = list(ids_node.metadata.keys())
             ids_node.excluded_llm_metadata_keys = list(ids_node.metadata.keys())
