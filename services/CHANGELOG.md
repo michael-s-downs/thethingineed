@@ -3,7 +3,7 @@
 
 # Changelog
 
-## v3.0.0 (2025-01-17)
+## v3.0.0 (2025-01-23)
 - integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
@@ -22,6 +22,7 @@
     - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
     - If text has been extracted (for language detection) it will not be uploaded
   - [Improvement] When exception if temporal files created, those are deleted
+  - [Improvement] Required more memory for large documents (3GB recommended)
 - preprocess-ocr:
   - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.8)
     - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
