@@ -17,12 +17,13 @@
   - [Calling LLM API](#calling-llm-api)
     - [Simple prediction call:](#simple-prediction-call)
       - [Query types](#query-types)
+    - [Queue format:](#queue-format)
     - [Get models:](#get-models)
       - [Parameters](#parameters)
       - [Examples](#examples)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for */predict*](#request-and-response-formats-for-predict)
+    - [Request and Response Formats for /predict](#request-and-response-formats-for-predict)
     - [Parameters explanation](#parameters-explanation)
     - [Persistence format](#persistence-format)
     - [Error Handling](#error-handling)
@@ -581,6 +582,70 @@ Images formats allowed: *jpeg, png, gif* and *webp*.
 
     The parameter 'query' (in this example "Google Cloud") will be replaced in the template "$query".
 
+### Queue format:
+The LLMAPI component has another way to do the calling (by queue) which requires different parameters and added environment variables in order to do the call.
+
+When llmapi is working with queue format, the ordinary call (with 'query_metadata', 'model_metadata'...) must be written in a json file located in the cloud or in a local path, as the content of the call will be read from there.
+
+The parameters passed in the queue message must be:
+* <b>queue_metadata</b> (required):
+  * <b>input_file</b> (required): Location of the input file to read the call from.
+  * <b>output_file</b> (required): Location of the output file in which the output of the call will be written.
+  * <b>location_type</b> (required): Whether the files are be read from the cloud (storage) or local.
+* <b>headers</b> (required):
+  * <b>x-reporting</b> (required): url to report to 
+  * <b>x-tenant</b> (required): tenant where you have the deployed the module
+  * <b>x-department</b> (required): user identifier
+  * <b>x-limits</b> (optional): If not passed, the models limits will be consulted from the apigw (using the x-reporting url). If passed must be a formatted string, see the format in  [X-limits header](#x-limits-header). (<b>In this case</b> we recommend to not pass this parameter and use it with apigw consulting as last update will be used)
+
+A call example could be:
+
+```json
+{
+    "queue_metadata":{
+        "input_file": "route/to/input/call/file",
+        "output_file": "route/to/answer/output/file",
+        "location_type": "cloud"
+    },
+    "headers": {
+        "x-tenant": "develop",
+        "x-department": "main",
+        "x-reporting": "https://reportingurl.com",
+        "x-limits": "{\"llmapi/azure/gpt-3.5-turbo-16k/tokens\":{\"Limit\":400, \"Current\":450}}"
+    }
+}
+```
+
+In the output queue, this message will be written:
+```json
+{
+  "status": "finished",
+  "status_code": 200,
+  "result": "route/to/answer/output/file",
+  "tracking": {
+    "pipeline": [
+      {
+        "ts": 1737372355.587,
+        "step": "GENAI_LLMQUEUE",
+        "type": "INPUT"
+      },
+      {
+        "ts": 1737372372.202,
+        "step": "GENAI_LLMQUEUE",
+        "type": "OUTPUT"
+      }
+    ]
+  }
+}
+```
+In the result key, the path of the output file is written (if error, the error message will be written there too)
+Finally there are some mandatory environment variables when llmqueue is running:
+
+- QUEUE_MODE: To choose if the llmapi runs in queue or in API format
+- QUEUE_DELETE_ON_READ: True if delete messages when read wanted (recommended to True)
+- Q_GENAI_LLMQUEUE_INPUT: Name of the input queue
+- Q_GENAI_LLMQUEUE_OUTPUT: Name of the output queue
+
 ### Get models:
 
 Now, we are going to use the <i>/get_models (GET)</i> method from the LLM API. 
@@ -879,6 +944,7 @@ The response structure must be as follows:
 * platform_metadata (required):
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
   - timeout (optional): Maximum time to response. By default is 30s if this value is not passed.
+  - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
 
 Specifically for DALLE the request parameters are:
 
@@ -901,6 +967,7 @@ Specifically for DALLE the request parameters are:
 * platform_metadata: Data related to the platform where the language model stays
   - platform: Name of the platform that will be used [azure, bedrock, openai]
   - timeout: Maximum waiting time of the request default as 60
+  - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
 
 ### Persistence format
 Persistence is a list of previous interactions in pairs (user - assistant) written along the conversation with the model. If the chat is too long (number of tokens exceeded), the oldest ones will be deleted. The **_context_** parameter, has priority over this one in order to fit the number of tokens for the model. In images, each model has a maximum (GPT's=10, Claude3=20). An example of basic persistence would be:
@@ -1269,6 +1336,7 @@ LLMAPI needs 3 config files to run.
                     "model": "genai-gpt4o-EastUs",
                     "model_type": "gpt-4o",
                     "max_input_tokens": 128000,
+                    "max_img_size_mb": 20.0,
                     "zone": "genAI-EastUs",
                     "message": "chatGPT-v",
                     "api_version": "2024-02-15-preview",
@@ -1300,22 +1368,23 @@ LLMAPI needs 3 config files to run.
     }
     ```
 - Each parameter for a model configuration is:
-    - model: name of the model. In **azure** platform will be the deployment name of the model and in **bedrock** a name decided by the user (used to distinguish between same models in different region).
-    - model_id: as in **bedrock** platform there are no deployment names, each model is defined by the model_id (equal in all models from the same type) and the zone where the model has been deployed
-    - model_type: defined by the user (same models must have the same model_type)
-    - max_input_tokens: maximum number of tokens accepted by the model as input
-    - zone: place where the model has been deployed (used to get the api-keys)
-    - message: type of message that will be used in order to adapt the input to the model requirements. It could be:
-        - chatClaude: Claude models with text capabilities
-        - chatClaude-v: Claude models with text and vision capabilities
-        - chatGPT: ChatGPT models with text capabilities
-        - chatGPT-v: ChatGPT with text and vision capabilities
-        - dalle3: Dall-E 3 models (image generation)
-        - chatLlama3: Llama 3 and 3-1 models
-        - chatNova-v: Nova models with text and vision capabilities
-        - chatNova: Nova models with text capabilities
-    - api_version: version of the api (model) that is being used
-    - model_pool: pools the model belongs to
+    - <b>model:</b> name of the model. In <b>azure</b> platform will be the deployment name of the model and in <b>bedrock</b> a name decided by the user (used to distinguish between same models in different region).
+    - <b>model_id:</b> as in <b>bedrock</b> platform there are no deployment names, each model is defined by the model_id (equal in all models from the same type) and the zone where the model has been deployed
+    - <b>model_type:</b> defined by the user (same models must have the same model_type)
+    - <b>max_input_tokens:</b> maximum number of tokens accepted by the model as input
+    - <b>max_img_size_mb:</b><i> (only in <b>vision</b> models)</i> maximum size in megabytes that the model accepts per one image
+    - <b>zone:</b> place where the model has been deployed (used to get the api-keys)
+    - <b>message:</b> type of message that will be used in order to adapt the input to the model requirements. It could be:
+        - <b>chatClaude:</b> Claude models with text capabilities
+        - <b>chatClaude-v:</b> Claude models with text and vision capabilities
+        - <b>chatGPT:</b> ChatGPT models with text capabilities
+        - <b>chatGPT-v:</b> ChatGPT with text and vision capabilities
+        - <b>dalle3:</b> Dall-E 3 models (image generation)
+        - <b>chatLlama3:</b> Llama 3 and 3-1 models
+        - <b>chatNova-v:</b> Nova models with text and vision capabilities
+        - <b>chatNova:</b> Nova models with text capabilities
+    - <b>api_version:</b> version of the api (model) that is being used
+    - <b>model_pool:</b> pools the model belongs to
 
 - **`default_llm_models.json`**: Stored in src/LLM/conf, this file contains the default models assigned based on the platform when the model parameter is not specified in the process call. The structure is as follows:
 
@@ -1394,7 +1463,7 @@ This class manages the main flow of the component by parsing the input, calling 
 
 ![alt text](imgs/techhubgenaillmapi/llmdeployment.png)
 
-**loaders.py (`ManagerStorage`, `BaseStoragemanager`, `LLMStorageManager`)**
+**storage_manager.py (`ManagerStorage`, `BaseStoragemanager`, `LLMStorageManager`)**
 
 This class is responsible of managing the operations with all files associated with the llmapi process in the cloud storage; this includes the [configuration files](#configuration-files) like models and templates/prompts.
 
@@ -1445,7 +1514,7 @@ In the following diagram flows, each color will represent the following files:
 
 ![alt text](imgs/techhubgenaillmapi/flow2.png)
 
-3. Once the platform has been initialized the model is next, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
+3. When a message is received, the first thing done is to adapt it if is a queue_message (and the 'QUEUE_MODE') environment variable is set to 'True'. Then the message is parsed and once the platform has been initialized the model is the following, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
 
 ![alt text](imgs/techhubgenaillmapi/flow3.png)
 

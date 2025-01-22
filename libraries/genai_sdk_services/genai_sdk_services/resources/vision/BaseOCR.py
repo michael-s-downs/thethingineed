@@ -904,7 +904,7 @@ class LLMOCR(BaseOCR):
             raise Exception(f"Error writing to queue {self.queue_input_url}: {response} in {self.provider}")
 
 
-    def _read_llm_responses(self, files) -> dict:
+    def _read_llm_responses(self, files, force_continue) -> dict:
         responses = []
         final_responses = []
         if files:        
@@ -922,12 +922,16 @@ class LLMOCR(BaseOCR):
                             self.qc.write((self.provider, self.queue_output_url), messages[0])
                             time.sleep(0.5)
                     if timestamp != 0.0 and time.time() - timestamp > 180.0:
+                        if force_continue:
+                            break # Not throw exception to not lose the rest and do the merge (for big files purposes)
                         raise Exception(f"Timeout reading file {base_filename} from llmqueue")
                 except Exception as ex:
                     raise Exception(f"Error reading from queue: {ex}")
 
             for response in responses:
                 if response.get('status_code') != 200:
+                    if force_continue:
+                        continue # Skip the file to not lose the rest and do the merge (for big files purposes)
                     raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
                 try:
                     loaded_file = self.sc.load_file((self.provider, self.storage_backend), response['result'])
@@ -952,6 +956,7 @@ class LLMOCR(BaseOCR):
         """
         self._set_credentials()
         llm_params = kwargs.get('llm_ocr_conf', {})
+        force_continue = llm_params.get('force_continue', False)
         query = llm_params.get('query')
         language = llm_params.get('language', "en")
         system = llm_params.get('system')
@@ -1006,19 +1011,24 @@ class LLMOCR(BaseOCR):
             })
             body['query_metadata']['query'] = query_vision
             if self.queue_mode:
-                self._write_llm_request(file, body, headers)
+                try:
+                    self._write_llm_request(file, body, headers)
+                except:
+                    if force_continue:
+                        continue # Skip the file to not lose the rest and do the merge (for big files purposes)
+                    raise Exception(f"Error writing to llmqueue: {file}")
             else:
                 responses.append(self._call_llm(body, headers))
         
         if self.queue_mode:
-            responses = self._read_llm_responses(files)
+            responses = self._read_llm_responses(files, force_continue)
 
         for response, file in zip(responses, files):
             returning_texts.append(response['answer'])
             lines_blocks.append([[]])
             words_blocks.append([[]])
             num_pag = int(file.split("_pag_")[1].split(".")[0])
-            returning_paragraphs.append([[{'text': paragraph, 'r0': 0, 'c0': 0, 'r1': 0, 'c1': 0, 'page': num_pag} for paragraph in response['answer'].split("\n")]])
+            returning_paragraphs.append([[]])
 
         return returning_texts, returning_blocks, returning_paragraphs, words_blocks, returning_tables, lines_blocks
     

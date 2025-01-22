@@ -227,7 +227,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **process_type**: Type of process.
     - **department**: Department assigned to apikey.
     - **report_url**: Url to report metrics to apigw.
-- **index_conf**: Configuration of index process.
+- **indexation_conf**: Configuration of index process.
   - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
     - **vector_storage**: Key to get the configuration of the database from config file.
@@ -293,7 +293,7 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
             "department": "main2",
             "report_url": "http://uhis-cdac-apigw.uhis-cdac/apigw/license/report/24e79c90cfcc46b7b43c36b63012bce9",
         },
-        "index_conf": {
+        "indexation_conf": {
             "vector_storage_conf": {
                 "index": "pruebas_indexing",
                 "vector_storage": "elastic-develop-local",
@@ -301,8 +301,8 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
             },
             "chunking_method": {
                 "method": "simple",
-                "windows_overlap": 10,
-                "windows_length": 300,
+                "window_overlap": 10,
+                "window_length": 300,
             },
             "models": [
                 {
@@ -551,47 +551,9 @@ This class manages the main flow of the component by parsing the input, calling 
 
 This class parses the input json request received from the queue, getting all the necessary parameters.
 
-Below is a list of all the parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Using-with-integration)), while others are internal parameters introduced by the integration service.
+There are several parameters that the indexing service receives in the queue request. Some of these parameters are configured by the user in the input request (see [Using with integration](#Using-with-integration)), while others are internal parameters introduced by the integration service. As explained before, the parameters used in the indexation service are:
 
-* **Project conf:** Configuration of project.
-    - **force_ocr:** <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
-    - **laparams:** Parameter to extract more information in PDFMiner text extraction in preprocess.
-    - **process_id:** Id of process.
-    - **timeout_id:** Id used to control process timeout.
-    - **process_type:** Type of process.
-    - **department:** Department assigned to apikey.
-    - **project_type:** Text/Image type of document.
-    - **report_url:** Url to report metrics to apigw.
-    - **timeout_sender:** Process time for timeout to occur.
-    - **extract_tables:** <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
-    - **csv:** <i>True</i> or <i>False</i>, Indicate if the text is in the CSV file.
-    - **url_sender:** Name or URl to respond.
-* **OCR conf:** Configuration to batch file in OCR.
-    - **batch_lenght:** Size max of pages to batch.
-    - **files_size:** Size max of byte size to batch.
-    - **calls_per_minute:** Number max of call to send OCR.
-* **Dataset conf:** Configuration of dataset.
-    - **dataset_path:** Path of the dataset folder in storage.
-    - **dataset_csv_path:** Path of the dataset csv in storage.
-    - **path_col:** Column of dataset that indicates URL.
-    - **label_col:** Column of dataset that indicates CategoryId.
-    - **dataset_id:** Id of the dataset.
-* **Preprocess conf:** Configuration of preprocess.
-    - **num_pag_ini:** Number of page of document to initialize extraction.
-    - **page_limit:** Total numbers of pages to extract.
-    - **layout_conf:** Configuration to do layout.
-        - **do_lines_text:** <i>True</i> or <i>False</i>, try to extract lines without OCR.
-        - **do_lines_ocr:** <i>True</i> or <i>False</i>, try to extract lines with OCR.
-        - **lines_conf:** Configuration of lines.
-            - **do_lines_results:** <i>True</i> or <i>False</i>, update images with lines and prediction.
-            - **model:** Name of model to predict lines.
-        - **do_titles:** Extract and generate files with only titles.
-        - **do_tables:** Extract and generate files with only tables.
-        - **tables_conf:**
-            - **sep:** Indicate which separator use to generate csv with tables lines.
-* **Origins:** Configuration of origin of resources.
-    - **ocr:** <i>aws-ocr</i> or <i>google-ocr</i>, Types of OCR supported.
-* **Index conf:** Configuration of index process.
+* **indexation_conf:** Configuration of index process.
     - **vector_storage_conf:** Configuration of the vector storage.
         - **index:** Name of index.
         - **vector_storage:** Key to get the configuration of the database from config file.
