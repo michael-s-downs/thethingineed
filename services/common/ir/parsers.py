@@ -14,8 +14,7 @@ from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 
 # Custom imports
 from common.genai_json_parser import (get_project_config, get_dataset_status_key,
-                                      get_do_titles, get_do_tables, get_specific, get_generic,
-                                      get_index_conf, get_exc_info)
+                                      get_do_titles, get_do_tables, get_specific, get_generic, get_exc_info)
 from common.logging_handler import LoggerHandler
 from common.services import PARSERS_SERVICE
 from common.errors.genaierrors import PrintableGenaiError
@@ -126,6 +125,7 @@ class ParserInfoindexing(Parser):
             self.get_vector_storage_conf(vector_storages)
             self.get_chunking_method()
             self.get_models(available_pools, available_models, models_credentials)
+            self.get_index_metadata()
         except KeyError as ex:
             self.logger.debug(f"Error getting indexing params for {self.index_conf}",
                               exc_info=get_exc_info())
@@ -220,6 +220,10 @@ class ParserInfoindexing(Parser):
             if model.get('embedding_model') in unique_embedding_models:
                 raise PrintableGenaiError(400, f"Model '{model.get('embedding_model')}' duplicated")
             unique_embedding_models.append(model.get('embedding_model'))
+
+    def get_index_metadata(self):
+       self.index_metadata= self.index_conf.get('index_metadata')
+
 
 
 class ParserInforetrieval(Parser):

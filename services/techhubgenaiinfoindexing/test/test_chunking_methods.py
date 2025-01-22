@@ -28,7 +28,7 @@ class TestChunkingMethods(unittest.TestCase):
         mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={}), MagicMock(text="chunk 2", metadata={})]
 
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
 
         self.assertEqual(len(result[0]), 2)
         mock_splitter.assert_called_once()
@@ -40,7 +40,7 @@ class TestChunkingMethods(unittest.TestCase):
         mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={}), MagicMock(text="chunk 2", metadata={})]
 
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = ["filename"])
 
         self.assertEqual(len(result[0]), 2)
         mock_splitter.assert_called_once()
@@ -70,7 +70,7 @@ class TestChunkingMethods(unittest.TestCase):
         method = Recursive(window_length=10, window_overlap=2, origin=("origin"), workspace=("workspace"),
                            sub_window_length=5, sub_window_overlap=1)
 
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
 
         self.assertEqual(len(result[0]), 3)  # 2 sub chunks + 1 base node
         self.assertEqual(result[0][0].metadata["index_id"], result[0][2].metadata["index_id"])
@@ -102,9 +102,9 @@ class TestChunkingMethods(unittest.TestCase):
         method = Recursive(window_length=10, window_overlap=2, origin=("origin"), workspace=("workspace"),
                            sub_window_length=5, sub_window_overlap=1)
 
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = False)
 
-        self.assertEqual(len(result[0]), 3)  # 2 sub chunks + 1 base node
+        self.assertEqual(len(result[0]), 3)
         self.assertEqual(result[0][0].metadata["index_id"], result[0][2].metadata["index_id"])
 
     @patch("chunking_methods.SentenceSplitter.get_nodes_from_documents")
@@ -112,7 +112,7 @@ class TestChunkingMethods(unittest.TestCase):
         mock_splitter.return_value = [MagicMock(text="chunk with context", metadata={})]
 
         method = SurroundingContextWindow(window_length=5, window_overlap=2, origin=("origin"), workspace=("workspace"), windows=1)
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
 
         self.assertEqual(len(result[0]), 2)
         self.assertEqual(result[0][0].text, "This is a test document.")
@@ -124,7 +124,7 @@ class TestChunkingMethods(unittest.TestCase):
         mock_splitter.return_value = [MagicMock(text="chunk with context", metadata={})]
 
         method = SurroundingContextWindow(window_length=5, window_overlap=2, origin=("origin"), workspace=("workspace"), windows=1)
-        result = method.get_chunks(self.docs, self.encoding)
+        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
 
         self.assertEqual(len(result[0]), 2)
         self.assertEqual(result[0][0].text, "This is a test document.")
@@ -160,10 +160,9 @@ class TestChunkingMethods(unittest.TestCase):
             "_csv_path": "csv_data/",
         }
 
-        # Simulate loading the header mapping file
         mock_load_file.side_effect = [
-            json.dumps({"pag_1_header_1": "Header 1"}).encode(),  # Header mapping
-            b"CSV content for table 1",  # CSV file content
+            json.dumps({"pag_1_header_1": "Header 1"}).encode(),
+            b"CSV content for table 1",
         ]
 
         origin = "origin_path"
@@ -172,44 +171,36 @@ class TestChunkingMethods(unittest.TestCase):
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
         result_node, updated_sections = method._add_titles_and_tables(node, sections, origin)
 
-        # Assertions for headers
         self.assertEqual(result_node.metadata["sections_headers"], "Header 1")
         self.assertEqual(result_node.text, "This is a test document with  and CSV content for table 1")
         self.assertEqual(updated_sections, "Header 1")
 
-        # Assertions for CSV
         self.assertEqual(result_node.metadata["tables"], True)
         self.assertEqual(result_node.text, "This is a test document with  and CSV content for table 1")
 
-        # Ensure load_file was called correctly
         mock_load_file.assert_any_call(origin, "header_mapping.json")
         mock_load_file.assert_any_call(origin, "csv_data/pag_1_table_1.csv")
 
     @patch("chunking_methods.load_file")
     def test_add_titles_and_tables_no_titles(self, mock_load_file):
-        # Setup del nodo
         node = MagicMock()
         node.text = "This is a test document without any titles"
         node.metadata = {
             "_header_mapping": "header_mapping.json",
         }
 
-        # Simula cargar el archivo de mapeo de encabezados
         mock_load_file.return_value = json.dumps({"pag_1_header_1": "Header 1"}).encode()
 
         origin = "origin_path"
         sections = "section1||section2"
 
-        # Instancia y llamada al método
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
         result_node, updated_sections = method._add_titles_and_tables(node, sections, origin)
 
-        # Verificaciones
         self.assertEqual(result_node.metadata["sections_headers"], "section2")
         self.assertEqual(result_node.text, "This is a test document without any titles")
         self.assertEqual(updated_sections, sections)
 
-        # Verifica que load_file fue llamado correctamente
         mock_load_file.assert_called_once_with(origin, "header_mapping.json")
 
 
