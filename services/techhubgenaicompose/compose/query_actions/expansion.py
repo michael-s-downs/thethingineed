@@ -202,7 +202,7 @@ class LangExpansion(ExpansionMethod):
         translate_model = params.get("model")
         
         if not isinstance(langs, list):
-            raise PrintableGenaiError(500, "Param <langs> is not a list")
+            raise PrintableGenaiError(400, "Param <langs> is not a list")
 
         retriever_result = []
         for retriever in retrieve_action:

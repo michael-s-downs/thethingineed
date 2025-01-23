@@ -240,7 +240,7 @@ class Director(AbstractManager):
         if "compose_flow" in self.compose_conf or "template" in self.compose_conf:
             template = self.get_compose_flow()
         else:
-            raise self.raise_PrintableGenaiError(404, "Compose config must have whether compose_conf or template arguments")
+            raise self.raise_PrintableGenaiError(400, "Compose config must have whether compose_conf or template arguments")
 
         # Set lang
         self.logger.debug(f"Setting lang: {self.conf_manager.lang} in the template")
@@ -296,7 +296,7 @@ class Director(AbstractManager):
             template = json.loads(template)
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableGenaiError(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(400, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
             raise self.raise_PrintableGenaiError(500, ex)
         
@@ -312,6 +312,6 @@ class Director(AbstractManager):
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableGenaiError(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(400, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
             raise self.raise_PrintableGenaiError(500, ex)

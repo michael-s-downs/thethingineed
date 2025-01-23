@@ -115,10 +115,10 @@ class ActionsManager(AbstractManager):
                         try:
                             template_dict = eval(template)
                         except SyntaxError:
-                            self.raise_PrintableGenaiError(500,
+                            self.raise_PrintableGenaiError(400,
                                                             "Template is not well formed, must be a dict {} structure")
                         if "$query" not in template_dict.get("user"):
-                            self.raise_PrintableGenaiError(500, "Template must contain $query to be replaced")
+                            self.raise_PrintableGenaiError(400, "Template must contain $query to be replaced")
 
 
     def safe_substitute(self, template, template_params, clear_quotes):
@@ -182,7 +182,7 @@ class ActionsManager(AbstractManager):
                     break
                 error_param.append(template_substituted[i])
             error_param = "".join(error_param)
-            raise self.raise_PrintableGenaiError(500,
+            raise self.raise_PrintableGenaiError(400,
                                                  f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template_substituted}")
 
         return template_dict
@@ -207,7 +207,7 @@ class ActionsManager(AbstractManager):
                       params.items()}  # Assert final json is json serializable
             params = {k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in params.items()}
         except Exception as _:
-            raise self.raise_PrintableGenaiError(500,
+            raise self.raise_PrintableGenaiError(400,
                                                  f"Params field must be a dictionary with json serializable values. Please check params field. Params: {params}")
 
         return params

@@ -152,7 +152,7 @@ class PersistDict():
             
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise PrintableGenaiError(status_code=500, message="Session id must be a string")
+            raise PrintableGenaiError(status_code=400, message="Session id must be a string")
         return self.PD.__getitem__(key)
 
     def get_conversation(self, session_id:str):
@@ -226,7 +226,7 @@ class Conversation(list):
             persistence (dict): Persistence data to be added.
         """
         if not isinstance(persistence, dict):
-            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=400, message="Persistence must be a dict")
         self.append(persistence)
 
         if self.max_persistence is not None and len(self) > self.max_persistence:
@@ -240,7 +240,7 @@ class Conversation(list):
             persistence (dict): New persistence data to replace the old one.
         """
         if not isinstance(persistence, dict):
-            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=400, message="Persistence must be a dict")
         self[-1] = persistence
 
     def remove_last(self):

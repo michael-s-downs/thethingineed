@@ -135,7 +135,7 @@ class ChunksRetriever(RetrieveMethod):
             if template['generic']['index_conf']['query'] == "":
                 raise PrintableGenaiError(status_code=400, message="Query is empty, cannot retrieve")
         except KeyError:
-            raise PrintableGenaiError(status_code=400, message="Query not found in the template, cannot retrieve")
+            raise PrintableGenaiError(status_code=404, message="Query not found in the template, cannot retrieve")
 
         response = requests.post(self.URL, json=template, headers=headers, verify=True)
         if response.status_code != 200:

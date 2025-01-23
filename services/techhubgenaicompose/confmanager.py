@@ -98,7 +98,7 @@ class ConfManager(AbstractManager):
             if name:
                 self.raise_PrintableGenaiError(404, f"Template file doesn't exists for name {name}")
             else:
-                self.raise_PrintableGenaiError(404, "Mandatory param <name> not found in template.")
+                self.raise_PrintableGenaiError(400, "Mandatory param <name> not found in template.")
 
         if isinstance(model_template, str) and len(model_template) > 0:
             if model_template[0] != '$':
@@ -107,7 +107,7 @@ class ConfManager(AbstractManager):
                 if isinstance(model_request, str):
                     model = model_request
                 else:
-                    self.raise_PrintableGenaiError(404, "There is no model defined in the request or template")
+                    self.raise_PrintableGenaiError(400, "There is no model defined in the request or template")
         else:
             model = model_template
 

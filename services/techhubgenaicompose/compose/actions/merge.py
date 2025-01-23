@@ -143,7 +143,7 @@ class MetaMerge(MergeMethod):
                     raise PrintableGenaiError(400, "Template empty")
             except ValueError:
                 raise PrintableGenaiError(
-                    404, f"IRStorage config file doesn't exist for name {template}"
+                    404, f"Cloud config file doesn't exist for name {template}"
                 )
 
         fields = [word[1:] for word in re.findall(pattern=r"\$\w+", string=template)]

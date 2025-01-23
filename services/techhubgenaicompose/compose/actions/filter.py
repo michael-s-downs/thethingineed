@@ -92,7 +92,7 @@ class PermissionFilter(FilterMethod):
         url = self.URL
         self.URL = params.get("url_allowed_documents", url)
         if self.URL is None:
-            raise PrintableGenaiError(400, "Variable URL_ALLOWED_DOCUMENT not found")
+            raise PrintableGenaiError(404, "Variable URL_ALLOWED_DOCUMENT not found")
         # Check permissions for documents
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -317,7 +317,7 @@ class MetadataFilter(FilterMethod):
                 if metadata_date < received_date:
                     return True
             else:
-                raise PrintableGenaiError(status_code=500,
+                raise PrintableGenaiError(status_code=400,
                                           message=f"Dictionary must have only eq, gt, lt, in, metaintext or textinmeta in keys. See example {self._get_example()}")
             return False
 
@@ -386,7 +386,7 @@ class MetadataFilter(FilterMethod):
             or_subfilter = any(self.apply_subfilter(metadata, sub_filter) for sub_filter in filter_dict["or"])
             boolean = or_subfilter
         else:
-            raise PrintableGenaiError(status_code=500,
+            raise PrintableGenaiError(status_code=400,
                                       message=f"Only 'and' or 'or' keys must be defined. See example {self._get_example()}")
         return boolean
 

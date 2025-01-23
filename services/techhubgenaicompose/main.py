@@ -325,9 +325,8 @@ def healthcheck() -> Dict:
     return {"status": "Service available"}
 
 
-@app.route('/load_session', methods=['POST'])
+@app.route('/load_session', methods=['PUT'])
 def load_session() -> Tuple[Dict, int]:
-    """ Deploy service in a syprocesunc way. """
     dat = request.get_json(force=True)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
@@ -340,7 +339,7 @@ def load_session() -> Tuple[Dict, int]:
     return deploy.load_session_redis(dat)
 
 
-@app.route('/upload_template', methods=['POST'])
+@app.route('/upload_template', methods=['PUT'])
 def upload_template() -> Tuple[Dict, int]:
     """ Uploads and checks a template """
     dat = request.get_json(force=True)
@@ -355,7 +354,7 @@ def upload_template() -> Tuple[Dict, int]:
     return deploy.upload_template(dat)
 
 
-@app.route('/upload_filter_template', methods=['POST'])
+@app.route('/upload_filter_template', methods=['PUT'])
 def upload_filter_template() -> Tuple[Dict, int]:
     """ Uploads and checks a template """
     dat = request.get_json(force=True)
@@ -369,10 +368,10 @@ def upload_filter_template() -> Tuple[Dict, int]:
 
     return deploy.upload_template(dat, template_filter=True)
 
-@app.route('/delete_filter_template', methods=['POST'])
+@app.route('/delete_filter_template', methods=['DELETE'])
 def delete_filter_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.get_json(force=True)
+    dat = request.args
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],
@@ -383,10 +382,10 @@ def delete_filter_template() -> Tuple[Dict, int]:
 
     return deploy.delete_template(dat, template_filter=True)
 
-@app.route('/delete_template', methods=['POST'])
+@app.route('/delete_template', methods=['DELETE'])
 def delete_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.get_json(force=True)
+    dat = request.args
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],
@@ -407,19 +406,18 @@ def list_filter_templates() -> Tuple[Dict, int]:
     "List compose filter template flows"
     return deploy.list_flows_compose(filters=True)
 
-@app.route('/get_template', methods=['POST'])
+@app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[Dict, int]:
     "List compose filter template flows"
-    dat = request.get_json(force=True)
+    dat = request.args
     return deploy.get_compose_template(dat, filters=False)
 
 @app.route('/get_filter_template', methods=['POST'])
 def get_filter_template() -> Tuple[Dict, int]:
     "List compose filter template flows"
-    dat = request.get_json(force=True)
+    dat = request.args
     return deploy.get_compose_template(dat, filters=True)
 
 
 if __name__ == "__main__":
-    #Process(target=run_redis_cleaner).start()
     app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)
