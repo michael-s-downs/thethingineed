@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.5.8
+genai-sdk-services==0.5.9
 flask==3.0.3
 gunicorn==23.0.0
 Pillow==10.0.1

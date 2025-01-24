@@ -879,7 +879,7 @@ class LLMOCR(BaseOCR):
 
     def _write_llm_request(self, file, body, headers):
         filename, extension = os.path.splitext(file) # Get extension and filepath
-        filename = filename.replace(f"{os.sep}imgs{os.sep}", f"{os.sep}llm{os.sep}")
+        filename = filename.replace(f"/imgs/", f"/llm/")
         input_llm_file = f"{filename}_input.json"
         output_llm_file = f"{filename}_output.json"
 
@@ -905,8 +905,8 @@ class LLMOCR(BaseOCR):
 
 
     def _read_llm_responses(self, files, force_continue) -> dict:
-        responses = []
-        final_responses = []
+        responses = {}
+        final_responses = {}
         if files:        
             base_filename = os.path.basename(files[0]).split("_pag_")[0]
             timestamp = 0.0 
@@ -917,7 +917,8 @@ class LLMOCR(BaseOCR):
                         filename = os.path.basename(messages[0]['result']).split("_pag_")[0]
                         if filename == base_filename:
                             timestamp = time.time()
-                            responses.append(messages[0])
+                            num_pag = os.path.splitext(messages[0]['result'])[0].split("_pag_")[1].split("_output")[0]
+                            responses[num_pag] = messages[0]
                         else:
                             self.qc.write((self.provider, self.queue_output_url), messages[0])
                             time.sleep(0.5)
@@ -928,9 +929,18 @@ class LLMOCR(BaseOCR):
                 except Exception as ex:
                     raise Exception(f"Error reading from queue: {ex}")
 
-            for response in responses:
+            # Complete all files to avoid gaps
+            if len(files) != len(responses):
+                for file in files:
+                    num_pag = os.path.splitext(file)[0].split("_pag_")[1]
+                    if num_pag not in responses:
+                        responses[num_pag] = {"status_code": 500, "result": file, "error_message": "File not found in queue"}
+                            
+            for response in responses.values():
                 if response.get('status_code') != 200:
                     if force_continue:
+                        num_pag = os.path.splitext(response['result'])[0].split("_pag_")[1]
+                        final_responses[num_pag] = {"answer": ""} # To not leave blank pages and avoid gaps 
                         continue # Skip the file to not lose the rest and do the merge (for big files purposes)
                     raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
                 try:
@@ -941,9 +951,10 @@ class LLMOCR(BaseOCR):
                 if len(loaded_file) <= 0:
                     raise Exception(f"Error loading response file {response['result']} from storage")
                 else:
-                    final_responses.append(json.loads(loaded_file)['result'])
+                    num_pag = os.path.splitext(response['result'])[0].split("_pag_")[1].split("_output")[0]
+                    final_responses[num_pag] = json.loads(loaded_file)['result']
 
-        return final_responses
+        return list(final_responses.values())
 
 
     def run_ocr(self, credentials: dict, files: list, **kwargs: dict) -> Tuple[list, list, list, list, list, list]:
