@@ -89,6 +89,114 @@ Finally, the supported document formats for this process are: pdf, jpeg, jpg, pn
 ### Input json parameters
 As preprocess_start, manages the organization of the json that goes over all preprocess components and indexing, here is the explanation of each parameter (in the correct output transformed by <b>'preprocess-start'</b>):
 
+<!---      
+- <b>layout_conf:</b> Configuration to do layout.
+
+          + <b>do_lines_text:</b> <i>True</i> or <i>False</i>, try to extract lines without OCR.
+          + <b>do_lines_ocr:</b> <i>True</i> or <i>False</i>, try to extract lines with OCR.
+          + <b>lines_conf:</b> Configuration of lines.
+              - <b>do_lines_results:</b> <i>True</i> or <i>False</i>, update images with lines and prediction.
+              - <b>model:</b> Name of model to predict lines.
+          + <b>do_titles:</b> Extract and generate files with only titles.
+          + <b>do_tables:</b> Extract and generate files with only tables.
+          + <b>tables_conf:</b>
+              - <b>sep:</b> Indicate which separator use to generate csv with tables lines.
+        - -->
+
+* generic
+  * <b>project_conf:</b> Configuration of project.
+      - <b>laparams:</b> Parameter to extract more information in PDFMiner text extraction in preprocess.
+      - <b>process_id:</b> Id of process.
+      - <b>timeout_id:</b> Id used to control process timeout.
+      - <b>process_type:</b> Type of process.
+      - <b>department:</b> Department assigned to apikey.
+      - <b>project_type:</b> Text/Image type of document.
+      - <b>report_url:</b> Url to report metrics to apigw.
+      - <b>timeout_sender:</b> Process time for timeout to occur.
+      - <b>csv:</b> <i>True</i> or <i>False</i>, Indicate if the text is in the CSV file.
+      - <b>url_sender:</b> Name or URl to respond.
+  * <b>dataset_conf:</b> Configuration of dataset.
+      - <b>dataset_path:</b> Path of the dataset folder in storage.
+      - <b>dataset_csv_path:</b> Path of the dataset csv in storage.
+      - <b>path_col:</b> Column of dataset that indicates URL.
+      - <b>label_col:</b> Column of dataset that indicates CategoryId.
+      - <b>dataset_id:</b> Id of the dataset.
+  * <b>preprocess_conf:</b> Configuration of preprocess.
+      - <b>num_pag_ini:</b> Number of page of document to initialize extraction.
+      - <b>page_limit:</b> Total numbers of pages to extract. 
+      - <b>ocr_conf:</b> Configuration of the OCR.
+        + <b>ocr:</b> <i>aws-ocr</i> or <i>google-ocr</i>, Types of OCR supported.
+        + <b>extract_tables:</b> <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
+        + <b>force_ocr:</b> <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
+        + <b>batch_length:</b> Size max of pages to batch.
+        + <b>files_size:</b> Size max of byte size to batch.
+        + <b>calls_per_minute:</b> Number max of call to send OCR.
+        + <b>llm_ocr_conf (<i>'llm-ocr' ocr type parameters</i>)</b> (optional): 
+          - <b>model</b> (optional): Name of the model (or pool) to be used on each platform. If this parameter is not provided 'gpt-4o-pool-world' will be the default model.
+          - <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', or 'bedrock'. 'azure' by default.
+          - <b>query</b> (optional): Question or task that you want to ask the model. 
+          - <b>system</b> (optional): Variable for chat-based models
+          - <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
+          - <b>num_retries</b> (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 10 by default
+          - <b>force_continue</b> (optional): If an error is raised by the LLM component in a particular page, force the document to index the rest of the pages received. If not, the 'llm-ocr' process is stopped and an error is raised.
+  * <b>indexation_conf</b>: Configuration of index process.
+    - <b>vector_storage_conf</b>: Configuration of the vector storage.
+      - <b>index</b>: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
+      - <b>vector_storage</b>: Key to get the configuration of the database from config file.
+      - <b>modify_index_docs <i>(optional)</i></b>: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
+        ```python
+        {
+          "update": {"filename": True},
+          "delete": {"filename": ["doc1.txt"]}
+        }
+        ``` 
+        Where in the update key, the user specifies the metadata used as a filter to find the document.
+    - <b>chunking_method</b>: Configuration of the chunking method.
+      - <b>window_overlap</b>: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 10, and it is measured with NLTK tokenizer.
+      - <b>window_length</b>: Length of chunks. Default value is 300.
+      - <b>method</b>: Type of chunking technique that will be used simple is the default one.
+      - <b>sub_window_length</b>: Integer value to specify the window length for the sub-chunks. (<b><i>Recursive method only</i></b>).
+      - <b>sub_window_overlap<b>: Integer value to specify the window overlap for the sub-chunks. (<b><i>Recursive method only</i></b>).
+      - <b>windows:<b> Number of the windows that will be taken in this method. (<b><i>Recursive method only</i></b>).
+    - <b>models</b>: Indexing model configuration.
+      - <b>alias</b>: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
+      - <b>embedding_model</b>: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
+      - <b>platform</b>: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
+    - <b>index_metadata</b>: This parameter can have various values to specify how metadata will be included in the embeddings:  
+      - If set to `true`, only the filename metadata and the metadata provided by the user will be included.  
+      - If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.  
+      - If omitted or set to `false`, no metadata will be included. 
+- <b>specific</b>
+  - <b>dataset</b>
+    - <b>dataset_key</b>: This key is generated by integration being:
+      ```json
+      {
+        "dataset_key": "ir_index_'datetime'_'timemilis'_'randomchars':ir_index_'date'_'time'_'timemilis'_'randomchars'"
+      }
+      ```
+      An example could be:
+      ```json
+      {
+        "dataset_key": "ir_index_20240628_091121_716609_s79eqe:ir_index_20240628_091121_716609_s79eqe"
+      }
+      ```
+      In the case that infoindexing is not used with integration, can be whatever written by the user.
+  - <b>paths</b>
+    - <b>text</b>: This is the place where the document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality))  has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to <b>True</b>, the file will be searched in the *"STORAGE_DATA"* blob (<b>Warning!</b> in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
+      ```json
+      {
+        "text": "username/dataset_key/txt/username/request_id/"
+      }
+      ```
+      An example could be:
+      ```json
+      {
+        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/"
+      }
+      ```
+      Otherwise, it has to be the route where the user uploads this file.
+- <b>integration</b>
+- <b>tracking</b>
 Then an example with the following key data could be:
 * <b>department</b>: documentation_test
 * <b>index_id</b>: ir_index_20250123_133146_371261_t6s48u
