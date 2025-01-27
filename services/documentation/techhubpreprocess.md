@@ -14,13 +14,25 @@
   - [Preprocess components explanation](#preprocess-components-explanation)
     - [Preprocess start](#preprocess-start)
       - [Environment variables](#environment-variables)
+      - [Error Handling](#error-handling)
+    - [Preprocess extract](#preprocess-extract)
       - [Environment variables](#environment-variables-1)
+      - [Error Handling](#error-handling-1)
     - [Preprocess OCR](#preprocess-ocr)
       - [Environment variables](#environment-variables-2)
+      - [Error Handling](#error-handling-2)
     - [Preprocess end](#preprocess-end)
       - [Environment variables](#environment-variables-3)
-  - [Deployment](#deployment)
-  - [Documentation](#documentation)
+      - [Error Handling](#error-handling-3)
+  - [Configuration](#configuration-1)
+    - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+    - [Secrets](#secrets)
+    - [Configuration files](#configuration-files)
+    - [Environment variables](#environment-variables-4)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
+    - [FAQ](#faq)
+  - [Version History](#version-history)
 
 ## Overview
 
@@ -86,7 +98,7 @@ The preprocess flow, is a complex flow that needs the communication between diff
   - FormRecognizer
   - Amazon Textract
   - TesseractOCR 
-  - LLMOCR: LLM vision based OCR using the 'genai-LLMAPI' component
+  - Multimodal OCR: LLM vision based OCR using the 'genai-LLMAPI' component
 * <b>preprocess-end</b>: This component, is the previous step before indexing. Its function is to check in redis if the process went right to write the message in the 'genai-infoindexing' component.
 
 Finally, the supported document formats for this process are: pdf, jpeg, jpg, png, txt, docx, xls, xlsx, pptx
@@ -133,7 +145,7 @@ As preprocess_start, manages the organization of the json that goes over all pre
       - <b>num_pag_ini:</b> Number of page of document to initialize extraction.
       - <b>page_limit:</b> Total numbers of pages to extract. 
       - <b>ocr_conf:</b> Configuration of the OCR.
-        + <b>ocr:</b> <i>aws-ocr</i> or <i>google-ocr</i>, Types of OCR supported.
+        + <b>ocr:</b> <i>aws-ocr</i>, <i>tesseract-ocr</i>, <i>azure-ocr</i> or <i>llm-ocr</i>>Types of OCR supported.
         + <b>extract_tables:</b> <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
         + <b>force_ocr:</b> <i>True</i> or <i>False</i> to force the process to go through ocr engine in preprocess.
         + <b>batch_length:</b> Size max of pages to batch.
@@ -368,9 +380,17 @@ Then an example with the following key data could be:
 ```
 
 ## Preprocess components explanation
+The flow of a preprocessing pipeline, starting from the user request in 'integration-receiver' would be the following:
+
+![alt text](imgs/Architecture_preprocess.png)
+
 
 ### Preprocess start
 ![alt text](imgs/techhubpreprocess/preprocess-start.png)
+
+This component starts parsing the input sent by 'integration-sender' and parsing it. After parsing creates the json that will be used from this point until the end, in this moment, a file located on the 'STORAGE_BACKEND' in `src/layout.json` is mixed with the formatted output json, so the format of this file, must be the same explained in [Input json parameters](#input-json-parameters). The 'layout.json' file is loaded when the component starts, so the content of the file will be the same for all the files passing through this flow, if a change is required, you must change the file and re-deploy the component to ensure that the change has been applied.
+
+Once added that information and the json finally generated, the component checks if the document and dataset exist in the storage to create the key in redis and start with the process. If everything goes good, the flow will continue and the message propagated to the 'preprocess-extract' component, if not, to the 'preprocess-end' component. 
 
 #### Environment variables
 * <b>PROVIDER</b>: Cloud service to use to load the configuration files (aws or azure).
@@ -387,8 +407,32 @@ Then an example with the following key data could be:
   - <b>SECRETS_PATH</b>: Path to the secrets folder.
   - <b>TENANT:</b> Tenant where the process is running.
 
+#### Error Handling
+
+Some common error messages you may encounter are:
+
+| Error message                                                                | Possible reason                                                                                     |
+|:-----------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|
+| Error creating status redis                             | Error while creating redis key for the document flow.                                                                 |
+| Error parsing parameters of configuration                    | There is a parameter sent wrong in the input JSON body.                                                                 |
+| Error getting dataset status key                                  | The dataset_status_key can't be generated or obtained                                                     |
+| Error checking files storage              | Error checking if the mandatory files are available                                                            |
+
+<i>**For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response</i>
+
+### Preprocess extract
 
 ![alt text](imgs/techhubpreprocess/preprocess-extract.png)
+
+In the 'preprocess-extract' component, the text extracting from the document is managed. There are several cases in which this component will need the 'preprocess-ocr' component:
+* When 'llm-ocr' ocr selected and the query has been passed (we already know the language of the text) and the 'force_ocr' parameter has been set to true (the ocr text extraction has preference). 
+* When is a corrupted text (or an error has ocurred during text extraction)
+
+Appart from that cases, a normal flow for the preprocess extract component is the following:
+1. The JSON input is parsed and the file downloaded.
+2. Once the file has been downloaded (mandatory to extract the case) it will be extracted if necessary and if it has been extracted, it will be uploaded to the storage and the 'preprocess-extract' component will send the next message to the 'preprocess-end'. Otherwise if the 'force_ocr' parameter is passed as 'True' or the text could not be extracted it will go to 'preprocess-ocr' and the text file will not be uploaded to the storage.
+3. In the cases that the flow must continue for the 'preprocess-ocr', 'preprocess-extract' will generate the images (one page is one image file) and upload them to the file storage, inserting the path in the input JSON and sending it to the 'preprocess-ocr'.
+
 
 #### Environment variables
 * <b>PROVIDER</b>: Cloud service to use to load the configuration files (aws or azure).
@@ -404,9 +448,35 @@ Then an example with the following key data could be:
   - <b>SECRETS_PATH</b>: Path to the secrets folder.
   - <b>TENANT:</b> Tenant where the process is running.
 
+#### Error Handling
+
+Some common error messages you may encounter are:
+| Error message                                                                | Possible reason                                                                                     |
+|:-----------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|
+| Error parsing parameters of configuration                             | There is a parameter sent wrong in the input JSON body.                                                                 |
+| Error getting documents parameters                    | There is a parameter sent wrong in the input JSON body in the document part                                                                  |
+| Error getting lines and cells                                 | There is a parameter sent wrong in the input JSON body in the lines and cells part                                                        |
+| Error downloading files              | Error while downloading the file from the storage      
+| Error getting number of pages             | Error getting the number of pages from the downloaded document
+| Not are images and text to process             | Text and images not obtained from the text (maybe is a corrupted text)
+
+<i>**For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response</i>
 
 ### Preprocess OCR
 ![alt text](imgs/techhubpreprocess/preprocess-ocr.png)
+
+In this component, we allow different OCR types:
+* <b>FormRecognizer</b>: Microsof Azure text extraction service. (<b>'azure-ocr'</b>)
+* <b>Amazon Textract</b>: AWS text extraction service. (<b>'aws-ocr'</b>)
+* <b>TesseractOCR</b>: Free Software text extraction service funded by Google. (<b>'tesseract-ocr'</b>)
+* <b>Multimodal OCR</b>: LLM vision based OCR using the 'genai-LLMAPI' component. Depending on the environment variables seen in the next section and the 'genai-LLMAPI' component mode deployed, can work as API or as queue, having both different behaviour. The configuration of this LLM call goes in the 'llm_ocr_conf' parameter explained in [Input json parameters](#input-json-parameters) (<b>'llm-ocr'</b>)
+
+
+These different OCRs, share the same flow except the 'LLMAPI' working as queue that has a little variation:
+1. Download the images and resize them if necessary, depending on the files_size parameter or if 'llm-ocr' selected (in this case the 'LLMAPI' component will resize them depending on the LLM selected). When resizing done to an image in the 'preprocess-ocr' component, it will be uploaded to the storage too.
+2. Then batch the pages and send them to the specified OCR. If 'LLMAPI' working as queue selected the batches will not be done as works by queues and rate limit with the service is more difficult to generate (we recommend using a pool of models to avoid it in the LLM calling).
+3. If the OCR extraction goes right the pages will be merged and uploaded to the storage (both merged and individually).
+4. This component, will always end in the 'preprocess-end' component even if there is an error during the flow.
 
 #### Environment variables
 
@@ -429,8 +499,30 @@ Then an example with the following key data could be:
   - <b>Q_GENAI_LLMQUEUE_OUTPUT:</b> 'LLMQUEUE' output queue
   - <b>URL_LLM:</b> URL to call 'LLMAPI'
 
+#### Error Handling
+
+Some common error messages you may encounter are:
+| Error message                                                                | Possible reason                                                                                     |
+|:-----------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|
+| Error parsing parameters of configuration                             | There is a parameter sent wrong in the input JSON body.                                                                 |
+| Error getting documents parameters                    | There is a parameter sent wrong in the input JSON body in the document part                                                                  |
+| Error getting lines and cells                                 | There is a parameter sent wrong in the input JSON body in the lines and cells part                                                        |
+| Error uploading files              | Error while uploading the file from the storage      
+| Error merging files             | Error while merging the pages text extracted by the OCR into one full text
+| Error getting credentials for OCR             | Credentials of the OCR has been set wrong |
+| Error getting paths of files | There is a parameter sent wrong in the input JSON body in the paths part |
+| Error resizing image | Error while resizing an image |
+| Error getting files size | Error while creating a list of all files (images) size |
+| Error extracting text with OCR | OCR service error while extracting the text |
+| Error while writing in LLM OCR queue | There has been an error in during the 'llm-ocr' process working as queue |
+
+
+<i>**For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response</i>
+
 ### Preprocess end
 ![alt text](imgs/techhubpreprocess/preprocess-end.png)
+
+This component's function is simple but crucial as is the manager of all ending preprocessing flows even if the documents do not need it. The function is to check the process status code on redis and depending on that, writing in the 'genai-infoindexing' flow to continue with the indexation process or ending the preprocess by writing in the 'flowmgmt-checkend' component.
 
 #### Environment variables
 
@@ -446,11 +538,60 @@ Then an example with the following key data could be:
   - <b>SECRETS_PATH</b>: Path to the secrets folder.
   - <b>TENANT:</b> Tenant where the process is running.
 
+#### Error Handling
 
-## Deployment
+Some common error messages you may encounter are:
+| Error message                                                                | Possible reason                                                                                     |
+|:-----------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------|
+| Error parsing parameters of configuration                             | There is a parameter sent wrong in the input JSON body.                                                                 |
+| Error getting dataset status key                                  | The dataset_status_key can't be generated or obtained                                                     |
+| Error getting redis configuration | The Redis configuration has not been propertly set |
+| Error getting code of redis status | Error getting the status code for the dataset status key (document passed to end preprocess pipeline) |
 
-To deploy the component on your own cloud use [this guide](deploy-guide-link).
 
-## Documentation
+<i>**For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response</i>
 
-For further information follow the [link](documentation.md).
+## Configuration
+### Blobs/Buckets storage distribution
+This service, needs different buckets :
+- **Integration**: 
+  - STORAGE_BACKEND: To store the raw document data processed by all the previous components.
+  - STORAGE_DATA: To store the document data that is going to be used by the previous services.
+
+### Secrets
+All necessary credentials for the pre-processing flow are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the environment variable 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 5 different secrets:
+
+- **`azure.json`**: This file stores the credentials to connect to the required Azure blobs and queues (only needed if using Azure infrastructure). The custom path for this secret is "azure/", making the full path "secrets/azure/azure.json". The structure of this secret is as follows:
+  ```json
+  {
+    "conn_str_storage": "your connection string for storage blobs",
+    "conn_str_queue": "your connection string for ServiceBus queues",
+  }
+  ```
+- **`redis.json`**: This file stores Redis credentials for process status control purposes. The predefined path for this file is: "redis/". The format of this secret is as follows:
+  ```json
+  {
+    "host": "your redis host",
+    "password": "redis password",
+    "port": "redis port"
+  }
+  ```
+
+### Configuration files
+The only configuration file needed is the explained in [Preprocess start](#preprocess-start)
+### Environment variables
+The environment variables, has been detailed in each component section.
+
+
+
+
+
+## Troubleshooting
+
+### Common Issues
+
+### FAQ
+
+## Version History
+
+- v1: Release version
