@@ -132,28 +132,28 @@ stages:
         inputs:
           pollingTimeoutSec: '300'
         displayName: Sonar Publish
-
-  - stage: Building
-    displayName: Build image Docker and Trivy scan
-    jobs:
-    - job:
-      pool:
-        vmImage: $(vmImageName)
-      steps:
-      - template: ../ap-template.yml
-        parameters:
-          serviceName: '$(serviceName)'
-          registryServerName: '$(registryServerName)'
-          acrRegistryLogin:  '$(acrRegistryLogin)'
-          acrRegistryPassword:  '$(acrRegistryPassword)'
-          defaultWorkingDirectory: '$(system.defaultWorkingDirectory)'
-          sourcesDirectory: '$(projectLocation)/$(serviceName)'
-          tag: '$(Build.BuildNumber)'
-          pythonVersion: '$(pythonVersion)'
-          baseImage: '$(baseImage)'
-          projectLocation: '$(projectLocation)'
-          helmRepoLocation: '$(helmRepoLocation)'
-          helmVersion: '$(helmVersion)'
-          templateType: '$(templateType)'
-          description: '$(description)'
-          libraryFeed: '$(feedGenai)'
+        
+- stage: Building
+  displayName: Build image Docker and Trivy scan
+  jobs:
+  - job:
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - template: ../ap-template.yml
+      parameters:
+        serviceName: '$(serviceName)'
+        registryServerName: '$(registryServerName)'
+        acrRegistryLogin:  '$(acrRegistryLogin)'
+        acrRegistryPassword:  '$(acrRegistryPassword)'
+        defaultWorkingDirectory: '$(system.defaultWorkingDirectory)'
+        sourcesDirectory: '$(projectLocation)/$(serviceName)'
+        tag: '$(Build.BuildNumber)'
+        pythonVersion: '$(pythonVersion)'
+        baseImage: '$(baseImage)'
+        projectLocation: '$(projectLocation)'
+        helmRepoLocation: '$(helmRepoLocation)'
+        helmVersion: '$(helmVersion)'
+        templateType: '$(templateType)'
+        description: '$(description)'
+        libraryFeed: '$(feedGenai)'
