@@ -47,7 +47,7 @@ steps:
 
 - script: |
     pip install --upgrade pip
-    python -m pip install -U setuptools wheel twine
+    python -m pip install -U setuptools wheel twine==6.0.1
     python setup.py install
   displayName: Install dependencies
 

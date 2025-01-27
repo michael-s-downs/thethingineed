@@ -1,7 +1,7 @@
 ### This code is property of the GGAO ###
 
 
-genai-sdk-services==0.5.8
+genai-sdk-services==0.5.9
 gunicorn==21.2.0
 aiohttp==3.8.5
 nltk==3.8.1
