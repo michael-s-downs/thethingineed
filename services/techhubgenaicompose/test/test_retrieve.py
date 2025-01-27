@@ -151,7 +151,7 @@ class TestChunksRetriever:
         with pytest.raises(PrintableGenaiError) as excinfo:
             chunks_retriever.process()
 
-        assert excinfo.value.status_code == 400
+        assert excinfo.value.status_code == 404
         assert "Query not found in the template" in str(excinfo.value)
 
     @patch("requests.post")

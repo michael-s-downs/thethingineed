@@ -371,7 +371,8 @@ def upload_filter_template() -> Tuple[Dict, int]:
 @app.route('/delete_filter_template', methods=['DELETE'])
 def delete_filter_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.args
+    dat = {}
+    dat.update(request.args)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],
@@ -385,7 +386,8 @@ def delete_filter_template() -> Tuple[Dict, int]:
 @app.route('/delete_template', methods=['DELETE'])
 def delete_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.args
+    dat = {}
+    dat.update(request.args)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],

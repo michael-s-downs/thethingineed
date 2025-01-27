@@ -180,7 +180,7 @@ class TestMetaMerge:
             assert exc_info.value.status_code == 404
             assert (
                 str(exc_info.value)
-                == "Error 404: IRStorage config file doesn't exist for name non_existing_template"
+                == "Error 404: Cloud config file doesn't exist for name non_existing_template"
             )
 
     def test_process_with_grouping_value_and_key_in_template(self, mock_streamchunk):

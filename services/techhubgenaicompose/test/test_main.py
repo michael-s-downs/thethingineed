@@ -58,7 +58,7 @@ def test_load_session_success(mock_update_status, client, mock_deployment):
         'x-department': 'department',
         'x-reporting': 'report'
     }
-    response = client.post('/load_session', json={"session_id": "123", "conv": []}, headers=headers)
+    response = client.put('/load_session', json={"session_id": "123", "conv": []}, headers=headers)
     assert response.status_code == 200
 
 def test_load_session_key_error(client):
@@ -68,7 +68,7 @@ def test_load_session_key_error(client):
         'x-department': 'department',
         'x-reporting': 'report'
     }
-    response = client.post('/load_session', json={}, headers=headers)
+    response = client.put('/load_session', json={}, headers=headers)
     assert response.status_code == 500
 
 def test_load_session_exception(client):
@@ -95,7 +95,7 @@ def test_upload_template_success(client):
     # Mocking the upload_object function
     with patch('main.upload_object') as mock_upload:
         mock_upload.return_value = True
-        response = client.post('/upload_template', json={
+        response = client.put('/upload_template', json={
             "name": "test_template",
             "content": {"key": "value"},
             "project_conf": {
@@ -116,7 +116,7 @@ def test_upload_template_key_error(client):
     }
     with patch('main.upload_object') as mock_upload:
         mock_upload.return_value = True
-        response = client.post('/upload_template', json={}, headers=headers)
+        response = client.put('/upload_template', json={}, headers=headers)
         assert response.status_code == 404
 
 def test_upload_template_exception(client, mocker):
@@ -137,7 +137,7 @@ def test_upload_template_exception_uploading(client):
     # Mocking the upload_object function
     with patch('main.upload_object') as mock_upload:
         mock_upload.side_effect = Exception
-        response = client.post('/upload_template', json={
+        response = client.put('/upload_template', json={
             "name": "test_template",
             "content": {"key": "value"},
             "project_conf": {
@@ -157,14 +157,8 @@ def test_delete_template_success(client):
     }
     with patch('main.delete_file') as mock_delete:
         mock_delete.return_value = True
-        response = client.post('/delete_template', json={
-            "name": "test_template",
-            "project_conf": {
-                "x-reporting": "report",
-                "x-department": "department",
-                "x-tenant": "tenant"
-            }
-        }, headers=headers)
+        url = "/delete_template"
+        response = client.delete(f"{url}?name=test_template", headers=headers)
         
         assert response.status_code == 200
 
@@ -175,7 +169,8 @@ def test_delete_template_key_error(client):
         'x-department': 'department',
         'x-reporting': 'report'
     }
-    response = client.post('/delete_template', json={}, headers=headers)
+    url = "/delete_template"
+    response = client.delete(f"{url}", headers=headers)
     assert response.status_code == 404
 
 
@@ -193,14 +188,8 @@ def test_delete_template_exception_uploading(client):
     }
     with patch('main.delete_file') as mock_delete:
         mock_delete.side_effect = Exception
-        response = client.post('/delete_template', json={
-            "name": "test_template",
-            "project_conf": {
-                "x-reporting": "report",
-                "x-department": "department",
-                "x-tenant": "tenant"
-            }
-        }, headers=headers)
+        url = "/delete_template"
+        response = client.delete(f"{url}?name=test_template", headers=headers)
         assert response.status_code == 500
 
 def test_upload_filter_template(client):
@@ -212,7 +201,7 @@ def test_upload_filter_template(client):
     }
     with patch('main.upload_object') as mock_upload:
         mock_upload.return_value = True
-        response = client.post('/upload_filter_template', json={
+        response = client.put('/upload_filter_template', json={
             "name": "filter_template",
             "content": {"filter_key": "filter_value"},
             "project_conf": {
@@ -233,14 +222,8 @@ def test_delete_filter_template(client):
     }
     with patch('main.delete_file') as mock_delete:
         mock_delete.return_value = True
-        response = client.post('/delete_filter_template', json={
-            "name": "filter_template",
-            "project_conf": {
-                "x-reporting": "report",
-                "x-department": "department",
-                "x-tenant": "tenant"
-            }
-        }, headers=headers)
+        url = "/delete_filter_template"
+        response = client.delete(f"{url}?name=test_template", headers=headers)
 
         assert response.status_code == 200
 
