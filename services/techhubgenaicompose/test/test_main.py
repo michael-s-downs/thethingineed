@@ -235,3 +235,72 @@ def test_process_exception(client):
         with pytest.raises(PrintableGenaiError) as excinfo:
             composed.process({})
         assert "Error" in str(excinfo.value)
+
+def test_get_compose_template(client):
+    """Test getting the content of a compose template."""
+    headers = {
+        'x-tenant': 'tenant',
+        'x-department': 'department',
+        'x-reporting': 'report'
+    }
+    with patch('main.load_file') as mock_load:
+        mock_load.return_value = b'{"key": "value"}'
+        response = client.get('/get_template', query_string={"name": "test_template"}, headers=headers)
+        
+        assert response.status_code == 200
+        assert response.json['result'] == '{"key": "value"}'
+
+def test_get_compose_template_key_error(client):
+    """Test getting the content of a compose template with missing key."""
+    headers = {
+        'x-tenant': 'tenant',
+        'x-department': 'department',
+        'x-reporting': 'report'
+    }
+    response = client.get('/get_template', headers=headers)
+    
+    assert response.status_code == 404
+    assert "Error parsing JSON, Key: <name> not found" in response.json['error_message']
+
+def test_get_compose_template_exception(client):
+    """Test getting the content of a compose template with an exception."""
+    headers = {
+        'x-tenant': 'tenant',
+        'x-department': 'department',
+        'x-reporting': 'report'
+    }
+    with patch('main.load_file', side_effect=Exception("Some error")) as mock_load:
+        response = client.get('/get_template', query_string={"name": "test_template"}, headers=headers)
+        
+        assert response.status_code == 500
+        assert "Some error" in response.json['error_message']
+
+def test_list_flows_compose(client):
+    """Test listing all compose templates."""
+    headers = {
+        'x-tenant': 'tenant',
+        'x-department': 'department',
+        'x-reporting': 'report'
+    }
+    with patch('main.list_files') as mock_list:
+        mock_list.return_value = [
+            "src/compose/templates/template1.json",
+            "src/compose/templates/template2.json"
+        ]
+        response = client.get('/list_templates', headers=headers)
+        
+        assert response.status_code == 200
+        assert response.json['result'] == ["template1.json", "template2.json"]
+
+def test_list_flows_compose_exception(client):
+    """Test listing all compose templates with an exception."""
+    headers = {
+        'x-tenant': 'tenant',
+        'x-department': 'department',
+        'x-reporting': 'report'
+    }
+    with patch('main.list_files', side_effect=Exception("Some error")) as mock_list:
+        response = client.get('/list_templates', headers=headers)
+        
+        assert response.status_code == 500
+        assert "Some error" in response.json['error_message']

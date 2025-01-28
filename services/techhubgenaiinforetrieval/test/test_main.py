@@ -358,35 +358,28 @@ def test_retrieve_documents_exceptions(client):
 
 
 def test_retrieve_documents_filenames(client):
-    body = {
-        "index": "test"
-    }
     with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
-        response = client.post("/get_documents_filenames", json=body)
-        result = json.loads(response.text).get('result')
+        response = client.get("/get_documents_filenames?index=test")
+        result = response.json.get('result')
         assert response.status_code == 200
         assert result.get('docs') == [{'filename': 'test', 'chunks': 1}, {'filename': 'test2', 'chunks': 1}]
 
     # Not index passed
-    response = client.post("/get_documents_filenames", json={})
-    result = json.loads(response.text)
+    response = client.get("/get_documents_filenames")
+    result = response.json
     assert response.status_code == 400
     assert result.get('error_message') == "Missing parameter: index"
 
 def test_retrieve_documents_filenames_exceptions(client):
-    body = {
-        "index": "test"
-    }
-
     with patch('endpoints.get_connector') as mock_get_connector:
         mock_connector = MagicMock()
         mock_get_connector.return_value = mock_connector
 
         # Excepción genérica
         mock_connector.get_documents_filenames.side_effect = Exception("Mocked exception")
-        response = client.post("/get_documents_filenames", json=body)
-        result = json.loads(response.text)
+        response = client.get("/get_documents_filenames?index=test")
+        result = response.json
         assert response.status_code == 400
         assert result.get('error_message') == "Error processing operation: Mocked exception"
 
@@ -397,8 +390,8 @@ def test_retrieve_documents_filenames_exceptions(client):
             body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
         )
         mock_connector.get_documents_filenames.side_effect = not_found_error
-        response = client.post("/get_documents_filenames", json=body)
-        result = json.loads(response.text)
+        response = client.get("/get_documents_filenames?index=test")
+        result = response.json
         assert response.status_code == 400
         assert "Index 'test'" in result.get('error_message')
 
@@ -417,13 +410,10 @@ def test_get_models(client):
 
 
 def test_delete_index(client):
-    body = {
-        "index": "test"
-    }
     with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
-        response = client.post("/delete_index", json=body)
-        result = json.loads(response.text).get('result')
+        response = client.delete("/delete_index?index=test")
+        result = response.json.get('result')
         assert response.status_code == 200
         assert result == "Index 'test' deleted for '1' models"
 
@@ -437,8 +427,8 @@ def test_delete_index_exceptions(client):
         mock_get_connector.return_value = mock_connector
 
         mock_connector.delete_index.side_effect = Exception("Mocked exception")
-        response = client.post("/delete_index", json=body)
-        result = json.loads(response.text)
+        response = client.delete("/delete_index?index=test")
+        result = response.json
         assert response.status_code == 400
         assert result.get('error_message') == "Error processing delete index operation: Mocked exception"
 
@@ -448,8 +438,8 @@ def test_delete_index_exceptions(client):
             body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
         )
         mock_connector.delete_index.side_effect = not_found_error
-        response = client.post("/delete_index", json=body)
-        result = json.loads(response.text)
+        response = client.delete("/delete_index?index=test")
+        result = response.json
         assert response.status_code == 400
         assert ("Index 'test' not found") in result.get('error_message')
 
@@ -473,10 +463,13 @@ def test_delete_documents(client):
             "filename": ["test.pdf"]
         }
     }
+    query_params = f"?index={body['index']}&filename={body['delete']['filename'][0]}"
     with patch('endpoints.get_connector') as mock_get_connector:
         mock_get_connector.return_value = get_connector()
-        response = client.post("/delete-documents", json=body)
-        result = json.loads(response.text).get('result')
+
+        # Send the DELETE request with query parameters
+        response = client.delete(f"/delete_documents{query_params}")
+        result = response.json.get('result')
         assert response.status_code == 200
         assert result == "Documents that matched the filters were deleted for 'test'"
 
@@ -488,15 +481,15 @@ def test_delete_documents_exeception(client):
             "filename": ["test.pdf"]
         }
     }
+    query_params = f"?index={body['index']}&filename={body['delete']['filename'][0]}"
     with patch('endpoints.get_connector') as mock_get_connector:
 
         mock_connector = MagicMock()
         mock_get_connector.return_value = mock_connector
 
-
         mock_connector.delete_documents.side_effect = Exception("Mocked exception")
-        response = client.post("/delete-documents", json=body)
-        result = json.loads(response.text)
+        response = client.delete(f"/delete_documents{query_params}")
+        result = response.json
         assert response.status_code == 400
         assert result.get('error_message') == "Error processing delete operation: Mocked exception"
 
@@ -506,8 +499,8 @@ def test_delete_documents_exeception(client):
             body={"error": {"root_cause": [{"type": "index_not_found_exception", "reason": "Index not found"}]}}
         )
         mock_connector.delete_documents.side_effect = not_found_error
-        response = client.post("/delete-documents", json=body)
-        result = json.loads(response.text)
+        response = client.delete(f"/delete_documents{query_params}")
+        result = response.json
         assert response.status_code == 400
         assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
 
@@ -515,16 +508,16 @@ def test_delete_documents_exeception(client):
         mock_connector.delete_documents.return_value = MagicMock(
             body={"failures": [{"reason": "test failure"}], "deleted": 0}
         )
-        response = client.post("/delete-documents", json=body)
-        result = json.loads(response.text)
+        response = client.delete(f"/delete_documents{query_params}")
+        result = response.json
         assert response.status_code == 400
         assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
 
         mock_connector.delete_documents.return_value = MagicMock(
             body={"failures": [], "deleted": 0}
         )
-        response = client.post("/delete-documents", json=body)
-        result = json.loads(response.text)
+        response = client.delete(f"/delete_documents{query_params}")
+        result = response.json
         assert response.status_code == 400
         assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
 
@@ -536,78 +529,3 @@ def test_list_indices(client):
         result = json.loads(response.text)
         assert response.status_code == 200
         assert len(result.get('indices')) == 2
-
-"""
-def test_manage_actions_get_elastic():
-    with patch('main.deploy', get_ir_deployment()):
-        # Index not found
-        connector = MagicMock()
-        connector.get_documents_filenames.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
-        response, status_code = manage_actions_get_elasticsearch("test", "get_documents_filenames", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Index 'test' not found"
-
-        # Operation not allowed
-        response, status_code = manage_actions_get_elasticsearch("test", "wrong_operation", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Unsupported operation"
-
-        #Exception during process
-        connector.get_documents_filenames.side_effect = KeyError("d")
-        response, status_code = manage_actions_get_elasticsearch("test", "get_documents_filenames", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Error processing operation 'get_documents_filenames': 'd'"
-
-
-def test_manage_actions_delete_elastic():
-    with patch('main.deploy', get_ir_deployment()):
-        # Index not found
-        connector = MagicMock()
-        connector.delete_documents.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Documents not found for filters: {}"
-
-        # Operation not allowed
-        response, status_code = manage_actions_delete_elasticsearch("test", "wrong_operation", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Unsupported operation"
-
-        #Exception during process
-        connector.delete_documents.side_effect = KeyError("d")
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Error processing operation 'delete-documents': 'd'"
-
-        # Failures during delete
-        connector = MagicMock()
-        magic_object = MagicMock(body={'failures': [{"test": "test"}], 'deleted': 0})
-        magic_object.get.return_value = 0
-        connector.delete_documents.return_value = magic_object
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Documents not found for filters: {}"
-
-        # Documents not found
-        connector = MagicMock()
-        magic_object = MagicMock(body={'failures': [], 'deleted': 0})
-        magic_object.get.return_value = 0
-        connector.delete_documents.return_value = magic_object
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Documents not found for filters: {}"
-
-        # Error deleting
-        magic_object = MagicMock(body={'failures': [], 'deleted': -1})
-        magic_object.get.return_value = -1
-        connector.delete_documents.return_value = magic_object
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete-documents", {}, connector)
-        assert status_code == 400
-        assert re.match(r"Error deleting documents: \[<MagicMock name='mock.delete_documents\(\)' id='(?P<id>\d+)'>\]", response['result'])
-
-        # Delete index index not found
-        connector.delete_index.side_effect = elasticsearch.NotFoundError(message="dd", meta=MagicMock(), body={})
-        response, status_code = manage_actions_delete_elasticsearch("test", "delete_index", {}, connector)
-        assert status_code == 400
-        assert response['result'] == "Index 'test' not found"
-"""

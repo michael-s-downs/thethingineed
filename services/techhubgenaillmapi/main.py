@@ -174,7 +174,7 @@ class LLMDeployment(BaseDeployment):
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template_str)
-            raise self.raise_PrintableGenaiError(
+            raise self.PrintableGenaiError(
                 500,
                 f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
             )
@@ -476,7 +476,7 @@ def get_available_models() -> Tuple[str, int]:
     ).get_response_base()
 
 
-@app.route("/upload_prompt_template", methods=["POST"])
+@app.route("/upload_prompt_template", methods=["PUT"])
 def upload_prompt_template() -> Tuple[str, int]:
     deploy.logger.info("Upload prompt template request received")
     dat = request.get_json(force=True)
@@ -484,10 +484,11 @@ def upload_prompt_template() -> Tuple[str, int]:
     return ResponseObject(**response).get_response_base()
 
 
-@app.route("/delete_prompt_template", methods=["POST"])
+@app.route("/delete_prompt_template", methods=["DELETE"])
 def delete_prompt_template() -> Tuple[str, int]:
     deploy.logger.info("Delete prompt template request received")
-    dat = request.get_json(force=True)
+    dat = {}
+    dat.update(request.args)
     response = deploy.storage_manager.delete_template(dat)
     return ResponseObject(**response).get_response_base()
 

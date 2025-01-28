@@ -198,8 +198,9 @@ default_templates_file_names = {
 }
 
 def get_llm_deployment():
-    with (patch('common.utils.load_secrets') as mock_load_secrets,
-          patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
+    with (
+        patch('common.utils.load_secrets') as mock_load_secrets,
+        patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
         mock_load_secrets.return_value = {"URLs": {
             "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API"},
@@ -214,9 +215,11 @@ def get_llm_deployment():
         storage_mock_object.get_available_models.return_value = available_models
 
         mock_get_file_storage.return_value = storage_mock_object
-        from main import LLMDeployment
-        with patch("main.set_queue"):
-            return LLMDeployment()
+        with patch('common.genai_controllers.load_file') as mock_load_file:
+            mock_load_file.return_value = ['{"test": "test"}', '{"test2":"test"}']          
+            from main import LLMDeployment
+            with patch("main.set_queue"):
+                return LLMDeployment()
 
 class TestMain(unittest.TestCase):
     headers = {

@@ -414,7 +414,7 @@ def get_template() -> Tuple[Dict, int]:
     dat = request.args
     return deploy.get_compose_template(dat, filters=False)
 
-@app.route('/get_filter_template', methods=['POST'])
+@app.route('/get_filter_template', methods=['GET'])
 def get_filter_template() -> Tuple[Dict, int]:
     "List compose filter template flows"
     dat = request.args
