@@ -53,9 +53,9 @@ class ComposeDeployment(BaseDeployment):
                 'error_message': error_message,
                 'status_code': status_code
             }
-            return json.dumps(response), status_code
+            return response, status_code
 
-        return json.dumps(response)
+        return response
 
 
     def process(self, json_input: dict):
