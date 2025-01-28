@@ -63,7 +63,7 @@ def test_process_success(mocker, preprocess_deployment):
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, True))
     mocker.patch('main.upload_files')
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -139,7 +139,7 @@ def test_process_llm_ocr_error_extracting(mocker, preprocess_deployment):
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, True))
     mocker.patch('main.upload_files')
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', side_effect=Exception)
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -483,7 +483,7 @@ def test_resize_image_error(mocker, preprocess_deployment):
     assert message == json_input_invalid
     assert next_service == 'preprocess_end'
 
-def test_get_sizes_error(mocker, preprocess_deployment):
+def test_get_image_size_error(mocker, preprocess_deployment):
     mocker.patch('main.get_generic', return_value={
         'project_conf': {
             'department': 'DEPARTMENT_NAME',
@@ -523,7 +523,7 @@ def test_get_sizes_error(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes',side_effect=Exception)
+    mocker.patch('main.get_image_size',side_effect=Exception)
     mocker.patch('main.get_dataset_status_key', return_value={'mock_dataset_status_key': 'id_089'})
     mocker.patch('main.update_status')
 
@@ -574,7 +574,7 @@ def test_extracting_text_ocr_error(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', side_effect=Exception)
 
@@ -628,7 +628,7 @@ def test_repor_ocr_pages(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -689,7 +689,7 @@ def test_merge_files_exception(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -747,8 +747,7 @@ def test_upoading_files_error(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes',
-                 return_value=[{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -810,7 +809,7 @@ def test_getting_languages_error(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
@@ -875,7 +874,7 @@ def test_remove_local_files_error(mocker, preprocess_deployment):
     mocker.patch('main.get_do_cells_ocr')
     mocker.patch('main.get_do_lines_ocr')
     mocker.patch('main.resize_image', return_value=(None, False))
-    mocker.patch('main.get_sizes', return_value=[{'filename': 'image1.jpeg', 'size': 5},{'filename': 'image2.jpeg', 'size': 10}])
+    mocker.patch('main.get_image_size', return_value=10.0)
     mocker.patch('main.get_ocr_files', return_value={'text': ['example text']})
     mocker.patch('main.chunk', return_value=[
         [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]

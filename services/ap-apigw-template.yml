@@ -140,6 +140,15 @@ steps:
 - bash: docker build -f '${{ parameters.projectLocation }}/${{ parameters.apiProjectName }}/Dockerfile' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.projectLocation }}'
   displayName: Build image
 
+# Scan image with trivy
+- task: trivy@1
+  inputs:
+    image: ${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}
+    severities: CRITICAL,HIGH,UNKNOWN
+    options: --timeout 10m0s
+    exitCode: 0
+  displayName: Trivy image scan
+
 # Push image docker with tag numeric
 - bash: docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}'
   displayName: Push image (${{ parameters.tag }})
