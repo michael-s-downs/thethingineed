@@ -41,7 +41,7 @@ class ChunkingMethod(ABC):
 
 
     @abstractmethod
-    def get_chunks(self, docs: list, encoding):
+    def get_chunks(self, docs: list, encoding, index_metadata):
         """Method to get the chunks"""
 
 
@@ -51,15 +51,27 @@ class ChunkingMethod(ABC):
         """
         return model_type == cls.CHUNKING_FORMAT
 
-    def _add_nodes_metadata(self, nodes, origin):
+    def _add_nodes_metadata(self, nodes, origin, index_metadata):
         final_nodes = []
         sections = ""
+        mandatory_metadata_keys = [
+            "uri", "document_id", "snippet_number", "snippet_id",
+            "_node_content", "_node_type", "doc_id", "ref_doc_id", "window",
+            "original_text", "index_id", "sections_headers", "tables"
+        ]
+
         for counter, node in enumerate(nodes):
             titles_tables_node, sections = self._add_titles_and_tables(node, sections, origin)
             # Must be added here as in titles_tables text is changed
             ids_node = self._add_ids(titles_tables_node, counter)
             # Exclude when embedding generation
-            ids_node.excluded_embed_metadata_keys = list(ids_node.metadata.keys())
+
+            if isinstance(index_metadata, list):
+                ids_node.excluded_embed_metadata_keys = list(set(ids_node.metadata.keys()) - set(index_metadata))
+            elif index_metadata:
+                ids_node.excluded_embed_metadata_keys = mandatory_metadata_keys
+            else:
+                ids_node.excluded_embed_metadata_keys = list(ids_node.metadata.keys())
             ids_node.excluded_llm_metadata_keys = list(ids_node.metadata.keys())
             final_nodes.append(ids_node)
         return final_nodes
@@ -109,7 +121,7 @@ class Simple(ChunkingMethod):
     def __init__(self, window_length: int, window_overlap: int, origin: tuple, workspace: tuple):
         super().__init__(window_length, window_overlap, origin, workspace)
 
-    def get_chunks(self, docs: list, encoding) -> list:
+    def get_chunks(self, docs: list, encoding, index_metadata) -> list:
         """Get nodes from documents
 
         :param docs: list of documents
@@ -128,9 +140,9 @@ class Simple(ChunkingMethod):
                                      tokenizer=encoding.encode, paragraph_separator="\\n\\n").get_nodes_from_documents([doc], show_progress=True)
 
             if eval(os.getenv('TESTING', "False")):
-                final_nodes = self._add_nodes_metadata(nodes, self.origin)
+                final_nodes = self._add_nodes_metadata(nodes, self.origin, index_metadata)
             else:
-                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
+                final_nodes = self._add_nodes_metadata(nodes, self.workspace, index_metadata)
             nodes_per_doc.append(final_nodes)
         return nodes_per_doc
 
@@ -162,7 +174,7 @@ class Recursive(ChunkingMethod):
         return node
 
 
-    def get_chunks(self, docs: list, encoding) -> list:
+    def get_chunks(self, docs: list, encoding, index_metadata) -> list:
         """Get nodes from documents
 
         :param docs: list of documents
@@ -183,9 +195,9 @@ class Recursive(ChunkingMethod):
             
             # The metadata and configurations are passed when splitting recursively
             if eval(os.getenv('TESTING', "False")):
-                base_nodes = self._add_nodes_metadata(base_nodes, self.origin)
+                base_nodes = self._add_nodes_metadata(base_nodes, self.origin, index_metadata)
             else:
-                base_nodes = self._add_nodes_metadata(base_nodes, self.workspace)
+                base_nodes = self._add_nodes_metadata(base_nodes, self.workspace, index_metadata)
             
             sub_node_splitter = SentenceSplitter(chunk_size=self.sub_window_length, chunk_overlap=self.sub_window_overlap,
                                                  tokenizer=encoding.encode, paragraph_separator="\\n\\n")
@@ -213,7 +225,7 @@ class SurroundingContextWindow(ChunkingMethod):
         super().__init__(window_length, window_overlap, origin, workspace)
         self.windows = windows
 
-    def get_chunks(self, docs: list, encoding) -> list:
+    def get_chunks(self, docs: list, encoding, index_metadata) -> list:
         """Get nodes from documents
 
         :param docs: list of documents
@@ -236,9 +248,9 @@ class SurroundingContextWindow(ChunkingMethod):
                                                            original_text_metadata_key="original_text").get_nodes_from_documents([doc], show_progress=True)
 
             if eval(os.getenv('TESTING', "False")):
-                final_nodes = self._add_nodes_metadata(nodes, self.origin)
+                final_nodes = self._add_nodes_metadata(nodes, self.origin, index_metadata)
             else:
-                final_nodes = self._add_nodes_metadata(nodes, self.workspace)
+                final_nodes = self._add_nodes_metadata(nodes, self.workspace, index_metadata)
             nodes_per_doc.append(final_nodes)
         return nodes_per_doc
 

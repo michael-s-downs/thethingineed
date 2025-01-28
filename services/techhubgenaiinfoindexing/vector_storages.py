@@ -109,8 +109,9 @@ class LlamaIndex(VectorDB):
         chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
                                                                       "workspace": self.workspace})
 
+        index_metadata = io.index_metadata
         # The last docs is used to get the nodes, because all the documents in the indexes must be indentical
-        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding)
+        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding, index_metadata)
 
         # Indexation with the embeddings generation
         for model in io.models:

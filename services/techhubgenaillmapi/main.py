@@ -370,10 +370,8 @@ class LLMDeployment(BaseDeployment):
                 "status_code": ex.status_code,
             }
         except Exception as ex:
-            self.logger.error(
-                f"[Process] Error while processing: {ex}.", exc_info=exc_info
-            )
-            raise ex
+            self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
+            result = {'status': 'error', 'error_message': str(ex), 'status_code': 500}
 
         return ResponseObject(**result).get_response_predict(queue_metadata)
 

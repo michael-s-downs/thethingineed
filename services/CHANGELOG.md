@@ -3,7 +3,7 @@
 
 # Changelog
 
-## v3.0.0 (2025-01-17)
+## v3.0.0 (2025-01-23)
 - integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
@@ -22,16 +22,22 @@
     - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
     - If text has been extracted (for language detection) it will not be uploaded
   - [Improvement] When exception if temporal files created, those are deleted
+  - [Improvement] Required more memory for large documents (3GB recommended)
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.6)
-    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT' and 'Q_GENAI_LLMQUEUE_OUTPUT' for queue mode, 'URL_LLM' for API mode
+  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.9)
+    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
     - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
     - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
   - [Improvement] JSON flow body refactor (preprocess and indexation)
   - [Improvement] File sizes now calculated from local files instead storage
+  - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
   - [Improvement] Resize image method generalization and moved to 'utils.py'
   - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
+  - [New] New parameter 'index_metadata'
+    - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
+    - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
+    - If omitted or set to 'false', no metadata will be included
   - [Improvement] JSON flow body refactor
 - genai-llmapi:
   - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)

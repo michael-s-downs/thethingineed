@@ -18,12 +18,10 @@ from typing import List
 
 class MockVectorDB(VectorDB):
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
-        # Implementación simulada para pruebas
         processed_data = [f"Processed {file}" for file in markdown_files]
         return processed_data
 
     def index_documents(self, docs: List, io: Parser) -> List:
-        # Implementación simulada para pruebas
         return [f"Indexed {doc}" for doc in docs]
 
 class TextVectorDB(unittest.TestCase):
@@ -35,20 +33,16 @@ class TextVectorDB(unittest.TestCase):
         self.vector_db = VectorDB(self.connector, self.workspace, self.origin, self.aws_credentials)
 
     def test_get_processed_data(self):
-        # Configuración
         io = MagicMock(spec=Parser)
         df = pd.DataFrame({"column": [1, 2, 3]})
         markdown_files = ["file1.md", "file2.md"]
 
-        # Llamada al método
         result = self.vector_db.get_processed_data(io, df, markdown_files)
 
     def test_index_documents(self):
-        # Configuración
         io = MagicMock(spec=Parser)
         docs = ["doc1", "doc2", "doc3"]
 
-        # Llamada al método
         result = self.vector_db.index_documents(docs, io)
 
 class TestLlamaIndex(unittest.TestCase):
@@ -69,38 +63,29 @@ class TestLlamaIndex(unittest.TestCase):
     @patch.object(LlamaIndex, 'get_processed_data', return_value=['mock_document'])
     def test_call_get_processed_data(self, mock_get_processed_data):
         """Test that get_processed_data is called with correct parameters."""
-        # Mock para Parser
         mock_parser = MagicMock()
         mock_parser.models = [{'embedding_model': 'test_model'}]
         mock_parser.index = 'test_index'
 
-        # Crear un DataFrame y archivos markdown ficticios
         df = pd.DataFrame({'text': ['Test content'], 'Url': ['test_url']})
         markdown_files = [None]
 
-        # Llamar al método get_processed_data
         result = self.vector_db.get_processed_data(mock_parser, df, markdown_files)
 
-        # Verificar que el método fue llamado con los argumentos correctos
         mock_get_processed_data.assert_called_once_with(mock_parser, df, markdown_files)
 
-        # Verificar el resultado esperado
         self.assertEqual(result, ['mock_document'])
 
     @patch.object(LlamaIndex, 'index_documents', return_value=[{'status': 'success'}])
     def test_call_index_documents(self, mock_index_documents):
         """Test that index_documents is called with correct parameters."""
-        # Crear documentos simulados
         docs = [MagicMock()]
         mock_parser = MagicMock()
 
-        # Llamar al método index_documents
         result = self.vector_db.index_documents(docs, mock_parser)
 
-        # Verificar que el método fue llamado con los argumentos correctos
         mock_index_documents.assert_called_once_with(docs, mock_parser)
 
-        # Verificar el resultado esperado
         self.assertEqual(result, [{'status': 'success'}])
 
     @patch("vector_storages.logging.getLogger")
@@ -124,16 +109,13 @@ class TestLlamaIndex(unittest.TestCase):
         self.assertFalse(LlamaIndex.is_vector_database_type("OtherType"))
 
     def test_get_processed_data_success(self):
-        # Configuración de mocks
         mock_connector = MagicMock()
         mock_parser = MagicMock()
         mock_logger = MagicMock()
 
-        # Crear instancia de LlamaIndex
         llama_index = LlamaIndex(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
         llama_index.logger = mock_logger
 
-        # Configuración de mocks de entrada
         mock_parser.models = [{'embedding_model': 'test_model'}]
         mock_parser.index = 'test_index'
         mock_parser.txt_path = 'test_path'
@@ -144,14 +126,11 @@ class TestLlamaIndex(unittest.TestCase):
         df = pd.DataFrame({'text': ['Test content'], 'Url': ['test_url']})
         markdown_files = [None]
 
-        # Mocks internos
         llama_index._get_documents_from_dataframe = MagicMock(return_value=['mock_document'])
         mock_connector.assert_correct_index_metadata = MagicMock()
 
-        # Llamar a la función
         result = llama_index.get_processed_data(mock_parser, df, markdown_files)
 
-        # Verificar resultados
         llama_index._get_documents_from_dataframe.assert_called_once()
         mock_connector.assert_correct_index_metadata.assert_called_once()
         assert result == ['mock_document']
@@ -161,15 +140,12 @@ class TestLlamaIndex(unittest.TestCase):
     def test_get_processed_data_exception(self, mock_logger_handler, mock_get_logger):
         """Test the exception handling in get_processed_data when ElasticConnectionError is raised."""
 
-        # Crear mocks
         mock_connector = MagicMock(spec=Connector)
         mock_logger = MagicMock()
 
-        # Instanciar LlamaIndex
         llama_index = LlamaIndex(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
         llama_index.logger = mock_logger
 
-        # Configurar el mock para el Parser
         mock_parser = MagicMock()
         mock_parser.models = [{'embedding_model': 'test_model'}]
         mock_parser.index = 'test_index'
@@ -178,27 +154,21 @@ class TestLlamaIndex(unittest.TestCase):
         mock_parser.do_titles = False
         mock_parser.do_tables = False
 
-        # Crear un DataFrame y una lista de archivos markdown
         df = pd.DataFrame({'text': ['Test content'], 'Url': ['test_url']})
         markdown_files = [None]
 
-        # Simular el comportamiento de _get_documents_from_dataframe
         llama_index._get_documents_from_dataframe = MagicMock(return_value=['mock_document'])
 
-        # Simular que se lanza una ElasticConnectionError
-        mock_connector.assert_correct_index_metadata.side_effect = ElasticConnectionError("ElasticSearch connection failed.")
+        mock_connector.assert_correct_index_metadata = MagicMock(side_effect=ElasticConnectionError("ElasticSearch connection failed."))
 
-        # Verificar que se lance PrintableGenaiError y se registre el error
         with self.assertRaises(PrintableGenaiError) as cm:
             llama_index.get_processed_data(mock_parser, df, markdown_files)
 
-        # Asegurarse de que el error se registró
         mock_logger.error.assert_called_with(
             "Connection to elastic failed. Check if the elastic service is running.",
             exc_info=False
         )
 
-        # Verificar que el código de error y el mensaje de la excepción son correctos
         self.assertEqual(cm.exception.status_code, 400)
         self.assertIn("Index test_index connection to elastic", str(cm.exception))
 
@@ -217,45 +187,39 @@ class TestLlamaIndex(unittest.TestCase):
         io.process_type = "process_type"
         io.specific = {"document": {"n_pags": 1}}
         io.chunking_method = {}
-        io.modify_index_docs = {}  # Configuración del atributo faltante
-        io.scheme = {}  # Configuración del atributo faltante
+        io.modify_index_docs = {}
+        io.scheme = {}
+        io.index_metadata = ["filename"]
         docs = [MagicMock()]
 
         # Mock para `self.connector`
         self.vector_db.connector.scheme = "http"
         self.vector_db.connector.host = "localhost"
         self.vector_db.connector.port = "9200"
-        self.vector_db.connector.username = "test_user"  # Atributo agregado
-        self.vector_db.connector.password = "test_pass"  # Atributo agregado
+        self.vector_db.connector.username = "test_user"
+        self.vector_db.connector.password = "test_pass"
 
-        # Simulamos que el índice NO existe
         self.vector_db.connector.exist_index = MagicMock(return_value=False)
         self.vector_db.connector.create_empty_index = MagicMock()
 
-        # Mock para encoding
         self.vector_db.encoding.encode = MagicMock(return_value=["token1", "token2"])
 
-        # Mock para chunking
         mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
 
-        # Mock del modelo de embedding
         mock_embed_model.return_value = None
 
-        # Mock del storage context y vector index
         mock_storage_context.return_value = MagicMock()
         mock_vector_index.return_value.insert_nodes = MagicMock()
 
-        # Mock para evitar que se realicen interacciones reales con ElasticsearchStore
         mock_es_store.return_value = MagicMock()
 
-        # Ejecución del test
+        # test execution
         result = self.vector_db.index_documents(docs, io)
 
-        # Verificar que el método exist_index haya sido llamado y que se haya intentado crear el índice vacío
+        # Verify that the exist_index method has been called and that an attempt has been made to create the empty index
         self.vector_db.connector.exist_index.assert_called_once_with('test_index_test_model')
         self.vector_db.connector.create_empty_index.assert_called_once_with('test_index_test_model')
 
-        # Asserts adicionales si es necesario
         mock_get_chunking.assert_called_once_with({**io.chunking_method, "origin": self.vector_db.origin, "workspace": self.vector_db.workspace})
         self.assertEqual(len(result), 1)
         expected_keys = [
@@ -326,23 +290,20 @@ class TestLlamaIndex(unittest.TestCase):
     def test_modify_index_docs_handle_exception(self, mock_get_logger, mock_modify_index_docs):
         """Test the _modify_index_docs method when an exception is raised."""
 
-        # Crear mocks de prueba
         docs = [MagicMock()]
         modify_index_docs = {"key": "value"}
         index = "test_index"
 
-        # Configuración para simular una excepción en el mock
+        # Configuration to simulate an exception in the mock
         mock_modify_index_docs.side_effect = IndexError("Simulated error")
 
-        # Crear un mock para el logger
         mock_logger = MagicMock()
-        mock_get_logger.return_value = mock_logger  # Asignamos el mock del logger
+        mock_get_logger.return_value = mock_logger
 
-        # Llamar al método y verificar que se maneja la excepción
+        # verify exception
         with self.assertRaises(IndexError):
             self.vector_db._modify_index_docs(docs, modify_index_docs, index)
 
-        # Verificar que modify_index_documents fue llamado con los parámetros correctos
         mock_modify_index_docs.assert_called_once_with(
             self.vector_db.connector, modify_index_docs, docs, index, self.vector_db.logger
         )
@@ -364,19 +325,17 @@ class TestLlamaIndex(unittest.TestCase):
         mock_vector_index.return_value.insert_nodes.assert_called()
 
     def test_write_nodes_connection_error(self):
-        # Configurar mocks
-        instance = self.vector_db  # Reemplaza con la clase donde está `_write_nodes`
+        instance = self.vector_db
         nodes_per_doc = []
         embed_model = MagicMock()
         vector_store = MagicMock()
         models = []
         index_name = "test_index"
 
-        # Ejecutar la función y verificar excepción
         with pytest.raises(ConnectionError, match="Max num of retries reached while indexing"):
             instance._write_nodes(nodes_per_doc, embed_model, vector_store, models, index_name, delta=3, max_retries=3)
 
-    @patch("time.sleep", return_value=None)  # Mock para evitar demoras reales
+    @patch("time.sleep", return_value=None)
     def test_write_nodes_bulk_index_error(self, mock_sleep):
         nodes_per_doc = [[MagicMock(metadata={'filename': 'file1'})]]
         embed_model = MagicMock()
@@ -417,27 +376,22 @@ class TestLlamaIndex(unittest.TestCase):
         self.connector.delete_documents.assert_called()
 
     def test_manage_indexing_exception_with_failures(self):
-        # Simulamos que el método `delete_documents` devuelve un resultado con errores en 'failures'
+
         self.connector_mock.delete_documents.return_value = MagicMock(
             body={'failures': ['some_failure'], 'deleted': 0}
         )
 
-        # Llamamos al método
         self.lama_index._manage_indexing_exception('test_index', [{'embedding_model': 'test_model'}], ['test_file'])
 
-        # Verificamos que el logger registra el mensaje correcto de error
         self.logger_mock.debug.assert_called_with("Result deleting documents in index test_index_test_model: Error deleting documents")
 
     def test_manage_indexing_exception_with_no_deletions(self):
-        # Simulamos que el método `delete_documents` devuelve un resultado con 'deleted' igual a 0
         self.connector_mock.delete_documents.return_value = MagicMock(
             body={'failures': [], 'deleted': 0}
         )
 
-        # Llamamos al método
         self.lama_index._manage_indexing_exception('test_index', [{'embedding_model': 'test_model'}], ['test_file'])
 
-        # Verificamos que el logger registra el mensaje correcto cuando no se encuentran documentos
         self.logger_mock.debug.assert_called_with("Result deleting documents in index test_index_test_model: Documents not found")
 
 
@@ -454,12 +408,10 @@ class TestManagerVectorDB(unittest.TestCase):
         self.assertIsInstance(vector_db, LlamaIndex)
 
     def test_get_vector_database_with_invalid_type(self):
-        """Test que verifica que se lanza una excepción cuando se pasa un tipo inválido."""
-        # Verificamos que se lanza la excepción PrintableGenaiError con el tipo incorrecto
+        """Test that verifies that an exception is thrown when an invalid type is passed."""
         with self.assertRaises(PrintableGenaiError) as cm:
             ManagerVectorDB.get_vector_database(self.conf_invalid)
 
-        # Verificamos que el código de error sea 400 y que el mensaje de la excepción sea el esperado
         self.assertEqual(cm.exception.status_code, 400)
         self.assertIn("Platform type doesnt exist", str(cm.exception))
         self.assertIn("Possible values", str(cm.exception))
