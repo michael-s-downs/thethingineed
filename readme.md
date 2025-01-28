@@ -442,18 +442,6 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Reload config (GET)**
-
-    Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
-
-    URL: https://**\<deploymentdomain\>**/llm/reloadconfig
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **Get_models (GET)**
 

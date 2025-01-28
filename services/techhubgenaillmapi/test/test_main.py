@@ -321,12 +321,6 @@ class TestMain(unittest.TestCase):
         assert result['error_message'] == ("Error parsing JSON: 'Input should be a valid integer, unable to parse string as an integer' "
                                            "in parameter '['max_input_tokens']' for value 'ss'")
 
-    def test_reloadconfig(self):
-        with patch("main.load_secrets"):
-            from main import reloadconfig
-        _, status_code = reloadconfig()
-        assert status_code == 200
-
 
     def test_get_validation_error_response(self):
         error = {

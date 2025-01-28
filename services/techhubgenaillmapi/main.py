@@ -398,17 +398,6 @@ def sync_deployment() -> Tuple[str, int]:
     return deploy.sync_deployment(json_input)
 
 
-@app.route("/reloadconfig", methods=["GET"])
-def reloadconfig() -> Tuple[str, int]:
-    deploy.logger.info("Reload config request received")
-    deploy.templates, deploy.templates_names, deploy.display_templates_with_files = (
-        deploy.storage_manager.get_templates(return_files=True)
-    )
-    result = json.dumps({"status": "ok", "status_code": 200}), 200
-
-    return result
-
-
 @app.route("/healthcheck", methods=["GET"])
 def healthcheck() -> Dict:
     return {"status": "Service available"}
