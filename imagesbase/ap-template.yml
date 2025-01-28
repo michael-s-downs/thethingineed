@@ -17,7 +17,7 @@ parameters:
   default: ''
   type: string
 - name: pythonVersion
-  default: '3.8'
+  default: '3.11'
   type: string
 - name: libraryFeed
   default: ''
@@ -81,6 +81,15 @@ steps:
 # Create image docker
 - bash: docker build -f '${{ parameters.sourcesDirectory }}/Dockerfile' --build-arg 'python_version=${{ parameters.pythonVersion }}' -t '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
   displayName: Build image
+
+# # Scan image with trivy
+# - task: trivy@1
+#   inputs:
+#     image: ${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}
+#     severities: CRITICAL,HIGH,UNKNOWN
+#     exitCode: 0
+#     options: --timeout 10m0s
+#   displayName: Trivy image scan
 
 # Push image docker with tag numeric
 - bash: docker push '${{ parameters.registryServerName }}/${{ parameters.imageName }}:${{ parameters.tag }}'
