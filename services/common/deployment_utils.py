@@ -304,7 +304,7 @@ class BaseDeployment(ABC):
         }
         if error_message:
             response['error_message'] = error_message
-        return json.dumps(response), status_code
+        return response, status_code
 
     def cron_deployment(self, time_sleep: int = 1):
         """ Deploy service in a cron way.
@@ -337,4 +337,4 @@ class BaseDeployment(ABC):
         self.logger.info("Request finished")
 
         r_dict = {'status': "finished" if status_code == 200 else "error", 'result': response, 'status_code': status_code}
-        return json.dumps(r_dict), status_code
+        return r_dict, status_code
