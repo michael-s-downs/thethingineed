@@ -12,6 +12,7 @@ trigger:
     include:
     - 'services/techhubintegrationsender/*'
     - 'helm/'
+
 variables:
 - group: Variables para CI
 - group: Params Python
