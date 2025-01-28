@@ -771,14 +771,6 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 ### Endpoints
 
 - **/predict (POST)**: This is the main endpoint used to call the LLM.
-- **/reloadconfig (GET)**: Used to reload the configuration read from the files like the models and prompt templates available. Returns the following JSON:
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
