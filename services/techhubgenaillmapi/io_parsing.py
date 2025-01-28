@@ -1,6 +1,6 @@
 # Native imports
 import json, os
-from typing import Literal, Optional, Union, Tuple
+from typing import Literal, Optional, Union, Tuple, List
 import requests
 
 # Installed imports
@@ -202,10 +202,20 @@ class LLMMetadata(BaseModel):
     top_k: Optional[int] = Field(None, ge=0, le=500) # Optional int with range constraint
     model: Optional[str] = None
     default_model: Optional[str] = None
+    tools: Optional[list] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
 
+    @field_validator('tools')
+    def validate_tools(cls, v, values: FieldValidationInfo):
+        tool_names = set()
+        for tool in v:
+            if tool['name'] in tool_names:
+                raise ValueError(f"Duplicate tool name '{tool.name}' found.")
+            tool_names.add(tool['name'])
+            Tool(**tool)
+        return v
     @model_validator(mode='after')
     def validate_functions_and_functions_call(self):
         if self.functions and not self.function_call:
@@ -222,6 +232,58 @@ class LLMMetadata(BaseModel):
         values.pop('default_model', None)
         return values
 
+class Tool(BaseModel):
+    name: str = None
+    description: str = None
+    input_schema: dict = None
+
+    class Config:
+        extra = 'forbid'
+
+    @field_validator('input_schema')
+    def validate_input_schema(cls, v, values: FieldValidationInfo):
+        Input_schema(**v)
+        return v
+
+class Input_schema(BaseModel):
+    type: str = None
+    properties: dict
+    required: List[str] = None
+
+    class Config:
+        extra = 'forbid'
+
+    @field_validator('properties')
+    def validate_properties(cls, v, values:FieldValidationInfo):
+        for key, prop in v.items():
+            if key == 'enum':
+                Property(**{key: prop})
+            else:
+                if not prop['type']:
+                    raise ValueError(f"Property '{key}' is missing 'type'.")
+                if not prop['description']:
+                    raise ValueError(f"Property '{key}' is missing 'description'.")
+        return v
+
+    @model_validator(mode='after')
+    def validate_input_schema(cls, values):
+        if not values.properties:
+            raise ValueError("The 'properties' field is required and cannot be empty.")
+        if not values.required:
+            raise ValueError("The 'required' field is required and cannot be empty.")
+        if not values.type:
+            raise ValueError("The 'required' field is required and cannot be empty.")
+        required_fields = set(values.required)
+        defined_fields = set(values.properties.keys())
+        missing_fields = required_fields - defined_fields
+        if missing_fields:
+            raise ValueError(f"The required fields {missing_fields} are missing in properties.")
+        return values
+
+class Property(BaseModel):
+    enum: Optional[List[str]] = None
+    class Config:
+        extra = 'forbid'
 
 class PlatformMetadata(BaseModel):
     # Platform metadata

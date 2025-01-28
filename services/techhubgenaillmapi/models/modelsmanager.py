@@ -53,6 +53,7 @@ class ManagerModel(object):
         for model in ManagerModel.MODEL_TYPES:
             if model.get_message_type(selected_model.get('message')):
                 conf.pop('model', None)
+                conf.pop('tools', None)
                 selected_model.pop('message', None)
                 selected_model.pop('model_pool', None)
                 selected_model.update(conf)

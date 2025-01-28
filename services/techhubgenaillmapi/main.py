@@ -105,12 +105,13 @@ class LLMDeployment(BaseDeployment):
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
         parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
                                                                                                 {})
+        tools = parsed_llm_metadata['tools']
         model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT,
                                        self.available_pools, self.models_config_manager)
         # Check max_tokens in dalle
         if model.model_type == "dalle3" and model.max_input_tokens > 4000:
             raise PrintableGenaiError(400, "Error, in dalle3 the maximum number of characters in the prompt is 4000")
-        return model
+        return model, tools
 
     def parse_query(self, query_metadata: dict, model: GenerativeModel):
         query_metadata['is_vision_model'] = model.is_vision
@@ -144,10 +145,10 @@ class LLMDeployment(BaseDeployment):
             raise ValueError("Missing mandatory fields ('query_metadata', 'llm_metadata' or 'platform_metadata')")
 
         platform = self.parse_platform(json_input.get('platform_metadata', {}))
-        model = self.parse_model(json_input.get('llm_metadata', {}), platform)
+        model, tools = self.parse_model(json_input.get('llm_metadata', {}), platform)
         query_metadata = self.parse_query(json_input.get('query_metadata', {}), model)
         project_conf = self.parse_project_conf(json_input.get('project_conf', {}), model, platform)
-        return query_metadata, model, platform, project_conf['x_reporting']
+        return query_metadata, model, platform, project_conf['x_reporting'], tools
 
     def get_validation_error_response(self, error):
         """ Get validation error response
@@ -181,7 +182,7 @@ class LLMDeployment(BaseDeployment):
             json_input, queue_metadata = adapt_input_queue(json_input)
 
             # Parse and check input
-            query_metadata, model, platform, report_url = self.parse_input(json_input)
+            query_metadata, model, platform, report_url, tools = self.parse_input(json_input)
 
             # Set model
             platform.set_model(model)
