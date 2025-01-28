@@ -3,7 +3,7 @@
 
 # Changelog
 
-## v3.0.0 (2025-01-23)
+## v3.0.0 (2025-01-30)
 - integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
