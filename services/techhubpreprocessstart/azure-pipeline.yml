@@ -1,7 +1,6 @@
 ### This code is property of the GGAO ###
 
 
-
 trigger:
   batch: true
   branches:
