@@ -81,3 +81,11 @@ class GenerativeModel(ABC):
         :return: True if the message_type is correct, False otherwise
         """
         return message_type == cls.MODEL_MESSAGE
+
+    @abstractmethod
+    def adapt_tools(self, tools: list) -> list:
+        """ Method to adapt the entrie tools for the model.
+
+        :param tools: list of tools to use by the model.
+        :return: list with the list of tools adapted for the model
+        """

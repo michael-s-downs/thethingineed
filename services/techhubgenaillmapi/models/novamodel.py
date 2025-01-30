@@ -12,7 +12,7 @@ class NovaModel(GenerativeModel):
 
     # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
-                 top_k, temperature, stop, models_credentials):
+                 top_k, temperature, stop, models_credentials, tools):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify model
@@ -49,6 +49,8 @@ class NovaModel(GenerativeModel):
                 self.temperature = temperature
             else:
                 raise ValueError(f"Temperature must be between 0.0 and 1.0 for the model {self.model_name}")
+        if tools:
+            self.tools = self.adapt_tools(tools)
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class
@@ -83,6 +85,8 @@ class NovaModel(GenerativeModel):
                 }}
         if self.top_k:
             body['inferenceConfig']['top_k'] = self.top_k
+        if self.tools:
+            body['tools'] = self.tools
         return json.dumps(body)
 
     def get_result(self, response: dict) -> dict:
@@ -134,6 +138,23 @@ class NovaModel(GenerativeModel):
                f'max_tokens:{self.max_tokens}, ' \
                f'temperature:{self.temperature}}}'
 
+    def adapt_tools(self, tools):
+        adapted_tools = []
+
+        for tool in tools:
+            adapted_tool = {
+                "toolSpec": {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "inputSchema": {
+                        "json": tool["input_schema"]
+                    }
+                }
+            }
+
+            adapted_tools.append(adapted_tool)
+
+        return adapted_tools
 
 class ChatNova(NovaModel):
     MODEL_MESSAGE = "chatNova"

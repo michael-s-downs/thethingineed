@@ -67,6 +67,7 @@ class GPTModel(GenerativeModel):
         self.response_format = response_format
         self.encoding = tiktoken.get_encoding("cl100k_base")
         self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        self.tools = None
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -92,6 +93,9 @@ class GPTModel(GenerativeModel):
             else:
                 raise PrintableGenaiError(400, f"Response format {self.response_format} not supported for model {self.model_name} "
                                     f"(only 'json_object' supported)")
+        if self.tools:
+            data['tools'] = self.tools
+
         return json.dumps(data)
 
     def get_result(self, response: dict) -> dict:
@@ -152,6 +156,22 @@ class GPTModel(GenerativeModel):
         }
         return result
 
+    def adapt_tools(self, tools):
+        adapted_tools = []
+
+        for tool in tools:
+            adapted_tool = {
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "parameters": tool["input_schema"]
+                }
+            }
+
+            adapted_tools.append(adapted_tool)
+
+        return adapted_tools
 
     def __repr__(self):
         """Return the model representation."""
@@ -311,7 +331,8 @@ class ChatGPTModel(GPTModel):
                  models_credentials: dict = None,
                  top_p: int = 0,
                  seed: int = None,
-                 response_format: str = None):
+                 response_format: str = None,
+                 tools: list = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used
@@ -338,6 +359,8 @@ class ChatGPTModel(GPTModel):
         super().__init__(model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                          temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = False
+        if tools:
+            self.tools = self.adapt_tools(tools)
 
 
 class ChatGPTVision(GPTModel):
@@ -361,7 +384,8 @@ class ChatGPTVision(GPTModel):
                  top_p : int = 0,
                  seed: int = None,
                  response_format: str = None,
-                 max_img_size_mb: float = 20.00):
+                 max_img_size_mb: float = 20.00,
+                 tools: list = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used in the gpt3_5 endpoint
@@ -389,3 +413,5 @@ class ChatGPTVision(GPTModel):
                          temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
+        if tools:
+            self.tools = self.adapt_tools(tools)

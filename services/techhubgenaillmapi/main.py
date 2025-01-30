@@ -103,9 +103,13 @@ class LLMDeployment(BaseDeployment):
     def parse_model(self, llm_metadata: dict, platform: Platform):
         llm_metadata['default_model'] = self.default_models.get(platform.MODEL_FORMAT)
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(exclude_unset=True, exclude_none=True)
-        parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT,
-                                                                                                {})
-        tools = parsed_llm_metadata['tools']
+        parsed_llm_metadata['models_credentials'] = self.models_credentials.get('api-keys').get(platform.MODEL_FORMAT, {})
+        tools = None
+        if parsed_llm_metadata.get('tools'):
+            tools = parsed_llm_metadata['tools']
+        else:
+            parsed_llm_metadata['tools'] = tools
+
         model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT,
                                        self.available_pools, self.models_config_manager)
         # Check max_tokens in dalle

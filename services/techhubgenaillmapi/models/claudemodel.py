@@ -13,7 +13,7 @@ class ClaudeModel(GenerativeModel):
 
     # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                 temperature, stop, models_credentials):
+                 temperature, stop, models_credentials, tools):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify model
@@ -47,6 +47,8 @@ class ClaudeModel(GenerativeModel):
             else:
                 raise ValueError(f"Temperature must be between 0.0 and 1.0 for the model {self.model_name}")
         self.stop_sequences = stop
+        if tools:
+            self.tools = tools
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class
@@ -71,14 +73,17 @@ class ClaudeModel(GenerativeModel):
         """
         messages = self.message.preprocess()
         system = messages.pop(-2).get('content') # Remove system message from the list
-        body = json.dumps({"messages": messages,
-                           "temperature": self.temperature,
-                           "stop_sequences": self.stop_sequences,
-                           "anthropic_version": self.api_version,
-                           "max_tokens": self.max_tokens,
-                           "system": system
-                           })
-        return body
+        body = {"messages": messages,
+                "temperature": self.temperature,
+                "stop_sequences": self.stop_sequences,
+                "anthropic_version": self.api_version,
+                "max_tokens": self.max_tokens,
+                "system": system
+                }
+        if self.tools:
+            body['tools'] = self.tools
+
+        return json.dumps(body)
 
     def get_result(self, response: dict) -> dict:
         """ Method to format the model response.

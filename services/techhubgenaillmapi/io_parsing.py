@@ -256,13 +256,7 @@ class Input_schema(BaseModel):
     @field_validator('properties')
     def validate_properties(cls, v, values:FieldValidationInfo):
         for key, prop in v.items():
-            if key == 'enum':
-                Property(**{key: prop})
-            else:
-                if not prop['type']:
-                    raise ValueError(f"Property '{key}' is missing 'type'.")
-                if not prop['description']:
-                    raise ValueError(f"Property '{key}' is missing 'description'.")
+            Property(**prop)
         return v
 
     @model_validator(mode='after')
@@ -281,7 +275,9 @@ class Input_schema(BaseModel):
         return values
 
 class Property(BaseModel):
-    enum: Optional[List[str]] = None
+    type: str = None
+    description: Optional[str] = None
+    enum: Optional[List[object]] = None
     class Config:
         extra = 'forbid'
 
