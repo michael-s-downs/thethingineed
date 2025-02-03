@@ -198,8 +198,8 @@ class LLMMetadata(BaseModel):
     style: Literal['vivid', 'natural'] = None
     user: Optional[str] = None
     top_p: Optional[confloat(ge=0.0, le=1.0)] = None
-    # Nova model parameter
-    top_k: Optional[int] = Field(None, ge=0, le=500) # Optional int with range constraint
+    top_k: Optional[int] = Field(None, ge=0, le=500) # Nova model parameter # Optional int with range constraint
+    max_completion_tokens: Optional[PositiveInt] = None # o1 model parameter
     model: Optional[str] = None
     default_model: Optional[str] = None
 

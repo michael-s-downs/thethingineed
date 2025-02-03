@@ -5,7 +5,7 @@ import copy
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision
+from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel
 from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision
@@ -14,7 +14,7 @@ from generatives import GenerativeModel
 
 
 class ManagerModel(object):
-    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision]
+    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, ChatGPTOModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision]
 
     @staticmethod
     def find_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:

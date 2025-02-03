@@ -180,3 +180,62 @@ class ChatGPTvMessage(Message):
                     user_content.append(e)
 
         return [{'role': 'system', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]
+
+class ChatGPTOMessage(Message):
+    MODEL_FORMAT = "chatGPT-o"
+
+    def __init__(self, query: list, template: dict, template_name: str = "system_query", context: str = "",
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=(), max_img_size_mb=20.00):
+        """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
+
+        :param query: Question made.
+        :param template: Template used to build the prompt.
+        :param template_name: Template Name used to build the prompt.
+        :param context: Context used to answer the question.
+        :param system:  openai model system configuration
+        :param functions: List of functions to be used in the model
+        :param function_call: Function call to be used in the model
+        :param persistence: List containing the conversation history
+        """
+        super().__init__()
+        self.query = query
+        if context != "" and isinstance(self.query, list):
+            raise PrintableGenaiError(400, "Context param not allowed in vision models")
+        self.context = context
+        if functions is None:
+            functions = []
+        self.template_name = template_name
+        self.template = template
+        self.system = system
+        self.functions = functions
+        self.function_call = function_call
+        self.persistence = persistence if isinstance(persistence, list) else []
+        self.multiprompt = bool(self.persistence)
+        self.substituted_query = []
+        adapter = ManagerAdapters.get_adapter({'adapter': "gpt4v", 'message': self, 'max_img_size_mb': max_img_size_mb})
+        adapter.adapt_query_and_persistence()
+        self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
+
+    def preprocess(self) -> List:
+        """Given a query and a context it will return the text in the GPT model format.
+
+        :return: List with the messages in the correct format for the model
+        """
+        if "system" in self.template:
+            system_prompt = Template(self.template["system"])
+            system_content = system_prompt.safe_substitute(system=self.system)
+        else:
+            system_content = self.system
+
+        user_content = []
+        user_prompt = Template(self.template["user"])
+        if isinstance(self.template["user"], str):
+            user_content = user_prompt.safe_substitute(query=self.query, context=self.context)
+        else:
+            for e in self.template["user"]:
+                if e == "$query":
+                    user_content.extend(self.query)
+                else:
+                    user_content.append(e)
+
+        return [{'role': 'developer', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]

@@ -267,7 +267,7 @@ class AzurePlatform(GPTPlatform):
         :return: Url to make the request
         """
         self.logger.debug("Building url.")
-        if generativeModel.MODEL_MESSAGE in ["chatGPT", "chatGPT-v"]:
+        if generativeModel.MODEL_MESSAGE in ["chatGPT", "chatGPT-v", "chatGPT-o"]:
             template = Template(self.models_urls.get('AZURE_GPT_CHAT_URL'))
         elif generativeModel.MODEL_MESSAGE == "dalle":
             template = Template(self.models_urls.get('AZURE_DALLE_URL'))

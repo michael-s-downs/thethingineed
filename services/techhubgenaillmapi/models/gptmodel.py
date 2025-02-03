@@ -389,3 +389,53 @@ class ChatGPTVision(GPTModel):
                          temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
+
+class ChatGPTOModel(GPTModel):
+    MODEL_MESSAGE = "chatGPT-o"
+
+    def __init__(self, model: str = 'genai-gpt4V-sweden',
+                 model_type: str = "",
+                 pool_name: str = None,
+                 max_input_tokens: int = 32768,
+                 max_tokens: int = 1000,  # -1 does not work in vision models
+                 bag_tokens: int = 500,
+                 zone: str = "genai-sweden",
+                 api_version: str = "2024-02-15-preview",
+                 temperature: float = 0,
+                 n: int = 1,
+                 functions: List = [],
+                 function_call: str = "none",
+                 stop: List = [DEFAULT_STOP_MSG],
+                 models_credentials: dict = None,
+                 top_p: int = 0,
+                 seed: int = None,
+                 response_format: str = None,
+                 max_img_size_mb: float = 20.00,
+                 max_completion_tokens = 1000):
+
+        super().__init__(model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
+                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
+        self.is_vision = True
+        self.max_img_size_mb = max_img_size_mb
+        self.max_completion_tokens = max_completion_tokens
+
+    def parse_data(self) -> json:
+        """ Convert message and model data into json format.
+        Returns: Query in json format to be sent.
+                    """
+        data = dict(model=self.model_name,
+                    n=self.n,
+                    stop=self.stop,
+                    messages=self.message.preprocess())
+        if self.seed:
+            data['seed'] = self.seed
+        if self.max_completion_tokens > 0:
+            data['max_completion_tokens'] = self.max_completion_tokens
+        if self.response_format:
+            if self.response_format == "json_object":
+                data['response_format'] = {"type": "json_object"}
+            else:
+                raise PrintableGenaiError(400,
+                                          f"Response format {self.response_format} not supported for model {self.model_name} "
+                                          f"(only 'json_object' supported)")
+        return json.dumps(data)
