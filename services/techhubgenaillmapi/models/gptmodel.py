@@ -67,7 +67,6 @@ class GPTModel(GenerativeModel):
         self.response_format = response_format
         self.encoding = tiktoken.get_encoding("cl100k_base")
         self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
-        self.tools = None
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -130,8 +129,14 @@ class GPTModel(GenerativeModel):
             if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
-            # check if content is in the message
-            text = choice.get('message', {}).get('content', '')
+            message = choice.get('message', {})
+
+            if 'tool_calls' in message:
+                for tool_call in message['tool_calls']:
+                    text = tool_call['function']['arguments']
+            else:
+                # check if content is in the message
+                text = choice.get('message', {}).get('content', '')
 
             # get text
             if re.search(NOT_FOUND_MSG, text, re.I):
