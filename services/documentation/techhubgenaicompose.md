@@ -255,7 +255,7 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/load_session (POST)**: Used to load directly to REDIS a conversation.
+* **/load_session (PUT)**: Used to load directly to REDIS a conversation.
 
     ```json
     {
@@ -275,25 +275,23 @@ If the response looks like this, you are good to go.
 
 * **/list_templates (GET)**: Used to list all templates stored in cloud.
 
+    URL: https://<deploymentdomain>/compose/list_templates
+
 * **/list_filter_templates (GET)**: Used to list all filter templates stored in cloud.
 
-* **/get_template (POST)**: Used to get the content of a template JSON file stored in cloud.
+    URL: https://<deploymentdomain>/compose/list_filter_templates
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
+* **/get_template (GET)**: Used to get the content of a template JSON file stored in cloud.
+
+    URL: https://<deploymentdomain>/compose/get_templates?name=mytemplate
 
 * **/get_filter_template (POST)**: Used to get the content of a filter template JSON file stored in cloud.
 
-    ```json
-    {
-        "name": "filter_template_name"
-    }
-    ```
+    URL: https://<deploymentdomain>/compose/get_filter_templates?name=mytemplate
 
-* **/upload_template (POST)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
+* **/upload_template (PUT)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
+
+    Body:
 
     ```json
     {
@@ -302,7 +300,11 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/upload_filter_template (POST)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
+    URL: https://<deploymentdomain>/compose/upload_filter_template
+
+* **/upload_filter_template (PUT)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
+
+    Body:
 
     ```json
     {
@@ -311,21 +313,15 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/delete_template (POST)**: Used to delete a template JSON file from cloud storage.
+    URL: https://<deploymentdomain>/compose/upload_filter_template
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+* **/delete_template (DELETE)**: Used to delete a template JSON file from cloud storage.
 
-* **/delete_filter_template (POST)**: Used to delete a filter template JSON file from cloud storage.
+    URL: https://<deploymentdomain>/compose/delete_template?name=mytemplate
 
-    ```json
-    {
-    "name": "example_filter_template"
-    }
-    ```
+* **/delete_filter_template (DELETE)**: Used to delete a filter template JSON file from cloud storage.
+
+    URL: https://<deploymentdomain>/compose/delete_filter_template?name=mytemplate
 
 ### Request and Response Formats for /process
 
