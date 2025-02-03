@@ -9,6 +9,7 @@
   - [Getting started](#getting-started)
   - [Concepts and Definitions](#concepts-and-definitions)
   - [Chunking Methods](#chunking-methods)
+  - [Embeddings Generation](#embeddings-generation)
   - [Component Reference](#component-reference)
     - [Using with integration](#using-with-integration)
     - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
@@ -343,6 +344,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
     - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
     - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
+  - **metadata**: This parameter allows users to add custom metadata
   - **index_metadata**: This parameter can have various values to specify how metadata will be included in the embeddings:  
     - If set to `true`, only the filename metadata and the metadata provided by the user will be included.  
     - If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.  
@@ -367,13 +369,13 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **text**: This is the place where the document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality))  has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
       ```json
       {
-        "text": "username/dataset_key/txt/username/request_id/"
+        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/<filename>.txt"
       }
       ```
       An example could be:
       ```json
       {
-        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/"
+        "text": "username/dataset_key/txt/username/request_id/documentation.txt"
       }
       ```
       Otherwise, it has to be the route where the user uploads this file.

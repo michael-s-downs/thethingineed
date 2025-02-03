@@ -12,7 +12,6 @@ trigger:
     include:
     - 'services/techhubgenaillmapi/*'
     - 'helm/'
-    - 'imagesbase/*'
 
 variables:
 - group: Variables para CI

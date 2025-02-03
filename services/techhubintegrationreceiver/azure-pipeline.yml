@@ -93,6 +93,9 @@ stages:
             pip install -r requirements.txt
             pip install pytest pytest-cov 
 
+            echo "---Installing pytest requirements---"
+            pip install -r test/requirements.txt
+
             export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
             export INTEGRATION_NAME=search
             export STORAGE_PERSIST_FOLDER=test

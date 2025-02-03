@@ -15,48 +15,24 @@ pool:
 variables:
 - name: 'projectlocation'
   value: '$(Agent.BuildDirectory)/s'
+- name: 'folderName'
+  value: techhubelasticsearch
+- name: 'targetFolderName'
+  value: 'elasticsearch'
 
 stages:
-  - stage: SonarAnalysis
-    jobs:
-      - job: test
-        continueOnError: false
-        steps:       
-        - task: SonarQubePrepare@7
-          inputs:
-            SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
-            scannerMode: 'cli'
-            configMode: 'manual'
-            cliProjectKey: $(System.DefinitionName)
-            cliSources: '$(System.DefaultWorkingDirectory)/services/techhubelasticsearch/'
-                  
-            # removes sonar.branch.name variable as this is not supported by community edition
-        - task: PowerShell@2
-          inputs:
-            targetType: 'inline'
-            script: |
-              $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w,/,-]*"\,?'
-                  Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"      
-        - task: SonarQubeAnalyze@7
-          inputs:
-            jdkversion: 'JAVA_HOME_17_X64'
-
-        - task: SonarQubePublish@7
-          inputs:
-            pollingTimeoutSec: '300'
-
   - stage: Elasticsearch
     jobs:
       - job: CopyFilesIaCAndPublish
         steps:
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(System.DefaultWorkingDirectory)/services/techhubelasticsearch/'
+            SourceFolder: '$(System.DefaultWorkingDirectory)/services/$(folderName)/'
             Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/$(targetFolderName)'
             CleanTargetFolder: true
         - task: PublishBuildArtifacts@1
           inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(targetFolderName)'
             ArtifactName: 'ElasticSearch'
             publishLocation: 'Container'       
