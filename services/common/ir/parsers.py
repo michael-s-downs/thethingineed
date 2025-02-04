@@ -178,6 +178,7 @@ class ParserInfoindexing(Parser):
             for key in metadata_primary_keys:
                 if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
                     raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
+            metadata_primary_keys = sorted(metadata_primary_keys)
         elif isinstance(metadata_primary_keys, str):
             if not is_available_metadata(self.metadata, metadata_primary_keys, self.chunking_method.get('method')):
                 raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
