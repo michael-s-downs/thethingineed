@@ -200,6 +200,7 @@ class LLMMetadata(BaseModel):
     top_p: Optional[confloat(ge=0.0, le=1.0)] = None
     top_k: Optional[int] = Field(None, ge=0, le=500) # Nova model parameter # Optional int with range constraint
     max_completion_tokens: Optional[PositiveInt] = None # o1 model parameter
+    reasoning_effort: Optional[Literal['low', 'medium', 'high']] = None
     model: Optional[str] = None
     default_model: Optional[str] = None
 

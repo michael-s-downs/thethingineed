@@ -397,27 +397,38 @@ class ChatGPTOModel(GPTModel):
                  model_type: str = "",
                  pool_name: str = None,
                  max_input_tokens: int = 32768,
-                 max_tokens: int = 1000,  # -1 does not work in vision models
-                 bag_tokens: int = 500,
+                 bag_tokens: int = 25000, # higher than others due to reasoning tokens
                  zone: str = "genai-sweden",
                  api_version: str = "2024-02-15-preview",
-                 temperature: float = 0,
                  n: int = 1,
-                 functions: List = [],
-                 function_call: str = "none",
                  stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None,
-                 top_p: int = 0,
                  seed: int = None,
                  response_format: str = None,
                  max_img_size_mb: float = 20.00,
-                 max_completion_tokens = 1000):
+                 max_completion_tokens: int = 1000,
+                 reasoning_effort: str = None):
 
-        super().__init__(model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
+        GenerativeModel.__init__(self, models_credentials, zone) # o1 model has different parameters than the parent class
+
+        self.model_name = model
+        self.model_type = model_type
+        self.pool_name = pool_name
+        self.max_input_tokens = max_input_tokens
+        self.bag_tokens = bag_tokens
+        self.zone = zone
+        self.api_version = api_version
+        self.n = n
+        self.stop = stop
+        self.seed = seed
+        self.response_format = response_format
+        self.encoding = tiktoken.get_encoding("cl100k_base")
+        self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
         self.max_completion_tokens = max_completion_tokens
+        self.reasoning_effort = reasoning_effort
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -438,4 +449,66 @@ class ChatGPTOModel(GPTModel):
                 raise PrintableGenaiError(400,
                                           f"Response format {self.response_format} not supported for model {self.model_name} "
                                           f"(only 'json_object' supported)")
+        if self.reasoning_effort:
+            data['reasoning_effort'] = self.reasoning_effort
+
         return json.dumps(data)
+
+    def get_result(self, response: dict) -> dict:
+        """ Method to format the model response.
+
+        :param response: Dict returned by  LLM endpoint.
+        :return: Dict with the answer, tokens used and logprobs.
+        """
+        # Check status code
+        if 'status_code' in response and response['status_code'] != 200:
+            return {
+                'status': 'error',
+                'error_message': str(response['msg']),
+                'status_code': response['status_code']
+            }
+        # get answer
+        choice = response.get('choices', [{}])[0]
+
+        # if finish_reason is content_filter, return error
+        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
+            return {
+                'status': 'error',
+                'error_message': 'content_filter',
+                'status_code': 400
+            }
+        # if query has made with a function_call, return answer
+        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
+            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
+
+        else:
+            # check if message is in the response
+            if 'message' not in choice:
+                raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
+
+            # check if content is in the message
+            text = choice.get('message', {}).get('content', '')
+
+            # get text
+            if re.search(NOT_FOUND_MSG, text, re.I):
+                answer = NOT_FOUND_MSG
+                self.logger.info("Answer not found.")
+            else:
+                answer = text.strip()
+
+        self.logger.info(f"LLM response: {answer}.")
+        text_generated = {
+            'answer': answer,
+            'logprobs': [],
+            'n_tokens': response['usage']['total_tokens'] + response['usage']['completion_tokens_details']['reasoning_tokens'],
+            'query_tokens': self.message.user_query_tokens,
+            'input_tokens': response['usage']['prompt_tokens'],
+            'output_tokens': response['usage']['completion_tokens'],
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+        }
+        result = {
+            'status': "finished",
+            'result': text_generated,
+            'status_code': 200
+        }
+        return result
