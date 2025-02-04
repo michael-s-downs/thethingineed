@@ -146,13 +146,13 @@ Below is a list of all the parameters that can be included in the request body, 
 * <b>operation</b> (required): Operation to perform. It must always have the value "indexing".
 * <b>indexation_conf</b>: 
   * <b>vector_storage_conf</b>:
-    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
-    * <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>. 
+    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]). 
+    * <b>metadata_primary_keys</b> (optional): This parameter is to specify whether the metadata provided in the value (list or string) will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
   * <b>chunking_method</b>
     * <b>window_length</b> (optional): Integer value to specify the window length for text chunking purposes, 300 by default.
     * <b>window_overlap</b> (optional): Integer value to specify the window overlapping for text chunking purposes, 10 by default.
     * <b>method</b> (optional): Type of chunking technique (<i>surrounding_context_window</i>, <i>recursive</i> or <i>simple</i> (by default)) that will be used to split normal chunks into smaller chunks to improve the retrieval process. Each chunking method has different parameters associated.
-    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required method) Integer value to specify the window length for the sub-chunks.
+    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required for method) Integer value to specify the window length for the sub-chunks.
     * <b>sub_window_overlap (<i>recursive method parameter</i>)</b> (required for method): Integer value to specify the window overlap for the sub-chunks.
     * <b>windows (<i>surrounding context window method parameter</i>)</b> (required for method): Number of the windows that will be taken in this method
 
@@ -174,6 +174,7 @@ Below is a list of all the parameters that can be included in the request body, 
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
       * <b>num_retries</b> (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 10 by default
       * <b>force_continue</b> (optional): If an error is raised by the LLM component in a particular page, force the document to index the rest of the pages received. If not, the 'llm-ocr' process is stopped and an error is raised.
+* <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>.
 * <b>response_url</b> (required): Accessible endpoint to receive asynchronous response as callback when indexing process finishes. The service will send a POST message with these parameters:
   - <b>status</b>: Indicates if the final status of the indexing process, the value can be “Finished” or “Error”.
   - <b>error</b>: Description of the error; this parameter is only sent when an error occurs.

@@ -242,7 +242,7 @@ metadata_n
 ```
 **This text will be the one hashed if 'metadata_primary_keys' passed.
 
-This field, can be a list of metadata or a string with a single metadata. All metadata keys passed must appear in the optional ones (passed too) or in the mandatory ones.
+This field, can be a list of metadata or a string with a single metadata. All metadata keys passed must appear in the 'metadata' parameter or in the mandatory ones (see <b>connectors.py</b> in [Code Overview](#code-overview) ).
 
 ## Component Reference
 If infoindexing is working with the whole toolkit, the request will be done by API call to integration and the response will be given by checkend as an async callback (also written in redis database).
@@ -340,7 +340,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
   - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
     - **vector_storage**: Key to get the configuration of the database from config file.
-    - **metadata_primary_keys**: This parameter is to specify if the metadata provided in the value (list or string) will be used in the vector storage id generation (in order to allow same chunks with different location if required)
+    - **metadata_primary_keys**: This parameter is to specify whether the metadata provided in the value (list or string) will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
   - **chunking_method**: Configuration of the chunking method.
     - **window_overlap**: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 10, and it is measured with NLTK tokenizer.
     - **window_length**: Length of chunks. Default value is 300.
