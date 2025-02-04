@@ -392,6 +392,7 @@ class ChatGPTVision(GPTModel):
 
 class ChatGPTOModel(GPTModel):
     MODEL_MESSAGE = "chatGPT-o"
+    DEFAULT_TEMPLATE_NAME = "system_query_v"
 
     def __init__(self, model: str = 'genai-gpt4V-sweden',
                  model_type: str = "",
