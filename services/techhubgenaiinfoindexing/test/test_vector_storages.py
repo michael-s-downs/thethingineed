@@ -187,7 +187,6 @@ class TestLlamaIndex(unittest.TestCase):
         io.process_type = "process_type"
         io.specific = {"document": {"n_pags": 1}}
         io.chunking_method = {}
-        io.modify_index_docs = {}
         io.scheme = {}
         io.index_metadata = ["filename"]
         docs = [MagicMock()]
@@ -271,42 +270,6 @@ class TestLlamaIndex(unittest.TestCase):
         self.assertTrue(len(result) > 0)
         mock_document.assert_called()
 
-    @patch("vector_storages.modify_index_documents")
-    def test_modify_index_docs(self, mock_modify_index_docs):
-        """Test the _modify_index_docs method."""
-        docs = [MagicMock()]
-        modify_index_docs = {"key": "value"}
-        index = "test_index"
-
-        mock_modify_index_docs.return_value = docs
-
-        result = self.vector_db._modify_index_docs(docs, modify_index_docs, index)
-
-        self.assertEqual(result, docs)
-        mock_modify_index_docs.assert_called_once()
-
-    @patch("vector_storages.modify_index_documents")
-    @patch("vector_storages.logging.getLogger")
-    def test_modify_index_docs_handle_exception(self, mock_get_logger, mock_modify_index_docs):
-        """Test the _modify_index_docs method when an exception is raised."""
-
-        docs = [MagicMock()]
-        modify_index_docs = {"key": "value"}
-        index = "test_index"
-
-        # Configuration to simulate an exception in the mock
-        mock_modify_index_docs.side_effect = IndexError("Simulated error")
-
-        mock_logger = MagicMock()
-        mock_get_logger.return_value = mock_logger
-
-        # verify exception
-        with self.assertRaises(IndexError):
-            self.vector_db._modify_index_docs(docs, modify_index_docs, index)
-
-        mock_modify_index_docs.assert_called_once_with(
-            self.vector_db.connector, modify_index_docs, docs, index, self.vector_db.logger
-        )
 
     @patch("vector_storages.time.sleep", return_value=None)
     @patch("vector_storages.VectorStoreIndex")

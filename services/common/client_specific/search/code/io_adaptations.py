@@ -109,8 +109,7 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
         # Retrocompatibility mode
         request_json['indexation_conf'] = {}
         request_json['indexation_conf']['vector_storage_conf'] = {
-            'index': request_json['input_json'].get('index'),
-            'modify_index_docs': request_json['input_json'].get('modify_index', {})
+            'index': request_json['input_json'].get('index')
         }
 
         # Retrocompatibility mode
