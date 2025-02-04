@@ -100,7 +100,6 @@ class TestInfoIndexationDeployment():
                 "index": "test_indexing",
                 "windows_overlap": 10,
                 "windows_length": 300,
-                "modify_index_docs": {},
                 "models": [
                     {
                         "embedding_model": "text-embedding-ada-002",
