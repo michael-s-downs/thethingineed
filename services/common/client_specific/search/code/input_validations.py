@@ -12,7 +12,7 @@ import conf_utils
 import docs_utils
 from common.storage_manager import ManagerStorage
 from common.genai_controllers import storage_containers
-from common.ir.utils import is_available_metadata
+from common.ir.validations import is_available_metadata
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
     """ Validate if param exist, correct type and no empty
@@ -237,11 +237,11 @@ def _validate_index_metadata(request_json: dict) -> Tuple[bool, list]:
             for key in index_metadata:
                 if not is_available_metadata(metadata, key, chunking_method):
                     valid = False
-                    messages.append(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {chunking_method}")
+                    messages.append(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
         if isinstance(index_metadata, str):
             if not is_available_metadata(metadata, index_metadata, chunking_method):
                 valid = False
-                messages.append(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {chunking_method}")
+                messages.append(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
     return valid, messages
 
 
@@ -258,11 +258,11 @@ def _validate_metadata_primary_keys(request_json: dict) -> Tuple[bool, list]:
             for key in metadata_primary_keys:
                 if not is_available_metadata(metadata, key, chunking_method):
                     valid = False
-                    messages.append(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {chunking_method}")
+                    messages.append(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
         if isinstance(metadata_primary_keys, str):
             if not is_available_metadata(metadata, metadata_primary_keys, chunking_method):
                 valid = False
-                messages.append(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {chunking_method}")
+                messages.append(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
     return valid, messages
 
 def _validate_ocr(request_json: dict) -> Tuple[bool, list]:

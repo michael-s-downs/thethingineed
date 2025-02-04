@@ -17,7 +17,7 @@ from common.genai_json_parser import (get_project_config, get_dataset_status_key
                                       get_do_titles, get_do_tables, get_specific, get_generic, get_exc_info)
 from common.logging_handler import LoggerHandler
 from common.services import PARSERS_SERVICE
-from common.ir.utils import is_available_metadata
+from common.ir.validations import is_available_metadata
 from common.errors.genaierrors import PrintableGenaiError
 
 
@@ -177,10 +177,10 @@ class ParserInfoindexing(Parser):
         if isinstance(metadata_primary_keys, list):
             for key in metadata_primary_keys:
                 if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
-                    raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {self.chunking_method.get('method')}", 400)
+                    raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         elif isinstance(metadata_primary_keys, str):
             if not is_available_metadata(self.metadata, metadata_primary_keys, self.chunking_method.get('method')):
-                raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {self.chunking_method.get('method')}", 400)
+                raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         return metadata_primary_keys
 
     @staticmethod
@@ -239,10 +239,10 @@ class ParserInfoindexing(Parser):
         if isinstance(index_metadata, list):
             for key in index_metadata:
                 if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
-                    raise PrintableGenaiError(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {self.chunking_method.get('method')}", 400)
+                    raise PrintableGenaiError(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         elif isinstance(index_metadata, str):
             if not is_available_metadata(self.metadata, index_metadata, self.chunking_method.get('method')):
-                raise PrintableGenaiError(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method {self.chunking_method.get('method')}", 400)
+                raise PrintableGenaiError(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         self.index_metadata = index_metadata
 
 
