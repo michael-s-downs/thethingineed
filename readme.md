@@ -3304,7 +3304,7 @@ Once the process ends, the accesible endpoint provided will receive a POST reque
 
 #### Update indexed documents
 
-Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by including the `modify_index_docs` parameter, which specifies the metadata used to filter the document for editing. The request body is as follows:
+Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by calling again to the integration service with the same configuration provided in the previous indexation:
 
 ```json
 {
@@ -3312,13 +3312,14 @@ Once documents have been indexed, it is often necessary to update their informat
   "indexation_conf": {
     "vector_storage_conf": {
       "index": "index_example5",
-      "modify_index_docs": {"update": {"filename": true}}
+      "metadata_primpary_keys": "same_as_before"
     }
   },
   "documents_metadata": {"doc1.txt": {"content_binary": "aG9sYQ=="}},
   "response_url": "http://",
 }
 ```
+The update will be done by the chunk id, if 'metadata_primary_keys' was not passed, the id will be based on the chunk content only. If passed, the id will be done based on the chunk content and the metadata specified. In both cases, the metadata and embeddings will be updated for the document if the id matches. If the id does not match, the ids that does not match will be indexed.
 
 Response:
 
@@ -5098,7 +5099,7 @@ The indexing flow is the following:
 
 - INFOINDEXING
 
-    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png "Process flow")
 
 - FLOWMGMT
 

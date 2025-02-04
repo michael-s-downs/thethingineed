@@ -42,7 +42,7 @@ class ChunkingMethod(ABC):
 
 
     @abstractmethod
-    def get_chunks(self, docs: list, encoding, index_metadata):
+    def get_chunks(self, docs: list, encoding, io):
         """Method to get the chunks"""
 
 
@@ -51,6 +51,21 @@ class ChunkingMethod(ABC):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.CHUNKING_FORMAT
+    
+    @staticmethod
+    def _get_id(node, metadata_primary_keys):
+        id = None
+        if isinstance(metadata_primary_keys, list):
+            text = str(node.text) + "\n\n"
+            for key in metadata_primary_keys:
+                text += str(node.metadata[key]) + "\n"
+            id = "{:02x}".format(mmh3.hash128(text, signed=False))
+        elif isinstance(metadata_primary_keys, str):
+            text = str(node.text) + "\n\n" + str(node.metadata[metadata_primary_keys])
+            id = "{:02x}".format(mmh3.hash128(text, signed=False))
+        else:
+            id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        return id
 
     def _add_nodes_metadata(self, nodes, origin, io: Parser):
         final_nodes = []
@@ -80,16 +95,7 @@ class ChunkingMethod(ABC):
     @staticmethod
     def _add_ids(node, counter: int, metadata_primary_keys):
         node.metadata['snippet_number'] = counter
-        if isinstance(metadata_primary_keys, list):
-            text = str(node.text) + "\n\n"
-            for key in metadata_primary_keys:
-                text += str(node.metadata[key]) + "\n"
-            id = "{:02x}".format(mmh3.hash128(text, signed=False))
-        elif isinstance(metadata_primary_keys, str):
-            text = str(node.text) + "\n\n" + str(node.metadata[metadata_primary_keys])
-            id = "{:02x}".format(mmh3.hash128(text, signed=False))
-        else:
-            id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        id = ChunkingMethod._get_id(node, metadata_primary_keys)
         node.metadata['snippet_id'] = id
         node.id_ = id
         return node
@@ -169,16 +175,7 @@ class Recursive(ChunkingMethod):
     @staticmethod
     def _add_ids(node, counter: int, metadata_primary_keys):
         node.metadata['snippet_number'] = counter
-        if isinstance(metadata_primary_keys, list):
-            text = str(node.text) + "\n\n"
-            for key in metadata_primary_keys:
-                text += str(node.metadata[key]) + "\n"
-            id = "{:02x}".format(mmh3.hash128(text, signed=False))
-        elif isinstance(metadata_primary_keys, str):
-            text = str(node.text) + "\n\n" + str(node.metadata[metadata_primary_keys])
-            id = "{:02x}".format(mmh3.hash128(text, signed=False))
-        else:
-            id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
+        id = ChunkingMethod._get_id(node, metadata_primary_keys)
         node.metadata['snippet_id'] = id
         node.id_ = id
         # This one is the reference to parent chunk (extended while children created)
@@ -226,7 +223,7 @@ class Recursive(ChunkingMethod):
                 sub_nodes = sub_node_splitter.get_nodes_from_documents([base_node])
                 for child_number, sub_node in enumerate(sub_nodes):
                     # Manage ids from sub_nodes (id=hashed content and index_id must be parent_node id)
-                    id = "{:02x}".format(mmh3.hash128(str(sub_node.text), signed=False))
+                    id = self._get_id(sub_node, io.metadata_primary_keys)
                     sub_node.id_ = id
                     sub_inode = IndexNode.from_text_node(sub_node, base_node.node_id)
                     nodes.append(self._add_subnode_metadata(sub_inode, base_node, id, child_number))

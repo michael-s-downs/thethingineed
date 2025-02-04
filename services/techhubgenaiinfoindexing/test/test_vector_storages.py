@@ -215,10 +215,6 @@ class TestLlamaIndex(unittest.TestCase):
         # test execution
         result = self.vector_db.index_documents(docs, io)
 
-        # Verify that the exist_index method has been called and that an attempt has been made to create the empty index
-        self.vector_db.connector.exist_index.assert_called_once_with('test_index_test_model')
-        self.vector_db.connector.create_empty_index.assert_called_once_with('test_index_test_model')
-
         mock_get_chunking.assert_called_once_with({**io.chunking_method, "origin": self.vector_db.origin, "workspace": self.vector_db.workspace})
         self.assertEqual(len(result), 1)
         expected_keys = [

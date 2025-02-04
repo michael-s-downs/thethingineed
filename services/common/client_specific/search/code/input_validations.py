@@ -249,7 +249,7 @@ def _validate_metadata_primary_keys(request_json: dict) -> Tuple[bool, list]:
     """ Validate param metadata_primary_keys"""
     valid = True
     messages = []
-    metadata_primary_keys = request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf').get('metadata_primary_keys')
+    metadata_primary_keys = request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf', {}).get('metadata_primary_keys')
 
     if metadata_primary_keys:
         chunking_method = request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}).get('method', "simple")
