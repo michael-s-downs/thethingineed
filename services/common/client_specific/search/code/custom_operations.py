@@ -140,7 +140,8 @@ def sync_infodelete_request(apigw_params: dict, request_params: dict) -> bool:
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "finished":
-            raise Exception(f"Bad response from the API service '{url}'")
+            if "Documents not found for filters:" not in response_json.get('error_message', ""):
+                raise Exception(f"Bad response from the API service '{url}'")
 
         status = True
     except:

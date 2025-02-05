@@ -144,6 +144,8 @@ As preprocess_start, manages the organization of the json that goes over all pre
   * <b>preprocess_conf:</b> Configuration of preprocess.
       - <b>num_pag_ini:</b> Number of page of document to initialize extraction.
       - <b>page_limit:</b> Total numbers of pages to extract. 
+      - <b>corrupt_th_words:</b> Threshold to set if a text is valid depending on the corrupt words. (0 allows all, 1 the most restrictive one)
+      - <b>corrupt_th_chars:</b> Threshold to set if a text is valid depending on the corrupt chars. (0 allows all, 1 the most restrictive one)
       - <b>ocr_conf:</b> Configuration of the OCR.
         + <b>ocr:</b> <i>aws-ocr</i>, <i>tesseract-ocr</i>, <i>azure-ocr</i> or <i>llm-ocr</i>>Types of OCR supported.
         + <b>extract_tables:</b> <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.

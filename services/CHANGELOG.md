@@ -14,6 +14,7 @@
   - [New] Input JSON refactor to separate parameters between indexation and preprocess
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+  - [Improvement] Specific errors from the flow now sent to the client instead of generic error
 - preprocess-start:
   - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
 - preprocess-extract:

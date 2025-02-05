@@ -175,7 +175,8 @@ def adapt_output_base(request_json: dict) -> Tuple[dict, dict]:
 
         if process_error:
             result_parsed['status'] = "error"
-            result_parsed['error'] = "Process component not working"
+            msg = [doc.get("error", "") for doc in request_json.get('documents_metadata', {}).values()]
+            result_parsed['error'] = f"Process component not working: {', '.join(msg)}"
 
     return request_json, result_parsed
 
@@ -195,7 +196,7 @@ def adapt_output_default(request_json: dict) -> Tuple[dict, dict]:
         result_parsed['status'] = "Finished"
     if result_parsed['status'] == "error":
         result_parsed['status'] = "Error"
-        result_parsed['error'] = "Unable to index documents"
+        result_parsed.setdefault('error', "Unable to index documents")
 
     metadata = request_json.get('documents_metadata', {})
     result_parsed['docs'] = metadata
