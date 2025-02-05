@@ -135,8 +135,8 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
 
     return request_json, input_files
 
-def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[dict, list]:
-    """ Adapt input for profile knowler_queue
+def adapt_input_queue(request_json: dict, input_files: list) -> Tuple[dict, list]:
+    """ Adapt input for profile queue
 
     :param request_json: Request JSON with all information
     :param input_files: Input files attached from client
@@ -144,7 +144,7 @@ def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[di
     """
     request_json['tracking'] = deepcopy(request_json['input_json'])
 
-    input_json = request_json['input_json'].pop('APIRequest', {})
+    input_json = request_json['input_json'].pop('GenaiRequest', {})
     request_json['output_json'] = request_json.pop('input_json')
     request_json['input_json'] = input_json
 
@@ -205,8 +205,8 @@ def adapt_output_default(request_json: dict) -> Tuple[dict, dict]:
 
     return request_json, result_parsed
 
-def adapt_output_knowler_queue(request_json: dict) -> Tuple[dict, dict]:
-    """ Adapt output for profile knowler_queue
+def adapt_output_queue(request_json: dict) -> Tuple[dict, dict]:
+    """ Adapt output for profile queue
 
     :param request_json: Request JSON with all information
     :return: Request JSON and output result adapted
@@ -220,7 +220,7 @@ def adapt_output_knowler_queue(request_json: dict) -> Tuple[dict, dict]:
         request_json, result_parsed = adapt_output_default(request_json)
 
     output_json = request_json.pop('output_json', {})
-    output_json['APIResponse'] = result_parsed
+    output_json['GenaiResponse'] = result_parsed
     result_parsed = output_json
 
     return request_json, result_parsed

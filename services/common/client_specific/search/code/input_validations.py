@@ -449,15 +449,15 @@ def validate_input_delete(request_json: dict, input_files: list) -> Tuple[bool, 
 
     return valid, ", ".join(messages_list)
 
-def validate_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
-    """ Validate input and report errors for profile knowler_queue
+def validate_input_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
+    """ Validate input and report errors for profile queue
 
     :param request_json: Request JSON with all information
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
 
-    input_node = 'APIRequest'
+    input_node = 'GenaiRequest'
     input_json = request_json['input_json'].get(input_node, {})
 
     if input_json:
