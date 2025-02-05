@@ -238,10 +238,12 @@ def _validate_index_metadata(request_json: dict) -> Tuple[bool, list]:
                 if not is_available_metadata(metadata, key, chunking_method):
                     valid = False
                     messages.append(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
-        if isinstance(index_metadata, str):
-            if not is_available_metadata(metadata, index_metadata, chunking_method):
-                valid = False
-                messages.append(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        elif isinstance(index_metadata, bool):
+            # If it is a boolean, it is valid
+            pass
+        else:
+            valid = False
+            messages.append("The 'index_metadata' must be a list")    
     return valid, messages
 
 
@@ -259,10 +261,9 @@ def _validate_metadata_primary_keys(request_json: dict) -> Tuple[bool, list]:
                 if not is_available_metadata(metadata, key, chunking_method):
                     valid = False
                     messages.append(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
-        if isinstance(metadata_primary_keys, str):
-            if not is_available_metadata(metadata, metadata_primary_keys, chunking_method):
-                valid = False
-                messages.append(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        else:
+            valid = False
+            messages.append("The 'metadata_primary_keys' must be a list")
     return valid, messages
 
 def _validate_ocr(request_json: dict) -> Tuple[bool, list]:

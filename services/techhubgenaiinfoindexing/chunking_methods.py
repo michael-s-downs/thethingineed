@@ -60,9 +60,6 @@ class ChunkingMethod(ABC):
             for key in metadata_primary_keys:
                 text += str(node.metadata[key]) + "\n"
             id = "{:02x}".format(mmh3.hash128(text, signed=False))
-        elif isinstance(metadata_primary_keys, str):
-            text = str(node.text) + "\n\n" + str(node.metadata[metadata_primary_keys])
-            id = "{:02x}".format(mmh3.hash128(text, signed=False))
         else:
             id = "{:02x}".format(mmh3.hash128(str(node.text), signed=False))
         return id

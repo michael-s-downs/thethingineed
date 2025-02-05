@@ -40,7 +40,6 @@
     - If omitted or set to 'false', no metadata will be included
   - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
     - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
-    - If passed as string, only this metadata field will be included
     - If omitted, no metadata will be included
   - [Improvement] JSON flow body refactor
   - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
