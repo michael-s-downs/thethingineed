@@ -39,7 +39,7 @@ class TestChunkingMethods(unittest.TestCase):
     def test_simple_get_chunks_testing_true(self, mock_getenv, mock_splitter):
         mock_getenv.return_value = "True"
         mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={"filename": "asdf"}), MagicMock(text="chunk 2", metadata={"filename": "asdf"})]
-        io = MagicMock(index_metadata=["filename"], metadata_primary_keys="filename")
+        io = MagicMock(index_metadata=["filename"], metadata_primary_keys=["filename"])
 
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
         result = method.get_chunks(self.docs, self.encoding, io)

@@ -174,14 +174,13 @@ class ParserInfoindexing(Parser):
 
     def get_metadata_primary_keys(self, vector_storage_conf):
         metadata_primary_keys = vector_storage_conf.get('metadata_primary_keys')
-        if isinstance(metadata_primary_keys, list):
+        if not isinstance(metadata_primary_keys, list) and metadata_primary_keys:
+            raise PrintableGenaiError(400, "'metadata_primary_keys' must be a list")
+        if metadata_primary_keys:
             for key in metadata_primary_keys:
                 if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
                     raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
             metadata_primary_keys = sorted(metadata_primary_keys)
-        elif isinstance(metadata_primary_keys, str):
-            if not is_available_metadata(self.metadata, metadata_primary_keys, self.chunking_method.get('method')):
-                raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({metadata_primary_keys}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         return metadata_primary_keys
 
     @staticmethod
@@ -237,13 +236,12 @@ class ParserInfoindexing(Parser):
 
     def get_index_metadata(self):
         index_metadata = self.index_conf.get('index_metadata')
+        if not (isinstance(index_metadata, list) or isinstance(index_metadata, bool)) and index_metadata:
+            raise PrintableGenaiError(400, "'index_metadata' must be a list or a boolean")
         if isinstance(index_metadata, list):
             for key in index_metadata:
                 if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
                     raise PrintableGenaiError(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
-        elif isinstance(index_metadata, str):
-            if not is_available_metadata(self.metadata, index_metadata, self.chunking_method.get('method')):
-                raise PrintableGenaiError(f"The 'index_metadata' key ({index_metadata}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
         self.index_metadata = index_metadata
 
 
