@@ -6,15 +6,16 @@
 ## v3.0.0 (2025-01-30)
 - integration-receiver:
   - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
-  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
   - [Fix] When error while processing request, return 400 instead of 200
   - [Fix] When error while processing request, delete base64 to not surpass queue size
 - integration-sender:
   - [New] Input JSON refactor to separate parameters between indexation and preprocess
-  - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
+  - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
-  - [Improvement] Specific errors from the flow now sent to the client instead of generic error
+  - [Improvement] Return to client specific error messages from the flow instead of generic error
+  - [Improvement] Small refactors for 'queue' profile: I/O JSON nodes now are 'GenaiRequest' and 'GenaiResponse'
 - preprocess-start:
   - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
 - preprocess-extract:
@@ -40,8 +41,9 @@
     - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
     - If omitted or set to 'false', no metadata will be included
   - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
-    - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
-    - If omitted, no metadata will be included
+    - If provided the list of specific fields (e.g., ['filename', 'uri']), they will be used as primary keys
+    - If omitted, no metadata will be used for the id generation, only document content is taken into account
+    - This allow to have different documents with the same content duplicated in the elastic index with different metadata
   - [Improvement] JSON flow body refactor
   - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
 - genai-llmapi:
