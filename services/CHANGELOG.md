@@ -56,6 +56,8 @@
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval:
   - [Improvement] Adapt input JSON for coherence purposes with json body refactor
+- genai-compose:
+  - [Improvement] Add header 'delegate-token' to permission filter action
 - apigw:
   - [New] Endpoint '/report/{{report_id}}/list' to get limits by report id without api-key header
 - ALL:
