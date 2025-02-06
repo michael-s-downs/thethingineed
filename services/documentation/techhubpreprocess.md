@@ -144,6 +144,8 @@ As preprocess_start, manages the organization of the json that goes over all pre
   * <b>preprocess_conf:</b> Configuration of preprocess.
       - <b>num_pag_ini:</b> Number of page of document to initialize extraction.
       - <b>page_limit:</b> Total numbers of pages to extract. 
+      - <b>corrupt_th_words:</b> Threshold to set if a text is valid depending on the corrupt words. (0 allows all, 1 the most restrictive one)
+      - <b>corrupt_th_chars:</b> Threshold to set if a text is valid depending on the corrupt chars. (0 allows all, 1 the most restrictive one)
       - <b>ocr_conf:</b> Configuration of the OCR.
         + <b>ocr:</b> <i>aws-ocr</i>, <i>tesseract-ocr</i>, <i>azure-ocr</i> or <i>llm-ocr</i>>Types of OCR supported.
         + <b>extract_tables:</b> <i>True</i> or <i>False</i> to generate file with tables extract of OCR in preprocess.
@@ -163,14 +165,7 @@ As preprocess_start, manages the organization of the json that goes over all pre
     - <b>vector_storage_conf</b>: Configuration of the vector storage.
       - <b>index</b>: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
       - <b>vector_storage</b>: Key to get the configuration of the database from config file.
-      - <b>modify_index_docs <i>(optional)</i></b>: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
-        ```python
-        {
-          "update": {"filename": True},
-          "delete": {"filename": ["doc1.txt"]}
-        }
-        ``` 
-        Where in the update key, the user specifies the metadata used as a filter to find the document.
+      - <b>metadata_primary_keys</b>: This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
     - <b>chunking_method</b>: Configuration of the chunking method.
       - <b>window_overlap</b>: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 10, and it is measured with NLTK tokenizer.
       - <b>window_length</b>: Length of chunks. Default value is 300.
@@ -303,8 +298,7 @@ Then an example with the following key data could be:
         "indexation_conf": {
             "vector_storage_conf": {
                 "index": "agents_test_2",
-                "vector_storage": "elastic-test",
-                "modify_index_docs": {}
+                "vector_storage": "elastic-test"
             },
             "chunking_method": {
                 "method": "simple",

@@ -26,9 +26,10 @@ class TestChunkingMethods(unittest.TestCase):
     @patch("chunking_methods.SentenceSplitter.get_nodes_from_documents")
     def test_simple_get_chunks(self, mock_splitter):
         mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={}), MagicMock(text="chunk 2", metadata={})]
+        io = MagicMock(index_metadata=None, metadata_primary_keys=None)
 
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 2)
         mock_splitter.assert_called_once()
@@ -37,10 +38,11 @@ class TestChunkingMethods(unittest.TestCase):
     @patch("os.getenv")
     def test_simple_get_chunks_testing_true(self, mock_getenv, mock_splitter):
         mock_getenv.return_value = "True"
-        mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={}), MagicMock(text="chunk 2", metadata={})]
+        mock_splitter.return_value = [MagicMock(text="chunk 1", metadata={"filename": "asdf"}), MagicMock(text="chunk 2", metadata={"filename": "asdf"})]
+        io = MagicMock(index_metadata=["filename"], metadata_primary_keys=["filename"])
 
         method = Simple(window_length=5, window_overlap=1, origin=("origin"), workspace=("workspace"))
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = ["filename"])
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 2)
         mock_splitter.assert_called_once()
@@ -66,11 +68,12 @@ class TestChunkingMethods(unittest.TestCase):
             }
 
         mock_splitter.side_effect = [base_nodes, sub_nodes]
+        io = MagicMock(index_metadata=True, metadata_primary_keys=None)
 
         method = Recursive(window_length=10, window_overlap=2, origin=("origin"), workspace=("workspace"),
                            sub_window_length=5, sub_window_overlap=1)
 
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 3)  # 2 sub chunks + 1 base node
         self.assertEqual(result[0][0].metadata["index_id"], result[0][2].metadata["index_id"])
@@ -98,11 +101,12 @@ class TestChunkingMethods(unittest.TestCase):
             }
 
         mock_splitter.side_effect = [base_nodes, sub_nodes]
+        io = MagicMock(index_metadata=False, metadata_primary_keys=["index_id"])
 
         method = Recursive(window_length=10, window_overlap=2, origin=("origin"), workspace=("workspace"),
                            sub_window_length=5, sub_window_overlap=1)
 
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = False)
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 3)
         self.assertEqual(result[0][0].metadata["index_id"], result[0][2].metadata["index_id"])
@@ -110,9 +114,10 @@ class TestChunkingMethods(unittest.TestCase):
     @patch("chunking_methods.SentenceSplitter.get_nodes_from_documents")
     def test_surrounding_context_window_get_chunks(self, mock_splitter):
         mock_splitter.return_value = [MagicMock(text="chunk with context", metadata={})]
+        io = MagicMock(index_metadata=None, metadata_primary_keys=None)
 
         method = SurroundingContextWindow(window_length=5, window_overlap=2, origin=("origin"), workspace=("workspace"), windows=1)
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 2)
         self.assertEqual(result[0][0].text, "This is a test document.")
@@ -122,9 +127,10 @@ class TestChunkingMethods(unittest.TestCase):
     def test_surrounding_context_window_get_chunks_testing_true(self, mock_getenv, mock_splitter):
         mock_getenv.return_value = "True"
         mock_splitter.return_value = [MagicMock(text="chunk with context", metadata={})]
+        io = MagicMock(index_metadata=None, metadata_primary_keys=None)
 
         method = SurroundingContextWindow(window_length=5, window_overlap=2, origin=("origin"), workspace=("workspace"), windows=1)
-        result = method.get_chunks(self.docs, self.encoding, index_metadata = True)
+        result = method.get_chunks(self.docs, self.encoding, io)
 
         self.assertEqual(len(result[0]), 2)
         self.assertEqual(result[0][0].text, "This is a test document.")

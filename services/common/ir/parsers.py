@@ -17,6 +17,7 @@ from common.genai_json_parser import (get_project_config, get_dataset_status_key
                                       get_do_titles, get_do_tables, get_specific, get_generic, get_exc_info)
 from common.logging_handler import LoggerHandler
 from common.services import PARSERS_SERVICE
+from common.ir.validations import is_available_metadata
 from common.errors.genaierrors import PrintableGenaiError
 
 
@@ -73,8 +74,7 @@ class ParserInfoindexing(Parser):
         'window_length': 300,
         'windows': 1,
         'sub_window_overlap': 5,
-        'sub_window_length': 100,
-        'modify_index_docs': {}
+        'sub_window_length': 100
     }
 
     INDEXING_MODES = ["simple", "recursive", "surrounding_context_window"]
@@ -122,10 +122,11 @@ class ParserInfoindexing(Parser):
 
         try:
             self.get_index_conf()
-            self.get_vector_storage_conf(vector_storages)
             self.get_chunking_method()
-            self.get_models(available_pools, available_models, models_credentials)
+            self.get_metadata()
             self.get_index_metadata()
+            self.get_vector_storage_conf(vector_storages)
+            self.get_models(available_pools, available_models, models_credentials)
         except KeyError as ex:
             self.logger.debug(f"Error getting indexing params for {self.index_conf}",
                               exc_info=get_exc_info())
@@ -168,8 +169,19 @@ class ParserInfoindexing(Parser):
     def get_vector_storage_conf(self, vector_storages):
         vector_storage_conf = self.index_conf['vector_storage_conf']
         self.index = vector_storage_conf['index']
-        self.modify_index_docs = vector_storage_conf.get('modify_index_docs', self.OPTIONAL_PARAMS['modify_index_docs'])
+        self.metadata_primary_keys = self.get_metadata_primary_keys(vector_storage_conf)
         self.vector_storage = self.get_vector_storage(vector_storages, vector_storage_conf)
+
+    def get_metadata_primary_keys(self, vector_storage_conf):
+        metadata_primary_keys = vector_storage_conf.get('metadata_primary_keys')
+        if not isinstance(metadata_primary_keys, list) and metadata_primary_keys:
+            raise PrintableGenaiError(400, "'metadata_primary_keys' must be a list")
+        if metadata_primary_keys:
+            for key in metadata_primary_keys:
+                if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
+                    raise PrintableGenaiError(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
+            metadata_primary_keys = sorted(metadata_primary_keys)
+        return metadata_primary_keys
 
     @staticmethod
     def get_vector_storage(vector_storages, vector_storage_conf):
@@ -193,7 +205,8 @@ class ParserInfoindexing(Parser):
         else:
             raise PrintableGenaiError(400, f"Chunking mode {self.chunking_method.get('method')} not available")
 
-
+    def get_metadata(self):
+        self.metadata = self.index_conf.get('metadata', {})
 
     def get_models(self, available_pools: dict, available_models: dict, models_credentials: dict):
         self.models = self.index_conf['models']
@@ -222,7 +235,15 @@ class ParserInfoindexing(Parser):
             unique_embedding_models.append(model.get('embedding_model'))
 
     def get_index_metadata(self):
-       self.index_metadata= self.index_conf.get('index_metadata')
+        index_metadata = self.index_conf.get('index_metadata')
+        if not (isinstance(index_metadata, list) or isinstance(index_metadata, bool)) and index_metadata:
+            raise PrintableGenaiError(400, "'index_metadata' must be a list or a boolean")
+        if isinstance(index_metadata, list):
+            for key in index_metadata:
+                if not is_available_metadata(self.metadata, key, self.chunking_method.get('method')):
+                    raise PrintableGenaiError(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{self.chunking_method.get('method')}'", 400)
+        self.index_metadata = index_metadata
+
 
 
 

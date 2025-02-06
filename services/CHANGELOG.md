@@ -14,6 +14,7 @@
   - [New] Input JSON refactor to separate parameters between indexation and preprocess
   - [New] Support any input params for preprocess and indexation processes (including preprocess by 'llm-ocr')
   - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+  - [Improvement] Specific errors from the flow now sent to the client instead of generic error
 - preprocess-start:
   - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
 - preprocess-extract:
@@ -34,11 +35,15 @@
   - [Improvement] Resize image method generalization and moved to 'utils.py'
   - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
-  - [New] New parameter 'index_metadata'
+  - [New] New parameter 'index_metadata' to include metadata in the embedding generation
     - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
     - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
     - If omitted or set to 'false', no metadata will be included
+  - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
+    - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
+    - If omitted, no metadata will be included
   - [Improvement] JSON flow body refactor
+  - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
 - genai-llmapi:
   - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
   - [New] Added resize for an image that exceeds the max allowed by the LLM vision model

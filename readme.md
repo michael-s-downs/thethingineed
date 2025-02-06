@@ -146,13 +146,13 @@ Below is a list of all the parameters that can be included in the request body, 
 * <b>operation</b> (required): Operation to perform. It must always have the value "indexing".
 * <b>indexation_conf</b>: 
   * <b>vector_storage_conf</b>:
-    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
-    * <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>. 
+    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]). 
+    * <b>metadata_primary_keys</b> (optional): This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
   * <b>chunking_method</b>
     * <b>window_length</b> (optional): Integer value to specify the window length for text chunking purposes, 300 by default.
     * <b>window_overlap</b> (optional): Integer value to specify the window overlapping for text chunking purposes, 10 by default.
     * <b>method</b> (optional): Type of chunking technique (<i>surrounding_context_window</i>, <i>recursive</i> or <i>simple</i> (by default)) that will be used to split normal chunks into smaller chunks to improve the retrieval process. Each chunking method has different parameters associated.
-    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required method) Integer value to specify the window length for the sub-chunks.
+    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required for method) Integer value to specify the window length for the sub-chunks.
     * <b>sub_window_overlap (<i>recursive method parameter</i>)</b> (required for method): Integer value to specify the window overlap for the sub-chunks.
     * <b>windows (<i>surrounding context window method parameter</i>)</b> (required for method): Number of the windows that will be taken in this method
 
@@ -174,6 +174,7 @@ Below is a list of all the parameters that can be included in the request body, 
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
       * <b>num_retries</b> (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 10 by default
       * <b>force_continue</b> (optional): If an error is raised by the LLM component in a particular page, force the document to index the rest of the pages received. If not, the 'llm-ocr' process is stopped and an error is raised.
+* <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>.
 * <b>response_url</b> (required): Accessible endpoint to receive asynchronous response as callback when indexing process finishes. The service will send a POST message with these parameters:
   - <b>status</b>: Indicates if the final status of the indexing process, the value can be “Finished” or “Error”.
   - <b>error</b>: Description of the error; this parameter is only sent when an error occurs.
@@ -3245,7 +3246,7 @@ Once the process ends, the accesible endpoint provided will receive a POST reque
 
 #### Update indexed documents
 
-Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by including the `modify_index_docs` parameter, which specifies the metadata used to filter the document for editing. The request body is as follows:
+Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by calling again to the integration service with the same configuration provided in the previous indexation:
 
 ```json
 {
@@ -3253,13 +3254,14 @@ Once documents have been indexed, it is often necessary to update their informat
   "indexation_conf": {
     "vector_storage_conf": {
       "index": "index_example5",
-      "modify_index_docs": {"update": {"filename": true}}
+      "metadata_primpary_keys": "same_as_before"
     }
   },
   "documents_metadata": {"doc1.txt": {"content_binary": "aG9sYQ=="}},
   "response_url": "http://",
 }
 ```
+The update will be done by the chunk id, if 'metadata_primary_keys' was not passed, the id will be based on the chunk content only. If passed, the id will be done based on the chunk content and the metadata specified. In both cases, the metadata and embeddings will be updated for the document if the id matches. If the id does not match, the ids that does not match will be indexed.
 
 Response:
 
@@ -5039,7 +5041,7 @@ The indexing flow is the following:
 
 - INFOINDEXING
 
-    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png "Process flow")
 
 - FLOWMGMT
 

@@ -2,9 +2,9 @@
   "default_ocr": "azure-ocr",
   "custom_functions":
   {
-    "validate_input": "input_validations.validate_input_knowler_queue",
-    "adapt_input": "io_adaptations.adapt_input_knowler_queue",
-    "adapt_output": "io_adaptations.adapt_output_knowler_queue",
+    "validate_input": "input_validations.validate_input_queue",
+    "adapt_input": "io_adaptations.adapt_input_queue",
+    "adapt_output": "io_adaptations.adapt_output_queue",
     "indexing": "api_calls.indexing",
     "infodelete": "custom_operations.infodelete_sync",
     "response_async": "response_calls.response_queue_default",
