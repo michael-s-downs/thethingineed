@@ -74,7 +74,8 @@ class ComposeDeployment(BaseDeployment):
                 'x-department': project_conf['x-department'],
                 'x-tenant': project_conf['x-tenant'],
                 'x-limits': project_conf.get('x-limits', json.dumps({})),
-                'user-token': request.headers.get('user-token', "")
+                'user-token': request.headers.get('user-token', ""),
+                'delegate-token': request.headers.get('delegate-token', "")
             }
 
         except KeyError as ex:
@@ -314,7 +315,8 @@ def sync_deployment() -> Tuple[Dict, int]:
         'x-department': request.headers['x-department'],
         'x-reporting': request.headers['x-reporting'],
         'x-limits': request.headers.get('x-limits', json.dumps({})),
-        'user-token': request.headers.get('user-token', "")
+        'user-token': request.headers.get('user-token', ""),
+        'delegate-token': request.headers.get('delegate-token', "")
     }
     dat['generic'].update({"project_conf": apigw_params})
     return deploy.sync_deployment(dat)
