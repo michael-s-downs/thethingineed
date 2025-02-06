@@ -89,6 +89,7 @@ class PermissionFilter(FilterMethod):
 
         self.BODY["internalIds"] = list(set(document_ids))  # IDs must be unique
         self.HEADERS["Authorization"] = headers.get("user-token", "")
+        self.HEADERS["delegate-token"] = headers.get("delegate-token", "")
         url = self.URL
         self.URL = params.get("url_allowed_documents", url)
         if self.URL is None:
