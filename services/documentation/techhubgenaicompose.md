@@ -3686,6 +3686,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
      - **K_steps** (int): Max number of query to create. The max number of queries is 10.
      - **Context** (string, optional): Context for the template to use while calling llmapi.
      - **Model** (string, optional): Model to use for the translation.
+     - **Prompt_template_name** (string, optional): Prompt template to use while calling llmapi.
 
     Example:
 

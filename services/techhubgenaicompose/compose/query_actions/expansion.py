@@ -73,6 +73,11 @@ class StepSplitExpansion(ExpansionMethod):
 
     def process(self, params: dict, actions_confs: dict):
         headers = params.pop("headers")
+        template_name = params.get("template_name")
+        template = deepcopy(STEP_TEMPLATE)
+        if template_name:
+            template["query_metadata"].pop("template")
+            template["query_metadata"]["prompt_template_name"] = template_name
         
         retrieve_action = self.get_retrieve_action(actions_confs)
 
@@ -89,11 +94,11 @@ class StepSplitExpansion(ExpansionMethod):
             STEP_QUERY = f"Input Query: {query}, K queries or lower: {k_steps} \n Response: [List of simpler queries here]"
             if context:
                 STEP_QUERY = f"Context: {context}, {STEP_QUERY}"
-            STEP_TEMPLATE['query_metadata']['query'] = STEP_QUERY
+            template['query_metadata']['query'] = STEP_QUERY
             if model is not None:
-                STEP_TEMPLATE['llm_metadata']['model'] = model
+                template['llm_metadata']['model'] = model
             
-            result = self.call_llm(STEP_TEMPLATE, headers)
+            result = self.call_llm(template, headers)
             retriever_result.append(result)
 
         queries = []
