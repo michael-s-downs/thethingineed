@@ -129,9 +129,13 @@ class LLMDeployment(BaseDeployment):
             return "", eval(template)
 
         elif template_name:
-            template_name_no_lang = template_name
+            if len(template_name.split("_")[-1]) == 2:
+                template_name_no_lang = template_name[:-3]
+            else:
+                template_name_no_lang = template_name
+
             if lang:
-                template_name = f"{template_name}_{lang}"
+                template_name = f"{template_name_no_lang}_{lang}"
 
             templates = self.load_prompt_template(template_name_no_lang)
 
