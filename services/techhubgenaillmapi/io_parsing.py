@@ -415,9 +415,6 @@ def adapt_input_queue(json_input: dict) -> tuple:
             try:
                 # Vision queries
                 json_input['query_metadata'][mount_key] = json.loads(file_content)
-            except json.decoder.JSONDecodeError as ex:
-                error_param = get_error_word_from_exception(ex, file_content)
-                raise PrintableGenaiError(500, f"X-limits is not json serializable please check near param: <{error_param}>. String: {file_content}")
             except Exception:
                 # Non-vision queries
                 json_input['query_metadata'][mount_key] = file_content
@@ -449,7 +446,6 @@ class ResponseObject(BaseModel):
 
     def get_response_predict(self, queue_metadata: QueueMetadata) -> Tuple[bool, dict, str]:
         output, status_code = self.get_response_base()
-        output = json.loads(output)
         if QUEUE_MODE:
             must_continue = True
             next_service = os.getenv('Q_GENAI_LLMQUEUE_OUTPUT')
@@ -477,4 +473,4 @@ class ResponseObject(BaseModel):
             response['error_message'] = self.error_message
         else:
             raise ValueError("Internal error, response object must have a result or an error_message")
-        return json.dumps(response), self.status_code
+        return response, self.status_code

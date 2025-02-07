@@ -69,7 +69,6 @@ class LLMDeployment(BaseDeployment):
             }
         )
 
-
         default_templates_names = list(
             set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
         )
@@ -497,4 +496,4 @@ if __name__ == "__main__":
     if QUEUE_MODE:
         deploy.async_deployment()
     else:
-        app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)
+        app.run(host="0.0.0.0", debug=False, port=8892, use_reloader=False)
