@@ -1,14 +1,31 @@
 ### This code is property of the GGAO ###
 
+from typing import Tuple
 
 # Custom import
 from common.deployment_utils import BaseDeployment
 from common.genai_controllers import db_dbs, set_queue, set_db
 from common.genai_status_control import update_full_status, get_status_code, get_value, delete_status
-from common.genai_json_parser import *
+from common.genai_json_parser import (
+    get_generic,
+    get_specific,
+    get_document,
+    get_exc_info,
+    get_dataset_status_key,
+    get_project_config,
+)
 from common.services import FLOWMGMT_CHECKEND_SERVICE
-from common.status_codes import *
-from common.error_messages import *
+from common.status_codes import (
+    ERROR,
+    PROCESS_FINISHED,
+)
+from common.error_messages import (
+    PARSING_PARAMETERS_ERROR,
+    GETTING_DATASET_STATUS_KEY_ERROR,
+    SENDING_RESPONSE_ERROR,
+    REPORTING_MESSAGE_ERROR,
+)
+
 
 
 class FlowMgmtCheckEndDeployment(BaseDeployment):
@@ -122,7 +139,7 @@ class FlowMgmtCheckEndDeployment(BaseDeployment):
                 self.logger.debug(f"Checking status of process of {dataset_status_key}")
                 error = get_status_code(redis_status, dataset_status_key, format_json=True) == ERROR
                 self.logger.info(f"Status of process of {dataset_status_key} is an error -> '{error}'")
-            except:
+            except Exception:
                 self.logger.error(f"Process {dataset_status_key} not exists in Redis.", exc_info=get_exc_info())
                 error = True
 
@@ -134,7 +151,7 @@ class FlowMgmtCheckEndDeployment(BaseDeployment):
                     update_full_status(redis_status, dataset_status_key, status_code, message_to_send)
 
                     delete_status(redis_timeout, timeout_id)
-                except:
+                except Exception:
                     message_to_send = "No defined message error in Redis"
                     status_code = ERROR if error else PROCESS_FINISHED
                     self.logger.error(f"[Process {dataset_status_key}] Error to read of Redis '{timeout_id}'", exc_info=get_exc_info())

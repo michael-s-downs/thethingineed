@@ -13,7 +13,7 @@ class SortMethod(ABC):
     Abstract base class for sorting methods.
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streamlist: list) -> None:
         """
@@ -60,7 +60,7 @@ class SortScore(SortMethod):
 
     TYPE = "score"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -101,7 +101,7 @@ class SortDocumentID(SortMethod):
 
     TYPE = "doc_id"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -141,7 +141,7 @@ class SortSnippetNumber(SortMethod):
 
     TYPE = "sn_number"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -180,7 +180,7 @@ class SortLength(SortMethod):
 
     TYPE = "length"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -219,7 +219,7 @@ class SortDate(SortMethod):
 
     TYPE = "date"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -258,7 +258,7 @@ class SortMeta(SortMethod):
 
     TYPE = "meta"
 
-    def process(self, params):
+    def process(self, params = {}):
         """
         Process the streamlist given the sorting method.
 
@@ -306,7 +306,7 @@ class SortFactory:
         Args:
             sort_type (str): Type of the sorting method.
         """
-        self.sortmethod: SortMethod = None
+        self.sortmethod = None
         for sortmethod in self.SORTS:
             if sortmethod.TYPE == sort_type:
                 self.sortmethod = sortmethod

@@ -308,7 +308,7 @@ class TestMetadataFilter:
         with pytest.raises(PrintableGenaiError) as exc_info:
             metadata_filter.process(params)
 
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 400
         assert "Only 'and' or 'or' keys must be defined." in str(exc_info.value)
 
     def test_apply_filter_and_or_combined(self, sample_data):
@@ -432,7 +432,7 @@ class TestPermissionFilter:
         with pytest.raises(PrintableGenaiError) as exc_info:
             permission_filter.process({})
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 404
         assert "Variable URL_ALLOWED_DOCUMENT not found" in str(exc_info.value)
 
     async def test_send_post_request_success(self, permission_filter):

@@ -77,7 +77,7 @@ class FilterLLM(FilterResponseMethod):
 
         answer = self.streamlist[-1].answer
         if answer is None:
-            raise PrintableGenaiError(400, "No answer found to filter")
+            raise PrintableGenaiError(404, "No answer found to filter")
         
         context = " ".join([streamchunk.content for streamchunk in self.streamlist])
         filter_query_response = f"Query:{query}. Response:{answer}. Context:{context}"

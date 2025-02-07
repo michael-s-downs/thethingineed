@@ -168,7 +168,7 @@ class TemplateManager(AbstractManager):
 
     def load_template(self):
         """
-        Loads the template stored in S3 that's going to be used.
+        Loads the template stored in cloud that's going to be used.
         """
         name = self.name
         if isinstance(self.name, list):
@@ -176,7 +176,7 @@ class TemplateManager(AbstractManager):
                 name = random.choices(name, weights=self.probs)[0]
                 self.logger.info(f"[Process ] Chosen template: {name}")
             except Exception:
-                self.raise_PrintableGenaiError(500,
+                self.raise_PrintableGenaiError(400,
                                                  "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
         self.logger.debug("Template name is not string so, uploading as string...")
         try:

@@ -12,8 +12,9 @@ from common.utils import get_models
 
 def get_documents_filenames_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handle the request to retrieve filenames of documents from the specified index.'''
-    json_input = request.get_json(force=True)
-    index = json_input.get('index', "").strip()
+    dat = {}
+    dat.update(request.args)
+    index = dat.get('index', "").strip()
 
     if not index:
         return {'status': "error", 'error_message': "Missing parameter: index", 'status_code': 400}, 400
@@ -92,10 +93,11 @@ def get_models_handler(deploy) -> Tuple[Dict, int]:
 
 def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handles the request to delete documents from Elasticsearch indexes based on specified filters.'''
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request received with data: {json_input}")
+    dat = request.args
+    deploy.logger.info(f"Request received with data: {dat}")
 
-    index, filters = json_input.get('index', ""), json_input.get('delete', {})
+    index, filters = dat.get('index', ""), dat.getlist('filename')
+    filters = {"filename": filters}
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 
@@ -130,10 +132,11 @@ def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
 
 def delete_index_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handles the request to delete specified Elasticsearch indexes for all available models.'''
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request received with data: {json_input}")
+    dat = {}
+    dat.update(request.args)
+    deploy.logger.info(f"Request received with data: {dat}")
 
-    index = json_input.get('index', "")
+    index = dat.get('index', "")
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 

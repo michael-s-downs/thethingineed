@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
+from common.models_manager import BaseModelConfigManager
 from generatives import (ManagerModel, GenerativeModel, ChatGPTModel, GenerativeModel, DalleModel,
                          ChatGPTVision, ChatClaudeModel, ChatClaudeVision, LlamaModel, ChatNova, ChatNovaVision, NovaModel)
 

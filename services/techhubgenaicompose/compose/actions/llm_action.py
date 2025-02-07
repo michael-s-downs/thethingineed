@@ -39,9 +39,9 @@ class LLMMethod(ABC):
         list: The processed streamlist.
     """
 
-    TYPE: str = None
-    URL: str = None
-    TEMPLATE: dict = None
+    TYPE: str
+    URL: str
+    TEMPLATE: dict
     HEADERS = {"Content-type": "application/json"}
 
     def __init__(self, streamlist: list) -> None:
@@ -183,9 +183,9 @@ class LLMSummarize(LLMMethod):
     def clear_output(self):
         """Deletes all the answers used to make a global summary. Not needed in this case"""
 
-    def add_hystoric(self, session_id, template, PD):
+    def add_hystoric(self, session_id, template, pd):
         """Adds persistence to compose summaries"""
-        hystoric = PD.get_conversation(session_id)
+        hystoric = pd.get_conversation(session_id)
         persistence = []
         for h in hystoric:
             if isinstance(h, dict):
@@ -394,7 +394,7 @@ class LLMFactory:
             summarize_type (str): one of the available summarizes
         """
 
-        self.llm_method: LLMMethod = None
+        self.llm_method = None
         for llm_method in self.SUMMARIES:
             if llm_method.TYPE == llm_type:
                 self.llm_method = llm_method

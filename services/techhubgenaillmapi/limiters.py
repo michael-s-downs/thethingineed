@@ -132,7 +132,6 @@ class QueryLimiter(ABC):
                 self.message.persistence.remove(pair)
                 self.logger.info(
                     f"Reached maximum images permitted. Persistence has been limited for images < {self.max_images}.")
-                continue
             else:
                 self.num_images += images_message
 

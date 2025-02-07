@@ -315,31 +315,19 @@ The output can be changed passing in the requests some attribute values:
 
     URL: https://**\<deploymentdomain\>**/compose/list_filter_templates  
 
-- **Get compose template (POST)**
+- **Get compose template (GET)**
 
     Used to get the content of a template json file stored in cloud.
 
-    URL: https://**\<deploymentdomain\>**/compose/get_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_template?name=mytemplate
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
-- **Get compose filter template (POST)**
+- **Get compose filter template (GET)**
 
     Used to get the content of a filter template json file stored in cloud.
 
-    URL: https://**\<deploymentdomain\>**/compose/get_filter_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_filter_template?name=myfiltertemplate
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
-- **Upload template (POST)**
+- **Upload template (PUT)**
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
@@ -352,7 +340,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Upload filter template (POST)**
+- **Upload filter template (PUT)**
 
     Used to upload a filter template json file to the cloud storage the content value must be a json converted to string.
 
@@ -365,35 +353,23 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Delete template (POST)**
+- **Delete template (DELETE)**
 
     Used to delete a template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/compose/delete_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_template?name=mytemplate
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
-
-- **Delete filter template (POST)**
+- **Delete filter template (DELETE)**
 
     Used to delete a filter template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template?name?myfiltertemplate
 
-    ```json
-    {
-    "name": "example_filter_template"
-    }
-    ```
+- **Load session (PUT)**
 
-- **Load session (POST)**
-    
     Used to load a session by possibly inserting a conversation:
-    
-    URL: https://**\<deploymentdomain\>**/compose/load_session 
+
+    URL: https://**\<deploymentdomain\>**/compose/load_session
 
     ```json
     {    
@@ -446,18 +422,6 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Reload config (GET)**
-
-    Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
-
-    URL: https://**\<deploymentdomain\>**/llm/reloadconfig
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **Get_models (GET)**
 
@@ -496,11 +460,11 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Upload prompt template (POST)**
+- **Upload prompt template (PUT)**
 
     Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
 
-    URL: https://**\<deploymentdomain\>**/llm/upload_prompt_template 
+    URL: https://**\<deploymentdomain\>**/llm/upload_prompt_template
 
     ```json
     {
@@ -509,17 +473,11 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Delete prompt template (POST)**
+- **Delete prompt template (DELETE)**
 
     Used to delete a prompt template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/llm/delete_prompt_template
-
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+    URL: https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **List prompt templates (GET)**
 
@@ -565,7 +523,6 @@ The output can be changed passing in the requests some attribute values:
 
     URL: https://**\<deploymentdomain\>**/llm/healthcheck 
 
-
     ```json
     {
         "status": "Service available"
@@ -597,36 +554,24 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Deletes document from index (POST)**
+- **Deletes document from index (DELETE)**
 
     Used to delete document/s from an index. 
    
-    URL: https://**\<deploymentdomain\>**/retrieve/delete-documents
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_documents?index=myindex&filename=myfile
 
-    ```json
-    {
-        "index": "myindex",
-        "delete":{
-            "filename": "manual.docx"
-        }
-    }
-    ```
-- **Delete an index (POST)**
+- **Delete an index (DELETE)**
 
     Used to delete an index from vector storage
 
-    URL: https://**\<deploymentdomain\>**/retrieve/delete_index
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_index?index=myindex
 
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
 - **Check if the component is available (GET)**
-    
+
     URL: https://**\<deploymentdomain\>**/retrieve/healthcheck
 
     Returns:
+
     ```json
     {
         "status": "Service available"
@@ -638,6 +583,7 @@ The output can be changed passing in the requests some attribute values:
     Used to retrieve the full document from an index.
 
     URL: https://**\<deploymentdomain\>**/retrieve/retrieve_documents
+
     ```json
         {
             "index": "myindex",
@@ -647,21 +593,14 @@ The output can be changed passing in the requests some attribute values:
         }
     ```
 
+- **Get filenames from index (GET)**
 
-- **Retrieve filenames from index (POST)**
+    Used to get the documents filenames from an index.
 
-    Used to retrieve the documents filenames from an index.
-    
-    URL: https://**\<deploymentdomain\>**/retrieve/get_documents_filenames
-
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
+    URL: https://**\<deploymentdomain\>**/retrieve/get_documents_filenames?index=myindex
 
 - **Get_models (GET)**
-    
+
     URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
     Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/retrieve/get_models?platform=azure
@@ -699,6 +638,7 @@ The output can be changed passing in the requests some attribute values:
     URL: https://**\<deploymentdomain\>**/retrieve/list_indices
 
     Response: 
+
     ```json
     {
         "indices": [
@@ -1478,6 +1418,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - **K_steps** (int): Max number of query to create. The max number of queries is 10.
     - **Context** (string, optional): Context for the template to use while calling llmapi.
     - **Model** (string, optional): Model to use for the translation.
+    - **Prompt_template_name** (string, optional): Prompt template to use while calling llmapi.
 
     Example:
 

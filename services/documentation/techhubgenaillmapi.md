@@ -771,14 +771,6 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 ### Endpoints
 
 - **/predict (POST)**: This is the main endpoint used to call the LLM.
-- **/reloadconfig (GET)**: Used to reload the configuration read from the files like the models and prompt templates available. Returns the following JSON:
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
@@ -790,7 +782,8 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 - **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure.
 
-    Response:   
+    Response:
+
     ```json
     {
         "models": {
@@ -820,7 +813,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
     }
     ```
 
-- **/upload_prompt_template (POST)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
+- **/upload_prompt_template (PUT)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
 
     ```json
     {
@@ -829,42 +822,46 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
     }
     ```
 
-- **/delete_prompt_template (POST)**: Used to delete a prompt template JSON file from cloud storage.
+- **/delete_prompt_template (DELETE)**: Used to delete a prompt template JSON file from cloud storage.
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **/list_templates (GET)**: Used to get all the available templates.
-    ```json
-    {
-        "status": "finished",
-        "status_code": 200,
-        "result": {
-            "genai_create_query_v.json": [
-                "system_query_v"
-            ],
-            "genai_lan_create_query.json": [
-                "emptysystem_query",
-                "emptysystem_query_es",
-                "emptysystem_query_en",
-                "system_query"
-            ]
-        }
-    }
-    ```
 
-- **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
-    ```json
-    {
-        "template": {
-            "system": "$system",
-            "user": "$query"
-        },
+Response:
+
+```json
+{
+    "status": "finished",
+    "status_code": 200,
+    "result": {
+        "genai_create_query_v.json": [
+            "system_query_v"
+        ],
+        "genai_lan_create_query.json": [
+            "emptysystem_query",
+            "emptysystem_query_es",
+            "emptysystem_query_en",
+            "system_query"
+        ]
     }
-    ```
+}
+```
+
+- **/get_template (GET)**: Used to get the content of a prompt template:
+  
+https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+
+Response:
+
+```json
+{
+    "template": {
+        "system": "$system",
+        "user": "$query"
+    },
+}
+```
 
 ### Request and Response Formats for <i>/predict</i>
 

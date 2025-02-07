@@ -27,7 +27,7 @@ class MergeMethod(ABC):
         type: The return type.
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streamlist: list) -> None:
         """Instantiate the MergeMethod class.
@@ -76,7 +76,7 @@ class AddMerge(MergeMethod):
 
     TYPE = "add"
 
-    def process(self, SEQ: str = "\n"):
+    def process(self, seq: str = "\n"):
         """Process the streamlist by adding the stream contents.
 
         Args:
@@ -88,7 +88,7 @@ class AddMerge(MergeMethod):
         es = deepcopy(EMPTY_STREAM)
         es.update(
             {
-                "content": SEQ.join(
+                "content": seq.join(
                     [streamlist.content for streamlist in self.streamlist]
                 )
             }
@@ -118,7 +118,7 @@ class MetaMerge(MergeMethod):
     TYPE = "meta"
     DEFAULT_FIELD = "Content: $content"
 
-    def process(self, params):
+    def process(self, params = {}):
         """Process the streamlist by creating a meta field.
 
         Args:
@@ -143,7 +143,7 @@ class MetaMerge(MergeMethod):
                     raise PrintableGenaiError(400, "Template empty")
             except ValueError:
                 raise PrintableGenaiError(
-                    404, f"IRStorage config file doesn't exist for name {template}"
+                    404, f"Cloud config file doesn't exist for name {template}"
                 )
 
         fields = [word[1:] for word in re.findall(pattern=r"\$\w+", string=template)]
@@ -230,7 +230,7 @@ class MergeFactory:
         Args:
             merge_type (str): The type of merge method.
         """
-        self.mergemethod: MergeMethod = None
+        self.mergemethod = None
         for mergemethod in self.MERGES:
             if mergemethod.TYPE == merge_type:
                 self.mergemethod = mergemethod

@@ -59,7 +59,7 @@ class PersistManager(AbstractManager):
     def get_param(self, params:dict, param_name: str, param_type):
         return super().get_param(params, param_name, param_type, self.defaults_dict)
 
-    def run(self, template, session_id, PD, reformulated=False):
+    def run(self, template, session_id, pd, reformulated=False):
         """Executes the persistence logic based on the provided template and session data.
 
         Args:
@@ -80,8 +80,8 @@ class PersistManager(AbstractManager):
         max_persistence = self.get_param(self.params, "max_persistence", int)
 
         # Initialize PD to fix the max_persistence
-        PD.add({}, session_id=session_id, max_persistence=max_persistence)
-        self.logger.debug(f"PersitDict init with {PD}")
+        pd.add({}, session_id=session_id, max_persistence=max_persistence)
+        self.logger.debug(f"PersitDict init with {pd}")
         return template
 
 
@@ -152,7 +152,7 @@ class PersistDict():
             
     def __getitem__(self, key):
         if not isinstance(key, str):
-            raise PrintableGenaiError(status_code=500, message="Session id must be a string")
+            raise PrintableGenaiError(status_code=400, message="Session id must be a string")
         return self.PD.__getitem__(key)
 
     def get_conversation(self, session_id:str):
@@ -226,7 +226,7 @@ class Conversation(list):
             persistence (dict): Persistence data to be added.
         """
         if not isinstance(persistence, dict):
-            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=400, message="Persistence must be a dict")
         self.append(persistence)
 
         if self.max_persistence is not None and len(self) > self.max_persistence:
@@ -240,7 +240,7 @@ class Conversation(list):
             persistence (dict): New persistence data to replace the old one.
         """
         if not isinstance(persistence, dict):
-            raise PrintableGenaiError(status_code=500, message="Persistence must be a dict")
+            raise PrintableGenaiError(status_code=400, message="Persistence must be a dict")
         self[-1] = persistence
 
     def remove_last(self):

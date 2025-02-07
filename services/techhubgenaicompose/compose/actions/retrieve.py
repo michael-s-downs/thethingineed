@@ -15,7 +15,7 @@ class RetrieveMethod(ABC):
     Abstract base class for retrieve methods.
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, params: Union[List, Dict]) -> None:
         """
@@ -135,7 +135,7 @@ class ChunksRetriever(RetrieveMethod):
             if template['generic']['index_conf']['query'] == "":
                 raise PrintableGenaiError(status_code=400, message="Query is empty, cannot retrieve")
         except KeyError:
-            raise PrintableGenaiError(status_code=400, message="Query not found in the template, cannot retrieve")
+            raise PrintableGenaiError(status_code=404, message="Query not found in the template, cannot retrieve")
 
         response = requests.post(self.URL, json=template, headers=headers, verify=True)
         if response.status_code != 200:
@@ -240,7 +240,7 @@ class RetrieverFactory:
         Args:
             filter_type (str): The type of the filter.
         """
-        self.retrievermethod: RetrieveMethod = None
+        self.retrievermethod = None
         for retrievermethod in self.FILTERS:
             if retrievermethod.TYPE == filter_type:
                 self.retrievermethod = retrievermethod
