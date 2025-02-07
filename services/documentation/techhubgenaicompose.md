@@ -283,11 +283,11 @@ If the response looks like this, you are good to go.
 
 * **/get_template (GET)**: Used to get the content of a template JSON file stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/get_templates?name=mytemplate
+    URL: https://<deploymentdomain>/compose/get_template?name=mytemplate
 
 * **/get_filter_template (POST)**: Used to get the content of a filter template JSON file stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/get_filter_templates?name=mytemplate
+    URL: https://<deploymentdomain>/compose/get_filter_template?name=mytemplate
 
 * **/upload_template (PUT)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
 

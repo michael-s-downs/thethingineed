@@ -824,7 +824,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 - **/delete_prompt_template (DELETE)**: Used to delete a prompt template JSON file from cloud storage.
 
-https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate.
+https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **/list_templates (GET)**: Used to get all the available templates.
 
