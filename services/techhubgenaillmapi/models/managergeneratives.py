@@ -5,7 +5,7 @@ import copy
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel
+from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel, ChatGPTOVisionModel
 from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision
@@ -14,7 +14,7 @@ from generatives import GenerativeModel
 
 
 class ManagerModel(object):
-    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, ChatGPTOModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision]
+    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision, ChatGPTOModel, ChatGPTOVisionModel]
 
     @staticmethod
     def find_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:
@@ -51,9 +51,9 @@ class ManagerModel(object):
         selected_model['pool_name'] = pool_name
         ## check model message: chatGPT, chatGPT-v,....
         for model in ManagerModel.MODEL_TYPES:
-            if model.get_message_type(selected_model.get('message')):
+            if model.get_generatives_type(selected_model.get('model_type')):
                 conf.pop('model', None)
-                selected_model.pop('message', None)
+                selected_model.pop('message', None) # retrocompatibility
                 selected_model.pop('model_pool', None)
                 selected_model.update(conf)
                 try:

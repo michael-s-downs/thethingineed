@@ -37,6 +37,7 @@ TEMPLATE_IS_NOT_DICT_MSG = "Template is not well formed, must be a dict {} struc
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
     DEFAULT_TEMPLATE_NAME = "system_query"
+    GENERATIVE_MODELS = None
 
     def __init__(self, models_credentials, zone):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
@@ -62,7 +63,7 @@ class GenerativeModel(ABC):
         queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
-                                                        "persistence": message.persistence, "querylimiter": "azure"})
+                                                        "persistence": message.persistence, "querylimiter": self.MODEL_QUERY_LIMITER})
         self.message = queryLimiter.get_message()
 
     @abstractmethod
@@ -81,3 +82,12 @@ class GenerativeModel(ABC):
         :return: True if the message_type is correct, False otherwise
         """
         return message_type == cls.MODEL_MESSAGE
+
+    @classmethod
+    def get_generatives_type(cls, model_type: str):
+        """Check if the model_type is one of the possible ones.
+
+                :param model_type: Type of the model
+                :return: True if the model_type is in GENERATIVE_MODELS list
+                """
+        return model_type in cls.GENERATIVE_MODELS

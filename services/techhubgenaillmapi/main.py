@@ -20,7 +20,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from common.models_manager import ManagerModelsConfig
 from endpoints import ManagerPlatform, Platform
 from generatives import GenerativeModel
-from models.modelsmanager import ManagerModel
+from models.managergeneratives import ManagerModel
 from common.storage_manager import ManagerStorage
 from io_parsing import PlatformMetadata, LLMMetadata, QueryMetadata, ProjectConf, QUEUE_MODE, ResponseObject, adapt_input_queue
 from common.utils import get_models

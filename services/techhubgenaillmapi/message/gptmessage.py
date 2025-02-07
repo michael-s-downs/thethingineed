@@ -181,11 +181,11 @@ class ChatGPTvMessage(Message):
 
         return [{'role': 'system', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]
 
-class ChatGPTOMessage(Message):
-    MODEL_FORMAT = "chatGPT-o"
+class ChatGPTOMiniMessage(Message):
+    MODEL_FORMAT = "chatGPT-o1-mini"
 
     def __init__(self, query: list, template: dict, template_name: str = "system_query", context: str = "",
-                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=(), max_img_size_mb=20.00):
+                 system=DEFAULT_SYSTEM_MSG, functions=None, function_call: str = "none", persistence=()):
         """Chat object. It is used for models that admit persitance as an input such as gpt3.5 or gpt4.
 
         :param query: Question made.
@@ -212,7 +212,7 @@ class ChatGPTOMessage(Message):
         self.persistence = persistence if isinstance(persistence, list) else []
         self.multiprompt = bool(self.persistence)
         self.substituted_query = []
-        adapter = ManagerAdapters.get_adapter({'adapter': "gpt4v", 'message': self, 'max_img_size_mb': max_img_size_mb})
+        adapter = ManagerAdapters.get_adapter({'adapter': "base", 'message': self})
         adapter.adapt_query_and_persistence()
         self.user_query_tokens = self._get_user_query_tokens(self.substituted_query)
 
@@ -238,4 +238,4 @@ class ChatGPTOMessage(Message):
                 else:
                     user_content.append(e)
 
-        return [{'role': 'developer', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]
+        return [{'role': 'assistant', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]

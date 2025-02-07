@@ -10,6 +10,8 @@ import tiktoken
 # Local imports
 from generatives import GenerativeModel
 from common.errors.genaierrors import PrintableGenaiError
+from limiters import ManagerQueryLimiter
+from message.messagemanager import ManagerMessages
 
 DEFAULT_STOP_MSG = "<|endoftext|>"
 
@@ -17,6 +19,7 @@ NOT_FOUND_MSG = "Not found"
 
 class GPTModel(GenerativeModel):
     MODEL_MESSAGE = None
+    MODEL_QUERY_LIMITER = "azure"
 
     # Not contains default params, because is an encapsulator for GPTModels, so the default are in there
     def __init__(self, model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
@@ -163,6 +166,7 @@ class GPTModel(GenerativeModel):
 
 class DalleModel(GPTModel):
     MODEL_MESSAGE = "dalle"
+    GENERATIVE_MODELS = ["dalle3"]
 
     def __init__(self,
                  max_input_tokens: int = 4000,
@@ -292,8 +296,8 @@ class DalleModel(GPTModel):
 
 class ChatGPTModel(GPTModel):
     # AKA GPT3.5 // GPT4
-
     MODEL_MESSAGE = "chatGPT"
+    GENERATIVE_MODELS = ["gpt-3.5-turbo-16k", "gpt-4-turbo",]
 
     def __init__(self, model: str = 'gpt-3.5-pool-europe',
                  model_type: str = "",
@@ -343,6 +347,7 @@ class ChatGPTModel(GPTModel):
 class ChatGPTVision(GPTModel):
     MODEL_MESSAGE = "chatGPT-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
+    GENERATIVE_MODELS = ["gpt-4o", "gpt-4v", "gpt-4o-mini"]
 
     def __init__(self, model: str = 'genai-gpt4V-sweden',
                  model_type: str = "",
@@ -391,8 +396,142 @@ class ChatGPTVision(GPTModel):
         self.max_img_size_mb = max_img_size_mb
 
 class ChatGPTOModel(GPTModel):
-    MODEL_MESSAGE = "chatGPT-o"
+    MODEL_MESSAGE = "chatGPT"
+    GENERATIVE_MODELS = ["gpt-o1-mini", "gpt-o3-mini"]
+
+    def __init__(self, model: str = 'genai-gpt4V-sweden',
+                 model_type: str = "",
+                 pool_name: str = None,
+                 max_input_tokens: int = 32768,
+                 bag_tokens: int = 25000, # higher than others due to reasoning tokens
+                 zone: str = "genai-sweden",
+                 api_version: str = "2024-02-15-preview",
+                 n: int = 1,
+                 stop: List = None,
+                 models_credentials: dict = None,
+                 seed: int = None,
+                 response_format: str = None,
+                 max_completion_tokens: int = 1000,
+                 reasoning_effort: str = None):
+
+        if model_type == 'gpt-o1-mini':
+            if stop is not None:
+                raise ValueError("Parameter: 'stop' not supported in model: 'gpt-o1-mini'.")
+            if reasoning_effort is not None:
+                raise ValueError("Parameter: 'reasoning_effort' not supported in model: 'gpt-o1-mini'.")
+
+        GenerativeModel.__init__(self, models_credentials, zone)
+
+        self.model_name = model
+        self.model_type = model_type
+        self.MODEL_MESSAGE = "chatGPT-o1-mini" if model_type == 'gpt-o1-mini' else "chatGPT"
+        self.pool_name = pool_name
+        self.max_input_tokens = max_input_tokens
+        self.bag_tokens = bag_tokens
+        self.zone = zone
+        self.api_version = api_version
+        self.n = n
+        if self.model_type == 'gpt-o1-mini':
+            self.stop = None
+        else:
+            self.stop = stop if stop is not None else [DEFAULT_STOP_MSG]
+        self.seed = seed
+        self.response_format = response_format
+        self.encoding = tiktoken.get_encoding("cl100k_base")
+        self.encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
+        self.is_vision = False
+        self.max_completion_tokens = max_completion_tokens
+        self.reasoning_effort = reasoning_effort
+
+    def parse_data(self) -> json:
+        """ Convert message and model data into json format.
+        Returns: Query in json format to be sent.
+                    """
+        data = dict(model=self.model_name,
+                    n=self.n,
+                    messages=self.message.preprocess())
+        if self.seed:
+            data['seed'] = self.seed
+        if self.stop:
+            data['stop'] = self.stop
+        if self.max_completion_tokens > 0:
+            data['max_completion_tokens'] = self.max_completion_tokens
+        if self.response_format:
+            if self.response_format == "json_object":
+                data['response_format'] = {"type": "json_object"}
+            else:
+                raise PrintableGenaiError(400,
+                                          f"Response format {self.response_format} not supported for model {self.model_name} "
+                                          f"(only 'json_object' supported)")
+        if self.reasoning_effort:
+            data['reasoning_effort'] = self.reasoning_effort
+
+        return json.dumps(data)
+
+    def get_result(self, response: dict) -> dict:
+        """ Method to format the model response.
+
+        :param response: Dict returned by  LLM endpoint.
+        :return: Dict with the answer, tokens used and logprobs.
+        """
+        # Check status code
+        if 'status_code' in response and response['status_code'] != 200:
+            return {
+                'status': 'error',
+                'error_message': str(response['msg']),
+                'status_code': response['status_code']
+            }
+        # get answer
+        choice = response.get('choices', [{}])[0]
+
+        # if finish_reason is content_filter, return error
+        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
+            return {
+                'status': 'error',
+                'error_message': 'content_filter',
+                'status_code': 400
+            }
+        # if query has made with a function_call, return answer
+        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
+            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
+
+        else:
+            # check if message is in the response
+            if 'message' not in choice:
+                raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
+
+            # check if content is in the message
+            text = choice.get('message', {}).get('content', '')
+
+            # get text
+            if re.search(NOT_FOUND_MSG, text, re.I):
+                answer = NOT_FOUND_MSG
+                self.logger.info("Answer not found.")
+            else:
+                answer = text.strip()
+
+        self.logger.info(f"LLM response: {answer}.")
+        text_generated = {
+            'answer': answer,
+            'logprobs': [],
+            'n_tokens': response['usage']['total_tokens'] + response['usage']['completion_tokens_details']['reasoning_tokens'],
+            'query_tokens': self.message.user_query_tokens,
+            'input_tokens': response['usage']['prompt_tokens'],
+            'output_tokens': response['usage']['completion_tokens'],
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+        }
+        result = {
+            'status': "finished",
+            'result': text_generated,
+            'status_code': 200
+        }
+        return result
+
+class ChatGPTOVisionModel(GPTModel):
+    MODEL_MESSAGE = "chatGPT-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
+    GENERATIVE_MODELS = ["gpt-o1"]
 
     def __init__(self, model: str = 'genai-gpt4V-sweden',
                  model_type: str = "",
