@@ -173,7 +173,7 @@ class LLMDeployment(BaseDeployment):
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template_str)
-            raise self.PrintableGenaiError(
+            raise PrintableGenaiError(
                 500,
                 f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
             )
@@ -496,4 +496,4 @@ if __name__ == "__main__":
     if QUEUE_MODE:
         deploy.async_deployment()
     else:
-        app.run(host="0.0.0.0", debug=False, port=8892, use_reloader=False)
+        app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)
