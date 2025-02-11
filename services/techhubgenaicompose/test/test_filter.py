@@ -478,6 +478,24 @@ class TestPermissionFilter:
         assert result[0].meta["knowler_id"] == "1"
         assert result[1].meta["knowler_id"] == "3"
 
+    def test_permission_filter_process_return_allowed(self, permission_filter):
+        """Test para cubrir el método process."""
+        permission_filter.URL = "http://example.com"
+        permission_filter.streamlist = [
+            MockStreamChunk(meta={"knowler_id": "1"}),
+            MockStreamChunk(meta={"knowler_id": "2"}),
+            MockStreamChunk(meta={"knowler_id": "3"}),
+        ]
+
+        permission_filter.send_post_request = self.mock_send_post_request
+
+        result = permission_filter.process({"return_not_allowed": True})
+
+        assert len(result) == 3
+        assert result[0].meta["knowler_id"] == "1"
+        assert result[1].meta["knowler_id"] == "3"
+        assert result[2].meta["knowler_id"] == "2"
+
 
 class MockStream:
     """Mock class to simulate StreamChunk objects."""

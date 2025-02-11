@@ -3,9 +3,10 @@
 
 # Changelog
 
-## vx.0.0 (x-x-x)
-- genai-compose
+## vX.X.X (XXXX-XX-XX)
+- genai-compose:
   - [New] New optional param "prompt_template_name" added to expand query steps to let the user use other llm prompt template while llmapi to expand the query.
+  - [New] New optional param "return_not_allowed" added to filter by permission to return the not allowed documents with the content empty.
   - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query.
   - [Improvement] Endpoint delete_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_template?name=mytemplate
   - [Improvement] Endpoint delete_filer_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_filter_template?name=mytemplate
@@ -15,7 +16,7 @@
   - [Improvement] Endpoint get_filter_template updated from POST request type to GET request type and to use url params instead of the body. Example: /compose/get_template?name=mytemplate
   - [Improvement] Endpoint load_session updated from POST request type to PUT request type.
   - [Improvement] Updated the response format from string to json.
-- genai-llmapi
+- genai-llmapi:
   - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
   - [New] Prompt templates splitted into diferent files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
   - [New] Endpoint reloadconfig deleted, it does nothing with the prompt load change.
@@ -23,18 +24,18 @@
   - [Improvement] Endpoint upload_prompt_template updated from POST request type to PUT request type.
   - [Improvement] Endpoint delete_prompt_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /llm/delete_prompt_template?name=mytemplate
   - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.
-- genai-inforetrieval
+- genai-inforetrieval:
   - [Improvement] Changed endpoint delete-documents with delete_documents to match all the other endpoints. 
   - [Improvement] Endpoint delete_documents updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_documents?index=myindex&filename=myfile&filename=myfile2
   - [Improvement] Endpoint delete_index updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_index?index=myindex
   - [Improvement] Endpoint get_documents_filenames updated from POST request type to GET request type and to use url params instead of the body. Example: /get_documents_filenames?index=myindex
-- flowgmtcheckend
+- flowgmtcheckend:
   - [Improvement] Quit star imports and set only the required.
 - preprocess-extract:
   - [Improvement] Quit star imports and set only the required.
-- common
+- common:
   - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.
-- ALL
+- ALL:
   - [Improvement] Update and fix status_codes
   - [Improvement] Fixed maintainability warnings from sonarqube
 
