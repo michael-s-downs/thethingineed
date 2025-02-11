@@ -29,7 +29,7 @@ parameters:
   default: '3.8'
   type: string
 - name: baseImage
-  default: 'default-base-38'
+  default: 'default-base'
   type: string
 - name: baseTag
   default: 'latest'
