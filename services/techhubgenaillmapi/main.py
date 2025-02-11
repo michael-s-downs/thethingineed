@@ -168,10 +168,13 @@ class LLMDeployment(BaseDeployment):
             template_str = load_file(
                 storage_containers["workspace"], f"{TEMPLATEPATH}/{name}.json"
             )
+            if not template_str:
+                raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
+
             template = json.loads(template_str)
 
             if not template:
-                raise PrintableGenaiError(404, "Prompt template not found")
+                raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
 
             return template
 
@@ -184,7 +187,7 @@ class LLMDeployment(BaseDeployment):
 
         except ValueError:
             raise PrintableGenaiError(
-                404, f"Prompt template file doesn't exists for name <{name}>"
+                404, f"Prompt template file doesn't exist for name '{name}'"
             )
 
     def parse_platform(self, platform_metadata: dict):
