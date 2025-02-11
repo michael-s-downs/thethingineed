@@ -6,6 +6,7 @@
 ## vx.0.0 (x-x-x)
 - genai-compose
   - [New] New optional param "prompt_template_name" added to expand query steps to let the user use other llm prompt template while llmapi to expand the query.
+  - [New] New optional param "return_not_allowed" added to filter by permission to return the not allowed documents with the content empty.
   - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query.
   - [Improvement] Endpoint delete_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_template?name=mytemplate
   - [Improvement] Endpoint delete_filer_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_filter_template?name=mytemplate
