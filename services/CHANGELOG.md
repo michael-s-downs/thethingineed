@@ -29,7 +29,7 @@
   - [Improvement] Endpoint delete_documents updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_documents?index=myindex&filename=myfile&filename=myfile2
   - [Improvement] Endpoint delete_index updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_index?index=myindex
   - [Improvement] Endpoint get_documents_filenames updated from POST request type to GET request type and to use url params instead of the body. Example: /get_documents_filenames?index=myindex
-- flowgmtcheckend:
+- flowmgmt-checkend:
   - [Improvement] Quit star imports and set only the required.
 - preprocess-extract:
   - [Improvement] Quit star imports and set only the required.
