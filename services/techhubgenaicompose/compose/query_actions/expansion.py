@@ -158,7 +158,7 @@ class LangExpansion(ExpansionMethod):
         """
         async with session.post(self.URL, json=template, headers=headers, verify_ssl=True) as response:
             LLMP.control_errors(response, async_bool=True)
-            return (await response.json(content_type='text/html'))['result']
+            return (await response.json())['result']
 
     async def parallel_calls(self, templates, headers):
         """Async function that makes parallel calls using async_call_llm
