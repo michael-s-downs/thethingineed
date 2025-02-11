@@ -94,6 +94,8 @@ class PermissionFilter(FilterMethod):
         self.URL = params.get("url_allowed_documents", url)
         if self.URL is None:
             raise PrintableGenaiError(404, "Variable URL_ALLOWED_DOCUMENT not found")
+        return_not_allowed = params.get("return_not_allowed", False)
+
         # Check permissions for documents
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -103,10 +105,17 @@ class PermissionFilter(FilterMethod):
 
         # Filter non permitted streamchunks
         output_sl = []
+        not_allowed_chunks = []
         for sc in self.streamlist:
             knowler_id = sc.meta["knowler_id"]
             if knowler_id in permitted_docs:
                 output_sl.append(sc)
+
+            elif return_not_allowed:
+                sc.content = ""
+                not_allowed_chunks.append(sc)
+        
+        output_sl.extend(not_allowed_chunks)
 
         return output_sl
 
