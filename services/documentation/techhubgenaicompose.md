@@ -3359,6 +3359,8 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
+    * **Return_not_allowed** (bool):  Flag to return not allowed documents in permissionfilter.
+
     * **Filer_conditions** (json/dict): Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
     Example of the **filter** action using the "<i>related_to</i>" type:
