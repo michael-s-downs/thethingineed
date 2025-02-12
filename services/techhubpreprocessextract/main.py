@@ -2,7 +2,9 @@
 
 
 # Native imports
+import os
 import json
+from typing import Tuple
 from multiprocessing import Process, Manager
 
 # Installed imports
@@ -14,12 +16,41 @@ from common.deployment_utils import BaseDeployment
 from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
 from common.genai_controllers import upload_object, download_file
 from common.genai_status_control import update_status
-from common.genai_json_parser import *
-from common.status_codes import *
-from common.services import *
+from common.genai_json_parser import (
+    get_generic,
+    get_specific,
+    get_document,
+    get_exc_info,
+    get_dataset_status_key,
+    get_project_type,
+    get_force_ocr,
+    get_languages,
+    get_do_cells_text,
+    get_do_lines_text,
+    get_do_segments,
+)
+from common.services import (
+    PREPROCESS_EXTRACT_SERVICE,
+    PREPROCESS_OCR_SERVICE,
+    PREPROCESS_END_SERVICE,
+    PREPROCESS_TRANSLATION_SERVICE,
+    PREPROCESS_SEGMENTATION_SERVICE,
+    PREPROCESS_LAYOUT_SERVICE,
+)
 from common.preprocess.preprocess_extract import extract_text, get_num_pages, extract_images_conditional, EXTENSIONS
-from common.error_messages import *
 from common.utils import remove_local_files
+from common.status_codes import (
+    ERROR,
+    EXTRACTED_DOCUMENT,
+)
+from common.error_messages import (
+    PARSING_PARAMETERS_ERROR,
+    GETTING_DOCUMENTS_PARAMS_ERROR,
+    GETTING_LINES_AND_CELLS_ERROR,
+    DOWNLOADING_FILES_ERROR,
+    GETTING_NUM_PAGES_ERROR,
+    EXTRACTING_IMAGES_AND_TEXT_ERROR,
+)
 
 
 class PreprocessExtractDeployment(BaseDeployment):
@@ -236,7 +267,7 @@ class PreprocessExtractDeployment(BaseDeployment):
                     else:
                         self.logger.info("Not necessary to extract images because force ocr and extract lines are not necessary.")
                 elif not is_text_project:
-                    self.logger.info(f"Extract images because is project type different to text.")
+                    self.logger.info("Extract images because is project type different to text.")
                     images = extract_images_conditional(generic, specific, workspace, filename, folder_file)
                 else:
                     self.logger.info("Not necessary to extract images.")

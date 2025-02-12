@@ -255,7 +255,7 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/load_session (POST)**: Used to load directly to REDIS a conversation.
+* **/load_session (PUT)**: Used to load directly to REDIS a conversation.
 
     ```json
     {
@@ -275,25 +275,23 @@ If the response looks like this, you are good to go.
 
 * **/list_templates (GET)**: Used to list all templates stored in cloud.
 
+    URL: https://<deploymentdomain>/compose/list_templates
+
 * **/list_filter_templates (GET)**: Used to list all filter templates stored in cloud.
 
-* **/get_template (POST)**: Used to get the content of a template JSON file stored in cloud.
+    URL: https://<deploymentdomain>/compose/list_filter_templates
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
+* **/get_template (GET)**: Used to get the content of a template JSON file stored in cloud.
+
+    URL: https://<deploymentdomain>/compose/get_template?name=mytemplate
 
 * **/get_filter_template (POST)**: Used to get the content of a filter template JSON file stored in cloud.
 
-    ```json
-    {
-        "name": "filter_template_name"
-    }
-    ```
+    URL: https://<deploymentdomain>/compose/get_filter_template?name=mytemplate
 
-* **/upload_template (POST)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
+* **/upload_template (PUT)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
+
+    Body:
 
     ```json
     {
@@ -302,7 +300,11 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/upload_filter_template (POST)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
+    URL: https://<deploymentdomain>/compose/upload_filter_template
+
+* **/upload_filter_template (PUT)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
+
+    Body:
 
     ```json
     {
@@ -311,21 +313,15 @@ If the response looks like this, you are good to go.
     }
     ```
 
-* **/delete_template (POST)**: Used to delete a template JSON file from cloud storage.
+    URL: https://<deploymentdomain>/compose/upload_filter_template
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+* **/delete_template (DELETE)**: Used to delete a template JSON file from cloud storage.
 
-* **/delete_filter_template (POST)**: Used to delete a filter template JSON file from cloud storage.
+    URL: https://<deploymentdomain>/compose/delete_template?name=mytemplate
 
-    ```json
-    {
-    "name": "example_filter_template"
-    }
-    ```
+* **/delete_filter_template (DELETE)**: Used to delete a filter template JSON file from cloud storage.
+
+    URL: https://<deploymentdomain>/compose/delete_filter_template?name=mytemplate
 
 ### Request and Response Formats for /process
 
@@ -3363,6 +3359,8 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
     * **Template_name** (string):  Template name to use while calling genai-llmapi.
 
+    * **Return_not_allowed** (bool):  Flag to return not allowed documents in permissionfilter.
+
     * **Filer_conditions** (json/dict): Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
     Example of the **filter** action using the "<i>related_to</i>" type:
@@ -3690,6 +3688,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
      - **K_steps** (int): Max number of query to create. The max number of queries is 10.
      - **Context** (string, optional): Context for the template to use while calling llmapi.
      - **Model** (string, optional): Model to use for the translation.
+     - **Prompt_template_name** (string, optional): Prompt template to use while calling llmapi.
 
     Example:
 

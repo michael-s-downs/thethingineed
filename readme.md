@@ -146,13 +146,13 @@ Below is a list of all the parameters that can be included in the request body, 
 * <b>operation</b> (required): Operation to perform. It must always have the value "indexing".
 * <b>indexation_conf</b>: 
   * <b>vector_storage_conf</b>:
-    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
-    * <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>. 
+    * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]). 
+    * <b>metadata_primary_keys</b> (optional): This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
   * <b>chunking_method</b>
     * <b>window_length</b> (optional): Integer value to specify the window length for text chunking purposes, 300 by default.
     * <b>window_overlap</b> (optional): Integer value to specify the window overlapping for text chunking purposes, 10 by default.
     * <b>method</b> (optional): Type of chunking technique (<i>surrounding_context_window</i>, <i>recursive</i> or <i>simple</i> (by default)) that will be used to split normal chunks into smaller chunks to improve the retrieval process. Each chunking method has different parameters associated.
-    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required method) Integer value to specify the window length for the sub-chunks.
+    * <b>sub_window_length (<i>recursive method parameter</i>)</b> (required for method) Integer value to specify the window length for the sub-chunks.
     * <b>sub_window_overlap (<i>recursive method parameter</i>)</b> (required for method): Integer value to specify the window overlap for the sub-chunks.
     * <b>windows (<i>surrounding context window method parameter</i>)</b> (required for method): Number of the windows that will be taken in this method
 
@@ -160,6 +160,8 @@ Below is a list of all the parameters that can be included in the request body, 
 
   * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map-searchmodels_mapjson). 
   * <b>metadata</b> (optional): Custom metadata to associate to all documents sent in this call. Currently, if you want to specify different values for each document, you will have to send each document individually in different calls.
+  * <b>index_metadata</b> (optional):  This parameter, which can be either true to include only the filename and users` metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings generation.
+
 * <b>preprocess_conf</b>
   * <b>ocr_conf</b>
     * <b>ocr</b> (optional): OCR type that will be used if is necessary (or 'force_ocr' passed as 'True'). The available types are: 'azure-ocr' (FormRecognizer), 'aws-ocr' (Amazon Textract), 'tesseract-ocr' (TesseractOCR) 'llm-ocr' (llm vision based OCR using LLMAPI component)
@@ -172,6 +174,7 @@ Below is a list of all the parameters that can be included in the request body, 
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
       * <b>num_retries</b> (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 10 by default
       * <b>force_continue</b> (optional): If an error is raised by the LLM component in a particular page, force the document to index the rest of the pages received. If not, the 'llm-ocr' process is stopped and an error is raised.
+* <b>documents_metadata (<i>Warning!</i>):</b> (required): Content of the documents. The expected format is a JSON with each document name as key and another JSON as value with the key 'content_binary' and the document serialized in base64 as value. This value can be plain text or file binary but the extension must be consistent. <b>Only one document can be indexed per call</b>.
 * <b>response_url</b> (required): Accessible endpoint to receive asynchronous response as callback when indexing process finishes. The service will send a POST message with these parameters:
   - <b>status</b>: Indicates if the final status of the indexing process, the value can be “Finished” or “Error”.
   - <b>error</b>: Description of the error; this parameter is only sent when an error occurs.
@@ -312,31 +315,19 @@ The output can be changed passing in the requests some attribute values:
 
     URL: https://**\<deploymentdomain\>**/compose/list_filter_templates  
 
-- **Get compose template (POST)**
+- **Get compose template (GET)**
 
     Used to get the content of a template json file stored in cloud.
 
-    URL: https://**\<deploymentdomain\>**/compose/get_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_template?name=mytemplate
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
-- **Get compose filter template (POST)**
+- **Get compose filter template (GET)**
 
     Used to get the content of a filter template json file stored in cloud.
 
-    URL: https://**\<deploymentdomain\>**/compose/get_filter_template  
+    URL: https://**\<deploymentdomain\>**/compose/get_filter_template?name=myfiltertemplate
 
-    ```json
-    {
-        "name": "template_name"
-    }
-    ```
-
-- **Upload template (POST)**
+- **Upload template (PUT)**
 
     Used to upload a template json file to the cloud storage the content value must be a json converted to string.
 
@@ -349,7 +340,7 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Upload filter template (POST)**
+- **Upload filter template (PUT)**
 
     Used to upload a filter template json file to the cloud storage the content value must be a json converted to string.
 
@@ -362,35 +353,23 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Delete template (POST)**
+- **Delete template (DELETE)**
 
     Used to delete a template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/compose/delete_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_template?name=mytemplate
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
-
-- **Delete filter template (POST)**
+- **Delete filter template (DELETE)**
 
     Used to delete a filter template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template 
+    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template?name?myfiltertemplate
 
-    ```json
-    {
-    "name": "example_filter_template"
-    }
-    ```
+- **Load session (PUT)**
 
-- **Load session (POST)**
-    
     Used to load a session by possibly inserting a conversation:
-    
-    URL: https://**\<deploymentdomain\>**/compose/load_session 
+
+    URL: https://**\<deploymentdomain\>**/compose/load_session
 
     ```json
     {    
@@ -443,18 +422,6 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Reload config (GET)**
-
-    Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
-
-    URL: https://**\<deploymentdomain\>**/llm/reloadconfig
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **Get_models (GET)**
 
@@ -493,11 +460,11 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Upload prompt template (POST)**
+- **Upload prompt template (PUT)**
 
     Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
 
-    URL: https://**\<deploymentdomain\>**/llm/upload_prompt_template 
+    URL: https://**\<deploymentdomain\>**/llm/upload_prompt_template
 
     ```json
     {
@@ -506,17 +473,11 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Delete prompt template (POST)**
+- **Delete prompt template (DELETE)**
 
     Used to delete a prompt template json file from cloud storage.
 
-    URL: https://**\<deploymentdomain\>**/llm/delete_prompt_template
-
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+    URL: https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **List prompt templates (GET)**
 
@@ -562,7 +523,6 @@ The output can be changed passing in the requests some attribute values:
 
     URL: https://**\<deploymentdomain\>**/llm/healthcheck 
 
-
     ```json
     {
         "status": "Service available"
@@ -594,36 +554,24 @@ The output can be changed passing in the requests some attribute values:
     }
     ```
 
-- **Deletes document from index (POST)**
+- **Deletes document from index (DELETE)**
 
     Used to delete document/s from an index. 
    
-    URL: https://**\<deploymentdomain\>**/retrieve/delete-documents
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_documents?index=myindex&filename=myfile
 
-    ```json
-    {
-        "index": "myindex",
-        "delete":{
-            "filename": "manual.docx"
-        }
-    }
-    ```
-- **Delete an index (POST)**
+- **Delete an index (DELETE)**
 
     Used to delete an index from vector storage
 
-    URL: https://**\<deploymentdomain\>**/retrieve/delete_index
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_index?index=myindex
 
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
 - **Check if the component is available (GET)**
-    
+
     URL: https://**\<deploymentdomain\>**/retrieve/healthcheck
 
     Returns:
+
     ```json
     {
         "status": "Service available"
@@ -635,6 +583,7 @@ The output can be changed passing in the requests some attribute values:
     Used to retrieve the full document from an index.
 
     URL: https://**\<deploymentdomain\>**/retrieve/retrieve_documents
+
     ```json
         {
             "index": "myindex",
@@ -644,21 +593,14 @@ The output can be changed passing in the requests some attribute values:
         }
     ```
 
+- **Get filenames from index (GET)**
 
-- **Retrieve filenames from index (POST)**
+    Used to get the documents filenames from an index.
 
-    Used to retrieve the documents filenames from an index.
-    
-    URL: https://**\<deploymentdomain\>**/retrieve/get_documents_filenames
-
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
+    URL: https://**\<deploymentdomain\>**/retrieve/get_documents_filenames?index=myindex
 
 - **Get_models (GET)**
-    
+
     URL: https://**\<deploymentdomain\>**/retrieve/get_models
 
     Used to get the list with the available models. In the url we can send the embedding_model, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/retrieve/get_models?platform=azure
@@ -696,6 +638,7 @@ The output can be changed passing in the requests some attribute values:
     URL: https://**\<deploymentdomain\>**/retrieve/list_indices
 
     Response: 
+
     ```json
     {
         "indices": [
@@ -1475,6 +1418,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
     - **K_steps** (int): Max number of query to create. The max number of queries is 10.
     - **Context** (string, optional): Context for the template to use while calling llmapi.
     - **Model** (string, optional): Model to use for the translation.
+    - **Prompt_template_name** (string, optional): Prompt template to use while calling llmapi.
 
     Example:
 
@@ -2875,6 +2819,7 @@ This action is executed at the streamlist level. The aim is to apply a filter to
 * **Platform (string):** Platform hosting the LLM.
 * **Query (string)**
 * **Template_name (string):** Template name to use while calling genai-llmapi.
+* **Return_not_allowed** (bool):  Flag to return not allowed documents in permissionfilter.
 * **Filer_conditions (json/dict):** Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
 Example of <i>filter</i> action using <u>related_to</u> type:
@@ -3302,7 +3247,7 @@ Once the process ends, the accesible endpoint provided will receive a POST reque
 
 #### Update indexed documents
 
-Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by including the `modify_index_docs` parameter, which specifies the metadata used to filter the document for editing. The request body is as follows:
+Once documents have been indexed, it is often necessary to update their information. In this service, you can achieve this by calling again to the integration service with the same configuration provided in the previous indexation:
 
 ```json
 {
@@ -3310,13 +3255,14 @@ Once documents have been indexed, it is often necessary to update their informat
   "indexation_conf": {
     "vector_storage_conf": {
       "index": "index_example5",
-      "modify_index_docs": {"update": {"filename": true}}
+      "metadata_primpary_keys": "same_as_before"
     }
   },
   "documents_metadata": {"doc1.txt": {"content_binary": "aG9sYQ=="}},
   "response_url": "http://",
 }
 ```
+The update will be done by the chunk id, if 'metadata_primary_keys' was not passed, the id will be based on the chunk content only. If passed, the id will be done based on the chunk content and the metadata specified. In both cases, the metadata and embeddings will be updated for the document if the id matches. If the id does not match, the ids that does not match will be indexed.
 
 Response:
 
@@ -5096,7 +5042,7 @@ The indexing flow is the following:
 
 - INFOINDEXING
 
-    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png "Process flow")
 
 - FLOWMGMT
 

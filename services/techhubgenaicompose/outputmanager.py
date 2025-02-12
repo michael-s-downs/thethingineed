@@ -108,7 +108,6 @@ class OutputManager(AbstractManager):
             output (dict): Dictionary with the elements to return in the response
             sb (streambatch): Streambatch from retrieval
         """
-        if len(sb)>0:
-            if len(sb[0]):
-                output['answer'] = sb[0][-1].answer
+        if len(sb)>0 and len(sb[0]):
+            output['answer'] = sb[0][-1].answer
         return output

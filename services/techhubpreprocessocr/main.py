@@ -217,7 +217,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                                 upload_docs[key] += value
                     except Exception:
                         self.logger.error(f"[Process {dataset_status_key}] Error while writing in LLM OCR queue", exc_info=get_exc_info())
-                        raise Exception(OCR_ERROR)
+                        raise Exception(LLM_OCR_ERROR)
                 else:
                     for batch_idx, batch in enumerate(chunk(files, file_sizes, ocr_files_size, ocr_batch_length)):
                         self.logger.debug(f"Batch {batch_idx} of size {sum_up_size([x['size'] for x in batch])}MiB containing {len(batch)} files: {[x['filename'] for x in batch]}.")

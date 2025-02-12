@@ -17,6 +17,7 @@ variables:
 - group: Variables para CI
 - group: Params Python
 - group: RegistryVariables
+- group: Sonarqube Params
 
 - name: serviceName
   value: 'techhubpreprocessend'
@@ -49,6 +50,7 @@ variables:
 
 stages:
 - stage: SonarAnalysis
+  displayName: Sonar analysis and test coverage
   jobs:
   - job:
     continueOnError: false
@@ -57,50 +59,53 @@ stages:
     steps:
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '3.11'
+          versionSpec: '$(pythonVersion)'
           addToPath: true
           architecture: 'x64'
+        displayName: Set Python version
 
       - script: |
-          echo install magic 
-          sudo apt-get install libmagic1
+            echo "---Install magic---"
+            sudo apt-get install libmagic1
 
-          python -m venv .venv
-          source .venv/bin/activate
+            python -m venv .venv
+            source .venv/bin/activate
 
-          cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
-          echo "installing requirements from $(pwd)"
-          pip install -r requirements.txt
+            cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
+            echo "---Installing requirements from $(pwd)---"
+            pip install -r requirements.txt
 
-          echo "installing requirements from $(pwd)"
-          cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
+            echo "---Installing requirements from $(pwd)---"
+            cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
 
-          pip install --upgrade pip
-          python -m pip install -U setuptools wheel twine
-          python setup.py install
+            pip install --upgrade pip
+            python -m pip install -U setuptools wheel twine
+            python setup.py install
 
-          echo build package 
-          python setup.py build_ext --inplace
-          python setup.py bdist_wheel --python-tag=cp$(python_version)
+            echo "---Build Library---" 
+            python setup.py build_ext --inplace
+            python setup.py bdist_wheel --python-tag=cp$(python_version)
 
-          echo $(serviceName)
-          cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
+            echo "---$(serviceName)---"
+            cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
 
-          echo "installing requirements from $(pwd)"
-          pip install -r requirements.txt
-          pip install -r test/requirements.txt
+            echo "---Installing requirements from $(pwd)---"
+            pip install -r requirements.txt
+            pip install pytest pytest-cov 
 
-          export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
-          echo running coverage
-          coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
-          coverage report
-          coverage xml
+            echo "---Installing pytest requirements---"
+            pip install -r test/requirements.txt
+
+            export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
+            echo "---Running coverage---"
+            coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
+            coverage report
+            coverage xml
         displayName: Coverage report
-
 
       - task: SonarQubePrepare@7
         inputs:
-          SonarQube: 'sonarqube_service_connection_techhub_dev_japaneast'
+          SonarQube: $(sonarqube_service_connection)
           scannerMode: 'cli'
           configMode: 'manual'
           cliProjectKey: $(System.DefinitionName)
@@ -110,26 +115,28 @@ stages:
               sonar.sources=$(System.DefaultWorkingDirectory)/services/$(serviceName)/
               sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/$(serviceName)/coverage.xml
               sonar.exclusions=**/test/**
+        displayName: Sonar Preprare
 
-      # removes sonar.branch.name variable as this is not supported by community edition
       - task: PowerShell@2
         inputs:
           targetType: 'inline'
           script: |
-            $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w,/,-]*"\,?'
-                Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"      
+            $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w\.,/,-]*"\,?'
+                Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"   
+        displayName: Remove parameter
+
       - task: SonarQubeAnalyze@7
         inputs:
           jdkversion: 'JAVA_HOME_17_X64'
+        displayName: Sonar Analyze
 
       - task: SonarQubePublish@7
         inputs:
           pollingTimeoutSec: '300'
-
-
+        displayName: Sonar Publish
 
 - stage: Building
-  displayName: Build image
+  displayName: Build image Docker and Trivy scan
   jobs:
   - job:
     pool:

@@ -166,31 +166,31 @@ class TestAzurePlatform:
         assert result == mock_response
 
     def test_build_url(self):
-        generativeModel = ChatGPTModel(**model)
-        result_gpt = self.azure_platform.build_url(generativeModel)
-        generativeModel = DalleModel(**model)
-        result_dalle = self.azure_platform.build_url(generativeModel)
+        generative_model = ChatGPTModel(**model)
+        result_gpt = self.azure_platform.build_url(generative_model)
+        generative_model = DalleModel(**model)
+        result_dalle = self.azure_platform.build_url(generative_model)
         assert result_gpt == "https://techhubinc-EastUS2.openai.azure.com/openai/deployments/techhubinc-EastUS2-gpt-35-turbo-16k-0613/chat/completions?api-version=2024-02-15-preview"
         assert result_dalle == "https://techhubinc-EastUS2.openai.azure.com/openai/deployments/techhubinc-EastUS2-gpt-35-turbo-16k-0613/images/generations?api-version=2024-02-15-preview"
 
-        generativeModel = ChatClaudeModel(**claude_model)
-        with pytest.raises(PrintableGenaiError, match=f"Model message {generativeModel.MODEL_MESSAGE} not supported."):
-            self.azure_platform.build_url(generativeModel)
+        generative_model = ChatClaudeModel(**claude_model)
+        with pytest.raises(PrintableGenaiError, match=f"Model message {generative_model.MODEL_MESSAGE} not supported."):
+            self.azure_platform.build_url(generative_model)
     def test_set_model(self):
-        generativeModel = ChatGPTVision(**model)
-        generativeModel.api_key = "mock_api_key"
-        self.azure_platform.set_model(generativeModel)
+        generative_model = ChatGPTVision(**model)
+        generative_model.api_key = "mock_api_key"
+        self.azure_platform.set_model(generative_model)
 
         # Assert the expected output
-        assert self.azure_platform.generativeModel == generativeModel
+        assert self.azure_platform.generative_model == generative_model
         assert self.azure_platform.headers == {'api-key': "mock_api_key", 'Content-Type': "application/json"}
 
-        # Call the method with a mock generativeModel
+        # Call the method with a mock generative_model
         gptv_model = copy.deepcopy(model)
         gptv_model['zone'] = "mock_zone"
-        generativeModel = ChatGPTVision(**gptv_model)
-        with pytest.raises(PrintableGenaiError, match=f"Api key not found for model {generativeModel.model_name} in Azure Platform"):
-            self.azure_platform.set_model(generativeModel)
+        generative_model = ChatGPTVision(**gptv_model)
+        with pytest.raises(PrintableGenaiError, match=f"Api key not found for model {generative_model.model_name} in Azure Platform"):
+            self.azure_platform.set_model(generative_model)
 
 
     def test_call_model(self):
@@ -200,10 +200,10 @@ class TestAzurePlatform:
                                              "status_code": 200,
                                              "usage":{"total_tokens": 1000, "completion_tokens": 501, "prompt_tokens": 154}}
             mock_post.return_value = mock_object
-            generativeModel = ChatGPTModel(**model)
-            generativeModel.set_message(message_dict)
-            self.azure_platform.set_model(generativeModel)
-            result = generativeModel.get_result(self.azure_platform.call_model())
+            generative_model = ChatGPTModel(**model)
+            generative_model.set_message(message_dict)
+            self.azure_platform.set_model(generative_model)
+            result = generative_model.get_result(self.azure_platform.call_model())
             assert result['status_code'] == 200
             assert result['result']['answer'] == "asdf"
             assert result['result']['n_tokens'] == 1000
@@ -212,26 +212,26 @@ class TestAzurePlatform:
 
 
     def test_call_model_errors(self):
-        generativeModel = ChatGPTModel(**model)
-        generativeModel.set_message(message_dict)
-        self.azure_platform.set_model(generativeModel)
+        generative_model = ChatGPTModel(**model)
+        generative_model.set_message(message_dict)
+        self.azure_platform.set_model(generative_model)
         with patch('requests.post') as mock_func:
             mock_func.side_effect = requests.exceptions.Timeout
             response = self.azure_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 408
 
         with patch('requests.post') as mock_func:
             mock_func.side_effect = requests.exceptions.RequestException
             response = self.azure_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 500
 
         with patch('requests.post') as mock_func:
             mock_func.return_value.status_code = 500
             mock_func.return_value.text = "Internal server error"
             response = self.azure_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 500
         assert result['error_message'] == "Internal server error"
 
@@ -239,7 +239,7 @@ class TestAzurePlatform:
             mock_func.return_value.status_code = 429
             mock_func.return_value.text = "OpenAI rate limit exceeded"
             response = self.azure_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 429
         assert result['error_message'] == "OpenAI rate limit exceeded"
 
@@ -263,10 +263,10 @@ class TestBedrockPlatform:
 
 
     def test_set_model(self):
-        generativeModel = ChatGPTVision(**model)
-        generativeModel.api_key = "mock_api_key"
-        self.bedrock_platform.set_model(generativeModel)
-        assert self.bedrock_platform.generativeModel == generativeModel
+        generative_model = ChatGPTVision(**model)
+        generative_model.api_key = "mock_api_key"
+        self.bedrock_platform.set_model(generative_model)
+        assert self.bedrock_platform.generative_model == generative_model
 
     @patch("endpoints.provider", "azure")
     def test_call_model_bedrock(self):
@@ -274,10 +274,10 @@ class TestBedrockPlatform:
             body = MagicMock()
             body.read.return_value = json.dumps({"content": [{"text": "asdf"}], "usage":{"input_tokens":454, "output_tokens":5454}})
             mock_post.return_value.invoke_model.return_value = {"body": body}
-            generativeModel = ChatClaudeModel(**claude_model)
-            generativeModel.set_message(message_dict)
-            self.bedrock_platform.set_model(generativeModel)
-            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            generative_model = ChatClaudeModel(**claude_model)
+            generative_model.set_message(message_dict)
+            self.bedrock_platform.set_model(generative_model)
+            result = generative_model.get_result(self.bedrock_platform.call_model())
             assert result['status_code'] == 200
             assert result['result']['answer'] == "asdf"
             assert result['result']['input_tokens'] == 454
@@ -303,10 +303,10 @@ class TestBedrockPlatform:
             body = MagicMock()
             body.read.return_value = json.dumps({"output": {"message": {"content": [{"text": "asdf"}]}}, "usage": {"totalTokens": 1000, "input_tokens": 454, "output_tokens": 5454}})
             mock_post.return_value.invoke_model.return_value = {"body": body}
-            generativeModel = ChatNovaVision(**nova_model)
-            generativeModel.set_message(message_dict_vision)
-            self.bedrock_platform.set_model(generativeModel)
-            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            generative_model = ChatNovaVision(**nova_model)
+            generative_model.set_message(message_dict_vision)
+            self.bedrock_platform.set_model(generative_model)
+            result = generative_model.get_result(self.bedrock_platform.call_model())
             assert result['status_code'] == 200
             assert result['result']['answer'] == "asdf"
 
@@ -317,10 +317,10 @@ class TestBedrockPlatform:
             body = MagicMock()
             body.read.return_value = json.dumps({"generation": "asdf", "generation_token_count": 454, "prompt_token_count": 5454})
             mock_post.return_value.invoke_model.return_value = {"body": body}
-            generativeModel = LlamaModel(**llama3_model)
-            generativeModel.set_message(message_dict)
-            self.bedrock_platform.set_model(generativeModel)
-            result = generativeModel.get_result(self.bedrock_platform.call_model())
+            generative_model = LlamaModel(**llama3_model)
+            generative_model.set_message(message_dict)
+            self.bedrock_platform.set_model(generative_model)
+            result = generative_model.get_result(self.bedrock_platform.call_model())
             assert result['status_code'] == 200
             assert result['result']['answer'] == "asdf"
             assert result['result']['output_tokens'] == 454
@@ -329,19 +329,19 @@ class TestBedrockPlatform:
 
 
     def test_call_model_errors(self):
-        generativeModel = ChatClaudeModel(**claude_model)
-        generativeModel.set_message(message_dict)
-        self.bedrock_platform.set_model(generativeModel)
+        generative_model = ChatClaudeModel(**claude_model)
+        generative_model.set_message(message_dict)
+        self.bedrock_platform.set_model(generative_model)
         with patch('boto3.client') as mock_func:
             mock_func.side_effect = urllib3.exceptions.ReadTimeoutError(MagicMock(), "test", "test")
             response = self.bedrock_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 408
 
         with patch('boto3.client') as mock_func:
             mock_func.side_effect = requests.exceptions.RequestException
             response = self.bedrock_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 500
 
         client_error_response = {
@@ -357,14 +357,14 @@ class TestBedrockPlatform:
         with patch('boto3.client') as mock_func:
             mock_func.side_effect = botocore.exceptions.ClientError(client_error_response, "Call model")
             response = self.bedrock_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 400
 
 
         with patch('boto3.client') as mock_func:
             mock_func.side_effect = ConnectionError
             response = self.bedrock_platform.call_model()
-            result = generativeModel.get_result(response)
+            result = generative_model.get_result(response)
         assert result['status_code'] == 500
         assert result['error_message'] == "Max retries reached"
 
@@ -400,19 +400,19 @@ class TestOpenAIPlatform:
         assert result == mock_response
 
     def test_build_url(self):
-        generativeModel = ChatGPTModel(**model)
-        result_gpt = self.openai_platform.build_url(generativeModel)
+        generative_model = ChatGPTModel(**model)
+        result_gpt = self.openai_platform.build_url(generative_model)
         assert result_gpt == "https://api.openai.com/v1/chat/completions"
 
-        generativeModel = ChatClaudeModel(**claude_model)
-        with pytest.raises(PrintableGenaiError, match=f"Model message {generativeModel.MODEL_MESSAGE} not supported."):
-            self.openai_platform.build_url(generativeModel)
+        generative_model = ChatClaudeModel(**claude_model)
+        with pytest.raises(PrintableGenaiError, match=f"Model message {generative_model.MODEL_MESSAGE} not supported."):
+            self.openai_platform.build_url(generative_model)
 
     def test_set_model(self):
-        generativeModel = ChatGPTModel(**model)
-        generativeModel.api_key = "mock_api_key"
-        self.openai_platform.set_model(generativeModel)
+        generative_model = ChatGPTModel(**model)
+        generative_model.api_key = "mock_api_key"
+        self.openai_platform.set_model(generative_model)
 
         # Assert the expected output
-        assert self.openai_platform.generativeModel == generativeModel
+        assert self.openai_platform.generative_model == generative_model
         assert self.openai_platform.headers == {'Authorization': "Bearer mock_api_key", 'Content-Type': "application/json"}

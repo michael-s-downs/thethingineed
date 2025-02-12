@@ -77,11 +77,11 @@ def test_process_success(mocker, preprocess_deployment):
     mocker.patch('main.get_language', return_value='en')
     mocker.patch('main.remove_local_files')
     mocker.patch('main.update_status')
+    mocker.patch('main.download_files')
 
     preprocess_deployment = PreprocessOCRDeployment()
 
     json_input = {'input': 'data'}  # Datos de entrada de prueba
-
 
     must_continue, message, next_service = preprocess_deployment.process(json_input)
 

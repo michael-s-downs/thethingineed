@@ -16,7 +16,7 @@ class RescoreMethod(ABC):
     Abstract base class for rescore methods.
     """
 
-    TYPE: str = None
+    TYPE: str 
 
     def __init__(self, streamlist: list) -> None:
         """
@@ -199,7 +199,7 @@ class RescoreFactory:
         Args:
             rescore_type (str): Type of rescore method.
         """
-        self.rescoremethod: RescoreMethod = None
+        self.rescoremethod = None
         for rescoremethod in self.RESCORERS:
             if rescoremethod.TYPE == rescore_type:
                 self.rescoremethod = rescoremethod

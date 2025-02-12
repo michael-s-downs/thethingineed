@@ -31,8 +31,7 @@
     "indexation_conf": {
         "vector_storage_conf": {
             "index": "",
-            "vector_storage": "",
-            "modify_index_docs": {}
+            "vector_storage": ""
         },
         "chunking_method": {
             "method": "simple",

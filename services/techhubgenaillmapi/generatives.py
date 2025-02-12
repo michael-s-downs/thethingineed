@@ -6,7 +6,6 @@ import os
 import re
 import copy
 import json
-import random
 from typing import List
 from abc import ABC, abstractmethod
 
@@ -32,7 +31,7 @@ USER_AND_SYSTEM_KEY_ALLOWED_MSG = "Template can only have user and system key"
 USER_KEY_MANDATORY_MSG = "Template must contain the user key"
 
 TEMPLATE_IS_NOT_DICT_MSG = "Template is not well formed, must be a dict {} structure"
-
+NO_RESPONSE_FROM_MODEL = "There is no response from the model for the request"
 
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
@@ -64,7 +63,7 @@ class GenerativeModel(ABC):
         if hasattr(self, 'max_img_size_mb'):
             config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": self.MODEL_QUERY_LIMITER})
