@@ -38,6 +38,7 @@ class GenerativeModel(ABC):
     MODEL_MESSAGE = None
     DEFAULT_TEMPLATE_NAME = "system_query"
     GENERATIVE_MODELS = None
+    MODEL_QUERY_LIMITER = None
 
     def __init__(self, models_credentials, zone):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
@@ -48,7 +49,10 @@ class GenerativeModel(ABC):
         """
         logger_handler = LoggerHandler(GENAI_LLM_GENERATIVES, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
-        self.api_key = models_credentials.get(zone, None)
+        if "openai" in models_credentials and not zone:
+            self.api_key = models_credentials.get('openai')
+        else:
+            self.api_key = models_credentials.get(zone, None)
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class

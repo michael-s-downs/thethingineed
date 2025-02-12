@@ -15,7 +15,10 @@ import requests
 from endpoints import ManagerPlatform, Platform, GPTPlatform, OpenAIPlatform, AzurePlatform, BedrockPlatform
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
-from generatives import ChatGPTModel, GenerativeModel, DalleModel, ChatGPTVision, ChatClaudeModel, LlamaModel, ChatNova, ChatNovaVision
+from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel, ChatGPTOVisionModel
+from models.claudemodel import ChatClaudeModel, ChatClaudeVision
+from models.llamamodel import LlamaModel
+from models.novamodel import ChatNova, ChatNovaVision
 
 aws_credentials = {"access_key": "346545", "secret_key": "87968"}
 models_urls = {

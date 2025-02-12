@@ -297,7 +297,7 @@ class DalleModel(GPTModel):
 class ChatGPTModel(GPTModel):
     # AKA GPT3.5 // GPT4
     MODEL_MESSAGE = "chatGPT"
-    GENERATIVE_MODELS = ["gpt-3.5-turbo-16k", "gpt-4-turbo",]
+    GENERATIVE_MODELS = ["gpt-3.5-turbo-16k", "gpt-4-turbo"]
 
     def __init__(self, model: str = 'gpt-3.5-pool-europe',
                  model_type: str = "",

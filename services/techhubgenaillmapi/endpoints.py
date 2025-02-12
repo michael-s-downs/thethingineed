@@ -210,8 +210,10 @@ class OpenAIPlatform(GPTPlatform):
         :return: Url to make the request
         """
         self.logger.debug("Building url.")
-        if generativeModel.MODEL_MESSAGE == "chatGPT":
+        if generativeModel.MODEL_MESSAGE in ["chatGPT", "chatGPT-v", "chatGPT-o", "chatGPT-o1-mini"]:
             url = self.models_urls.get('OPENAI_GPT_CHAT_URL')
+        elif generativeModel.MODEL_MESSAGE == "dalle":
+            url = self.models_urls.get('OPENAI_DALLE_URL')
         else:
             raise PrintableGenaiError(400, f"Model message {generativeModel.MODEL_MESSAGE} not supported.")
 

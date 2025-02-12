@@ -199,8 +199,6 @@ class ChatGPTOMiniMessage(Message):
         """
         super().__init__()
         self.query = query
-        if context != "" and isinstance(self.query, list):
-            raise PrintableGenaiError(400, "Context param not allowed in vision models")
         self.context = context
         if functions is None:
             functions = []
@@ -221,21 +219,13 @@ class ChatGPTOMiniMessage(Message):
 
         :return: List with the messages in the correct format for the model
         """
+        user_prompt = Template(self.template["user"])
         if "system" in self.template:
             system_prompt = Template(self.template["system"])
             system_content = system_prompt.safe_substitute(system=self.system)
         else:
             system_content = self.system
 
-        user_content = []
-        user_prompt = Template(self.template["user"])
-        if isinstance(self.template["user"], str):
-            user_content = user_prompt.safe_substitute(query=self.query, context=self.context)
-        else:
-            for e in self.template["user"]:
-                if e == "$query":
-                    user_content.extend(self.query)
-                else:
-                    user_content.append(e)
+        user_content = user_prompt.safe_substitute(query=self.query, context=self.context)
 
         return [{'role': 'assistant', 'content': system_content}] + self.unitary_persistence() + [{'role': 'user', 'content': user_content}]

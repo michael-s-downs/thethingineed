@@ -8,8 +8,12 @@ from unittest.mock import MagicMock, patch
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
-from generatives import (ManagerModel, GenerativeModel, ChatGPTModel, GenerativeModel, DalleModel,
-                         ChatGPTVision, ChatClaudeModel, ChatClaudeVision, LlamaModel, ChatNova, ChatNovaVision, NovaModel)
+from models.managergeneratives import ManagerModel
+
+from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel, ChatGPTOVisionModel
+from models.claudemodel import ChatClaudeModel, ChatClaudeVision
+from models.llamamodel import LlamaModel
+from models.novamodel import ChatNova, ChatNovaVision, NovaModel
 
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
@@ -48,7 +52,7 @@ claude_model = {
 llama3_model = {
     "model": "meta-llama-3-70b-NorthVirginiaEast",
     "model_id": "meta.llama3-70b-instruct-v1:0",
-    "model_type": "llama3-v1-70b",
+    "model_type": "llama3-70b-v1",
     "max_input_tokens": 8000,
     "zone": "us-east-1",
     "message": "chatLlama3",
@@ -59,7 +63,7 @@ llama3_model = {
 claude3_model = {
     "model": "claude-3-haiku-ParisWest",
     "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-    "model_type": "claude-v3-haiku",
+    "model_type": "claude-3-5-haiku-v1:0",
     "max_input_tokens": 200000,
     "zone": "eu-west-3",
     "message": "chatClaude-v",
@@ -98,6 +102,37 @@ nova_v_model = {
 	"zone": "us-east-1",
 	"message": "chatNova-v",
 	"model_pool": ["techhubdev-pool-us-nova-lite-1:0","techhubdev-pool-world-nova-lite-1:0","techhub-pool-world-nova-lite-1:0"],
+    "models_credentials": {}
+}
+
+o_model={
+    "model": "techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31",
+    "model_type": "gpt-o3-mini",
+    "max_input_tokens": 200000,
+    "zone": "techhubdev-SwedenCentral",
+    "api_version": "2024-12-01-preview",
+    "model_pool": ["techhubdev-pool-eu-gpt-o3-mini","techhubdev-pool-world-gpt-o3-mini", "techhub-pool-world-gpt-o3-mini"],
+    "models_credentials": {}
+}
+
+o1_mini_model = {
+    "model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12",
+    "model_type": "gpt-o1-mini",
+    "max_input_tokens": 128000,
+    "zone": "techhubdev-SwedenCentral",
+    "api_version": "2024-12-01-preview",
+    "model_pool": ["techhubdev-pool-eu-gpt-o3-mini","techhubdev-pool-world-gpt-o3-mini", "techhub-pool-world-gpt-o3-mini"],
+    "models_credentials": {}
+}
+
+o_v_model={
+    "model": "techhubdev-SwedenCentral-gpt-o1-2024-12-17",
+    "model_type": "gpt-o1",
+	"max_input_tokens": 200000,
+	"max_img_size_mb": 20.00,
+	"zone": "techhubdev-SwedenCentral",
+	"api_version": "2024-12-01-preview",
+	"model_pool": ["techhubdev-pool-eu-gpt-o1","techhubdev-pool-world-gpt-o1","techhub-pool-world-gpt-o1"],
     "models_credentials": {}
 }
 
@@ -149,9 +184,6 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
         gpt = ManagerModel.get_model({"model": gpt_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(gpt, ChatGPTModel)
-        manager_models_config.get_model.return_value = copy.deepcopy(claude_model)
-        claude = ManagerModel.get_model({"model": claude_model['model']}, "bedrock", available_pools, manager_models_config)
-        assert isinstance(claude, ChatClaudeModel)
         manager_models_config.get_model.return_value = copy.deepcopy(dalle_model)
         dalle = ManagerModel.get_model({"model": dalle_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(dalle, DalleModel)
@@ -167,6 +199,15 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(nova_v_model)
         novav = ManagerModel.get_model({"model": nova_v_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(novav, ChatNovaVision)
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        chatgpto = ManagerModel.get_model({"model": o_model['model'], "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+        assert isinstance(chatgpto, ChatGPTOModel)
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+        chatgpt_o1_mini = ManagerModel.get_model({"model": o1_mini_model['model']}, "azure",available_pools, manager_models_config)
+        assert isinstance(chatgpt_o1_mini, ChatGPTOModel)
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        chatgptovision = ManagerModel.get_model({"model": o_v_model['model'], "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+        assert isinstance(chatgptovision, ChatGPTOVisionModel)
 
 
     def test_pool_model(self):
@@ -175,7 +216,32 @@ class TestManagerGeneratives:
         gptv = ManagerModel.get_model({"model": "techhubinc-pool-world-gpt-4o"}, "azure", available_pools, manager_models_config)
         assert isinstance(gptv, ChatGPTVision)
 
+    def test_get_model_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
 
+        with pytest.raises(PrintableGenaiError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31", "max_tokens": 1000}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: max_tokens not supported in model: techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31"
+
+    def test_get_model_reasoning_effort_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+
+        with pytest.raises(ValueError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12", "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: 'reasoning_effort' not supported in model: 'gpt-o1-mini'."
+
+    def test_get_model_stop_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+
+        with pytest.raises(ValueError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12", "stop": []}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: 'stop' not supported in model: 'gpt-o1-mini'."
 
 class TestGPTModel:
 
@@ -516,3 +582,166 @@ class TestNovaModel:
         }
         result = nova.get_result(mock_response)
         assert result['error_message'] == 'error'
+
+    def test_repr(self):
+        conf = copy.deepcopy(nova_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 1
+        conf['max_tokens'] = 100
+        conf['bag_tokens'] = []
+        conf['top_p'] = 0.9
+        conf['top_k'] = 50
+        conf['stop'] = None
+        conf['pool_name'] = "techhubdev-pool-world-nova-micro-1:0"
+        nova = NovaModel(**conf)
+        expected_output = (f"{{model:{conf['model']}, max_tokens:{conf['max_tokens']}, "
+                           f"temperature:{conf['temperature']}}}")
+        assert repr(nova) == expected_output
+
+
+class TestGPTOModel:
+
+    def test_parse_data(self):
+        conf = {
+            "model": o_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100,
+            "reasoning_effort": "low"
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        gpt_o = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o.set_message(message_dict)
+        gpt_o.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
+                                                                f"supported for model {conf['model']} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o.set_message(message_dict)
+            gpt_o.parse_data()
+    def test_parse_data_o1_mini(self):
+        conf = {
+            "model": o1_mini_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        gpt_o1_mini = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o1_mini.set_message(message_dict)
+        gpt_o1_mini.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o1_mini_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not supported for model {gpt_o1_mini.model_name} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o1_mini = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o1_mini.set_message(message_dict)
+            gpt_o1_mini.parse_data()
+
+
+    def test_get_result(self):
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"finish_reason": "content_filter"}],
+            'usage': {
+                'prompt_tokens': 0,
+                'completion_tokens': 0,
+                'total_tokens': 0,
+                'completion_tokens_details': {'reasoning_tokens': 0}
+            }
+        }
+        conf = copy.deepcopy(o_model)
+        conf.pop('model_pool')
+        conf['max_completion_tokens'] = 100
+        conf['n'] = 1
+        gpt_o = ChatGPTOModel(**conf)
+        gpt_o.set_message(message_dict)
+        result = gpt_o.get_result(mock_response)
+        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+
+
+        mock_response['choices'] = [{"finish_reason": "function_call", "message": {"function_call": {"arguments": "age=20"}}}]
+        result = gpt_o.get_result(mock_response)
+        assert result['result']['answer'] == "age=20"
+
+        mock_response['choices'] = [{"finish_reason": "ss"}]
+        with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
+                                                                "{'finish_reason': 'ss'}.")):
+            gpt_o.get_result(mock_response)
+
+        mock_response['choices'] = [{"message": {"content": "Not found"}}]
+        result = gpt_o.get_result(mock_response)
+        assert result['result']['answer'] == "Not found"
+
+
+class TestGPTOVisionModel:
+
+    def test_parse_data(self):
+        conf = {
+            "model": o_v_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100,
+            "reasoning_effort": "low"
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        gpt_o_v = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o_v.set_message(message_dict)
+        gpt_o_v.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o_v_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
+                                                                f"supported for model {conf['model']} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o_v = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o_v.set_message(message_dict)
+            gpt_o_v.parse_data()
+
+
+    def test_get_result(self):
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"finish_reason": "content_filter"}],
+            'usage': {
+                'prompt_tokens': 0,
+                'completion_tokens': 0,
+                'total_tokens': 0,
+                'completion_tokens_details': {'reasoning_tokens': 0}
+            }
+        }
+        conf = copy.deepcopy(o_v_model)
+        conf.pop('model_pool')
+        conf['max_completion_tokens'] = 100
+        conf['n'] = 1
+        gpt_o_v = ChatGPTOVisionModel(**conf)
+        gpt_o_v.set_message(message_dict)
+        result = gpt_o_v.get_result(mock_response)
+        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+
+        mock_response['choices'] = [{"finish_reason": "function_call", "message": {"function_call": {"arguments": "age=20"}}}]
+        result = gpt_o_v.get_result(mock_response)
+        assert result['result']['answer'] == "age=20"
+
+        mock_response['choices'] = [{"finish_reason": "ss"}]
+        with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
+                                                                "{'finish_reason': 'ss'}.")):
+            gpt_o_v.get_result(mock_response)
+
+        mock_response['choices'] = [{"message": {"content": "Not found"}}]
+        result = gpt_o_v.get_result(mock_response)
+        assert result['result']['answer'] == "Not found"

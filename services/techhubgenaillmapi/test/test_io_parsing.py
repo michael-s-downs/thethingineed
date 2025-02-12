@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 # Local imports
 from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
-from generatives import ChatGPTVision
+from models.gptmodel import ChatGPTVision
 
 gpt_v_model = {
     "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
