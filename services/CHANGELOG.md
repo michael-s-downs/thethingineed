@@ -21,6 +21,9 @@
   - [New] Prompt templates splitted into diferent files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
   - [New] Endpoint reloadconfig deleted, it does nothing with the prompt load change.
   - [New] Added method to show the word causing the error while loading a json.
+  - [New] Added support for models o1, o1-mini, and o3-mini.
+  - [New] Added reasoning and DALL·E models for the OpenAI platform.
+  - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
   - [Improvement] Endpoint upload_prompt_template updated from POST request type to PUT request type.
   - [Improvement] Endpoint delete_prompt_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /llm/delete_prompt_template?name=mytemplate
   - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.

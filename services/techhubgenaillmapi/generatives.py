@@ -67,7 +67,7 @@ class GenerativeModel(ABC):
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
                                                         "persistence": message.persistence, "querylimiter": self.MODEL_QUERY_LIMITER})
-        self.message = queryLimiter.get_message()
+        self.message = query_limiter.get_message()
 
     @abstractmethod
     def get_result(self, response: dict) -> dict:
