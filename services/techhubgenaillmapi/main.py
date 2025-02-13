@@ -25,7 +25,8 @@ from common.utils import load_secrets, get_error_word_from_exception
 from common.errors.genaierrors import PrintableGenaiError
 from common.models_manager import ManagerModelsConfig
 from endpoints import ManagerPlatform, Platform
-from generatives import ManagerModel, GenerativeModel
+from generatives import GenerativeModel
+from models.managergeneratives import ManagerModel
 from common.storage_manager import ManagerStorage
 from io_parsing import (
     PlatformMetadata,
@@ -151,11 +152,7 @@ class LLMDeployment(BaseDeployment):
             raise ValueError(f"Invalid template name '{template_name}'")
 
         else:
-            if model.MODEL_MESSAGE in [
-                "chatClaude-v",
-                "chatGPT-v",
-                "chatNova-v",
-            ] and isinstance(query, str):
+            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGPT-o"] and isinstance(query, str):
                 model.DEFAULT_TEMPLATE_NAME = "system_query"
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]

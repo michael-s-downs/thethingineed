@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from generatives import ChatGPTVision
+from models.gptmodel import ChatGPTVision
 
 
 gpt_v_model = {
@@ -36,7 +36,7 @@ bedrock_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "claude-v2:1-NorthVirginiaEast"
+        "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia"
     },
     "platform_metadata": {
         "platform": "bedrock"
@@ -163,12 +163,12 @@ available_models = {
     ],
     "bedrock": [
         {
-            "model": "claude-v2:1-NorthVirginiaEast",
-            "model_id": "anthropic.claude-v2:1",
-            "model_type": "claude-v2.1",
+            "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia",
+            "model_id": "us.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "model_type": "claude-3-5-sonnet-v1:0",
             "max_input_tokens": 200000,
             "zone": "us-east-1",
-            "message": "chatClaude",
+            "message": "chatClaude-v",
             "api_version": "bedrock-2023-05-31",
             "model_pool": []
         }
@@ -274,6 +274,7 @@ class TestMain(unittest.TestCase):
                 mock_post.return_value.invoke_model.return_value = {"body": body}
                 mock_func.return_value = True
                 _, result, _ = self.deploy.process({**bedrock_call, 'project_conf': copy.deepcopy(self.headers)})
+                print(result)
                 assert result['answer'] == "asdf"
 
     @patch("main.ManagerStorage")

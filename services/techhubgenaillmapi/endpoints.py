@@ -280,8 +280,10 @@ class OpenAIPlatform(GPTPlatform):
         :return: Url to make the request
         """
         self.logger.debug("Building url.")
-        if generative_model.MODEL_MESSAGE == "chatGPT":
+        if generative_model.MODEL_MESSAGE in ["chatGPT", "chatGPT-v", "chatGPT-o", "chatGPT-o1-mini"]:
             url = self.models_urls.get("OPENAI_GPT_CHAT_URL")
+        elif generative_model.MODEL_MESSAGE == "dalle":
+            url = self.models_urls.get('OPENAI_DALLE_URL')
         else:
             raise PrintableGenaiError(
                 400, f"Model message {generative_model.MODEL_MESSAGE} not supported."
@@ -369,10 +371,10 @@ class AzurePlatform(GPTPlatform):
         :return: Url to make the request
         """
         self.logger.debug("Building url.")
-        if generative_model.MODEL_MESSAGE in ["chatGPT", "chatGPT-v"]:
-            template = Template(self.models_urls.get("AZURE_GPT_CHAT_URL"))
+        if generative_model.MODEL_MESSAGE in ["chatGPT", "chatGPT-v", "chatGPT-o", "chatGPT-o1-mini"]:
+            template = Template(self.models_urls.get('AZURE_GPT_CHAT_URL'))
         elif generative_model.MODEL_MESSAGE == "dalle":
-            template = Template(self.models_urls.get("AZURE_DALLE_URL"))
+            template = Template(self.models_urls.get('AZURE_DALLE_URL'))
         else:
             raise PrintableGenaiError(
                 400, f"Model message {generative_model.MODEL_MESSAGE} not supported."
