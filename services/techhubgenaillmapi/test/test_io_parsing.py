@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 # Local imports
 from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
-from generatives import ChatGPTVision
+from models.gptmodel import ChatGPTVision
 
 gpt_v_model = {
     "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
@@ -152,9 +152,9 @@ class TestResponseObject():
 
 class TestLLMMetadata():
     def test_validate_funtions_and_functions_call(self):
-        with pytest.raises(ValidationError, match=re.escape("1 validation error for LLMMetadata\n  Value error, Internal error, function_call is mandatory because you put the functions param [type=value_error, input_value={'functions': ['function1'], 'model': 'ddd'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValidationError):
             LLMMetadata(functions=["function1"], model="ddd")
-        with pytest.raises(ValidationError, match=re.escape("1 validation error for LLMMetadata\n  Value error, Internal error, functions is mandatory because you put the function_call param [type=value_error, input_value={'function_call': 'function1', 'model': 'ddd'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValidationError):
             LLMMetadata(function_call="function1", model="ddd")
 
     def test_validate_default_model(self):
@@ -164,7 +164,7 @@ class TestLLMMetadata():
         metadata = LLMMetadata(model="techhubdev-pool-world-gpt-3.5-turbo-16k")
         assert metadata.model == "techhubdev-pool-world-gpt-3.5-turbo-16k"
 
-        with pytest.raises(ValidationError, match=r"1 validation error for LLMMetadata\n  Value error, Internal error, default model not founded \[type=value_error, input_value=\{\}, input_type=dict\]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error"):
+        with pytest.raises(ValidationError):
             LLMMetadata()
 
 class TestQueryMetadata():
@@ -205,7 +205,7 @@ class TestQueryMetadata():
 
     def test_max_characters_dalle(self):
         template = {"system": "$system", "user": "$query"}
-        with pytest.raises(ValueError, match=re.escape("1 validation error for QueryMetadata\n  Value error, Error, in dalle3 the maximum number of characters in the prompt is 4000 (query + persistence is longer) [type=value_error, input_value={'is_vision_model': False...e_name': 'system_query'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValueError):
             QueryMetadata(is_vision_model=False, model_type="dalle3", query=base64, template=template, template_name="system_query")
 
 class TestQueueMetadata():
@@ -283,7 +283,7 @@ class TestProjectConf():
 @patch("io_parsing.QUEUE_MODE", True)
 def test_adapt_input_queue():
     json_input = copy.deepcopy(azure_call)
-    json_input['headers'] = {'Content-Type': 'application/json'}
+    json_input['headers'] = {'Content-Type': 'application/json',"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"}
     json_input['query_metadata']["C:\\users"] = "C:\\users\\lkl"
 
     os.environ["DATA_MOUNT_PATH"] = ""

@@ -1,6 +1,9 @@
 # Native imports
 import json, os
 from typing import Literal, Optional, Union, Tuple, List
+import os
+import json
+from typing import Literal, Optional, Union, Tuple
 import requests
 
 # Installed imports
@@ -10,6 +13,8 @@ from pydantic import BaseModel, field_validator, PositiveInt, FieldValidationInf
 from generatives import GenerativeModel
 from common.logging_handler import LoggerHandler
 from common.genai_controllers import storage_containers, load_file, upload_object
+from common.utils import get_error_word_from_exception
+from common.errors.genaierrors import PrintableGenaiError
 
 # Create logger
 logger_handler = LoggerHandler("io_parsing", level=os.environ.get('LOG_LEVEL', "INFO"))
@@ -199,6 +204,8 @@ class LLMMetadata(BaseModel):
     user: Optional[str] = None
     top_p: Optional[confloat(ge=0.0, le=1.0)] = None
     top_k: Optional[int] = Field(None, ge=0, le=500) # Nova model parameter # Optional int with range constraint
+    max_completion_tokens: Optional[PositiveInt] = None # o1 model parameter
+    reasoning_effort: Optional[Literal['low', 'medium', 'high']] = None
     model: Optional[str] = None
     default_model: Optional[str] = None
     tools: Optional[list] = None
@@ -389,14 +396,18 @@ class QueueMetadata(BaseModel):
         """
         if self.location_type == "cloud":
             try:
-                json_input = json.loads(load_file(self.workspace, self.input_file))
-            except:
+                f = load_file(self.workspace, self.input_file)
+                json_input = json.loads(f)
+            except json.decoder.JSONDecodeError as ex:
+                error_param = get_error_word_from_exception(ex, f)
+                raise PrintableGenaiError(500, f"File is not json serializable please check near param: <{error_param}>. String: {f}")
+            except Exception:
                 raise ValueError(f"Unable to read json file '{self.input_file}' from {self.workspace}")
         else:
             try:
                 with open(self.input_file, "r", encoding="utf-8") as file:
                     json_input = json.load(file)
-            except:
+            except Exception:
                 raise ValueError(f"Unable to read json file '{self.input_file}'")
         return json_input
     
@@ -408,17 +419,17 @@ class QueueMetadata(BaseModel):
         if self.location_type == "cloud":
             try:
                 upload_object(self.workspace, json.dumps(json_output), self.output_file)
-            except:
+            except Exception:
                 raise ValueError(f"Unable to write json file '{self.output_file}' to {self.workspace} with content: {json_output}")
         else:
             try:
                 with open(self.output_file, "w", encoding="utf-8") as file:
                     json.dump(json_output, file)
-            except:
+            except Exception:
                 raise ValueError(f"Unable to write json file '{self.output_file}' with content {json_output}")
 
 
-def adapt_input_queue(json_input: dict) -> dict:
+def adapt_input_queue(json_input: dict) -> tuple:
     """ Input adaptations for queue case
 
     :param json_input: Input data
@@ -459,7 +470,7 @@ def adapt_input_queue(json_input: dict) -> dict:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 file_content = f.read()
-        except:
+        except Exception:
             file_content = ""
         if file_content:
             try:
@@ -496,7 +507,6 @@ class ResponseObject(BaseModel):
 
     def get_response_predict(self, queue_metadata: QueueMetadata) -> Tuple[bool, dict, str]:
         output, status_code = self.get_response_base()
-        output = json.loads(output)
         if QUEUE_MODE:
             must_continue = True
             next_service = os.getenv('Q_GENAI_LLMQUEUE_OUTPUT')
@@ -524,4 +534,4 @@ class ResponseObject(BaseModel):
             response['error_message'] = self.error_message
         else:
             raise ValueError("Internal error, response object must have a result or an error_message")
-        return json.dumps(response), self.status_code
+        return response, self.status_code

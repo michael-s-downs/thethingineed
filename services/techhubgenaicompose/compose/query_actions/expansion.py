@@ -3,8 +3,7 @@
 
 import os
 import requests
-from abc import abstractmethod, ABC
-from typing import List
+from abc import ABC
 from common.errors.genaierrors import PrintableGenaiError
 from common.errors.LLM import LLMParser
 from ..utils.defaults import TRANSLATE_TEMPLATE, STEP_TEMPLATE
@@ -74,6 +73,11 @@ class StepSplitExpansion(ExpansionMethod):
 
     def process(self, params: dict, actions_confs: dict):
         headers = params.pop("headers")
+        template_name = params.get("template_name")
+        template = deepcopy(STEP_TEMPLATE)
+        if template_name:
+            template["query_metadata"].pop("template")
+            template["query_metadata"]["prompt_template_name"] = template_name
         
         retrieve_action = self.get_retrieve_action(actions_confs)
 
@@ -90,11 +94,11 @@ class StepSplitExpansion(ExpansionMethod):
             STEP_QUERY = f"Input Query: {query}, K queries or lower: {k_steps} \n Response: [List of simpler queries here]"
             if context:
                 STEP_QUERY = f"Context: {context}, {STEP_QUERY}"
-            STEP_TEMPLATE['query_metadata']['query'] = STEP_QUERY
+            template['query_metadata']['query'] = STEP_QUERY
             if model is not None:
-                STEP_TEMPLATE['llm_metadata']['model'] = model
+                template['llm_metadata']['model'] = model
             
-            result = self.call_llm(STEP_TEMPLATE, headers)
+            result = self.call_llm(template, headers)
             retriever_result.append(result)
 
         queries = []
@@ -154,7 +158,7 @@ class LangExpansion(ExpansionMethod):
         """
         async with session.post(self.URL, json=template, headers=headers, verify_ssl=True) as response:
             LLMP.control_errors(response, async_bool=True)
-            return (await response.json(content_type='text/html'))['result']
+            return (await response.json())['result']
 
     async def parallel_calls(self, templates, headers):
         """Async function that makes parallel calls using async_call_llm
@@ -203,7 +207,7 @@ class LangExpansion(ExpansionMethod):
         translate_model = params.get("model")
         
         if not isinstance(langs, list):
-            raise PrintableGenaiError(500, "Param <langs> is not a list")
+            raise PrintableGenaiError(400, "Param <langs> is not a list")
 
         retriever_result = []
         for retriever in retrieve_action:
@@ -247,7 +251,7 @@ class ExpansionFactory:
         Args:
             expansion_type (str): Type of the query expansion method.
         """
-        self.expansionmethod: ExpansionMethod = None
+        self.expansionmethod = None
         for expansionmethod in self.EXPANSIONS:
             if expansionmethod.TYPE == expansion_type:
                 self.expansionmethod = expansionmethod

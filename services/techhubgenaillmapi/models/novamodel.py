@@ -9,6 +9,7 @@ from limiters import ManagerQueryLimiter
 
 class NovaModel(GenerativeModel):
     MODEL_MESSAGE = None
+    MODEL_QUERY_LIMITER = "nova"
 
     # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
@@ -52,21 +53,6 @@ class NovaModel(GenerativeModel):
         if tools:
             self.tools = self.adapt_tools(tools)
 
-    def set_message(self, config: dict):
-        """Sets the message as an argument of the class
-           It also modifies the message taking into account the number of tokens.
-
-        :param config: Dict with the message to be used
-        """
-        config['message'] = self.MODEL_MESSAGE
-        if hasattr(self, 'max_img_size_mb'):
-            config['max_img_size_mb'] = self.max_img_size_mb
-        message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
-                                                        "max_tokens": self.max_input_tokens,
-                                                        "bag_tokens": self.bag_tokens,
-                                                        "persistence": message.persistence, "querylimiter": "nova"})
-        self.message = queryLimiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -158,6 +144,7 @@ class NovaModel(GenerativeModel):
 
 class ChatNova(NovaModel):
     MODEL_MESSAGE = "chatNova"
+    GENERATIVE_MODELS = ["nova-micro-v1"]
 
     def __init__(self,
                  model,
@@ -200,6 +187,7 @@ class ChatNova(NovaModel):
 class ChatNovaVision(NovaModel):
     MODEL_MESSAGE = "chatNova-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
+    GENERATIVE_MODELS = ["nova-lite-v1", "nova-pro-v1"]
 
     def __init__(self,
                  model,

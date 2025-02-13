@@ -19,10 +19,10 @@
     - [Examples](#examples)
       - [Simple retrieval call: `url/process`](#simple-retrieval-call-urlprocess)
       - [Documents retrieval: `url/retrieve_documents`](#documents-retrieval-urlretrieve_documents)
-      - [Delete documents: `url/delete-documents`](#delete-documents-urldelete-documents)
+      - [Delete documents: `url/delete_documents`](#delete-documents-urldelete_documents)
       - [Delete index: `url/delete_index`](#delete-index-urldelete_index)
       - [Filenames retrieval: `url/get_documents_filenames`](#filenames-retrieval-urlget_documents_filenames)
-      - [List indices: `url/get_models`](#list-indices-urlget_models)
+      - [Get models: `url/get_models`](#get-models-urlget_models)
       - [Parameters](#parameters)
       - [Examples](#examples-1)
       - [List indices: `url/list_indices`](#list-indices-urllist_indices)
@@ -323,18 +323,11 @@ Response:
 }
 ```
 
-#### Delete documents: `url/delete-documents`
+#### Delete documents: `url/delete_documents`
 
-To delete a document from an index the request is:
+To delete a document from an index use the DELETE endpoint /delete_documents, the request is:
 
-```json
-{
-  "index": "myindex",
-  "delete":{
-      "filename": "filename"
-  }
-}
-```
+**\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
 
 Response:
 
@@ -348,7 +341,9 @@ Response:
 
 #### Delete index: `url/delete_index`
 
-To delete an index with all documents associated use the endpoint /delete_index and the body:
+To delete an index with all documents associated use the DELETE endpoint /delete_index:
+
+**\<deploymentdomain\>**/delete_index?index=myindex
 
 ```json
 {
@@ -368,11 +363,9 @@ Response:
 
 #### Filenames retrieval: `url/get_documents_filenames`
 To retrieve the name of the documents indexed and their chunks from an index, the request is:
-```json
-{
-    "index": "myindex"
-}
-```
+
+**\<deploymentdomain\>**/get_documents_filenames?index=myindex
+
 Response:
 
 ```json
@@ -404,39 +397,8 @@ Response:
 }
 ```
 
-It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
-https://**\<deploymentdomain\>**/retrieve/get_models?platform=azure
+#### Get models: `url/get_models`
 
-The response would be a list of all the available models on the platform:
-```json
-{
-    "status": "ok",
-    "result": {
-        "models": [
-            "ada-002-techhub-westeurope",
-            "ada-002-techhub-australia",
-            "ada-002-techhub-canada",
-            "ada-002-techhub-eastus",
-            "ada-002-techhub-eastus2",
-            "ada-002-france",
-            "ada-002-japan",
-            "ada-002-northcentralus",
-        ],
-        "pools": [
-            "ada-002-pool-techhub-world",
-            "ada-002-pool-europe",
-            "ada-002-pool-australia",
-            "ada-002-pool-world",
-            "ada-002-pool-techhub-europe",
-            "ada-002-pool-japan",
-            "ada-002-pool-techhub-america",
-            "ada-002-pool-america"
-        ]
-    },
-    "status_code": 200
-}
-```
-#### List indices: `url/get_models`
 #### Parameters
 
 The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
@@ -516,7 +478,9 @@ https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 ```
 
 #### List indices: `url/list_indices`
-Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this: 
+
+Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this:
+
 https://**\<deploymentdomain\>**/retrieve/list_indices
 
 The response would be a list of index names along with the models associated with each one:
@@ -577,25 +541,21 @@ The response would be a list of index names along with the models associated wit
     }
     ```
 
-* **/delete-documents (POST)**: Deletes document from index.  
-    Body:
+* **/delete_documents (DELETE)**: Deletes document from index.  
+    Params:
 
-    ```json
-    {
-        "index": "myindex",
-        "delete":{
-            "filename": "manual.docx"
-        }
-    }
-    ```
-* **/delete_index (POST)**: Deletes an index.  
-    Body:
+        index: Index name where the file is stored.
+        filename: File name to delete, can be passed more than one.
 
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
+    Example: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
+
+* **/delete_index (DELETE)**: Deletes an index.  
+    Params:
+
+        index: Index name where the file is stored.
+
+    Example: **\<deploymentdomain\>**/delete_index?index=myindex
+
 * **/healthcheck (GET)**: Used to check if the component is available.  
     Returns:
 
@@ -616,21 +576,26 @@ The response would be a list of index names along with the models associated wit
     }
     ```
 
-* **/get_documents_filenames (POST)**: Retrieves documents filenames from index.  
-    Body:
+* **/get_documents_filenames (GET)**: Retrieves documents filenames from index.  
+    Params:
 
-    ```json
-    {
-        "index": "myindex"
-    }
-    ```
-    
+        index: Index name where the file is stored.
+
+    Request: **\<deploymentdomain\>**/get_documents_filenames?index=myindex
+
 * **/get_models (GET)**: Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
-  Request: https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
+
+    Request:
+
+        https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
 * **/list_indices (GET)**: Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
-  Request: https://**\<deploymentdomain\>**/retrieve/list_indices  
-Returns:
+
+    Request:
+
+        https://**\<deploymentdomain\>**/retrieve/list_indices  
+
+    Returns:
     ```json
     {
     "indices": [

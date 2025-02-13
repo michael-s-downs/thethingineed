@@ -12,6 +12,7 @@ import conf_utils
 import docs_utils
 from common.storage_manager import ManagerStorage
 from common.genai_controllers import storage_containers
+from common.ir.validations import is_available_metadata
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
     """ Validate if param exist, correct type and no empty
@@ -222,6 +223,49 @@ def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
 
     return all(valid_list), messages_list
 
+
+def _validate_index_metadata(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param index_metadata"""
+    valid = True
+    messages = []
+    index_metadata = request_json['input_json'].get('indexation_conf', {}).get('index_metadata')
+
+    if index_metadata:
+        chunking_method = request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}).get('method', "simple")
+        metadata = request_json['input_json'].get('indexation_conf', {}).get('metadata', {})
+        if isinstance(index_metadata, list):
+            for key in index_metadata:
+                if not is_available_metadata(metadata, key, chunking_method):
+                    valid = False
+                    messages.append(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        elif isinstance(index_metadata, bool):
+            # If it is a boolean, it is valid
+            pass
+        else:
+            valid = False
+            messages.append("The 'index_metadata' must be a list")    
+    return valid, messages
+
+
+def _validate_metadata_primary_keys(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param metadata_primary_keys"""
+    valid = True
+    messages = []
+    metadata_primary_keys = request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf', {}).get('metadata_primary_keys')
+
+    if metadata_primary_keys:
+        chunking_method = request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}).get('method', "simple")
+        metadata = request_json['input_json'].get('indexation_conf', {}).get('metadata', {})
+        if isinstance(metadata_primary_keys, list):
+            for key in metadata_primary_keys:
+                if not is_available_metadata(metadata, key, chunking_method):
+                    valid = False
+                    messages.append(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        else:
+            valid = False
+            messages.append("The 'metadata_primary_keys' must be a list")
+    return valid, messages
+
 def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
     # Check ocr and llm_ocr_conf parameters
     messages = []
@@ -386,7 +430,9 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models, _validate_chunking_method, _validate_ocr]
+    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, 
+                          _validate_models, _validate_chunking_method, _validate_ocr, 
+                          _validate_metadata_primary_keys, _validate_index_metadata]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)
@@ -403,15 +449,15 @@ def validate_input_delete(request_json: dict, input_files: list) -> Tuple[bool, 
 
     return valid, ", ".join(messages_list)
 
-def validate_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
-    """ Validate input and report errors for profile knowler_queue
+def validate_input_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
+    """ Validate input and report errors for profile queue
 
     :param request_json: Request JSON with all information
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
 
-    input_node = 'APIRequest'
+    input_node = 'GenaiRequest'
     input_json = request_json['input_json'].get(input_node, {})
 
     if input_json:

@@ -9,6 +9,8 @@ from limiters import ManagerQueryLimiter
 
 class LlamaModel(GenerativeModel):
     MODEL_MESSAGE = "chatLlama3"
+    MODEL_QUERY_LIMITER = "bedrock"
+    GENERATIVE_MODELS = ["llama3-70b-v1", "llama3-8b-v1", "llama3-1-405b-v1", "llama3-1-70b-v1", "llama3-1-8b-v1"]
 
     def __init__(self,
                  model: str = 'meta-llama-3-8b-NorthVirginiaEast',
@@ -55,20 +57,6 @@ class LlamaModel(GenerativeModel):
         self.stop_sequences = stop
         self.is_vision = False
 
-
-    def set_message(self, config: dict):
-        """Sets the message as an argument of the class
-           It also modifies the message taking into account the number of tokens.
-
-        :param config: Dict with the message to be used
-        """
-        config['message'] = self.MODEL_MESSAGE
-        message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
-                                                        "max_tokens": self.max_input_tokens,
-                                                        "bag_tokens": self.bag_tokens,
-                                                        "persistence": message.persistence, "querylimiter": "bedrock"})
-        self.message = queryLimiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.

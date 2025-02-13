@@ -76,7 +76,7 @@ class StreamChunk:
         param_name = param_name.lower()
         try:
             return self.meta[param_name]
-        except:
+        except Exception:
             raise GenaiError(status_code=404, message=f"Param <{param_name}> not found in metadata")
 
     def get(self, param_name):

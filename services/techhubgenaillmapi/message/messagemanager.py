@@ -8,13 +8,13 @@ from messages import Message
 from message.llamamessage import Llama3Message
 from message.novamessage import NovaVMessage, NovaMessage
 from message.claudemessage import ClaudeMessage, Claude3Message
-from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage
+from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
 class ManagerMessages(object):
-    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message, NovaMessage, NovaVMessage]
+    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, ChatGPTOMiniMessage, Llama3Message, NovaMessage, NovaVMessage]
 
     @staticmethod
     def get_message(conf: dict) -> Message:
-        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v]
+        """ Method to instantiate the message class: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v, chatGPT-o]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude-v"}
         :return: message object
@@ -29,7 +29,7 @@ class ManagerMessages(object):
 
     @staticmethod
     def get_possible_messages() -> List:
-        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v]
+        """ Method to list the messages: [chatGPT, chatClaude, dalle, chatClaude-v, chatGPT-v, chatNova, chatNova-v, chatGPT-o]
 
         :param conf: Message configuration. Example:  {"message":"chatClaude-v"}
         :return: available messages

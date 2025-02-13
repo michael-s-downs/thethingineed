@@ -9,6 +9,8 @@
   - [Getting started](#getting-started)
   - [Concepts and Definitions](#concepts-and-definitions)
   - [Chunking Methods](#chunking-methods)
+  - [Embeddings Generation](#embeddings-generation)
+  - [Vector Storage. Chunk id generation](#vector-storage-chunk-id-generation)
   - [Component Reference](#component-reference)
     - [Using with integration](#using-with-integration)
     - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
@@ -135,6 +137,113 @@ Once explained the overlapping, there are 3 chunking methods to split the text i
 
   ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
 
+## Embeddings Generation
+Embeddings are vector representations of the input text, created from the content of individual chunks. They can optionally be enriched with metadata, ensuring that the embeddings capture both the textual content and relevant contextual information.
+
+The process of creating embeddings involves several steps:
+
+* **Text chunking:** When dealing with large text, the first step is to divide it into smaller manegeable chunks using the methods mentioned above: `Simple`, `Surrounding Context Window` or `Recursive`. These methods ensure that each chunk preserves contextual information through the use of chunk overlap, which unifies portions of consecutive chunks.
+* **Metadata Integration:** After the text is chunked, metadata can be attached to each chunk if desired in order to provide additional context about the source or attributes of the text. The metadata added can either be the one defined by the user (using the `metadata` parameter) or the metadata of the chunk ( such as `uri`, `document_id`, `snippet_number`...).  This step is controlled by the `index_metadata` parameter:
+  * If set to `true`, only basic metadata, such as the filename and the metadata provided by the user, will be included.
+  * If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.
+  * And if omitted or set to `false`, no additional metadata will be included.
+* **Embedding Generation:** Each chunk, potentially enriched with metadtaa, is then passed through an embedding model that will be responsible for converting each chunk into a numerical vector that will represent its semantic meaning
+
+
+In this example the user provides some metadata such as `year` `category` and `day`, but index_metadata is set as false:
+````json
+"indexation_conf": {
+      "vector_storage_conf": {
+        "index": "example",
+        "vector_storage": "elastic-develop-local",
+        "metadata_primary_keys": ["filename"]
+      },
+      "chunking_method": {
+        "method": "simple",
+        "window_overlap": 10,
+        "window_length": 300
+      },
+      "models": [
+        {
+          "alias": "techhub-pool-world-ada-002",
+          "embedding_model": "text-embedding-ada-002",
+          "platform": "azure"
+        }
+      ],
+      "metadata": {
+        "year": "2024",
+        "category": "turism",
+        "day": "monday"
+      }
+    }
+    "index_metadata": false
+},
+
+````
+So in this case only the text content of the chunk will be processed by the embedding model:
+
+```
+['{chunk_content}]
+```
+For the upper case would be:
+```
+['Living in Zaragoza today is a blend of rich history and modern vibrancy. As one of Spain\'s largest cities, it offers a high quality of life with a relatively low cost compared to bigger cities like Madrid or Barcelona. The city boasts a mix of historic landmarks, such as the Basilica del Pilar and the Aljaferia Palace, alongside contemporary architecture and urban development. Zaragoza\'s streets are alive with cultural events, festivals, and a thriving culinary scene, where tapas and local specialties like "ternasco" are celebrated. Its strategic location between Madrid, Barcelona, Valencia, and Bilbao makes it an important transport hub, yet it retains the charm of a city that\'s easy to navigate and welcoming to both locals and visitors.\nIn recent years, Zaragoza has embraced sustainability and innovation, becoming a smart city focused on renewable energy and efficient urban planning. The riverbanks of the Ebro have been revitalized into green spaces, perfect for walking, cycling, or enjoying outdoor activities. The city\'s public transport, including trams and buses, is modern and reliable, making it easy to commute. Zaragoza is also home to a vibrant student population, thanks to its renowned university, adding youthful energy to its streets. Despite its modernization, the city retains a strong sense of community and tradition, with warm and friendly people who value their heritage while looking forward to the future.']
+```
+
+In this other example the `index_metadata` parameter includes `filename`,  `year` and  `snippet_number`:
+
+````json
+"indexation_conf": {
+      "vector_storage_conf": {
+        "index": "example",
+        "vector_storage": "elastic-develop-local",
+        "metadata_primary_keys": ["filename"]
+      },
+      "chunking_method": {
+        "method": "simple",
+        "window_overlap": 10,
+        "window_length": 300
+      },
+      "models": [
+        {
+          "alias": "techhub-pool-world-ada-002",
+          "embedding_model": "text-embedding-ada-002",
+          "platform": "azure"
+        }
+      ],
+      "metadata": {
+        "year": "2024",
+        "category": "turism",
+        "day": "monday"
+      }
+    }
+    "index_metadata": ["filename", "year", "snnipet_number"]
+},
+
+````
+So in this case the content that will be processed by the embedding model will include the metadata fields specified in the `index_metadata` parameter:
+```
+['{metadata_key_0}: {metadata_value_0}\n{metadata_key_n}: {metadata_value_n}\n\n{chunk_content}']
+```
+For the upper case would be:
+````
+['year: 2024\nfilename: nowadays_zaragoza_simple.txt\nsnippet_number: 0\n\nLiving in Zaragoza today is a blend of rich history and modern vibrancy. As one of Spain\'s largest cities, it offers a high quality of life with a relatively low cost compared to bigger cities like Madrid or Barcelona. The city boasts a mix of historic landmarks, such as the Basilica del Pilar and the Aljaferia Palace, alongside contemporary architecture and urban development. Zaragoza\'s streets are alive with cultural events, festivals, and a thriving culinary scene, where tapas and local specialties like "ternasco" are celebrated. Its strategic location between Madrid, Barcelona, Valencia, and Bilbao makes it an important transport hub, yet it retains the charm of a city that\'s easy to navigate and welcoming to both locals and visitors.\nIn recent years, Zaragoza has embraced sustainability and innovation, becoming a smart city focused on renewable energy and efficient urban planning. The riverbanks of the Ebro have been revitalized into green spaces, perfect for walking, cycling, or enjoying outdoor activities. The city\'s public transport, including trams and buses, is modern and reliable, making it easy to commute. Zaragoza is also home to a vibrant student population, thanks to its renowned university, adding youthful energy to its streets. Despite its modernization, the city retains a strong sense of community and tradition, with warm and friendly people who value their heritage while looking forward to the future.']
+````
+
+## Vector Storage. Chunk id generation
+In order to index the chunks, an id must be generated to identify each one. The default mode is with the text of the chunk hashed (to update if passed the same doc). But there is a parameter ('metadata_primary_keys') that allows to add them to the chunk id generation having this format:
+```
+chunk content 
+
+metadata_1
+metadata_2
+...
+metadata_n
+```
+**This text will be the one hashed if 'metadata_primary_keys' passed.
+
+This field, is a list of metadata and all metadata keys passed must appear in the 'metadata' parameter or in the mandatory ones (see <b>connectors.py</b> in [Code Overview](#code-overview) ).
+
 ## Component Reference
 If infoindexing is working with the whole toolkit, the request will be done by API call to integration and the response will be given by checkend as an async callback (also written in redis database).
 
@@ -231,14 +340,7 @@ For a calling with just the infoindexing module, this are the mandatory paramete
   - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
     - **vector_storage**: Key to get the configuration of the database from config file.
-    - **modify_index_docs <i>(optional)</i>**: Dictionary used to update the information of an already indexed document or to delete documents that are not longer not needed. The dictionary format is as follows:
-      ```python
-      {
-        "update": {"filename": True},
-        "delete": {"filename": ["doc1.txt"]}
-      }
-      ``` 
-      Where in the update key, the user specifies the metadata used as a filter to find the document.
+    - **metadata_primary_keys**: This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
   - **chunking_method**: Configuration of the chunking method.
     - **window_overlap**: When dividing the document into snippets, the number of tokens that overlap between 2 subsequent chunks. Default value is 10, and it is measured with NLTK tokenizer.
     - **window_length**: Length of chunks. Default value is 300.
@@ -250,6 +352,11 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **alias**: Model or pool of models to index (equivalent to <i>"embedding_model_name"</i> in <i>models_config.json</i> config file).
     - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file).
     - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file).
+  - **metadata**: This parameter allows users to add custom metadata
+  - **index_metadata**: This parameter can have various values to specify how metadata will be included in the embeddings:  
+    - If set to `true`, only the filename metadata and the metadata provided by the user will be included.  
+    - If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.  
+    - If omitted or set to `false`, no metadata will be included. 
 
 - **specific**
   - **dataset**
@@ -270,13 +377,13 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **text**: This is the place where the document explained in [Writing message in queue (developer functionality)](#Writing-message-in-queue-(Developer-functionality))  has to be located in the blob/bucket storage deployed associated to the *"STORAGE_BACKEND"* variable. If the *"TESTING"* variable is set to **True**, the file will be searched in the *"STORAGE_DATA"* blob (**Warning!** in this case the tokens will not be reported). If the service is used in conjunction with integration will be generated automatically with the following format:
       ```json
       {
-        "text": "username/dataset_key/txt/username/request_id/"
+        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/<filename>.txt"
       }
       ```
       An example could be:
       ```json
       {
-        "text": "<department>/ir_index_20240711_081350_742985_d847mh/txt/<department>/request_20240711_081349_563044_5c2bac/"
+        "text": "username/dataset_key/txt/username/request_id/documentation.txt"
       }
       ```
       Otherwise, it has to be the route where the user uploads this file.
@@ -296,7 +403,7 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
             "vector_storage_conf": {
                 "index": "pruebas_indexing",
                 "vector_storage": "elastic-develop-local",
-                "modify_index_docs": {}
+                "metadata_primary_keys": ["filename"]
             },
             "chunking_method": {
                 "method": "simple",
@@ -309,7 +416,8 @@ Otherwise, as has been explained in the readme another way of calling infoindexi
                     "platform":"openai",
                     "alias": "ada-002-pool-europe"
                 }
-            ]
+            ], 
+            "index_metadata": true
         }
     },
     "specific": {
@@ -555,9 +663,7 @@ There are several parameters that the indexing service receives in the queue req
     - **vector_storage_conf:** Configuration of the vector storage.
         - **index:** Name of index.
         - **vector_storage:** Key to get the configuration of the database from config file.
-        - **modify_index_docs:** How to proceed when indexing a document.
-          - **update:** Update by parameter indicated.
-          - **delete:** Delete by parameter indicated.
+        - **metadata_primary_keys**: Specifies if the metadata provided in the list will be used in the vector storage id generation.
     - **chunking_method:**
         - **method:** Type of chunking method.
         - **window_overlap:** Overlap to apply to chunks.
@@ -569,6 +675,9 @@ There are several parameters that the indexing service receives in the queue req
         - **alias:** Model or pool of models to index (equivalent to name in config file).
         - **embedding_model:** Type of embedding that will calculate the vector of embeddings.
         - **platform:** Provider used to store and get the information.
+    - **metadata**: This parameter allows users to add custom metadata
+    - **index_metadata**:  This parameter, which can be either true to include the filename and users` metadata or a list specifying the metadata fields to include. Is used to add metadata to the embeddings generation.
+
     
 
 However, the necessary ones are detailed in the readme file.
@@ -617,7 +726,7 @@ This class saves the documents and their associated metadata in the database.
 
 
 ### Flow
-![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-infoindexing-decision-flow.png)
+![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png)
 
 In the following flows diagram, each color will represent the following files:
     
@@ -633,27 +742,23 @@ In the following flows diagram, each color will represent the following files:
     ![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
 5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
     ![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
-6. Here the <i>modify_index_docs</i> param in the call is managed by eliminating all the documents that match the update or delete keys and filters (if updated, delete and then re-index). If the index does not exist, is created separately due to LlamaIndex only accepts one embeddings field for each index. The format is name of the index without <i> \\/,|>?\*<" \\_ </i>embedding_model (the special characters are replaced by _) . An example could be
-    ```text
-    firstindexation_text-embedding-ada-002
-    ```
-    ![alt text](imgs/techhubgenaiinfoindexing/flow7.png)
-7. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then the manager of the chunking method selected en the 'method' parameter will be chosen and the document splitted in chunks based on the method using the parameters in 'chunking_method'.
+6. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then the manager of the chunking method selected en the 'method' parameter will be chosen and the document splitted in chunks based on the method using the parameters in 'chunking_method'.
+    <img src="imgs/techhubgenaiinfoindexing/flow7.png" width="300">
+7. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
+
     <img src="imgs/techhubgenaiinfoindexing/flow8.png" width="300">
-8. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
-    <img src="imgs/techhubgenaiinfoindexing/flow9.png" width="300">
-9. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
-    <img src="imgs/techhubgenaiinfoindexing/flow10.png" width="900">
-10. Write the documents in the vector storage for each model, following all this steps:
+8. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
+    <img src="imgs/techhubgenaiinfoindexing/flow9.png" width="900">
+9.  Write the documents in the vector storage for each model, following all this steps:
     1. The first step is to internally generate the index name for each requested model.
     2. Then the object used to generate the embeddings is created
     3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
     4. Save the number of pages and tokens for every model to report it after.
     5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
-    ![alt text](imgs/techhubgenaiinfoindexing/flow11.png)
-11.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
+    ![alt text](imgs/techhubgenaiinfoindexing/flow10.png)
+10.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
 
-    ![alt text](imgs/techhubgenaiinfoindexing/flow12.png)
+    ![alt text](imgs/techhubgenaiinfoindexing/flow11.png)
 
 
 

@@ -25,7 +25,7 @@ from httpx import TimeoutException
 from openai import RateLimitError
 
 # Custom imports
-from common.ir.utils import modify_index_documents, get_embed_model
+from common.ir.utils import get_embed_model
 from common.genai_controllers import provider
 from common.logging_handler import LoggerHandler
 from common.ir.parsers import Parser
@@ -96,21 +96,11 @@ class LlamaIndex(VectorDB):
     def index_documents(self, docs: List, io: Parser) -> List:
         """Index documents in the document store"""
         list_report_to_api = []
-
-        # This one first to modify_index_docs before next indexation
-        for model in io.models:
-            index_name = ELASTICSEARCH_INDEX(io.index, model.get('embedding_model'))
-            if not self.connector.exist_index(index_name):
-                self.connector.create_empty_index(index_name)
-            docs = self._modify_index_docs(docs, io.modify_index_docs, index_name)
-
         n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
-
         chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
                                                                       "workspace": self.workspace})
 
-        # The last docs is used to get the nodes, because all the documents in the indexes must be indentical
-        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding)
+        nodes_per_doc = chunking_method.get_chunks(docs, self.encoding, io)
 
         # Indexation with the embeddings generation
         for model in io.models:
@@ -193,18 +183,6 @@ class LlamaIndex(VectorDB):
             llama_doc = Document(text=doc['content'], metadata=doc['meta'])
             final_docs.append(llama_doc)
         return final_docs
-
-    def _modify_index_docs(self, docs: list, modify_index_docs: dict, index: str):
-        """Modify index documents
-        """
-        try:
-            docs = modify_index_documents(self.connector, modify_index_docs, docs, index, self.logger)
-        except IndexError as ex:
-            self.logger.error("There was an error while trying to update documents in document store.",
-                              exc_info=get_exc_info())
-            self.logger.error(modify_index_documents.__doc__.strip(), exc_info=get_exc_info())
-            raise ex
-        return docs
 
     def _write_nodes(self, nodes_per_doc: list, embed_model, vector_store, models, index_name, delta=0, max_retries=3):
         """Write documents in the document store

@@ -163,6 +163,14 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
+### Reasoning Models
+
+Reasoning models represent a new category of specialized language models. They are designed to break down complex problems into smaller, manageable steps and solve them through explicit logical reasoning. Unlike general-purpose LLMs, which often generate direct answers, reasoning models are specifically trained to demonstrate their thought process in a structured manner.  
+
+Some models, such as `o1`, `o1-mini`, and `o3-mini`, do not explicitly display their reasoning phase, while others do. The reasoning phase illustrates how the model deconstructs a problem into smaller subproblems, explores different approaches, selects the most effective strategies, discards invalid ones, and ultimately determines the best answer.  
+
+This paradigm shift is significant because it changes how some parameters are passed to the model and how the model generates responses. Some tokens produced by reasoning models are reserved for the reasoning process itself. In models like `o1`, it is possible to set a maximum token limit that includes both the tokens visible to the user and those used for reasoning. Additionally, certain models allow for configuring the `"reasoning effort"`, which specifies how many reasoning tokens should be generated before formulating a final response to the prompt.  
+
 ## Calling LLM API
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
@@ -771,14 +779,6 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 ### Endpoints
 
 - **/predict (POST)**: This is the main endpoint used to call the LLM.
-- **/reloadconfig (GET)**: Used to reload the configuration read from the files like the models and prompt templates available. Returns the following JSON:
-
-    ```json
-    {
-        "status": "ok",
-        "status_code": 200
-    }
-    ```
 
 - **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
@@ -790,7 +790,8 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 - **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure.
 
-    Response:   
+    Response:
+
     ```json
     {
         "models": {
@@ -820,7 +821,7 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
     }
     ```
 
-- **/upload_prompt_template (POST)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
+- **/upload_prompt_template (PUT)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
 
     ```json
     {
@@ -829,42 +830,46 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
     }
     ```
 
-- **/delete_prompt_template (POST)**: Used to delete a prompt template JSON file from cloud storage.
+- **/delete_prompt_template (DELETE)**: Used to delete a prompt template JSON file from cloud storage.
 
-    ```json
-    {
-    "name": "example_template"
-    }
-    ```
+https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **/list_templates (GET)**: Used to get all the available templates.
-    ```json
-    {
-        "status": "finished",
-        "status_code": 200,
-        "result": {
-            "genai_create_query_v.json": [
-                "system_query_v"
-            ],
-            "genai_lan_create_query.json": [
-                "emptysystem_query",
-                "emptysystem_query_es",
-                "emptysystem_query_en",
-                "system_query"
-            ]
-        }
-    }
-    ```
 
-- **/get_template (GET)**: Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
-    ```json
-    {
-        "template": {
-            "system": "$system",
-            "user": "$query"
-        },
+Response:
+
+```json
+{
+    "status": "finished",
+    "status_code": 200,
+    "result": {
+        "genai_create_query_v.json": [
+            "system_query_v"
+        ],
+        "genai_lan_create_query.json": [
+            "emptysystem_query",
+            "emptysystem_query_es",
+            "emptysystem_query_en",
+            "system_query"
+        ]
     }
-    ```
+}
+```
+
+- **/get_template (GET)**: Used to get the content of a prompt template:
+  
+https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+
+Response:
+
+```json
+{
+    "template": {
+        "system": "$system",
+        "user": "$query"
+    },
+}
+```
 
 ### Request and Response Formats for <i>/predict</i>
 
@@ -945,6 +950,13 @@ The response structure must be as follows:
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
   - timeout (optional): Maximum time to response. By default is 30s if this value is not passed.
   - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
+
+When using reasoning models, it is important to consider the different `llm_metadata` parameters:
+* llm_metadata: Data related to the language model:
+  - model: The reasoning model that will be used.
+  - max_input_tokens (optional): The maximum number of tokens used in the request.
+  - max_completion_tokens (optional): In reasoning models, the `max_tokens` parameter is no longer supported. Instead, `max_completion_tokens` defines the maximum number of tokens the model can generate, including both the tokens visible to the user and the tokens used for reasoning.
+  - reasoning_effort (optional): This parameter guides the model on how many reasoning tokens it should generate before producing a response to the prompt. It can be set to `[low, medium, or high]`. The higher the effort setting, the longer the model will take to process the request, generally resulting in a larger number of reasoning tokens. By default, it is set to `medium`. (Some models, such as `o1-mini`, do not yet support this parameter.)
 
 Specifically for DALLE the request parameters are:
 
@@ -1379,6 +1391,7 @@ LLMAPI needs 3 config files to run.
         - <b>chatClaude-v:</b> Claude models with text and vision capabilities
         - <b>chatGPT:</b> ChatGPT models with text capabilities
         - <b>chatGPT-v:</b> ChatGPT with text and vision capabilities
+        - <b>chatGPT-o1-mini:</b> o1-mini model with text capabilities
         - <b>dalle3:</b> Dall-E 3 models (image generation)
         - <b>chatLlama3:</b> Llama 3 and 3-1 models
         - <b>chatNova-v:</b> Nova models with text and vision capabilities

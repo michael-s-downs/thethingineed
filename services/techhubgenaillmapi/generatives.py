@@ -6,7 +6,6 @@ import os
 import re
 import copy
 import json
-import random
 from typing import List
 from abc import ABC, abstractmethod
 
@@ -32,11 +31,13 @@ USER_AND_SYSTEM_KEY_ALLOWED_MSG = "Template can only have user and system key"
 USER_KEY_MANDATORY_MSG = "Template must contain the user key"
 
 TEMPLATE_IS_NOT_DICT_MSG = "Template is not well formed, must be a dict {} structure"
-
+NO_RESPONSE_FROM_MODEL = "There is no response from the model for the request"
 
 class GenerativeModel(ABC):
     MODEL_MESSAGE = None
     DEFAULT_TEMPLATE_NAME = "system_query"
+    GENERATIVE_MODELS = None
+    MODEL_QUERY_LIMITER = None
 
     def __init__(self, models_credentials, zone):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
@@ -47,7 +48,10 @@ class GenerativeModel(ABC):
         """
         logger_handler = LoggerHandler(GENAI_LLM_GENERATIVES, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
-        self.api_key = models_credentials.get(zone, None)
+        if "openai" in models_credentials and not zone:
+            self.api_key = models_credentials.get('openai')
+        else:
+            self.api_key = models_credentials.get(zone, None)
 
     def set_message(self, config: dict):
         """Sets the message as an argument of the class
@@ -59,11 +63,11 @@ class GenerativeModel(ABC):
         if hasattr(self, 'max_img_size_mb'):
             config['max_img_size_mb'] = self.max_img_size_mb
         message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
+        query_limiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
                                                         "max_tokens": self.max_input_tokens,
                                                         "bag_tokens": self.bag_tokens,
-                                                        "persistence": message.persistence, "querylimiter": "azure"})
-        self.message = queryLimiter.get_message()
+                                                        "persistence": message.persistence, "querylimiter": self.MODEL_QUERY_LIMITER})
+        self.message = query_limiter.get_message()
 
     @abstractmethod
     def get_result(self, response: dict) -> dict:
@@ -81,6 +85,15 @@ class GenerativeModel(ABC):
         :return: True if the message_type is correct, False otherwise
         """
         return message_type == cls.MODEL_MESSAGE
+
+    @classmethod
+    def get_generatives_type(cls, model_type: str):
+        """Check if the model_type is one of the possible ones.
+
+                :param model_type: Type of the model
+                :return: True if the model_type is in GENERATIVE_MODELS list
+                """
+        return model_type in cls.GENERATIVE_MODELS
 
     @abstractmethod
     def adapt_tools(self, tools: list) -> list:

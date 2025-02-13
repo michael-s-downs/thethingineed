@@ -255,11 +255,11 @@ def sync_deployment() -> Tuple[Dict, int]:
     dat.update({"project_conf": apigw_params})
     return deploy.sync_deployment(dat)
 
-@app.route('/delete-documents', methods=['POST'])
+@app.route('/delete_documents', methods=['DELETE'])
 def delete_documents() -> Tuple[str, int]:
     return delete_documents_handler(deploy, request)
 
-@app.route('/delete_index', methods=['POST'])
+@app.route('/delete_index', methods=['DELETE'])
 def delete_index() -> Tuple[str, int]:
     return delete_index_handler(deploy, request)
 
@@ -271,7 +271,7 @@ def healthcheck() -> Dict:
 def retrieve_documents() -> Tuple[Dict, int]:
     return retrieve_documents_handler(deploy, request)
 
-@app.route('/get_documents_filenames', methods=['POST'])
+@app.route('/get_documents_filenames', methods=['GET'])
 def get_documents_filenames() -> Tuple[Dict, int]:
     return get_documents_filenames_handler(deploy, request)
 

@@ -11,7 +11,8 @@ from unittest.mock import MagicMock
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
 from limiters import ManagerQueryLimiter, AzureQueryLimiter, BedrockQueryLimiter, QueryLimiter, NovaQueryLimiter
-from messages import ChatGPTMessage, DalleMessage, ChatGPTvMessage, Claude3Message
+from message.claudemessage import Claude3Message
+from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage
 
 
 no_vision_persistence = [

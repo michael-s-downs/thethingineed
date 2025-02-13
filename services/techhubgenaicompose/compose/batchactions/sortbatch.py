@@ -2,14 +2,13 @@
 
 
 from typing import List
-from copy import deepcopy
 from statistics import mean
 
 from common.errors.genaierrors import GenaiError
 
 
 class BatchSortMethod:
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streambatch: list) -> None:
         """Instantiate streambatch
@@ -31,7 +30,7 @@ class BatchSortMethod:
 class BatchSortScore(BatchSortMethod):
     TYPE = "score"
 
-    def process(self, params):
+    def process(self, params = {}):
         if params:
             desc = params.get('desc', True)
         else:
@@ -50,7 +49,7 @@ class BatchSortScore(BatchSortMethod):
 class BatchSortLength(BatchSortMethod):
     TYPE = "length"
 
-    def process(self, params):
+    def process(self, params = {}):
         if params:
             desc = params.get('desc', True)
         else:
@@ -76,7 +75,7 @@ class BatchSortFactory:
             mergebatch_type (str): one of the available mergebatchs
         """
 
-        self.batchsortmethod: BatchSortMethod = None
+        self.batchsortmethod = None
         for batchsortmethod in self.SORTBATCHES:
             if batchsortmethod.TYPE == batchsort_type:
                 self.batchsortmethod = batchsortmethod

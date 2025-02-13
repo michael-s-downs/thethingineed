@@ -10,6 +10,7 @@ from limiters import ManagerQueryLimiter
 
 class ClaudeModel(GenerativeModel):
     MODEL_MESSAGE = None
+    MODEL_QUERY_LIMITER = "bedrock"
 
     # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
@@ -50,21 +51,6 @@ class ClaudeModel(GenerativeModel):
         if tools:
             self.tools = tools
 
-    def set_message(self, config: dict):
-        """Sets the message as an argument of the class
-           It also modifies the message taking into account the number of tokens.
-
-        :param config: Dict with the message to be used
-        """
-        config['message'] = self.MODEL_MESSAGE
-        if hasattr(self, 'max_img_size_mb'):
-            config['max_img_size_mb'] = self.max_img_size_mb
-        message = ManagerMessages().get_message(config)
-        queryLimiter = ManagerQueryLimiter.get_limiter({"message": message, "model": self.MODEL_MESSAGE,
-                                                        "max_tokens": self.max_input_tokens,
-                                                        "bag_tokens": self.bag_tokens,
-                                                        "persistence": message.persistence, "querylimiter": "bedrock"})
-        self.message = queryLimiter.get_message()
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -138,7 +124,7 @@ class ClaudeModel(GenerativeModel):
 
 class ChatClaudeModel(ClaudeModel):
     MODEL_MESSAGE = "chatClaude"
-
+    GENERATIVE_MODELS = []
     def __init__(self, model: str = 'anthropic.claude-v2',
                  model_id: str = 'anthropic.claude-v2',
                  model_type: str = "",
@@ -176,6 +162,7 @@ class ChatClaudeModel(ClaudeModel):
 class ChatClaudeVision(ClaudeModel):
     MODEL_MESSAGE = "chatClaude-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
+    GENERATIVE_MODELS = ["claude-3-5-sonnet-v1:0", "claude-3-5-haiku-v1:0", "claude-3-5-sonnet-v2:0", "claude-3-haiku-v1:0", "claude-3-sonnet-v1:0"]
 
     def __init__(self, model: str = 'anthropic.claude-3-sonnet-20240229-v1:0',
                  model_id: str = 'anthropic.claude-3-sonnet-20240229-v1:0',

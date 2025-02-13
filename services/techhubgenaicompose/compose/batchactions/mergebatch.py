@@ -9,7 +9,7 @@ from common.errors.genaierrors import GenaiError
 
 
 class MergeBatchMethod:
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streambatch: list) -> None:
         """Instantiate streambatch
@@ -54,7 +54,7 @@ class MergeBatchFactory:
             mergebatch_type (str): one of the available mergebatchs
         """
 
-        self.mergebatchmethod: MergeBatchMethod = None
+        self.mergebatchmethod = None
         for mergebatchmethod in self.MERGEBATCHES:
             if mergebatchmethod.TYPE == mergebatch_type:
                 self.mergebatchmethod = mergebatchmethod

@@ -14,7 +14,7 @@ from common.errors.genaierrors import PrintableGenaiError
 from adapters import ManagerAdapters
 
 DEFAULT_SYSTEM_MSG = 'You are a helpful assistant'
-
+VCONTEXT_NOT_ALLOWED = "Context param not allowed in vision models"
 
 class Message(ABC):
     MODEL_FORMAT = "Message"
@@ -69,4 +69,3 @@ class Message(ABC):
                f'context:{self.context}, ' \
                f'template_name:{self.template_name}, ' \
                f'template:{self.template}}}'
-
