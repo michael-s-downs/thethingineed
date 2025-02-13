@@ -216,8 +216,6 @@ class LLMDeployment(BaseDeployment):
         else:
             parsed_llm_metadata['tools'] = tools
 
-        model = ManagerModel.get_model(parsed_llm_metadata, platform.MODEL_FORMAT,
-                                       self.available_pools, self.models_config_manager)
         # Check max_tokens in dalle
         if model.model_type == "dalle3" and model.max_input_tokens > 4000:
             raise PrintableGenaiError(
