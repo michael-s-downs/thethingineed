@@ -23,7 +23,7 @@ class GPTModel(GenerativeModel):
 
     # Not contains default params, because is an encapsulator for GPTModels, so the default are in there
     def __init__(self, model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                 temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format):
+                 temperature, n, stop, models_credentials, top_p, seed, response_format):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used in
@@ -37,9 +37,6 @@ class GPTModel(GenerativeModel):
         :param temperature: Higher values like 0.8 will make the output more random,
                             while lower values like 0.2 will make it more focused and deterministic
         :param n: How many completions to generate for each prompt.
-        :param functions: List of functions to be used in the model.
-        :param function_call: Function call to be used in the model. Possible values: "auto", "none",
-                                                                                        {"name": "my_function"}
         :param stop: Up to 4 sequences where the API will stop generating further tokens.
         :param top_p: Top p value to use in the model
         :param models_credentials: Credentials to use the model
@@ -62,8 +59,6 @@ class GPTModel(GenerativeModel):
             else:
                 raise ValueError(f"Temperature must be between 0.0 and 2.0 for the model {self.model_name}")
         self.n = n
-        self.functions = functions
-        self.function_call = function_call
         self.stop = stop
         self.top_p = top_p
         self.seed = seed
@@ -82,9 +77,6 @@ class GPTModel(GenerativeModel):
                     stop=self.stop,
                     top_p=self.top_p,
                     messages=self.message.preprocess())
-        if self.functions:
-            data['functions'] = self.functions
-            data['function_call'] = self.function_call
         if self.max_tokens > 0:
             data['max_tokens'] = self.max_tokens
         if self.seed:
@@ -123,9 +115,6 @@ class GPTModel(GenerativeModel):
                 'error_message': 'content_filter',
                 'status_code': 400
             }
-        # if query has made with a function_call, return answer
-        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
-            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
 
         else:
             # check if message is in the response
@@ -135,18 +124,37 @@ class GPTModel(GenerativeModel):
             message = choice.get('message', {})
 
             if 'tool_calls' in message:
-                for tool_call in message['tool_calls']:
-                    text = tool_call['function']['arguments']
+                tool_calls = []
+                for tool_call in choice.get('message', {}).get('tool_calls', []):
+                    tool_calls.append({
+                        "name": tool_call.get("function", {}).get("name", ""),
+                        "id": tool_call.get("id", ""),
+                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                    })
+
+                result = {
+                    "status": "finished",
+                    "result": {
+                        "answer": message.get('content', ""),
+                        "tool_calls": tool_calls,
+                        "input_tokens": response['usage']['prompt_tokens'],
+                        "n_tokens": response['usage']['total_tokens'],
+                        "output_tokens": response['usage']['completion_tokens'],
+                        "query_tokens": self.message.user_query_tokens
+                    },
+                    "status_code": 200
+                }
+                return result
             else:
                 # check if content is in the message
                 text = choice.get('message', {}).get('content', '')
 
-            # get text
-            if re.search(NOT_FOUND_MSG, text, re.I):
-                answer = NOT_FOUND_MSG
-                self.logger.info("Answer not found.")
-            else:
-                answer = text.strip()
+                # get text
+                if re.search(NOT_FOUND_MSG, text, re.I):
+                    answer = NOT_FOUND_MSG
+                    self.logger.info("Answer not found.")
+                else:
+                    answer = text.strip()
 
         self.logger.info(f"LLM response: {answer}.")
         text_generated = {
@@ -165,6 +173,10 @@ class GPTModel(GenerativeModel):
         return result
 
     def adapt_tools(self, tools):
+
+        if not tools:
+            return tools
+
         adapted_tools = []
 
         for tool in tools:
@@ -334,8 +346,6 @@ class ChatGPTModel(GPTModel):
                  api_version: str = "2023-08-01-preview",
                  temperature: float = 0,
                  n: int = 1,
-                 functions: List = [],
-                 function_call: str = "none",
                  stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None,
                  top_p: int = 0,
@@ -355,9 +365,6 @@ class ChatGPTModel(GPTModel):
         :param temperature: Higher values like 0.8 will make the output more random,
                             while lower values like 0.2 will make it more focused and deterministic
         :param n: How many completions to generate for each prompt.
-        :param functions: List of functions to be used in the model.
-        :param function_call: Function call to be used in the model. Possible values: "auto", "none",
-                                                                                        {"name": "my_function"}
         :param stop: Up to 4 sequences where the API will stop generating further tokens.
         :param models_credentials: Credentials to use the model
         :param top_p: Top p value to use in the model
@@ -366,10 +373,9 @@ class ChatGPTModel(GPTModel):
         """
 
         super().__init__(model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
+                         temperature, n, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = False
-        if tools:
-            self.tools = self.adapt_tools(tools)
+        self.tools = self.adapt_tools(tools)
 
 
 class ChatGPTVision(GPTModel):
@@ -387,8 +393,6 @@ class ChatGPTVision(GPTModel):
                  api_version: str = "2024-02-15-preview",
                  temperature: float = 0,
                  n: int = 1,
-                 functions: List = [],
-                 function_call: str = "none",
                  stop: List = [DEFAULT_STOP_MSG],
                  models_credentials: dict = None,
                  top_p : int = 0,
@@ -409,9 +413,6 @@ class ChatGPTVision(GPTModel):
         :param temperature: Higher values like 0.8 will make the output more random,
                             while lower values like 0.2 will make it more focused and deterministic
         :param n: How many completions to generate for each prompt.
-        :param functions: List of functions to be used in the model.
-        :param function_call: Function call to be used in the model. Possible values: "auto", "none",
-                                                                                        {"name": "my_function"}
         :param stop: Up to 4 sequences where the API will stop generating further tokens.
         :param models_credentials: Credentials to use the model
         :param top_p: Top p value to use in the model
@@ -420,11 +421,10 @@ class ChatGPTVision(GPTModel):
         """
 
         super().__init__(model, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
-                         temperature, n, functions, function_call, stop, models_credentials, top_p, seed, response_format)
+                         temperature, n, stop, models_credentials, top_p, seed, response_format)
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
-        if tools:
-            self.tools = self.adapt_tools(tools)
+        self.tools = self.adapt_tools(tools)
 
 class ChatGPTOModel(GPTModel):
     MODEL_MESSAGE = "chatGPT"
@@ -443,13 +443,16 @@ class ChatGPTOModel(GPTModel):
                  seed: int = None,
                  response_format: str = None,
                  max_completion_tokens: int = 1000,
-                 reasoning_effort: str = None):
+                 reasoning_effort: str = None,
+                 tools: list = None):
 
         if model_type == 'gpt-o1-mini':
             if stop is not None:
                 raise ValueError("Parameter: 'stop' not supported in model: 'gpt-o1-mini'.")
             if reasoning_effort is not None:
                 raise ValueError("Parameter: 'reasoning_effort' not supported in model: 'gpt-o1-mini'.")
+            if tools is not None:
+                raise ValueError("Parameter: 'tools' not supported in model: 'gpt-o1-mini'.")
 
         GenerativeModel.__init__(self, models_credentials, zone)
 
@@ -474,6 +477,7 @@ class ChatGPTOModel(GPTModel):
         self.is_vision = False
         self.max_completion_tokens = max_completion_tokens
         self.reasoning_effort = reasoning_effort
+        self.tools = self.adapt_tools(tools)
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -497,6 +501,8 @@ class ChatGPTOModel(GPTModel):
                                           f"(only 'json_object' supported)")
         if self.reasoning_effort:
             data['reasoning_effort'] = self.reasoning_effort
+        if self.tools:
+            data['tools'] = self.tools
 
         return json.dumps(data)
 
@@ -523,24 +529,46 @@ class ChatGPTOModel(GPTModel):
                 'error_message': 'content_filter',
                 'status_code': 400
             }
-        # if query has made with a function_call, return answer
-        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
-            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
 
         else:
             # check if message is in the response
             if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
-            # check if content is in the message
-            text = choice.get('message', {}).get('content', '')
+            message = choice.get('message', {})
 
-            # get text
-            if re.search(NOT_FOUND_MSG, text, re.I):
-                answer = NOT_FOUND_MSG
-                self.logger.info("Answer not found.")
+            if 'tool_calls' in message:
+                tool_calls = []
+                for tool_call in choice.get('message', {}).get('tool_calls', []):
+                    tool_calls.append({
+                        "name": tool_call.get("function", {}).get("name", ""),
+                        "id": tool_call.get("id", ""),
+                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                    })
+
+                result = {
+                    "status": "finished",
+                    "result": {
+                        "answer": message.get('content', ''),
+                        "tool_calls": tool_calls,
+                        "input_tokens": response['usage']['prompt_tokens'],
+                        "n_tokens": response['usage']['total_tokens'],
+                        "output_tokens": response['usage']['completion_tokens'],
+                        "query_tokens": self.message.user_query_tokens
+                    },
+                    "status_code": 200
+                }
+                return result
             else:
-                answer = text.strip()
+                # check if content is in the message
+                text = choice.get('message', {}).get('content', '')
+
+                # get text
+                if re.search(NOT_FOUND_MSG, text, re.I):
+                    answer = NOT_FOUND_MSG
+                    self.logger.info("Answer not found.")
+                else:
+                    answer = text.strip()
 
         self.logger.info(f"LLM response: {answer}.")
         text_generated = {
@@ -578,7 +606,8 @@ class ChatGPTOVisionModel(GPTModel):
                  response_format: str = None,
                  max_img_size_mb: float = 20.00,
                  max_completion_tokens: int = 1000,
-                 reasoning_effort: str = None):
+                 reasoning_effort: str = None,
+                 tools: list = None):
 
         GenerativeModel.__init__(self, models_credentials, zone) # o1 model has different parameters than the parent class
 
@@ -600,6 +629,7 @@ class ChatGPTOVisionModel(GPTModel):
         self.max_img_size_mb = max_img_size_mb
         self.max_completion_tokens = max_completion_tokens
         self.reasoning_effort = reasoning_effort
+        self.tools = self.adapt_tools(tools)
 
     def parse_data(self) -> json:
         """ Convert message and model data into json format.
@@ -622,6 +652,8 @@ class ChatGPTOVisionModel(GPTModel):
                                           f"(only 'json_object' supported)")
         if self.reasoning_effort:
             data['reasoning_effort'] = self.reasoning_effort
+        if self.tools:
+            data['tools'] = self.tools
 
         return json.dumps(data)
 
@@ -648,24 +680,45 @@ class ChatGPTOVisionModel(GPTModel):
                 'error_message': 'content_filter',
                 'status_code': 400
             }
-        # if query has made with a function_call, return answer
-        elif 'finish_reason' in choice and choice['finish_reason'] == 'function_call':
-            answer = choice.get('message', {}).get('function_call', {}).get('arguments', '')
-
         else:
             # check if message is in the response
             if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
 
-            # check if content is in the message
-            text = choice.get('message', {}).get('content', '')
+            message = choice.get('message', {})
 
-            # get text
-            if re.search(NOT_FOUND_MSG, text, re.I):
-                answer = NOT_FOUND_MSG
-                self.logger.info("Answer not found.")
+            if 'tool_calls' in message:
+                tool_calls = []
+                for tool_call in choice.get('message', {}).get('tool_calls', []):
+                    tool_calls.append({
+                        "name": tool_call.get("function", {}).get("name", ""),
+                        "id": tool_call.get("id", ""),
+                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                    })
+
+                result = {
+                    "status": "finished",
+                    "result": {
+                        "answer": message.get('content', ''),
+                        "tool_calls": tool_calls,
+                        "input_tokens": response['usage']['prompt_tokens'],
+                        "n_tokens": response['usage']['total_tokens'],
+                        "output_tokens": response['usage']['completion_tokens'],
+                        "query_tokens": self.message.user_query_tokens
+                    },
+                    "status_code": 200
+                }
+                return result
             else:
-                answer = text.strip()
+                # check if content is in the message
+                text = choice.get('message', {}).get('content', '')
+
+                # get text
+                if re.search(NOT_FOUND_MSG, text, re.I):
+                    answer = NOT_FOUND_MSG
+                    self.logger.info("Answer not found.")
+                else:
+                    answer = text.strip()
 
         self.logger.info(f"LLM response: {answer}.")
         text_generated = {

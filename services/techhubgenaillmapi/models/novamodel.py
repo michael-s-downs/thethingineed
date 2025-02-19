@@ -1,5 +1,6 @@
 # Native imports
 import json
+import re
 from typing import List
 
 # Local imports
@@ -13,7 +14,7 @@ class NovaModel(GenerativeModel):
 
     # Not contains default params, because is an encapsulator for ClaudeModels, so the default are in there
     def __init__(self, model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
-                 top_k, temperature, stop, models_credentials, tools):
+                 top_k, temperature, stop, models_credentials):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify model
@@ -50,8 +51,7 @@ class NovaModel(GenerativeModel):
                 self.temperature = temperature
             else:
                 raise ValueError(f"Temperature must be between 0.0 and 1.0 for the model {self.model_name}")
-        if tools:
-            self.tools = self.adapt_tools(tools)
+        self.tools = None
 
 
     def parse_data(self) -> json:
@@ -72,7 +72,7 @@ class NovaModel(GenerativeModel):
         if self.top_k:
             body['inferenceConfig']['top_k'] = self.top_k
         if self.tools:
-            body['tools'] = self.tools
+            body['toolConfig'] = self.tools
         return json.dumps(body)
 
     def get_result(self, response: dict) -> dict:
@@ -103,6 +103,71 @@ class NovaModel(GenerativeModel):
             }
         self.logger.info(f"LLM response: {answer}.")
 
+        stop_reason = response_body.get("stopReason", "")
+        if stop_reason == "tool_use":
+            content = response_body.get("output", {}).get("message", {}).get("content", [])
+            thinking_text = ""
+            answer_text = ""
+            tool_calls = []
+
+            for item in content:
+                if "text" in item:
+                    text = item["text"]
+                    thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
+                    if thinking_match:
+                        thinking_text = thinking_match.group(1).strip()
+                        answer_text = text.replace(thinking_match.group(0), "").strip()
+                    else:
+                        answer_text = text.strip()
+                elif "toolUse" in item:
+                    tool_calls.append({
+                        "name": item["toolUse"].get("name", ""),
+                        "id": item["toolUse"].get("toolUseId", ""),
+                        "inputs": item["toolUse"].get("input", {})
+                    })
+
+            result = {
+                "status": "finished",
+                "result": {
+                    "thinking": thinking_text,
+                    "answer": answer_text,
+                    "tool_calls": tool_calls,
+                    "input_tokens": response_body.get("usage", {}).get("inputTokens", 0),
+                    "n_tokens": response_body.get("usage", {}).get("totalTokens", 0),
+                    "output_tokens": response_body.get("usage", {}).get("outputTokens", 0),
+                    "query_tokens": self.message.user_query_tokens
+                },
+                "status_code": 200
+            }
+            return result
+        elif self.tools is not None:
+            content = response_body.get("output", {}).get("message", {}).get("content", [])
+            thinking_text = ""
+            answer_text = ""
+            for item in content:
+                text = item.get("text", "")
+                if text:
+                    thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
+                    if thinking_match:
+                        thinking_text = thinking_match.group(1).strip()
+                        answer_text = text.replace(thinking_match.group(0), "").strip()
+                    else:
+                        answer_text = text.strip()
+            result = {
+                "status": "finished",
+                "result": {
+                    "thinking": thinking_text,
+                    "answer": answer_text,
+                    "input_tokens": response_body.get("usage", {}).get("inputTokens", 0),
+                    "n_tokens": response_body.get("usage", {}).get("totalTokens", 0),
+                    "output_tokens": response_body.get("usage", {}).get("outputTokens", 0),
+                    "query_tokens": self.message.user_query_tokens
+                },
+                "status_code": 200
+            }
+            return result
+
+
         text_generated = {
             'answer': answer[0].get('text'),
             'n_tokens': response_body.get('usage').get('totalTokens'),
@@ -125,6 +190,9 @@ class NovaModel(GenerativeModel):
                f'temperature:{self.temperature}}}'
 
     def adapt_tools(self, tools):
+
+        if not tools:
+            return tools
         adapted_tools = []
 
         for tool in tools:
@@ -140,7 +208,7 @@ class NovaModel(GenerativeModel):
 
             adapted_tools.append(adapted_tool)
 
-        return adapted_tools
+        return {"tools": adapted_tools}
 
 class ChatNova(NovaModel):
     MODEL_MESSAGE = "chatNova"
@@ -159,7 +227,8 @@ class ChatNova(NovaModel):
                  top_p: float = 0.9,
                  temperature: float = 0.7,
                  stop: List = ["end_turn"],
-                 models_credentials: dict = None):
+                 models_credentials: dict = None,
+                 tools: List = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify model
@@ -182,6 +251,7 @@ class ChatNova(NovaModel):
         super().__init__(model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
                          top_k, temperature, stop, models_credentials)
         self.is_vision = False
+        self.tools = self.adapt_tools(tools)
 
 
 class ChatNovaVision(NovaModel):
@@ -203,7 +273,8 @@ class ChatNovaVision(NovaModel):
                  temperature: float = 0.7,
                  stop: List = ["end_turn"],
                  models_credentials: dict = None,
-                 max_img_size_mb: float = 20.00):
+                 max_img_size_mb: float = 20.00,
+                 tools: List = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify model
@@ -227,3 +298,4 @@ class ChatNovaVision(NovaModel):
                          top_k, temperature, stop, models_credentials)
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
+        self.tools = self.adapt_tools(tools)

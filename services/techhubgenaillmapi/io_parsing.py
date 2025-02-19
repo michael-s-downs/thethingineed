@@ -194,8 +194,6 @@ class LLMMetadata(BaseModel):
     temperature: Optional[confloat(ge=0.0, le=2.0)] = None
     max_tokens: Optional[PositiveInt] = None
     stop: Optional[list] = None
-    functions: Optional[list] = None
-    function_call: Optional[str] = None
     seed: Optional[PositiveInt] = None
     response_format: Literal['url', 'bs64_json', 'json_object'] = None
     quality: Literal['standard', 'hd'] = None
@@ -222,12 +220,6 @@ class LLMMetadata(BaseModel):
             tool_names.add(tool['name'])
             Tool(**tool)
         return v
-    @model_validator(mode='after')
-    def validate_functions_and_functions_call(self):
-        if self.functions and not self.function_call:
-            raise ValueError("Internal error, function_call is mandatory because you put the functions param")
-        elif self.function_call and not self.functions:
-            raise ValueError("Internal error, functions is mandatory because you put the function_call param")
 
     @model_validator(mode='before')
     def validate_default_model(cls, values):
@@ -238,21 +230,9 @@ class LLMMetadata(BaseModel):
         values.pop('default_model', None)
         return values
 
-class Tool(BaseModel):
-    name: str = None
-    description: str = None
-    input_schema: dict = None
 
-    class Config:
-        extra = 'forbid'
-
-    @field_validator('input_schema')
-    def validate_input_schema(cls, v, values: FieldValidationInfo):
-        Input_schema(**v)
-        return v
-
-class Input_schema(BaseModel):
-    type: str = None
+class InputSchema(BaseModel):
+    type: Union[str, List[str]] = None
     properties: dict
     required: List[str] = None
 
@@ -280,10 +260,20 @@ class Input_schema(BaseModel):
             raise ValueError(f"The required fields {missing_fields} are missing in properties.")
         return values
 
+class Tool(BaseModel):
+    name: str
+    description: str
+    input_schema: InputSchema
+
+    class Config:
+        arbitrary_types_allowed = True  # Allow custom types (InputSchema)
+        extra = 'forbid'
+
 class Property(BaseModel):
-    type: str = None
+    type: Union[str, List[str]] = None
     description: Optional[str] = None
     enum: Optional[List[object]] = None
+    items: Optional[dict] = None
     class Config:
         extra = 'forbid'
 

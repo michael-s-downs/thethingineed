@@ -95,10 +95,3 @@ class GenerativeModel(ABC):
                 """
         return model_type in cls.GENERATIVE_MODELS
 
-    @abstractmethod
-    def adapt_tools(self, tools: list) -> list:
-        """ Method to adapt the entrie tools for the model.
-
-        :param tools: list of tools to use by the model.
-        :return: list with the list of tools adapted for the model
-        """
