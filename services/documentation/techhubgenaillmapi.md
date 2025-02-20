@@ -14,9 +14,11 @@
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Core Concepts](#core-concepts)
     - [Architecture](#architecture)
+    - [Reasoning Models](#reasoning-models)
   - [Calling LLM API](#calling-llm-api)
     - [Simple prediction call:](#simple-prediction-call)
       - [Query types](#query-types)
+      - [Tools](#tools)
     - [Queue format:](#queue-format)
     - [Get models:](#get-models)
       - [Parameters](#parameters)
@@ -169,7 +171,15 @@ Reasoning models represent a new category of specialized language models. They a
 
 Some models, such as `o1`, `o1-mini`, and `o3-mini`, do not explicitly display their reasoning phase, while others do. The reasoning phase illustrates how the model deconstructs a problem into smaller subproblems, explores different approaches, selects the most effective strategies, discards invalid ones, and ultimately determines the best answer.  
 
-This paradigm shift is significant because it changes how some parameters are passed to the model and how the model generates responses. Some tokens produced by reasoning models are reserved for the reasoning process itself. In models like `o1`, it is possible to set a maximum token limit that includes both the tokens visible to the user and those used for reasoning. Additionally, certain models allow for configuring the `"reasoning effort"`, which specifies how many reasoning tokens should be generated before formulating a final response to the prompt.  
+This paradigm shift is significant because it changes how some parameters are passed to the model and how the model generates responses. Some tokens produced by reasoning models are reserved for the reasoning process itself. 
+
+In reasoning models like o1, the user can set a maximum token limit that includes both the tokens visible to the user and those used for reasoning using the `"max_completion_tokens"` parameter. This differs from the `"max_tokens"` parameter, which typically defines the total token limit for the entire request, including both the input (prompt) and the output (completion). 
+
+Additionally, certain models allow for configuring the `"reasoning effort"`, which specifies how many reasoning tokens should be generated before formulating a final response to the prompt.  
+
+![alt text](imgs/techhubgenaillmapi/max_completion_tokens.png)
+
+The previous image shows the difference between the `"max_completion_tokens"` and `"max_tokens"` parameters.
 
 ## Calling LLM API
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
@@ -590,6 +600,270 @@ Images formats allowed: *jpeg, png, gif* and *webp*.
 
     The parameter 'query' (in this example "Google Cloud") will be replaced in the template "$query".
 
+
+#### Tools
+
+Tools are external functions that enhance the model’s capabilities by enabling it to perform specialized tasks beyond its built-in knowledge and reasoning abilities.
+
+These predefined functions allow the model to interact with external data sources, execute computations, and carry out specific actions. Acting as a bridge between the model and real-world applications, tools facilitate dynamic responses based on real-time information.
+
+These tools should be defined by the user in the `llm_metadata` part of the call and it should follow a specific structure:
+- **tools**: List of tools provided by the user. Each tool must include the following properties:  
+  - **name**: The unique name of the tool.  
+  - **description**: A brief explanation of what the tool does.  
+  - **input_schema**: Defines the expected input format for the tool.  
+    - **type**: Specifies the type of input in (e.g., `object`).  
+    - **properties**: Describes the expected properties of the input. Each property may include:  
+      - **type**: The data type of the property (e.g., `string`, `integer`).  
+      - **description** (optional): A brief explanation of the property.  
+      - **enum** (optional): A predefined list of accepted values.  
+      - **items** (optional): If the type is `array`, defines the type of elements it contains.  
+    - **required**: A list of properties that are mandatory for the tool to function correctly.  
+
+An example of tool would be:
+````json
+"tools": [
+    {
+        "name": "print_sentiment_scores",
+        "description": "Prints the sentiment scores of a given text.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+            },
+            "required": ["positive_score", "negative_score", "neutral_score"]
+        }
+    }
+]
+
+````
+In this example the model could use this tool to perform a sentiment analysis based on a given text from the query.
+
+The call body would look like this:
+
+````json
+{
+    "query_metadata": {
+        "query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+    },
+    "llm_metadata": {
+        "max_input_tokens": 1000,
+        "model": "techhubdev-SwedenCentral-gpt-4o-2024-08-06",
+        "tools": [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {
+                            "type": "number",
+                            "description": "The positive sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "negative_score": {
+                            "type": "number",
+                            "description": "The negative sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "neutral_score": {
+                            "type": "number",
+                            "description": "The neutral sentiment score, ranging from 0.0 to 1.0."
+                        }
+                    },
+                    "required": [
+                        "positive_score",
+                        "negative_score",
+                        "neutral_score"
+                    ]
+                }
+            }
+        ]
+    },
+    "platform_metadata": {
+        "platform": "azure"
+    }
+}
+````
+
+And the call response would look like this:
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 137,
+        "n_tokens": 170,
+        "output_tokens": 33,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "call_YPRbPlvRiC5xCtDqGjDTC5Mp",
+                "inputs": {
+                    "negative_score": 0.8,
+                    "neutral_score": 0.1,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+When passing a tool to the model in a request, there are two possible outcomes based on the query:
+- **The model does not use the tool**: In this case, it provides a response based solely on the query input.
+- **The model uses the tool**: Depending on the specific model, the response may vary.
+
+When using **Nova** models a `thinking` parameter will be returned, where the model outlines the reasoning steps it will take. Additionally, the actual response is provided in the `answer` field.  
+
+If the necessary parameters for the tool are missing, the `thinking` field will contain a message from the model requesting the required inputs.
+
+Using the previous request as an example, the response from a Nova model would look like this:
+
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 519,
+        "n_tokens": 677,
+        "output_tokens": 158,
+        "query_tokens": 21,
+        "thinking": "I need to analyze the sentiment of the provided text and use the `print_sentiment_scores` tool to extract the sentiment scores for positive, negative, and neutral sentiments.",
+        "tool_calls": [
+            {
+                "id": "2d7855f5-d000-46fc-b982-4a5c36ff963b",
+                "inputs": {
+                    "negative_score": 0.3,
+                    "neutral_score": 0.2,
+                    "positive_score": 0.5
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+If the user requests to use a tool but does not provide the necessary parameters, the model will respond with a request for the missing information. The response would look something like this:  
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "I need a text to analyze. Could you please provide a text for which you want to get the sentiment scores?",
+        "input_tokens": 503,
+        "n_tokens": 602,
+        "output_tokens": 99,
+        "query_tokens": 5,
+        "thinking": "The User has asked to use the `print_sentiment_scores` tool, but has not provided any text to analyze. To use this tool, I need to first obtain the sentiment scores for a given text. Since the text is missing, I will ask the User to provide a text for sentiment analysis."
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+For **Claude** models, the reasoning process is included directly within the response. Therefore, both the reasoning steps and the final answer are unified in a single `answer` parameter.
+
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "To analyze the sentiment of this statement, we can use the print_sentiment_scores function. This will help us understand the overall sentiment expressed in your feedback about the product and customer service experience. Let's proceed with the sentiment analysis:",
+        "input_tokens": 491,
+        "n_tokens": 640,
+        "output_tokens": 149,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "toolu_bdrk_01NhGmhEGoHg38EznWYPJ1GL",
+                "inputs": {
+                    "negative_score": 0.6,
+                    "neutral_score": 0.3,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+If the necessary data is not provided, the response will appear in the `answer` parameter.
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "Certainly! I'd be happy to help you use the print_sentiment_scores function. However, to use this function effectively, we need to provide the required sentiment scores. The function requires three parameters:\n\n1. positive_score\n2. negative_score\n3. neutral_score\n\nThese scores should be numbers ranging from 0.0 to 1.0, representing the sentiment analysis of a given text. Since you haven't provided these scores, I'll need to ask you for them.\n\nCould you please provide the positive, negative, and neutral sentiment scores you'd like to print? For example:\n\n- Positive score: (a number between 0.0 and 1.0)\n- Negative score: (a number between 0.0 and 1.0)\n- Neutral score: (a number between 0.0 and 1.0)\n\nOnce you provide these scores, I'll be able to use the print_sentiment_scores function for you.",
+        "input_tokens": 476,
+        "n_tokens": 693,
+        "output_tokens": 217,
+        "query_tokens": 6
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+**GPT** models do not include any response regarding the model's reasoning or the steps it follows. As a result, the `answer` parameter is returned as an empty string:  
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 137,
+        "n_tokens": 170,
+        "output_tokens": 33,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "call_SHChCfGyZUjkwpMDmPa9lrz8",
+                "inputs": {
+                    "negative_score": 0.7,
+                    "neutral_score": 0.2,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+
+However, just like Claude models, if the required information is not provided, the model's response will appear in the `answer` parameter:
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "To use the `print_sentiment_scores` function, I need the sentiment scores for positive, negative, and neutral sentiments. Could you please provide these scores?",
+        "input_tokens": 123,
+        "logprobs": [],
+        "n_tokens": 156,
+        "output_tokens": 33,
+        "query_tokens": 6
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+
 ### Queue format:
 The LLMAPI component has another way to do the calling (by queue) which requires different parameters and added environment variables in order to do the call.
 
@@ -936,15 +1210,13 @@ The response structure must be as follows:
   - max_input_tokens (optional): Maximum number of tokens to be sent in the request. If the maximum size is exceeded, it will be cut from the context, leaving space for the model response.
   - max_tokens (optional): Maximum number of tokens to generate in the response.
   - temperature (optional): Temperature to use. Value between 0 and 2 (in Bedrock 0-1). Higher values like 0.8 make the output more random. Lower values like 0.2 make it more deterministic. By default 0.
-  - stop (optional): Up to 4 strings where the API will stop generating more tokens.
-  - **functions (*Warning!*):** Deprecated by OpenAI but still working. List of functions the model may generate JSON inputs for. Only in OpenAI and Azure.
-  - **function_call (*Warning!*):**  Deprecated by OpenAI but still working. Required if functions is sent. Possible values: “auto”, “none”, or {"name": "my_function"}. For full information: <https://platform.openai.com/docs/api-reference/chat/create#chat-create-function_call>
-  - seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
+  - stop (optional): Up to 4 strings where the API will stop generating more tokens.- seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
   - response_format (optional): The values available to manage the output format of the image generation models are [url, bs64_json] and for text generation models (only avaliable in selected ones by Azure OpenAI) is [json_object].
   - For image generation:
     + quality (optional): quality of the output image [“standard”, “hd”] default as standard
     + size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
     + style (optional): Output style of the image [vivid, natural], default as vivid
+  - tools(optional): List of tools defined by the user that could be used by the model (models such as DALLE ar not able to use tools)
 
 * platform_metadata (required):
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
@@ -957,6 +1229,7 @@ When using reasoning models, it is important to consider the different `llm_meta
   - max_input_tokens (optional): The maximum number of tokens used in the request.
   - max_completion_tokens (optional): In reasoning models, the `max_tokens` parameter is no longer supported. Instead, `max_completion_tokens` defines the maximum number of tokens the model can generate, including both the tokens visible to the user and the tokens used for reasoning.
   - reasoning_effort (optional): This parameter guides the model on how many reasoning tokens it should generate before producing a response to the prompt. It can be set to `[low, medium, or high]`. The higher the effort setting, the longer the model will take to process the request, generally resulting in a larger number of reasoning tokens. By default, it is set to `medium`. (Some models, such as `o1-mini`, do not yet support this parameter.)
+  - tools(optional): List of tools defined by the user that could be used by the model
 
 Specifically for DALLE the request parameters are:
 
