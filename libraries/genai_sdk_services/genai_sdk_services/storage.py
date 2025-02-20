@@ -5,6 +5,7 @@
 import importlib
 import logging
 import os
+import asyncio
 
 # Custom imports
 from genai_sdk_services.resources.import_user_functions import import_user_functions
@@ -86,6 +87,7 @@ class StorageController(object):
         except Exception as ex:
             self.logger.exception("Error while downloading %s" % remote_file)
             raise ex
+    
 
     def download_directory(self, origin: tuple, remote_directory: str, local_directory: str = None, suffix: str = None) -> bool:
         """ Download a directory from remote storage into a local file.
@@ -104,6 +106,79 @@ class StorageController(object):
                 origin[1], remote_directory, local_directory, suffix)
         except Exception as ex:
             self.logger.exception("Error while downloading %s" % remote_directory)
+            raise ex
+
+    def download_directory_async(self, origin: tuple, remote_directory: str, local_directory: str = None, suffix: str = None) -> bool:
+        """ Download directory from remote storage into a local file async.
+
+        :param origin: tuple(st, str) Origin of the data, tuple with the type of the origin
+                      (i.e. aws_bucket, azure_blob, azure_fileshare) and the origin (i.e. the name of the bucket).
+        :param remote_directory: (str) Name of the directory in remote storage.
+        :param local_directory: (str) Name of the local directory
+        :param suffix: (str) Filter files to download by suffix
+        :return: (bool) True if file has been downloaded successfully
+        """
+        try:
+            if origin[0] not in self.origins:
+                self.origins[origin[0]] = self._get_origin(origin[0])
+            return asyncio.run(self.origins[origin[0]].download_directory_async(
+                origin[1], remote_directory, local_directory, suffix))
+        except Exception as ex:
+            self.logger.exception("Error while downloading %s" % remote_directory)
+            raise ex
+
+    def download_batch_files_async(self, origin: tuple, files_list: list, local_directory: str) -> bool:
+        """ Download a list of files from remote storage into a local file async.
+
+        :param origin: tuple(st, str) Origin of the data, tuple with the type of the origin
+                      (i.e. aws_bucket, azure_blob, azure_fileshare) and the origin (i.e. the name of the bucket).
+        :param files_list: (list) List of files to download with the complete dirname.
+        :param local_directory: (str) Name of the local directory
+        :return: (bool) True if file has been downloaded successfully
+        """
+        try:
+            if origin[0] not in self.origins:
+                self.origins[origin[0]] = self._get_origin(origin[0])
+            return asyncio.run(self.origins[origin[0]].download_batch_files_async(
+                origin[1], files_list, local_directory))
+        except Exception as ex:
+            self.logger.exception(f"Error while downloading async to {local_directory}")
+            raise ex
+
+    def upload_batch_files_async(self, origin: tuple, files_list: list, remote_directory: str) -> bool:
+        """ Uploads a list of files to a remote storage async.
+
+        :param origin: tuple(st, str) Origin of the data, tuple with the type of the origin
+                      (i.e. aws_bucket, azure_blob, azure_fileshare) and the origin (i.e. the name of the bucket).
+        :param files_list: (list) List of files to upload.
+        :param remote_directory: (str) Name of the remote directory
+        :return: (bool) True if file has been downloaded successfully
+        """
+        try:
+            if origin[0] not in self.origins:
+                self.origins[origin[0]] = self._get_origin(origin[0])
+            return asyncio.run(self.origins[origin[0]].upload_batch_files_async(
+                origin[1], files_list, remote_directory))
+        except Exception as ex:
+            self.logger.exception(f"Error while uploading async to {remote_directory}")
+            raise ex
+
+    def upload_folder_async(self, origin: tuple, local_directory: str, remote_directory: str) -> bool:
+        """ Uploads all files from a local folder to a remote storage async.
+
+        :param origin: tuple(st, str) Origin of the data, tuple with the type of the origin
+                      (i.e. aws_bucket, azure_blob, azure_fileshare) and the origin (i.e. the name of the bucket).
+        :param local_directory: (str) Name of the local directory
+        :param remote_directory: (str) Name of the remote directory
+        :return: (bool) True if file has been downloaded successfully
+        """
+        try:
+            if origin[0] not in self.origins:
+                self.origins[origin[0]] = self._get_origin(origin[0])
+            return asyncio.run(self.origins[origin[0]].upload_folder_async(
+                origin[1], local_directory, remote_directory))
+        except Exception as ex:
+            self.logger.exception(f"Error while uploading async to {remote_directory}")
             raise ex
 
     def upload_object(self, origin: tuple, object_: bytes, remote_file: str) -> bool:

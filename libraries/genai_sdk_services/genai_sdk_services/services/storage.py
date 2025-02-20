@@ -12,9 +12,13 @@ from abc import ABCMeta, abstractmethod
 
 # Installed imports
 import boto3
+import asyncio
+import aiofiles
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 from azure.storage.fileshare import ShareClient, ShareServiceClient, ShareDirectoryClient, ShareFileClient
+from azure.storage.blob.aio import BlobServiceClient as aioBlobServiceClient
 
+N_ASYNC_THREADS = int(os.getenv("N_ASYNC_THREADS", 150))
 
 class BaseStorageService():
     @abstractmethod
@@ -517,26 +521,36 @@ class BlobService(BaseStorageService):
     def get_resource(self, origin: str):
         raise RuntimeError("This method is not implemented")
 
-    def get_bucket(self, origin: str):
+    def get_bucket(self, origin: str, async_mode: bool = False):
         """ Obtain the client to interact with a specific container.
 
         param origin: (str) Name of the container to get the client.
+        param async_mode: (bool) Optional. Flag to set the client sync or async.
         return: ContainerClient
         """
         bucket_credentials = self.credentials[origin]
-        bucket = ContainerClient.from_connection_string(bucket_credentials['conn_str'], origin)
+        if async_mode:
+                aio_service_client = aioBlobServiceClient.from_connection_string(bucket_credentials['conn_str'])
+                bucket = aio_service_client.get_container_client(origin)
+        else:
+            bucket = ContainerClient.from_connection_string(bucket_credentials['conn_str'], origin)
+
         self.buckets[origin] = bucket
         return bucket
 
-    def get_client(self, origin: str, file: str):
+    def get_client(self, origin: str, file: str, async_mode: bool = False):
         """ Obtain a client to interact with the specified blob.
 
         param origin: (str) Name of the container.
         param file: (str) The blob with which to interact.
+        param async_mode: (bool) Optional. Flag to use async.
         return: ContainerClient
         """
-        bucket = self.get_bucket(origin)
-        client = bucket.get_blob_client(file)
+        bucket = self.get_bucket(origin, async_mode)
+        if async_mode:
+            client = bucket.get_blob_client(blob=file)
+        else:
+            client = bucket.get_blob_client(file)
 
         return client, bucket
 
@@ -594,6 +608,109 @@ class BlobService(BaseStorageService):
         finally:
             file.close()
             container.close()
+
+    async def download_directory_async(self, origin: str, remote_directory: str, local_directory: str = None, suffix: list = None) -> bool:
+        """ Download a directory from Blob service into a local file.
+
+        :param origin: (str) Blob container to download files from
+        :param remote_directory: (str) Name of the directory in Blob service
+        :param local_directory: (str) Name of the local directory
+        :param suffix: (list) Types of files to download
+        :return: (bool) True if all files has been downloaded successfully
+        """
+        remote_directory = _assert_has_slash(remote_directory)
+        if local_directory:
+            local_directory = _assert_has_slash(local_directory)
+
+        blob_service_client = aioBlobServiceClient.from_connection_string(self.credentials[origin]['conn_str'])
+        container_client = blob_service_client.get_container_client(origin)
+
+        semaphore = asyncio.Semaphore(N_ASYNC_THREADS)  # Limit concurrent downloads
+
+        async def limited_download(blob_name, local_file_name):
+            async with semaphore:
+                await self.download_file_async(blob_service_client, origin, blob_name, local_file_name)
+
+        tasks = []
+        async for blob in container_client.list_blobs(name_starts_with=remote_directory):
+            if local_directory:
+                local_file_name = f"{local_directory}{blob.name.split('/')[-1]}"
+            else:
+                local_file_name = blob.name
+
+            remote_key_no_parent = blob.name[len(remote_directory):]
+
+            remote_suffix = remote_key_no_parent.split(".")[-1]
+            if type(suffix) is list and len(suffix) > 0:
+                if remote_suffix not in suffix:
+                    continue
+            tasks.append(limited_download(blob.name, local_file_name))
+
+        await asyncio.gather(*tasks)
+        await blob_service_client.close()
+    
+    async def download_batch_files_async(self, origin: str, files_list: list, local_directory: str) -> bool:
+        """ Download a batch of files from Blob service into local files.
+
+        :param origin: (str) Blob container to download files from
+        :param remote_directory: (str) Name of the directory in Blob service
+        :param local_directory: (str) Name of the local directory
+        :param suffix: (list) Types of files to download
+        :return: (bool) True if all files has been downloaded successfully
+        """
+        local_directory = _assert_has_slash(local_directory)
+
+        blob_service_client = aioBlobServiceClient.from_connection_string(self.credentials[origin]['conn_str'])
+        container_client = blob_service_client.get_container_client(origin)
+
+        semaphore = asyncio.Semaphore(N_ASYNC_THREADS)  # Limit concurrent downloads
+
+        if len(files_list) < 1:
+            raise Exception("No files received to download")
+        
+        async def limited_download(blob_name, local_file_name):
+            async with semaphore:
+                await self.download_file_async(blob_service_client, origin, blob_name, local_file_name)
+
+        tasks = []
+        for file_name in files_list:
+            async for blob in container_client.list_blobs(name_starts_with=file_name):
+                local_file_name = f"{local_directory}{blob.name.split('/')[-1]}"
+                tasks.append(limited_download(blob.name, local_file_name))
+
+        await asyncio.gather(*tasks)
+        await blob_service_client.close()
+
+
+    async def download_file_async(self, blob_service_client, container_name, remote_file, local_file_name):
+        """ Download a file from Blob service into a local file using async azure library.
+
+        Args:
+            blob_service_client (_type_): _description_
+            container_name (str): _description_
+            remote_file (str): _description_
+            local_path (str): 
+        """
+
+        if local_file_name is None:
+            self.logger.debug("local_file not specified, file will be saved as %s" % remote_file)
+            local_file_name = remote_file
+
+        dirname = os.path.dirname(local_file_name)
+        if not dirname:
+            dirname = "."
+
+        if not os.path.exists(dirname):
+            self.logger.debug("Directory does not exist. Creating directory...")
+            os.makedirs(dirname)
+
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=remote_file)
+        
+        async with aiofiles.open(f"{dirname}/{local_file_name.split('/')[-1]}", "wb") as file:
+            stream = await blob_client.download_blob()
+            async for chunk in stream.chunks():
+                await file.write(chunk)
+
 
     def download_directory(self, origin: str, remote_directory: str, local_directory: str = None, suffix: str = None) -> bool:
         """ Download a directory from Blob service into a local file.
@@ -686,6 +803,60 @@ class BlobService(BaseStorageService):
         finally:
             file.close()
             container.close()
+    
+
+    async def upload_batch_files_async(self, origin: str, file_paths: list, remote_folder: str):
+        """Upload multiple files asynchronously with controlled concurrency.
+
+        :param origin: (str) Blob container to upload files.
+        :param file_paths: (list) Files to upload.
+        :param remote_folder: (str) Name of the folder in Blob service.
+        :return: (bool) True if file has been uploaded successfully
+        """
+
+        remote_folder = _assert_has_slash(remote_folder)
+
+        blob_service_client = aioBlobServiceClient.from_connection_string(self.credentials[origin]['conn_str'])
+        container_client = blob_service_client.get_container_client(origin)
+
+        semaphore = asyncio.Semaphore(N_ASYNC_THREADS)
+
+        tasks = [self.upload_file_async(file_path, remote_folder, container_client, semaphore) for file_path in file_paths]
+        await asyncio.gather(*tasks)
+        await blob_service_client.close()
+
+
+    async def upload_folder_async(self, origin: str, local_folder: list, remote_folder: str):
+        """Upload multiple files asynchronously with controlled concurrency.
+
+        :param origin: (str) Blob container to upload files.
+        :param local_folder: (str) Name of the local folder.
+        :param remote_folder: (str) Name of the folder in Blob service.
+        :return: (bool) True if file has been uploaded successfully
+        """
+
+        remote_folder = _assert_has_slash(remote_folder)
+        local_folder = _assert_has_slash(local_folder)
+
+        blob_service_client = aioBlobServiceClient.from_connection_string(self.credentials[origin]['conn_str'])
+        container_client = blob_service_client.get_container_client(origin)
+
+        semaphore = asyncio.Semaphore(N_ASYNC_THREADS)
+        
+        tasks = []
+        for file_name in os.listdir(local_folder):
+            tasks.append(self.upload_file_async(f"{local_folder}{file_name}", remote_folder, container_client, semaphore))
+
+        await asyncio.gather(*tasks)
+        await blob_service_client.close()
+
+
+    async def upload_file_async(self, file_path: str, remote_folder:str, container_client, semaphore):
+        blob_name = f"{remote_folder}{file_path.split('/')[-1]}"
+        async with semaphore:
+            async with aiofiles.open(file_path, "rb") as file:
+                blob_client = container_client.get_blob_client(blob_name)
+                await blob_client.upload_blob(await file.read(), overwrite=True)
 
     def load_file(self, origin: str, remote_file: str) -> bytes:
         """ Return content of file in bytes
