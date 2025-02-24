@@ -36,7 +36,22 @@ bedrock_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia"
+        "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "bedrock"

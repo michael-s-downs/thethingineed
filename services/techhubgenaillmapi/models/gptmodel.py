@@ -235,7 +235,7 @@ class DalleModel(GPTModel):
         :param models_credentials: Credentials to use the model
         """
         super().__init__(model, model_type, pool_name, max_input_tokens, max_input_tokens, 0, zone, api_version,
-                         0, n, [], "none", [DEFAULT_STOP_MSG], models_credentials,
+                         0, n, [DEFAULT_STOP_MSG], models_credentials,
                          0, None, response_format)
         self.quality = quality
         self.size = size

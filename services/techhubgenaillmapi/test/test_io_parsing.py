@@ -32,7 +32,22 @@ bedrock_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "claude-v2:1-NorthVirginiaEast"
+        "model": "claude-v2:1-NorthVirginiaEast",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "bedrock"
@@ -82,7 +97,22 @@ azure_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13"
+        "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "azure"
