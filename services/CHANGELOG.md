@@ -28,7 +28,7 @@
   - [Improvement] Endpoint upload_prompt_template updated from POST request type to PUT request type.
   - [Improvement] Endpoint delete_prompt_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /llm/delete_prompt_template?name=mytemplate
   - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.
-  - [Improvement] functions and function_call parameters deprecated
+  - [Improvement] Parameters 'functions' and 'function_call' deprecated
 - genai-inforetrieval:
   - [Improvement] Changed endpoint delete-documents with delete_documents to match all the other endpoints. 
   - [Improvement] Endpoint delete_documents updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_documents?index=myindex&filename=myfile&filename=myfile2
