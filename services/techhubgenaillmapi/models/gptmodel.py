@@ -127,15 +127,15 @@ class GPTModel(GenerativeModel):
                 tool_calls = []
                 for tool_call in choice.get('message', {}).get('tool_calls', []):
                     tool_calls.append({
-                        "name": tool_call.get("function", {}).get("name", ""),
-                        "id": tool_call.get("id", ""),
-                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                        "name": tool_call.get('function', {}).get('name', ''),
+                        "id": tool_call.get('id', ''),
+                        "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
                     })
 
                 result = {
                     "status": "finished",
                     "result": {
-                        "answer": message.get('content', ""),
+                        "answer": message.get('content') or "",
                         "tool_calls": tool_calls,
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
@@ -183,9 +183,9 @@ class GPTModel(GenerativeModel):
             adapted_tool = {
                 "type": "function",
                 "function": {
-                    "name": tool["name"],
-                    "description": tool["description"],
-                    "parameters": tool["input_schema"]
+                    "name": tool['name'],
+                    "description": tool['description'],
+                    "parameters": tool['input_schema']
                 }
             }
 
@@ -448,11 +448,11 @@ class ChatGPTOModel(GPTModel):
 
         if model_type == 'gpt-o1-mini':
             if stop is not None:
-                raise ValueError("Parameter: 'stop' not supported in model: 'gpt-o1-mini'.")
+                raise ValueError(f"Parameter: 'stop' not supported in model: {model}.")
             if reasoning_effort is not None:
-                raise ValueError("Parameter: 'reasoning_effort' not supported in model: 'gpt-o1-mini'.")
+                raise ValueError(f"Parameter: 'reasoning_effort' not supported in model: {model}.")
             if tools is not None:
-                raise ValueError("Parameter: 'tools' not supported in model: 'gpt-o1-mini'.")
+                raise ValueError(f"Parameter: 'tools' not supported in model: {model}.")
 
         GenerativeModel.__init__(self, models_credentials, zone)
 
@@ -541,15 +541,15 @@ class ChatGPTOModel(GPTModel):
                 tool_calls = []
                 for tool_call in choice.get('message', {}).get('tool_calls', []):
                     tool_calls.append({
-                        "name": tool_call.get("function", {}).get("name", ""),
-                        "id": tool_call.get("id", ""),
-                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                        "name": tool_call.get('function', {}).get('name', ''),
+                        "id": tool_call.get('id', ''),
+                        "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
                     })
 
                 result = {
                     "status": "finished",
                     "result": {
-                        "answer": message.get('content', ''),
+                        "answer": message.get('content') or "",
                         "tool_calls": tool_calls,
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
@@ -691,15 +691,15 @@ class ChatGPTOVisionModel(GPTModel):
                 tool_calls = []
                 for tool_call in choice.get('message', {}).get('tool_calls', []):
                     tool_calls.append({
-                        "name": tool_call.get("function", {}).get("name", ""),
-                        "id": tool_call.get("id", ""),
-                        "inputs": json.loads(tool_call.get("function", {}).get("arguments", "{}"))
+                        "name": tool_call.get('function', {}).get('name', ''),
+                        "id": tool_call.get('id', ''),
+                        "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
                     })
 
                 result = {
                     "status": "finished",
                     "result": {
-                        "answer": message.get('content', ''),
+                        "answer": message.get('content') or "",
                         "tool_calls": tool_calls,
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],

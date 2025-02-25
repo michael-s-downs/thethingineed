@@ -250,7 +250,22 @@ class TestGPTModel:
             "model": gpt_model['model'],
             "seed": 42,
             "response_format": "json_object",
-            "max_tokens": 100
+            "max_tokens": 100,
+            "tools":[
+                {
+                    "name": "print_sentiment_scores",
+                    "description": "Prints the sentiment scores of a given text.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                            "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                            "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                        },
+                        "required": ["positive_score", "negative_score", "neutral_score"]
+                    }
+                }
+            ]
         }
         manager_models_config = MagicMock()
         manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
@@ -713,7 +728,25 @@ class TestGPTOModel:
             "seed": 42,
             "response_format": "json_object",
             "max_completion_tokens": 100,
-            "reasoning_effort": "low"
+            "reasoning_effort": "low",
+            "tools": [
+                {
+                    "name": "print_sentiment_scores",
+                    "description": "Prints the sentiment scores of a given text.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "positive_score": {"type": "number",
+                                               "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                            "negative_score": {"type": "number",
+                                               "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                            "neutral_score": {"type": "number",
+                                              "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                        },
+                        "required": ["positive_score", "negative_score", "neutral_score"]
+                    }
+                }
+            ]
         }
         manager_models_config = MagicMock()
         manager_models_config.get_model.return_value = copy.deepcopy(o_model)

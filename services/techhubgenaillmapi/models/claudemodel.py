@@ -103,18 +103,18 @@ class ClaudeModel(GenerativeModel):
             for item in response_body.get("content", []):
                 if item.get("type") == "tool_use":
                     tool_calls.append({
-                        "name": item.get("name"),
-                        "id": item.get("id", ""),
-                        "inputs": item.get("input", {})
+                        "name": item.get('name'),
+                        "id": item.get('id', ''),
+                        "inputs": item.get('input', {})
                     })
             result = {
                 "status": "finished",
                 "result": {
                     "answer": answer[0].get('text'),
                     "tool_calls": tool_calls,
-                    "input_tokens": response_body.get("usage", {}).get("input_tokens", 0),
-                    "n_tokens": response_body.get("usage", {}).get("input_tokens", 0) + response_body.get("usage", {}).get("output_tokens", 0),
-                    "output_tokens": response_body.get("usage", {}).get("output_tokens", 0),
+                    "input_tokens": response_body.get('usage', {}).get('input_tokens', 0),
+                    "n_tokens": response_body.get('usage', {}).get('input_tokens', 0) + response_body.get('usage', {}).get('output_tokens', 0),
+                    "output_tokens": response_body.get('usage', {}).get('output_tokens', 0),
                     "query_tokens": self.message.user_query_tokens
                 },
                 "status_code": 200

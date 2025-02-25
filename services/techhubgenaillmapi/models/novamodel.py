@@ -105,14 +105,14 @@ class NovaModel(GenerativeModel):
 
         stop_reason = response_body.get("stopReason", "")
         if stop_reason == "tool_use":
-            content = response_body.get("output", {}).get("message", {}).get("content", [])
+            content = response_body.get('output', {}).get('message', {}).get('content', [])
             thinking_text = ""
             answer_text = ""
             tool_calls = []
 
             for item in content:
                 if "text" in item:
-                    text = item["text"]
+                    text = item['text']
                     thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
                     if thinking_match:
                         thinking_text = thinking_match.group(1).strip()
@@ -121,9 +121,9 @@ class NovaModel(GenerativeModel):
                         answer_text = text.strip()
                 elif "toolUse" in item:
                     tool_calls.append({
-                        "name": item["toolUse"].get("name", ""),
-                        "id": item["toolUse"].get("toolUseId", ""),
-                        "inputs": item["toolUse"].get("input", {})
+                        "name": item["toolUse"].get('name', ''),
+                        "id": item["toolUse"].get('toolUseId', ''),
+                        "inputs": item["toolUse"].get('input', {})
                     })
 
             result = {
@@ -132,20 +132,20 @@ class NovaModel(GenerativeModel):
                     "thinking": thinking_text,
                     "answer": answer_text,
                     "tool_calls": tool_calls,
-                    "input_tokens": response_body.get("usage", {}).get("inputTokens", 0),
-                    "n_tokens": response_body.get("usage", {}).get("totalTokens", 0),
-                    "output_tokens": response_body.get("usage", {}).get("outputTokens", 0),
+                    "input_tokens": response_body.get('usage', {}).get('inputTokens', 0),
+                    "n_tokens": response_body.get('usage', {}).get('totalTokens', 0),
+                    "output_tokens": response_body.get('usage', {}).get('outputTokens', 0),
                     "query_tokens": self.message.user_query_tokens
                 },
                 "status_code": 200
             }
             return result
         elif self.tools is not None:
-            content = response_body.get("output", {}).get("message", {}).get("content", [])
+            content = response_body.get('output', {}).get('message', {}).get('content', [])
             thinking_text = ""
             answer_text = ""
             for item in content:
-                text = item.get("text", "")
+                text = item.get('text', '')
                 if text:
                     thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
                     if thinking_match:
@@ -158,9 +158,9 @@ class NovaModel(GenerativeModel):
                 "result": {
                     "thinking": thinking_text,
                     "answer": answer_text,
-                    "input_tokens": response_body.get("usage", {}).get("inputTokens", 0),
-                    "n_tokens": response_body.get("usage", {}).get("totalTokens", 0),
-                    "output_tokens": response_body.get("usage", {}).get("outputTokens", 0),
+                    "input_tokens": response_body.get('usage', {}).get('inputTokens', 0),
+                    "n_tokens": response_body.get('usage', {}).get('totalTokens', 0),
+                    "output_tokens": response_body.get('usage', {}).get('outputTokens', 0),
                     "query_tokens": self.message.user_query_tokens
                 },
                 "status_code": 200
@@ -198,10 +198,10 @@ class NovaModel(GenerativeModel):
         for tool in tools:
             adapted_tool = {
                 "toolSpec": {
-                    "name": tool["name"],
-                    "description": tool["description"],
+                    "name": tool['name'],
+                    "description": tool['description'],
                     "inputSchema": {
-                        "json": tool["input_schema"]
+                        "json": tool['input_schema']
                     }
                 }
             }
