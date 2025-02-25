@@ -94,3 +94,4 @@ class GenerativeModel(ABC):
                 :return: True if the model_type is in GENERATIVE_MODELS list
                 """
         return model_type in cls.GENERATIVE_MODELS
+

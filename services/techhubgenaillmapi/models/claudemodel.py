@@ -57,14 +57,17 @@ class ClaudeModel(GenerativeModel):
         """
         messages = self.message.preprocess()
         system = messages.pop(-2).get('content') # Remove system message from the list
-        body = json.dumps({"messages": messages,
-                           "temperature": self.temperature,
-                           "stop_sequences": self.stop_sequences,
-                           "anthropic_version": self.api_version,
-                           "max_tokens": self.max_tokens,
-                           "system": system
-                           })
-        return body
+        body = {"messages": messages,
+                "temperature": self.temperature,
+                "stop_sequences": self.stop_sequences,
+                "anthropic_version": self.api_version,
+                "max_tokens": self.max_tokens,
+                "system": system
+                }
+        if self.tools:
+            body['tools'] = self.tools
+
+        return json.dumps(body)
 
     def get_result(self, response: dict) -> dict:
         """ Method to format the model response.
@@ -86,6 +89,7 @@ class ClaudeModel(GenerativeModel):
             }
         response_body = json.loads(response.get('body').read())
         answer = response_body.get('content')
+
         if len(answer) == 0:
             return {
                 'status': 'error',
@@ -93,6 +97,29 @@ class ClaudeModel(GenerativeModel):
                 'status_code': 400
             }
         self.logger.info(f"LLM response: {answer}.")
+
+        if response_body.get('stop_reason') == "tool_use":
+            tool_calls = []
+            for item in response_body.get("content", []):
+                if item.get("type") == "tool_use":
+                    tool_calls.append({
+                        "name": item.get('name'),
+                        "id": item.get('id', ''),
+                        "inputs": item.get('input', {})
+                    })
+            result = {
+                "status": "finished",
+                "result": {
+                    "answer": answer[0].get('text'),
+                    "tool_calls": tool_calls,
+                    "input_tokens": response_body.get('usage', {}).get('input_tokens', 0),
+                    "n_tokens": response_body.get('usage', {}).get('input_tokens', 0) + response_body.get('usage', {}).get('output_tokens', 0),
+                    "output_tokens": response_body.get('usage', {}).get('output_tokens', 0),
+                    "query_tokens": self.message.user_query_tokens
+                },
+                "status_code": 200
+            }
+            return result
 
         text_generated = {
             'answer': answer[0].get('text'),
@@ -131,7 +158,8 @@ class ChatClaudeModel(ClaudeModel):
                  api_version: str = "",
                  temperature: float = 0,
                  stop: List = ["end_turn"],
-                 models_credentials: dict = None):
+                 models_credentials: dict = None,
+                 tools: List = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to specify the model
@@ -152,6 +180,7 @@ class ChatClaudeModel(ClaudeModel):
         super().__init__(model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, api_version,
                          temperature, stop, models_credentials)
         self.is_vision = False
+        self.tools = tools
 
 
 class ChatClaudeVision(ClaudeModel):
@@ -171,7 +200,8 @@ class ChatClaudeVision(ClaudeModel):
                  temperature: float = 0,
                  stop: List = ["end_turn"],
                  models_credentials: dict = None,
-                 max_img_size_mb: float = 5.00):
+                 max_img_size_mb: float = 5.00,
+                 tools: List = None):
         """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
 
         :param model: Model name used to verify the model
@@ -193,3 +223,4 @@ class ChatClaudeVision(ClaudeModel):
                          temperature, stop, models_credentials)
         self.is_vision = True
         self.max_img_size_mb = max_img_size_mb
+        self.tools = tools
