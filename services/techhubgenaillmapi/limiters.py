@@ -227,8 +227,24 @@ class NovaQueryLimiter(QueryLimiter):
                         num_images += 1
         return num_images
 
+class VertexQueryLimiter(QueryLimiter):
+    MODEL_FORMAT = "vertex"
+
+    def __init__(self, message: Message, model: str, max_tokens: int, bag_tokens: int,
+                 persistence: List[dict] = None) -> None:
+        """ Class that limits the number of tokens for the claude model
+
+        :param message: Message like class
+        :param model: Model name
+        :param max_tokens: Maximum numbre of tokens
+        :param bag_tokens: Number of tokens reserved to generative models.
+        :param persistence: If given indicates that a predecent conversation must me taken into account
+        """
+        super().__init__(message, model, max_tokens, bag_tokens, persistence)
+        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
+        self.max_images = 20
 class ManagerQueryLimiter(object):
-    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter]
+    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter]
 
     @staticmethod
     def get_limiter(conf: dict) -> QueryLimiter:

@@ -359,7 +359,6 @@ class Claude3Adapter(BaseAdapter):
         os.remove(resized_image_route)
 
 
-
 class NovaAdapter(BaseAdapter):
     ADAPTER_FORMAT = "nova"
 
@@ -446,10 +445,11 @@ class NovaAdapter(BaseAdapter):
         resized_image.close()
         os.remove(resized_image_route)
 
-
+class GeminiAdapter(BaseAdapter):
+    ADAPTER_FORMAT = "nova"
 
 class ManagerAdapters(object):
-    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter]
+    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter, GeminiAdapter]
 
     @staticmethod
     def get_adapter(conf: dict):

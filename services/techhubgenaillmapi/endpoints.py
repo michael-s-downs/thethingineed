@@ -14,6 +14,9 @@ import boto3
 import botocore
 from botocore.config import Config
 import urllib3
+from google import genai
+from google.genai import types
+from anthropic import AnthropicVertex
 
 # Custom imports
 from generatives import GenerativeModel
@@ -553,8 +556,191 @@ class BedrockPlatform(Platform):
                 return {"error": ISE, "msg": ISE, "status_code": 500}
 
 
+class VertexPlatform(Platform):
+    MODEL_FORMAT = "vertex"
+
+    def __init__(
+            self,
+            aws_credentials,
+            models_urls,
+            timeout: int = 30,
+            num_retries=3,
+            models_config_manager: BaseModelConfigManager = None,
+    ):
+        """Platform that sustains the model to be used
+
+        :param aws_credentials: AWS credentials
+        :param models_urls: Models credentials
+        :param timeout: Timeout for the request
+        """
+        super().__init__(
+            aws_credentials, models_urls, timeout, num_retries, models_config_manager
+        )
+
+    def set_model_retry(self):
+        """Set the model and configure urls when a retry has to be done."""
+        if hasattr(self, "generative_model"):
+            selected_model = self.models_config_manager.get_different_model_from_pool(
+                self.generative_model.pool_name,
+                self.generative_model.model_name,
+                self.MODEL_FORMAT,
+            )
+            if selected_model:
+                self.generative_model.model_name = selected_model.get("model")
+                self.generative_model.zone = selected_model.get("zone")
+                self.generative_model.api_version = selected_model.get("api_version")
+                self.generative_model.api_key = (
+                    self.models_config_manager.get_model_api_key_by_zone(
+                        self.generative_model.zone, self.MODEL_FORMAT
+                    )
+                )
+                self.set_model(self.generative_model)
+            else:
+                self.logger.debug(
+                    f"Model not found in the pool for retry, retrying with: {self.generative_model.model_name}"
+                )
+        else:
+            self.logger.error(NOT_GENERATIVE_MODEL_PARAM)
+            raise PrintableGenaiError(400, NOT_GENERATIVE_MODEL_PARAM)
+    def parse_response(self, answer):
+        """Test if response is correct (token number issue)
+
+        :param answer: Dict response by the endpoint
+        :return: Validated response
+        """
+        self.logger.debug(PARSING_RESPONSE_MSG)
+        if (
+            "error" in answer
+            and "code" in answer["error"]
+            and answer["error"]["code"] == 400
+        ):
+            return {
+                "error": answer,
+                "msg": str(answer["error"]["message"]),
+                "status_code": answer["error"]["code"],
+            }
+        elif (
+            "error" in answer
+            and "code" in answer["error"]
+            and answer["error"]["code"] == "invalid_api_key"
+        ):
+            return {
+                "error": answer,
+                "msg": str(answer["error"]["message"]),
+                "status_code": 401,
+            }
+        elif "error" in answer:
+            return {
+                "error": answer,
+                "msg": str(answer["error"]["message"]),
+                "status_code": 500,
+            }
+
+        self.logger.info(MESSAGE_PROCESSED_MSG)
+        return answer
+
+    def set_model(self, generative_model: GenerativeModel):
+        """Set the model and configure headers and urls.
+
+        :param generative_model: Model used to make the query
+        """
+        self.logger.debug(SETTING_MODEL_MSG)
+        super().set_model(generative_model)
+
+        self.headers = {
+            "Authorization": "Bearer " + generative_model.api_key,
+            "Content-Type": "application/json",
+        }
+
+    def call_model(self, delta=0) -> dict:
+        """Method to send the query to the endpoint
+
+        :param delta: Number of retries
+        :return: Endpoint response
+        """
+        try:
+            if delta > self.num_retries:
+                return {
+                    "error": "Max retries reached",
+                    "msg": "Max retries reached",
+                    "status_code": 500,
+                }
+            data_call = self.generative_model.parse_data()
+            self.logger.info(
+                f"Calling {self.MODEL_FORMAT} service with data {data_call}"
+            )
+            if self.generative_model.model_type in ['gemini-1.5-pro-002', 'gemini-2.0-flash-exp']:
+                client = genai.Client(
+                    vertexai=True,
+                    project="techhubdev", #CHANGE
+                    location=self.generative_model.zone,
+                    api_key=self.generative_model.api_key
+                )
+                answer = client.models.generate_content(
+                    model=self.generative_model.model_type,
+                    contents=data_call
+                )
+                self.logger.info(f"LLM response: {answer}.")
+                answer = self.parse_response(answer)
+                return answer
+            elif self.generative_model.model_type in ['claude-3-5-sonnet-v2', 'claude-3-5-sonnet', 'claude-3-5-haiku']:
+                client = AnthropicVertex(
+                    project_id="",
+                    region=self.generative_model.zone,
+                )
+                answer = client.messages.create(
+                    model=self.generative_model.model_type,
+                )
+
+                self.logger.info(f"LLM response: {answer}.")
+                answer = self.parse_response(answer)
+                return answer
+            else:
+                raise PrintableGenaiError(
+                    400,
+                    f"Model type '{self.generative_model.model_id}' doesnt exists in vertex platform. ",
+                )
+        except urllib3.exceptions.ReadTimeoutError:
+            self.logger.error(REQUEST_TIMED_OUT_MSG)
+            if delta < self.num_retries:
+                self.logger.warning(
+                    f"Timeout, retrying, try {delta + 1}/{self.num_retries}"
+                )
+                try:
+                    self.set_model_retry()
+                    time.sleep(5)
+                    return self.call_model(delta + 1)
+                except Exception:
+                    return {
+                        "error": REQUEST_TIMED_OUT_MSG,
+                        "msg": REQUEST_TIMED_OUT_MSG,
+                        "status_code": 408,
+                    }
+            else:
+                return {
+                    "error": REQUEST_TIMED_OUT_MSG,
+                    "msg": REQUEST_TIMED_OUT_MSG,
+                    "status_code": 408,
+                }
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"LLM response: {str(e)}.")
+            return {"error": e, "msg": str(e), "status_code": 500}
+        except botocore.exceptions.ClientError as error:
+            self.logger.error(f"Error calling botocore: {error}")
+            message = error.response["Error"]["Message"]
+            status_code = error.response["ResponseMetadata"]["HTTPStatusCode"]
+            return {"error": error, "msg": message, "status_code": status_code}
+        except ConnectionError:
+            try:
+                self.set_model_retry()
+                time.sleep(5)
+                return self.call_model(delta + 1)
+            except Exception:
+                return {"error": ISE, "msg": ISE, "status_code": 500}
+
+
 class ManagerPlatform(object):
-    MODEL_TYPES = [OpenAIPlatform, AzurePlatform, BedrockPlatform]
+    MODEL_TYPES = [OpenAIPlatform, AzurePlatform, BedrockPlatform, VertexPlatform]
 
     @staticmethod
     def get_platform(conf: dict) -> Platform:
