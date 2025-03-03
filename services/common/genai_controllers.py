@@ -161,6 +161,15 @@ def download_file(origin: Union[str, List[str]], file: Tuple[str, str]):
     sc.download_file(origin, remotefile, localfile)
 
 
+def download_batch_files_async(origin: Union[str, List[str]], files: list, local_directory: str):
+    """ Download files
+
+    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController origin
+    :param files: <List[tuple(str, str)]> remote_filename and local_filename
+    """
+    sc.download_batch_files_async(origin, files, local_directory)
+
+
 def download_directory(origin: Union[str, List[str]], path: str):
     """ Download directory
 
@@ -188,6 +197,16 @@ def upload_files(origin: Union[str, List[str]], files: list):
     """
     for remotefile, localfile in files:
         sc.upload_file(origin, localfile, remotefile)
+
+
+def upload_batch_files_async(origin: Union[str, List[str]], files: list, remote_directory: str):
+    """ Upload a batch of files to remote storage asynchronously.
+
+    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController origin
+    :param files: <list> List of local file paths to upload
+    :param remote_directory: <str> Remote directory to upload the files to
+    """
+    sc.upload_batch_files_async(origin, files, remote_directory)
 
 
 def upload_object(origin: Union[str, List[str]], obj: Union[bytes, str], file: str):

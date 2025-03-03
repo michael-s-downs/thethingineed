@@ -4,6 +4,7 @@
 # Native imports
 import os
 import json
+import time
 from typing import Tuple
 from multiprocessing import Process, Manager
 
@@ -190,16 +191,26 @@ class PreprocessExtractDeployment(BaseDeployment):
             # Extract cells and text from PDF if possible
             is_text_project = project_type == "text"
             text_extracted = False
-            if generic.get('preprocess_conf', {}).get('ocr_conf',{}).get('llm_ocr_conf', {}).get('query') and force_ocr:
+            ocr_conf = generic.get('preprocess_conf', {}).get('ocr_conf', {})
+            llm_ocr_conf = ocr_conf.get('llm_ocr_conf', {})
+            query_exists = llm_ocr_conf.get('query')
+
+            if query_exists and force_ocr:
                 self.logger.info("Force OCR is enabled, text extraction will be skipped.")
                 files_extracted = {'lang': "default"}
             else:
                 self.logger.info(f"Extracting text from file: {filename}")
-                files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
-
+                files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}                
                 try:
-                    process_timeout = 5  # Minutes
+                    process_timeout = 5  # Minutes 
                     return_dict = Manager().dict({'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []})
+
+                    if ocr_conf and not query_exists:
+                        # Override page_limit to 5 if environment variable is set
+                        page_limit = int(os.getenv('LLM_OCR_PAGE_LIMIT', 5)) 
+                        generic['preprocess_conf']['page_limit'] = page_limit
+
+                    start_time = time.time()  # Start timing
                     p = Process(target=extract_text, args=(filename, num_pags, generic, specific, do_cells_text, do_lines_text, return_dict))
                     p.start()
                     p.join(process_timeout * 60)  # Timeout
@@ -210,7 +221,10 @@ class PreprocessExtractDeployment(BaseDeployment):
                     files_extracted.update(return_dict)
 
                     text_extracted = files_extracted['text'] != ""
-                    self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: '{num_pags}'.")
+                    end_time = time.time()  # End timing
+                    self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: {page_limit}.")
+                    self.logger.info(f"Time taken for extracting text from the first 5 pages: {end_time - start_time} seconds.")
+
                 except Exception:
                     self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
 
@@ -228,9 +242,9 @@ class PreprocessExtractDeployment(BaseDeployment):
                         else:
                             path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
                             upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
-                    if files_extracted['text']:
-                        path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
-                        upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
+                    #if files_extracted['text']:
+                        #path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
+                        #upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
                 except Exception:
                     self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
 
@@ -279,7 +293,7 @@ class PreprocessExtractDeployment(BaseDeployment):
             message['specific'].update({
                 'paths': {
                     'images': images,
-                    'text': path_IRStorage_txt,
+                    'text': "",
                     'cells': path_IRStorage_cells
                 }
             })
@@ -345,3 +359,4 @@ class PreprocessExtractDeployment(BaseDeployment):
 if __name__ == "__main__":
     deploy = PreprocessExtractDeployment()
     deploy.async_deployment()
+
