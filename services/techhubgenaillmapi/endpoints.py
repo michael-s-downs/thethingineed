@@ -502,12 +502,21 @@ class BedrockPlatform(Platform):
                 region_name=self.generative_model.zone,
             )
             if provider == "azure":
-                bedrock = boto3.client(
-                    service_name="bedrock-runtime",
-                    aws_access_key_id=self.aws_credentials["access_key"],
-                    aws_secret_access_key=self.aws_credentials["secret_key"],
-                    config=config,
-                )
+                if os.getenv("TESTING", False):
+                    bedrock = boto3.client(
+                        service_name="bedrock-runtime",
+                        aws_access_key_id=self.aws_credentials["access_key"],
+                        aws_secret_access_key=self.aws_credentials["secret_key"],
+                        aws_session_token=self.aws_credentials["token_id"],
+                        config=config,
+                    )
+                else:
+                    bedrock = boto3.client(
+                        service_name="bedrock-runtime",
+                        aws_access_key_id=self.aws_credentials["access_key"],
+                        aws_secret_access_key=self.aws_credentials["secret_key"],
+                        config=config,
+                    )
             else:
                 bedrock = boto3.client(service_name="bedrock-runtime", config=config)
             answer = bedrock.invoke_model(
@@ -576,6 +585,31 @@ class VertexPlatform(Platform):
         super().__init__(
             aws_credentials, models_urls, timeout, num_retries, models_config_manager
         )
+
+    def build_url(self, generative_model: GenerativeModel):
+        """Build the url to make the request
+        :param generative_model: Model used to make the query
+        :return: Url to make the request
+        """
+        self.logger.debug("Building url.")
+        if generative_model.MODEL_MESSAGE in ["chatGemini", "chatGemini-v"]:
+            template = Template(self.models_urls.get('VERTEX_GEMINI_URL'))
+        elif generative_model.MODEL_MESSAGE in ["chatClaude", "chatClaude-v"]:
+            template = Template(self.models_urls.get('VERTEX_ANTRHOPIC_URL'))
+        else:
+            raise PrintableGenaiError(
+                400, f"Model message {generative_model.MODEL_MESSAGE} not supported."
+            )
+
+        project_id="techhubdev"
+
+        url = template.safe_substitute(
+            MODEL=generative_model.model_id,
+            ZONE=generative_model.zone,
+            PROJECT_ID=project_id
+        )
+        self.logger.debug("url: %s", url)
+        return url
 
     def set_model_retry(self):
         """Set the model and configure urls when a retry has to be done."""
@@ -670,15 +704,8 @@ class VertexPlatform(Platform):
                 f"Calling {self.MODEL_FORMAT} service with data {data_call}"
             )
             if self.generative_model.model_type in ['gemini-1.5-pro-002', 'gemini-2.0-flash-exp']:
-                client = genai.Client(
-                    vertexai=True,
-                    project="techhubdev", #CHANGE
-                    location=self.generative_model.zone,
-                    api_key=self.generative_model.api_key
-                )
-                answer = client.models.generate_content(
-                    model=self.generative_model.model_type,
-                    contents=data_call
+                answer = requests.post(
+                    url=self.url, headers=self.headers, data=data_call, timeout=self.timeout
                 )
                 self.logger.info(f"LLM response: {answer}.")
                 answer = self.parse_response(answer)

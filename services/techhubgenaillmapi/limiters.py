@@ -243,6 +243,80 @@ class VertexQueryLimiter(QueryLimiter):
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
         self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
+
+    #TODO Adapt this method to remove n_tokens and give final structure
+    @staticmethod
+    def _get_n_tokens(pair: List[dict]) -> int:
+        """
+        Method to get the number of tokens of the message.
+
+        :param pair: List of messages.
+        :return: Total number of tokens.
+        """
+        n_tokens = 0
+        for message in pair:
+            for part in message.get("parts", []):
+                if "text" in part and isinstance(part["text"], dict):
+                    n_tokens += part["text"].pop("n_tokens", 0)
+                if "inlineData" in part and isinstance(part["inlineData"], dict):
+                    n_tokens += part["inlineData"].pop("n_tokens", 0)
+        return n_tokens
+
+    @staticmethod
+    def _get_num_images(pair: List[dict]) -> int:
+        """
+        Method to get the number of images in the message.
+
+        :param pair: List of messages.
+        :return: Number of images.
+        """
+        num_images = 0
+        for message in pair:
+            for part in message.get("parts", []):
+                if "inlineData" in part and isinstance(part["inlineData"], dict):
+                    mime_type = part["inlineData"].get("mimeType", "")
+                    if mime_type.startswith("image/"):
+                        num_images += 1
+        return num_images
+
+    '''def _parse_message_persistence(self) -> Message:
+        """Modifies the message and returns it with the number of tokens of the text
+
+        :return: Message object limited to the number of tokens
+        """
+
+        self.logger.debug("Proceding persistence")
+        images_query = self._get_num_images(self.message.substituted_query)
+        if images_query > self.max_images:
+            raise PrintableGenaiError(400, f"Too many images in request. Max is {self.max_images}.")
+        self.num_images += images_query
+
+        tokens_api_call = self._get_n_tokens(self.message.substituted_query)
+        max_tokens_with_bag = self.max_tokens - self.bag_tokens
+        if tokens_api_call > max_tokens_with_bag and self.message.context:
+            self.message = self._limit_message_tokens(self.message, max_tokens_with_bag)
+            tokens_api_call = max_tokens_with_bag
+
+        for pair in reversed(self.message.persistence):
+
+            images_message = self._get_num_images(self.message.persistence)
+
+            if images_message + self.num_images > self.max_images:
+                self.message.persistence.remove(pair)
+                self.logger.info(
+                    f"Reached maximum images permitted. Persistence has been limited for images < {self.max_images}.")
+            else:
+                self.num_images += images_message
+
+                tokens_persistence_i = self._get_n_tokens(pair)
+                if tokens_api_call + tokens_persistence_i > max_tokens_with_bag - self.MARGIN:
+                    self.message.persistence.remove(pair)
+                    self.logger.debug(f"Pair {pair} was deleted")
+                    continue
+                tokens_api_call += tokens_persistence_i
+
+        return self.message'''
+
 class ManagerQueryLimiter(object):
     MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter]
 

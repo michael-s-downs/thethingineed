@@ -40,8 +40,8 @@ class BaseAdapter(ABC):
         self.max_img_size_mb = max_img_size_mb
         self.available_img_formats = ["JPEG", "PNG", "GIF", "WEBP"]
 
-        preprocessed_message = self.message.preprocess()
-        self.message.substituted_query = [preprocessed_message[0], preprocessed_message[-1]]
+        self.preprocessed_message = self.message.preprocess()
+        self.message.substituted_query = [self.preprocessed_message[0], self.preprocessed_message[-1]]
 
     def adapt_query_and_persistence(self):
         """ Method to add the number of tokens to the message"""
@@ -411,7 +411,6 @@ class NovaAdapter(BaseAdapter):
                 height = height_resize
         #TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
         return int((height * width) / 750)  # Not accurate
-    
 
     def _adapt_image(self, image_dict):
         """ Method to get tokens from an image and adapt it to nova-v format
@@ -446,7 +445,198 @@ class NovaAdapter(BaseAdapter):
         os.remove(resized_image_route)
 
 class GeminiAdapter(BaseAdapter):
-    ADAPTER_FORMAT = "nova"
+    ADAPTER_FORMAT = "gemini"
+
+    def __init__(self, message, max_img_size_mb=20.00):
+        """ Constructor for the NovaAdapter class
+
+        :param message: Message like class
+        """
+        super().__init__(message, max_img_size_mb)
+        self.message.substituted_query = self.preprocessed_message[-2:]
+        self.available_img_formats = ["JPEG", "PNG", "GIF", "WEBP"] #TODO change available img formats
+
+    @staticmethod
+    def _get_image_tokens(width, height, width_resize, height_resize) -> int:
+        """ Resize an image to have the correct format and get the tokens
+
+        :param width: Width of the image
+        :param height: Height of the image
+        :param width_resize: Width to resize to
+        :param height_resize: Height to resize to
+        :return: int - Number of tokens
+        """
+        if width > width_resize or height > height_resize:
+            if width > height:
+                height = int(height * height_resize / width)
+                width = width_resize
+            else:
+                width = int(width * width_resize / height)
+                height = height_resize
+        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        return int((height * width) / 750)  # Not accurate
+    def _adapt_messages(self, messages):
+        """Method to process messages and adapt text and images accordingly."""
+        for message in messages:
+            for part in message.get("parts", []):
+                if "text" in part:
+                    part["text"] = self._adapt_text(part["text"])
+            for part in message.get("parts", []):
+                if "image" in part:
+                    self._adapt_image(part)
+
+    def _adapt_text(self, text):
+        """Method to adapt text content by encoding and counting tokens."""
+
+        if isinstance(text, dict) and text.get('n_tokens'):
+            text.pop('type', None)
+            return {"content": text['content'], "n_tokens": text['n_tokens']}
+        else:
+            n_tokens = len(self.encoding.encode(text))
+            return {"content": text, "n_tokens": n_tokens}
+
+    def _adapt_image(self, image_dict):
+        """ Method to get tokens from an image and adapt it to nova-v format
+
+        :param image_dict: Image to get tokens from
+        :return: int - Number of tokens
+        """
+        if image_dict.get('detail'):
+            raise PrintableGenaiError(400, "Detail parameter not allowed in Gemini vision model")
+
+        # Get the base64 image resized and the size
+        base64_img, _, resized_image_route, resized_image = self._get_base64_image(image_dict)
+
+        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        if not image_dict.get('n_tokens'):
+            total = self._get_image_tokens(resized_image.width, resized_image.height, 1568, 1568)
+        else:
+            total = image_dict['n_tokens']
+
+        # To change format to nova (no type param is needed)
+        image_dict.clear()
+        image_dict.update({
+            "inlineData": {
+                "data": base64_img,
+                "mimeType": f"image/{resized_image.format.lower()}",
+                "n_tokens": total
+            }
+        })
+
+        # Remove the resized image and close the opened image
+        resized_image.close()
+        os.remove(resized_image_route)
+
+
+
+'''    def _adapt_messages(self, messages):
+        """Method to process messages and adapt text and images accordingly."""
+        for message in messages:
+            for part in message.get("parts", []):
+                if "text" in part:
+                    part["text"] = self._adapt_text(part["text"])
+            for part in message.get("parts", []):
+                if "inlineData" in part:
+                    self._adapt_image(part["inlineData"])
+
+    def _adapt_text(self, text):
+        """Method to adapt text content by encoding and counting tokens."""
+
+        if isinstance(text, dict) and text.get('n_tokens'):
+            return {"content": text['content'], "n_tokens": text['n_tokens']}
+        else:
+            n_tokens = len(self.encoding.encode(text))
+            return {"content": text, "n_tokens": n_tokens}
+
+    @staticmethod
+    def _get_image_tokens(width, height, width_resize, height_resize) -> int:
+        """ Resize an image to have the correct format and get the tokens
+
+        :param width: Width of the image
+        :param height: Height of the image
+        :param width_resize: Width to resize to
+        :param height_resize: Height to resize to
+        :return: int - Number of tokens
+        """
+        if width > width_resize or height > height_resize:
+            if width > height:
+                height = int(height * height_resize / width)
+                width = width_resize
+            else:
+                width = int(width * width_resize / height)
+                height = height_resize
+        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        return int((height * width) / 750)  # Not accurate
+
+    def _get_base64_image(self, image_dict):
+        """ Method to get the base64 image and the size of the image
+
+        :param image_dict: Image to get the base64 from
+
+        :return: str - Base64 image
+        :return: float - Size of the image
+        :return: str - Route of the resized image
+        :return: Image - Image object
+        """
+        if image_dict['type'] == "image_url":
+            content = image_dict['data']
+            downloaded_image = requests.get(content)
+            if downloaded_image.status_code != 200:
+                raise PrintableGenaiError(downloaded_image.status_code,
+                                          f"Error downloading the image: {downloaded_image.reason}")
+            try:
+                img = Image.open(io.BytesIO(downloaded_image.content))
+            except Exception as ex:
+                print(ex)
+                raise PrintableGenaiError(400, "Error, downloaded image content (url) must be valid")
+        elif image_dict['type'] == "image_b64":
+            content = image_dict['data']
+            try:
+                img = Image.open(io.BytesIO(base64.decodebytes(bytes(content, "utf-8"))))
+            except Exception:
+                raise PrintableGenaiError(400, "Image must be a valid base64 format")
+
+        media_type = img.format
+        if media_type not in self.available_img_formats:
+            raise PrintableGenaiError(400, f"Image must be in format {self.available_img_formats}")
+
+        # Resize the image and get the base64
+        resized_image_route = "image." + media_type.lower()
+        img.save(resized_image_route, quality=95)
+        size, _ = resize_image(resized_image_route, max_size_mb=self.max_img_size_mb)
+        with open(resized_image_route, "rb") as f:  # Faster to read from file than from Image and BytesIO
+            base64_img = base64.b64encode(f.read()).decode("utf-8")
+        img.close()
+
+        return base64_img, size, resized_image_route, Image.open(resized_image_route)
+
+    def _adapt_image(self, image_dict):
+        """ Method to get tokens from an image and adapt it to nova-v format
+
+        :param image_dict: Image to get tokens from
+        :return: int - Number of tokens
+        """
+        if image_dict.get('detail'):
+            raise PrintableGenaiError(400, "Detail parameter not allowed in Gemini vision model")
+
+        # Get the base64 image resized and the size
+        base64_img, _, resized_image_route, resized_image = self._get_base64_image(image_dict)
+
+        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        if not image_dict.get('n_tokens'):
+            total = self._get_image_tokens(resized_image.width, resized_image.height, 1568, 1568)
+        else:
+            total = image_dict['n_tokens']
+
+        # To change format to nova (no type param is needed)
+        image_dict['data'] = base64_img
+        image_dict['mimeType'] = f"image/{resized_image.format.lower()}"
+        image_dict['n_tokens'] = total
+        image_dict.pop('type')
+
+        # Remove the resized image and close the opened image
+        resized_image.close()
+        os.remove(resized_image_route)'''
 
 class ManagerAdapters(object):
     ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter, GeminiAdapter]

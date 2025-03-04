@@ -9,8 +9,9 @@ from message.llamamessage import Llama3Message
 from message.novamessage import NovaVMessage, NovaMessage
 from message.claudemessage import ClaudeMessage, Claude3Message
 from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
+from message.geminimessage import GeminiMessage, GeminiVMessage
 class ManagerMessages(object):
-    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, ChatGPTOMiniMessage, Llama3Message, NovaMessage, NovaVMessage]
+    MESSAGE_TYPES = [ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, ChatGPTOMiniMessage, Llama3Message, NovaMessage, NovaVMessage, GeminiVMessage, GeminiMessage]
 
     @staticmethod
     def get_message(conf: dict) -> Message:
