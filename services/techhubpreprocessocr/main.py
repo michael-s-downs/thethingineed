@@ -221,7 +221,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 prefix_map = {'images': origin_img_path, 'text': origin_text_path, 'cells': origin_cells_path, 'tables': origin_tables_path, 'txt': origin_txt_path}
 
                 path_file_txt = os.path.join(prefix_map['txt'], file_folder_txt).replace("\\", "/")
-                path_file_text = os.path.join(prefix_map['text'], "ocr", file_folder, merge_filename).replace("\\", "/")
+                path_file_text = os.path.join(prefix_map['text'], "ocr", merge_filename).replace("\\", "/")
 
                 if ocr == "llm-ocr" and LLMOCR.get_queue_mode():
                     try:
@@ -273,40 +273,28 @@ class PreprocessOCRDeployment(BaseDeployment):
             try:
                 self.logger.info("Uploading files to storage.")
                 upload_docs['text'].append((path_file_text, path_file_text))
-                #upload_docs['txt'].append((path_file_txt, path_file_txt))
-
-                upload_docs['text'].append((path_file_text, path_file_text))
 
                 total_upload_time = 0
                 for key, paths in upload_docs.items():
-                    if key == 'txt':
-                        continue
                     if ocr == "llm-ocr" and key not in ["text"]: 
                         continue # In llm-ocr cells paragraphs words tables and lines are not extracted 
         
                     if paths:
                         files_by_directory = {}
                         for remote_path, local_path in paths:
-                            if '/txt/' in remote_path or remote_path.startswith('txt/'):
-                                continue
-
                             remote_dir = os.path.dirname(remote_path)
-                            if remote_dir not in files_by_directory:
-                                files_by_directory[remote_dir] = []
-                            files_by_directory[remote_dir].append((local_path, remote_path))
+                            if "_pag_" in local_path:
+                                remote_dir = "/".join([remote_dir, "pags"])
+                            
+                            files_by_directory.setdefault(remote_dir, []).append(local_path)
                         
                         for remote_dir, local_files in files_by_directory.items():
-                            if not local_files: 
-                                continue
-                            
-                            local_file_paths = [local_path for local_path, _ in local_files]
-
                             upload_start_time = time.time()
-                            upload_batch_files_async(workspace, local_file_paths, remote_dir)
+                            upload_batch_files_async(workspace, local_files, remote_dir)
                             upload_end_time = time.time()
                             upload_time = upload_end_time - upload_start_time
                             total_upload_time += upload_time
-                            self.logger.info(f"Time taken for uploading {len(local_file_paths)} files to {remote_dir}: {upload_time:.2f} seconds.")
+                            self.logger.info(f"Time taken for uploading {len(local_files)} files to {remote_dir}: {upload_time:.2f} seconds.")
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error uploading files to storage", exc_info=get_exc_info())
                 raise Exception(UPLOADING_FILES_ERROR)

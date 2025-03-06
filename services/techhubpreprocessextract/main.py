@@ -229,29 +229,24 @@ class PreprocessExtractDeployment(BaseDeployment):
                     self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
 
             path_IRStorage_cells = ""
-            path_IRStorage_txt = ""
             if not force_ocr and text_extracted: # To not upload files if OCR is forced (only language extraction is needed)
                 # Save text    
                 self.logger.info("Uploading files of text.")
                 try:
-                    folder_file_txt = folder_file + ".txt"
                     for key in files_extracted['extraction']:
                         if key != "text":
-                            path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, "pags", f"{os.path.basename(folder_file)}_{key}.txt")
+                            path_IRStorage = os.path.join(specific['path_text'], "txt", "pags", f"{os.path.basename(folder_file)}_{key}.txt")
                             upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
                         else:
-                            path_IRStorage = os.path.join(specific['path_text'], "txt", folder_file, f"{os.path.basename(folder_file)}.txt")
+                            path_IRStorage = os.path.join(specific['path_text'], "txt", f"{os.path.basename(folder_file)}.txt")
                             upload_object(workspace, files_extracted.get('extraction', {})[key], path_IRStorage)
-                    #if files_extracted['text']:
-                        #path_IRStorage_txt = os.path.join(specific['path_txt'], folder_file_txt)
-                        #upload_object(workspace, files_extracted['text'], path_IRStorage_txt)
                 except Exception:
                     self.logger.warning(f"[Process {dataset_status_key}] Error uploading texts.", exc_info=get_exc_info())
 
                 # Save cells
                 self.logger.info("Uploading files of cells, boxes and lines.")
                 try:
-                    path_IRStorage_cells = os.path.join(specific['path_cells'], "txt", folder_file)
+                    path_IRStorage_cells = os.path.join(specific['path_cells'], "txt")
                     if files_extracted['boxes']:
                         filename_blocks = os.path.join(path_IRStorage_cells, f"{os.path.basename(folder_file)}_paragraphs.txt")
                         upload_object(workspace, json.dumps(files_extracted['boxes']), filename_blocks)

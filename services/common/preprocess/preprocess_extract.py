@@ -204,12 +204,12 @@ def extract_images_conditional(generic: dict, specific: dict, workspace: Union[s
     images = extract_images(filename, generic)
 
     files_to_upload = []
-    remote_directory = os.path.join(specific['path_img'], folder_file, "pags")
+    remote_directory = "/".join([specific['path_img'], "pags"])
 
     # Upload image to s3 and remove it from dict
     for image in images:
         file_img = os.path.basename(image['filename'])
-        remote_file = os.path.join(remote_directory, file_img)
+        remote_file = "/".join([remote_directory, file_img])
 
         files_to_upload.append(image['filename'])
 
