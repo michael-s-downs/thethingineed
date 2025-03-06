@@ -18,11 +18,12 @@
   - [Improvement] Updated the response format from string to JSON
 - genai-llmapi:
   - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
-  - [New] Prompt templates splitted into diferent files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
+  - [New] Prompt templates splitted into different files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
   - [New] Endpoint reloadconfig deleted, it does nothing with the prompt load change
   - [New] Added method to show the word causing the error while loading a JSON
   - [New] Added support for models o1, o1-mini, and o3-mini
   - [New] Added reasoning and DALL·E models for the OpenAI platform
+    - Add default model in 'src/LLM/conf/default_llm_models.json' for openai
   - [New] Added tools support
   - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
   - [Improvement] Endpoint upload_prompt_template updated from POST request type to PUT request type
