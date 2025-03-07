@@ -11,7 +11,7 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   administrator_login    = var.rg
   administrator_password = random_password.mysql_password.result
 
-  sku_name = "Standard_D2ads_v5"
+  sku_name = "GP_Standard_D2ads_v5"
   version  = "8.0.21"
   zone     = 1
 
