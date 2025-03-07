@@ -44,6 +44,8 @@
 - ALL:
   - [Improvement] Update and fix status_codes
   - [Improvement] Fixed maintainability warnings from sonarqube
+  - [Improvement] Update terraform, parametrize create private endpoint by resource
+  - [Improvement] Update helm, add template for elasticsearch and update deployment
 
 
 ## v3.0.0 (2025-01-30)
