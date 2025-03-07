@@ -63,12 +63,7 @@ spec:
             shareName: {{ $sa.shareName }}
   {{- end }}
 {{- end }}
-{{- if and (ne (.Values.nodePool | toString) "none") (ne (.Values.provider | toString) "azure") }}
       nodeSelector:
-        agentpool: {{ .Values.nodePool }}   
-{{- else }}
-      nodeSelector:
-        nodepool: {{ .Values.nodePool }}    
-{{- end }}
+        nodepool: {{ .Values.nodePool }}
       imagePullSecrets:
         - name: {{ .Values.image.nameImagePullSecret }}

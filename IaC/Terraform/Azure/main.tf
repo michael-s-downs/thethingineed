@@ -58,6 +58,7 @@ module "techhub_sa" {
   subnet            = var.RG_SUBNET
   create_queues     = var.CREATE_SB
   name_queues       = var.SB_QUEUES
+  private_endpoint  = var.DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE["sa"]
 
   depends_on = [azurerm_resource_group.rg]
 }
@@ -71,6 +72,7 @@ module "techhub_sb" {
   capacity    = var.SB_CAPACITY
   name_queues = var.SB_QUEUES
   tags        = local.common_tags
+  private_endpoint  = var.DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE["servicebus"]
 
   depends_on = [azurerm_resource_group.rg]
 }
@@ -86,6 +88,7 @@ module "techhub_mysql" {
   vnet              = var.VNET_NAME
   resource          = "mysqlServer"
   subnet            = var.RG_SUBNET
+  private_endpoint  = var.DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE["mysqlServer"]
 
   depends_on = [azurerm_resource_group.rg]
 }
@@ -101,6 +104,7 @@ module "techhub_redis" {
   vnet              = var.VNET_NAME
   resource          = "redisCache"
   subnet            = var.RG_SUBNET
+  private_endpoint  = var.DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE["redisCache"]
 
   depends_on = [azurerm_resource_group.rg]
 }
@@ -116,6 +120,7 @@ module "techhub_di" {
   vnet              = var.VNET_NAME
   resource          = "account"
   subnet            = var.RG_SUBNET
+  private_endpoint  = var.DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE["account"]
 
   depends_on = [azurerm_resource_group.rg]
 }
