@@ -12,6 +12,7 @@ resource "azurerm_redis_cache" "redis" {
 
 
 resource "azurerm_private_endpoint" "pep_redis" {
+  count               = var.private_endpoint ? 1 : 0
   name                = "pep-${var.resource}-${var.rg}"
   location            = var.location_vnet
   resource_group_name = var.rg
@@ -30,11 +31,12 @@ resource "azurerm_private_endpoint" "pep_redis" {
 }
 
 resource "azurerm_private_dns_a_record" "redis_recordset" {
+  count               = var.private_endpoint ? 1 : 0
   name                = azurerm_redis_cache.redis.name
   zone_name           = data.azurerm_private_dns_zone.dns_zone.name
   resource_group_name = var.rg_dns
   ttl                 = 3600
-  records             = [azurerm_private_endpoint.pep_redis.private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.pep_redis[0].private_service_connection[0].private_ip_address]
 
   depends_on = [azurerm_private_endpoint.pep_redis]
 }

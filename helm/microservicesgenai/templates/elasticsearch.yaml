@@ -1,0 +1,36 @@
+{{ if .Values.elastic.enabled }}
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: master
+  namespace: {{ .Values.namespace }}
+spec:
+  version: {{ .Values.elastic.version }}
+  nodeSets:
+  - name: {{ .Values.namespace }}
+    count: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: {{ .Values.elastic.requests_memory }}
+              cpu: {{ .Values.elastic.requests_cpu }}
+            limits:
+              memory: {{ .Values.elastic.limits_memory }}
+              cpu: {{ .Values.elastic.limits_cpu }}
+        nodeSelector:
+          agentpool: {{ .Values.nodePool }}
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.elastic.capacity }}
+    config:
+      node.store.allow_mmap: false
+{{ end }}
