@@ -685,6 +685,7 @@ class VertexPlatform(Platform):
             "Authorization": "Bearer " + generative_model.api_key,
             "Content-Type": "application/json",
         }
+        self.url = self.build_url(generative_model)
 
     def call_model(self, delta=0) -> dict:
         """Method to send the query to the endpoint
@@ -703,7 +704,7 @@ class VertexPlatform(Platform):
             self.logger.info(
                 f"Calling {self.MODEL_FORMAT} service with data {data_call}"
             )
-            if self.generative_model.model_type in ['gemini-1.5-pro-002', 'gemini-2.0-flash-exp']:
+            if self.generative_model.model_type in ['gemini-1.5-pro', 'gemini-2.0-flash']:
                 answer = requests.post(
                     url=self.url, headers=self.headers, data=data_call, timeout=self.timeout
                 )

@@ -248,19 +248,38 @@ class VertexQueryLimiter(QueryLimiter):
     @staticmethod
     def _get_n_tokens(pair: List[dict]) -> int:
         """
-        Method to get the number of tokens of the message.
+        Method to get the number of tokens from the message list and modify it.
 
         :param pair: List of messages.
         :return: Total number of tokens.
         """
-        n_tokens = 0
-        for message in pair:
+        total_tokens = 0
+
+        for i, message in enumerate(pair):
+            new_parts = []
+            current_part = {}
+
             for part in message.get("parts", []):
                 if "text" in part and isinstance(part["text"], dict):
-                    n_tokens += part["text"].pop("n_tokens", 0)
-                if "inlineData" in part and isinstance(part["inlineData"], dict):
-                    n_tokens += part["inlineData"].pop("n_tokens", 0)
-        return n_tokens
+                    total_tokens += part["text"].pop("n_tokens", 0)
+                    current_part["text"] = part["text"]["content"]
+
+                elif "inlineData" in part and isinstance(part["inlineData"], dict):
+                    total_tokens += part["inlineData"].pop("n_tokens", 0)
+                    current_part["inlineData"] = {
+                        "data": part["inlineData"].get("data", ""),
+                        "mimeType": part["inlineData"].get("mimeType", "")
+                    }
+
+                    new_parts.append(current_part)
+                    current_part = {}
+
+            if current_part:
+                new_parts.append(current_part)
+
+            message["parts"] = new_parts
+
+        return total_tokens
 
     @staticmethod
     def _get_num_images(pair: List[dict]) -> int:

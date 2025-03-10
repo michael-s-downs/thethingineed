@@ -121,6 +121,23 @@ class GeminiVMessage(Message):
         unitary_persistence = []
         for pair in self.persistence:
             for message in pair:
+                role = message.get('role', 'user')
+                if role == 'assistant':
+                    message['role'] = 'model'
+                unitary_persistence.append(message)
+        return unitary_persistence
+
+    '''def unitary_persistence(self) -> List:
+        """Given a persistence it will return a list with the messages in a unitary format.
+
+        :return: List with the messages in a unitary format
+        """
+        unitary_persistence = []
+        for pair in self.persistence:
+            for message in pair:
+                role = message.get('role', 'user')
+                if role == 'assistant':
+                    message['role'] = 'model'
                 if isinstance(message['content'], str):
                     message['parts'] = [{"text": message['content']}]
                     message.pop('content')
@@ -128,7 +145,7 @@ class GeminiVMessage(Message):
                     message['parts'] = message['content']
                     message.pop('content')
                 unitary_persistence.append(message)
-        return unitary_persistence
+        return unitary_persistence'''
 
     def preprocess(self):
         """Given a query and a context it will return the text in the Bedrock model format.

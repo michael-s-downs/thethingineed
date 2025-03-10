@@ -477,9 +477,19 @@ class GeminiAdapter(BaseAdapter):
         return int((height * width) / 750)  # Not accurate
     def _adapt_messages(self, messages):
         """Method to process messages and adapt text and images accordingly."""
+        for pair in messages:
+            if pair.get('content', ""):
+                if isinstance(pair['content'], str):
+                    pair['parts'] = [{"text": pair['content']}]
+                    pair.pop('content')
+                elif isinstance(pair['content'], list):
+                    pair['parts'] = pair['content']
+                    pair.pop('content')
         for message in messages:
             for part in message.get("parts", []):
                 if "text" in part:
+                    if part.get('type'):
+                        part.pop('type')
                     part["text"] = self._adapt_text(part["text"])
             for part in message.get("parts", []):
                 if "image" in part:
@@ -489,7 +499,6 @@ class GeminiAdapter(BaseAdapter):
         """Method to adapt text content by encoding and counting tokens."""
 
         if isinstance(text, dict) and text.get('n_tokens'):
-            text.pop('type', None)
             return {"content": text['content'], "n_tokens": text['n_tokens']}
         else:
             n_tokens = len(self.encoding.encode(text))
