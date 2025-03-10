@@ -11,7 +11,7 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   administrator_login    = var.rg
   administrator_password = random_password.mysql_password.result
 
-  sku_name = "B_Standard_B1ms"
+  sku_name = "GP_Standard_D2ads_v5"
   version  = "8.0.21"
   zone     = 1
 
@@ -20,16 +20,8 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   depends_on = [random_password.mysql_password]
 }
 
-resource "azurerm_mysql_flexible_server_configuration" "require_secure_transport" {
-  name                = "require_secure_transport"
-  value               = "OFF"
-  resource_group_name = var.rg
-  server_name         = azurerm_mysql_flexible_server.mysql.name
-
-  depends_on = [azurerm_mysql_flexible_server.mysql]
-}
-
 resource "azurerm_private_endpoint" "pep_mysql" {
+  count               = var.private_endpoint ? 1 : 0
   name                = "pep-${var.resource}-${var.rg}"
   location            = var.location_vnet
   resource_group_name = var.rg
@@ -48,11 +40,12 @@ resource "azurerm_private_endpoint" "pep_mysql" {
 }
 
 resource "azurerm_private_dns_a_record" "mysql_recordset" {
+  count               = var.private_endpoint ? 1 : 0
   name                = azurerm_mysql_flexible_server.mysql.name
   zone_name           = data.azurerm_private_dns_zone.dns_zone.name
   resource_group_name = var.rg_dns
   ttl                 = 3600
-  records             = [azurerm_private_endpoint.pep_mysql.private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.pep_mysql[0].private_service_connection[0].private_ip_address]
 
   depends_on = [azurerm_private_endpoint.pep_mysql]
 }

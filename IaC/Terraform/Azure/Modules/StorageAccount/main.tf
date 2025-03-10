@@ -26,6 +26,7 @@ resource "azurerm_storage_queue" "queues" {
 }
 
 resource "azurerm_private_endpoint" "pep_blob" {
+  count               = var.private_endpoint ? 1 : 0
   name                = "pep-${var.resource_blob}-${var.rg}"
   location            = var.location_vnet
   resource_group_name = var.rg
@@ -44,11 +45,12 @@ resource "azurerm_private_endpoint" "pep_blob" {
 }
 
 resource "azurerm_private_dns_a_record" "blob_recordset" {
+  count               = var.private_endpoint ? 1 : 0
   name                = azurerm_storage_account.sa.name
   zone_name           = data.azurerm_private_dns_zone.dns_zone_blob.name
   resource_group_name = var.rg_dns
   ttl                 = 3600
-  records             = [azurerm_private_endpoint.pep_blob.private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.pep_blob[0].private_service_connection[0].private_ip_address]
 
   depends_on = [azurerm_private_endpoint.pep_blob]
 }

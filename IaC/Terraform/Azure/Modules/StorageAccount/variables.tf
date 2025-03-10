@@ -76,3 +76,8 @@ variable "name_queues" {
   }))
   description = "Names of queues."
 }
+
+variable "private_endpoint" {
+  type        = bool
+  description = "Variable to decide if create private endpoint or not"
+}

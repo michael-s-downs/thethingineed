@@ -1,4 +1,6 @@
 # Native imports
+import json, os
+from typing import Literal, Optional, Union, Tuple, List
 import os
 import json
 from typing import Literal, Optional, Union, Tuple
@@ -192,8 +194,6 @@ class LLMMetadata(BaseModel):
     temperature: Optional[confloat(ge=0.0, le=2.0)] = None
     max_tokens: Optional[PositiveInt] = None
     stop: Optional[list] = None
-    functions: Optional[list] = None
-    function_call: Optional[str] = None
     seed: Optional[PositiveInt] = None
     response_format: Literal['url', 'bs64_json', 'json_object'] = None
     quality: Literal['standard', 'hd'] = None
@@ -206,16 +206,20 @@ class LLMMetadata(BaseModel):
     reasoning_effort: Optional[Literal['low', 'medium', 'high']] = None
     model: Optional[str] = None
     default_model: Optional[str] = None
+    tools: Optional[list] = None
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
 
-    @model_validator(mode='after')
-    def validate_functions_and_functions_call(self):
-        if self.functions and not self.function_call:
-            raise ValueError("Internal error, function_call is mandatory because you put the functions param")
-        elif self.function_call and not self.functions:
-            raise ValueError("Internal error, functions is mandatory because you put the function_call param")
+    @field_validator('tools')
+    def validate_tools(cls, v, values: FieldValidationInfo):
+        tool_names = set()
+        for tool in v:
+            if tool['name'] in tool_names:
+                raise ValueError(f"Duplicate tool name '{tool.name}' found.")
+            tool_names.add(tool['name'])
+            Tool(**tool)
+        return v
 
     @model_validator(mode='before')
     def validate_default_model(cls, values):
@@ -226,6 +230,52 @@ class LLMMetadata(BaseModel):
         values.pop('default_model', None)
         return values
 
+
+class InputSchema(BaseModel):
+    type: Union[str, List[str]] = None
+    properties: dict
+    required: List[str] = None
+
+    class Config:
+        extra = 'forbid'
+
+    @field_validator('properties')
+    def validate_properties(cls, v, values:FieldValidationInfo):
+        for key, prop in v.items():
+            Property(**prop)
+        return v
+
+    @model_validator(mode='after')
+    def validate_input_schema(cls, values):
+        if not values.properties:
+            raise ValueError("The 'properties' field is required and cannot be empty.")
+        if not values.required:
+            raise ValueError("The 'required' field is required and cannot be empty.")
+        if not values.type:
+            raise ValueError("The 'required' field is required and cannot be empty.")
+        required_fields = set(values.required)
+        defined_fields = set(values.properties.keys())
+        missing_fields = required_fields - defined_fields
+        if missing_fields:
+            raise ValueError(f"The required fields {missing_fields} are missing in properties.")
+        return values
+
+class Tool(BaseModel):
+    name: str
+    description: str
+    input_schema: InputSchema
+
+    class Config:
+        arbitrary_types_allowed = True  # Allow custom types (InputSchema)
+        extra = 'forbid'
+
+class Property(BaseModel):
+    type: Union[str, List[str]] = None
+    description: Optional[str] = None
+    enum: Optional[List[object]] = None
+    items: Optional[dict] = None
+    class Config:
+        extra = 'forbid'
 
 class PlatformMetadata(BaseModel):
     # Platform metadata

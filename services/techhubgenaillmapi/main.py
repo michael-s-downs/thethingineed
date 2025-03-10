@@ -210,13 +210,19 @@ class LLMDeployment(BaseDeployment):
             self.available_pools,
             self.models_config_manager,
         )
+        tools = None
+        if parsed_llm_metadata.get('tools'):
+            tools = parsed_llm_metadata['tools']
+        else:
+            parsed_llm_metadata['tools'] = tools
+
         # Check max_tokens in dalle
         if model.model_type == "dalle3" and model.max_input_tokens > 4000:
             raise PrintableGenaiError(
                 400,
                 "Error, in dalle3 the maximum number of characters in the prompt is 4000",
             )
-        return model
+        return model, tools
 
     def parse_query(self, query_metadata: dict, model: GenerativeModel):
         query_metadata["is_vision_model"] = model.is_vision
@@ -275,12 +281,12 @@ class LLMDeployment(BaseDeployment):
             )
 
         platform = self.parse_platform(json_input.get("platform_metadata", {}))
-        model = self.parse_model(json_input.get("llm_metadata", {}), platform)
+        model, tools = self.parse_model(json_input.get("llm_metadata", {}), platform)
         query_metadata = self.parse_query(json_input.get("query_metadata", {}), model)
         project_conf = self.parse_project_conf(
             json_input.get("project_conf", {}), model, platform
         )
-        return query_metadata, model, platform, project_conf["x_reporting"]
+        return query_metadata, model, platform, project_conf["x_reporting"], tools
 
     def get_validation_error_response(self, error):
         """Get validation error response
@@ -322,7 +328,7 @@ class LLMDeployment(BaseDeployment):
             json_input, queue_metadata = adapt_input_queue(json_input)
 
             # Parse and check input
-            query_metadata, model, platform, report_url = self.parse_input(json_input)
+            query_metadata, model, platform, report_url, tools = self.parse_input(json_input)
 
             # Set model
             platform.set_model(model)

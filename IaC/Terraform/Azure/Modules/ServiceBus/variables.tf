@@ -31,3 +31,8 @@ variable "name_queues" {
 variable "tags" {
   type = map(any)
 }
+
+variable "private_endpoint" {
+  type        = bool
+  description = "Variable to decide if create private endpoint or not"
+}
