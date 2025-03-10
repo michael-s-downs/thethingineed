@@ -181,12 +181,9 @@ class PreprocessOCRDeployment(BaseDeployment):
             files = [image['filename'] for image in path_images]
 
             try:
-                start_time = time.time()  
                 logger.debug("Downloading images from storage.")
                 normalized_files = [file.replace("\\", "/") for file in files]
                 download_batch_files_async(workspace, normalized_files, local_directory=os.path.dirname(normalized_files[0]))
-                end_time = time.time() 
-                logger.info(f"Time taken for downloading images: {end_time - start_time} seconds.")
                 if ocr == "llm-ocr":
                     logger.info("Images will be resized by LLM as llm-ocr model has been selected")
                 else:
@@ -199,11 +196,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                     
                     if resized_files:
                         remote_directory = os.path.dirname(resized_files[0])
-                        upload_start_time = time.time()
                         upload_batch_files_async(workspace, resized_files, remote_directory)
-                        upload_end_time = time.time()
-                        logger.info(f"Time taken for uploading resized images: {upload_end_time - upload_start_time:.2f} seconds.")
-
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error resizing images", exc_info=get_exc_info())
                 raise Exception(RESIZING_IMAGE_ERROR)
@@ -274,7 +267,6 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.info("Uploading files to storage.")
                 upload_docs['text'].append((path_file_text, path_file_text))
 
-                total_upload_time = 0
                 for key, paths in upload_docs.items():
                     if ocr == "llm-ocr" and key not in ["text"]: 
                         continue # In llm-ocr cells paragraphs words tables and lines are not extracted 
@@ -289,12 +281,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                             files_by_directory.setdefault(remote_dir, []).append(local_path)
                         
                         for remote_dir, local_files in files_by_directory.items():
-                            upload_start_time = time.time()
                             upload_batch_files_async(workspace, local_files, remote_dir)
-                            upload_end_time = time.time()
-                            upload_time = upload_end_time - upload_start_time
-                            total_upload_time += upload_time
-                            self.logger.info(f"Time taken for uploading {len(local_files)} files to {remote_dir}: {upload_time:.2f} seconds.")
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error uploading files to storage", exc_info=get_exc_info())
                 raise Exception(UPLOADING_FILES_ERROR)

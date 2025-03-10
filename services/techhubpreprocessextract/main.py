@@ -210,7 +210,6 @@ class PreprocessExtractDeployment(BaseDeployment):
                         page_limit = int(os.getenv('LLM_OCR_PAGE_LIMIT', 5)) 
                         generic['preprocess_conf']['page_limit'] = page_limit
 
-                    start_time = time.time()  # Start timing
                     p = Process(target=extract_text, args=(filename, num_pags, generic, specific, do_cells_text, do_lines_text, return_dict))
                     p.start()
                     p.join(process_timeout * 60)  # Timeout
@@ -221,9 +220,7 @@ class PreprocessExtractDeployment(BaseDeployment):
                     files_extracted.update(return_dict)
 
                     text_extracted = files_extracted['text'] != ""
-                    end_time = time.time()  # End timing
                     self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: {page_limit}.")
-                    self.logger.info(f"Time taken for extracting text from the first 5 pages: {end_time - start_time} seconds.")
 
                 except Exception:
                     self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())

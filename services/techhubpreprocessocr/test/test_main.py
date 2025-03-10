@@ -898,7 +898,296 @@ def test_remove_local_files_error(mocker, preprocess_deployment):
     assert message == json_input_invalid
     assert next_service == 'preprocess_end'
 
+def test_process_image_resizing_branches(mocker, preprocess_deployment):
+    common_mocks = {
+        'get_generic': mocker.patch('main.get_generic', return_value={
+            'project_conf': {
+                'department': 'DEPARTMENT_NAME',
+                'extract_tables': False,
+            }
+        }),
+        'get_specific': mocker.patch('main.get_specific', return_value={
+            'paths': {
+                'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
+                'text': 'path_to_text',
+                'cells': 'path_to_cells',
+                'tables': 'path_to_tables',
+                'txt': 'path_to_txt'
+            },
+            'path_img': 'path_to_image',
+            'path_cells': 'path_to_cells',
+            'path_text': 'path_to_text',
+            'path_txt': 'path_to_txt',
+            'path_tables': 'path_to_tables'
+        }),
+        'get_project_config': mocker.patch('main.get_project_config', return_value={
+            'process_id': '123',
+            'process_type': 'test',
+            'report_url': 'http://test.url',
+            'department': 'test',
+            'tenant': 'test'
+        }),
+        'get_document': mocker.patch('main.get_document', return_value={
+            'n_pags': 5, 
+            'filename': 'test_file.pdf', 
+            'language': 'en'
+        }),
+        'get_metadata_conf': mocker.patch('main.get_metadata_conf', return_value={}),
+        'get_do_cells_ocr': mocker.patch('main.get_do_cells_ocr'),
+        'get_do_lines_ocr': mocker.patch('main.get_do_lines_ocr'),
+        'upload_files': mocker.patch('main.upload_files'),
+        'get_image_size': mocker.patch('main.get_image_size', return_value=10.0),
+        'download_batch_files_async': mocker.patch('main.download_batch_files_async'),
+        'upload_batch_files_async': mocker.patch('main.upload_batch_files_async')
+    }
+    
+    for name, mock_obj in common_mocks.items():
+        globals()[name] = mock_obj
 
+    mocker.patch('main.get_ocr_files', return_value={'text': [('remote_text.txt', 'local_text.txt')]})
+    mocker.patch.object(preprocess_deployment, 'merge_files_text')
+    mocker.patch('os.makedirs')
+    mocker.patch('builtins.open', mock_open())
+    mocker.patch('main.format_indexing_metadata', side_effect=lambda text, filename, num_pags, metadata: text)
+    mocker.patch('main.get_language', return_value='en')
+    mocker.patch('main.remove_local_files')
+    mocker.patch('main.update_status')
+    mocker.patch('main.chunk', return_value=[
+        [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
+    ])
+    
+    mock_logger = mocker.patch('main.logger')
+    
+    get_ocr_config_llm = mocker.patch('main.get_ocr_config', return_value={
+        'files_size': 10,
+        'batch_length': 5,
+        'calls_per_minute': 10,
+        'ocr': 'llm-ocr',
+        'extract_tables': False,
+        'llm_ocr_conf': {
+            "model": "test",
+            "platform": "test",  
+            "query": "test:",
+            "system": "test",
+            "max_tokens": 1000
+        }
+    })
+
+    mock_logger.reset_mock()
+    
+    json_input = {'input': 'data'}
+    must_continue, message, next_service = preprocess_deployment.process(json_input)
+    
+    mock_logger.info.assert_any_call("Images will be resized by LLM as llm-ocr model has been selected")
+    
+    get_ocr_config_standard = mocker.patch('main.get_ocr_config', return_value={
+        'files_size': 10,
+        'batch_length': 5,
+        'calls_per_minute': 10,
+        'ocr': 'standard-ocr',
+        'extract_tables': False
+    })
+    
+    resize_image_mock = mocker.patch('main.resize_image', side_effect=[
+        (None, True),   
+        (None, False)  
+    ])
+    
+    mock_logger.reset_mock()
+    
+    must_continue, message, next_service = preprocess_deployment.process(json_input)
+
+    mock_logger.info.assert_any_call("Resizing images if is necesary.")
+    
+    assert resize_image_mock.call_count == 2
+    
+    upload_batch_files_async = common_mocks['upload_batch_files_async']
+    upload_batch_files_async.assert_called()
+
+def test_process_pag_in_local_path(mocker, preprocess_deployment):
+    mocker.patch('main.get_generic', return_value={
+        'project_conf': {
+            'department': 'DEPARTMENT_NAME',
+            'extract_tables': False,
+        }
+    })
+    mocker.patch('main.get_specific', return_value={
+        'paths': {
+            'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
+            'text': 'path_to_text',
+            'cells': 'path_to_cells',
+            'tables': 'path_to_tables',
+            'txt': 'path_to_txt'
+        },
+        'path_img': 'path_to_image',
+        'path_cells': 'path_to_cells',
+        'path_text': 'path_to_text',
+        'path_txt': 'path_to_txt',
+        'path_tables': 'path_to_tables'
+    })
+    mocker.patch('main.get_project_config', return_value={
+        'process_id': '123',
+        'process_type': 'test',
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
+    })
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
+    mocker.patch('main.get_metadata_conf', return_value={})
+    mocker.patch('main.get_ocr_config', return_value={
+        'files_size': 10,
+        'batch_length': 5,
+        'calls_per_minute': 10,
+        'ocr': 'test-ocr',
+        'extract_tables': False
+    })
+    mocker.patch('main.get_do_cells_ocr')
+    mocker.patch('main.get_do_lines_ocr')
+    mocker.patch('main.resize_image', return_value=(None, True))
+    mocker.patch('main.get_image_size', return_value=10.0)
+    mocker.patch('main.download_batch_files_async')
+
+    mocker.patch('main.chunk', return_value=[
+        [{'filename': 'image1.jpeg', 'size': 5}, {'filename': 'image2.jpeg', 'size': 10}]
+    ])
+    
+    mock_get_ocr_files = mocker.patch('main.get_ocr_files', return_value={
+        'text': [
+            ('/remote/path/file.txt', '/local/path/file.txt'),  
+            ('/remote/path/file_pag_1.txt', '/local/path/file_pag_1.txt')  
+        ],
+        'cells': [],
+        'paragraphs': [],
+        'words': [],
+        'tables': [],
+        'lines': [],
+        'txt': []
+    })
+    
+    upload_batch_mock = mocker.patch('main.upload_batch_files_async')
+    
+    mocker.patch.object(preprocess_deployment, 'merge_files_text')
+    mocker.patch('os.makedirs')
+    mocker.patch('builtins.open', mock_open(read_data='sample text'))
+    mocker.patch('main.format_indexing_metadata', side_effect=lambda text, filename, num_pags, metadata: text)
+    mocker.patch('main.get_language', return_value='en')
+    mocker.patch('main.remove_local_files')
+    mocker.patch('main.update_status')
+    
+    json_input = {'input': 'data'}
+    must_continue, message, next_service = preprocess_deployment.process(json_input)
+    
+    upload_calls = upload_batch_mock.call_args_list
+
+    pags_call_found = False
+    for call in upload_calls:
+        args, kwargs = call
+        remote_dir = args[2]  
+        if "pags" in remote_dir:
+            pags_call_found = True
+            break
+    
+    assert pags_call_found, "No upload call found with 'pags' in the remote directory"
+    
+    assert must_continue is True
+    assert message == json_input
+    assert next_service == 'preprocess_end'
+
+def test_process_llm_ocr_queue_mode(mocker, preprocess_deployment):
+    mocker.patch('main.get_generic', return_value={
+        'project_conf': {
+            'department': 'DEPARTMENT_NAME',
+            'extract_tables': False,
+        }
+    })
+    mocker.patch('main.get_specific', return_value={
+        'paths': {
+            'images': [{'filename': 'image1.jpeg', 'number': 0}, {'filename': 'image2.jpeg', 'number': 1}],
+            'text': 'path_to_text',
+            'cells': 'path_to_cells',
+            'tables': 'path_to_tables',
+            'txt': 'path_to_txt'
+        },
+        'path_img': 'path_to_image',
+        'path_cells': 'path_to_cells',
+        'path_text': 'path_to_text',
+        'path_txt': 'path_to_txt',
+        'path_tables': 'path_to_tables'
+    })
+    mocker.patch('main.get_project_config', return_value={
+        'process_id': '123',
+        'process_type': 'test',
+        'report_url': 'http://test.url',
+        'department': 'test',
+        'tenant': 'test'
+    })
+    mocker.patch('main.get_document', return_value={'n_pags': 5, 'filename': 'test_file.pdf', 'language': 'en'})
+    mocker.patch('main.get_metadata_conf', return_value={})
+    
+    mocker.patch('main.get_ocr_config', return_value={
+        'files_size': 10,
+        'batch_length': 5,
+        'calls_per_minute': 10,
+        'ocr': 'llm-ocr',
+        'extract_tables': False,
+        'llm_ocr_conf': {
+            "model": "test",
+            "platform": "test",  
+            "query": "test:",
+            "system": "test",
+            "max_tokens": 1000
+        }
+    })
+    
+    mocker.patch('main.get_do_cells_ocr', return_value=True)
+    mocker.patch('main.get_do_lines_ocr', return_value=True)
+    mocker.patch('main.resize_image', return_value=(None, True))
+    mocker.patch('main.get_image_size', return_value=10.0)
+    mocker.patch('main.download_batch_files_async')
+    mocker.patch('main.upload_batch_files_async')
+    
+    mocker.patch('main.LLMOCR.get_queue_mode', return_value=True)
+    
+    get_ocr_files_mock = mocker.patch('main.get_ocr_files')
+    
+    mock_extract_docs = {
+        'text': [('/remote/path/file.txt', '/local/path/file.txt')],
+        'cells': [('/remote/path/cell.txt', '/local/path/cell.txt')],
+        'words': [],
+        'tables': [],
+        'lines': [],
+        'paragraphs': [],
+        'txt': []
+    }
+    get_ocr_files_mock.return_value = mock_extract_docs
+    
+    mocker.patch.object(preprocess_deployment, 'merge_files_text')
+    mocker.patch('os.makedirs')
+    mocker.patch('builtins.open', mock_open(read_data='sample text'))
+    mocker.patch('main.format_indexing_metadata', side_effect=lambda text, filename, num_pags, metadata: text)
+    mocker.patch('main.get_language', return_value='en')
+    mocker.patch('main.remove_local_files')
+    mocker.patch('main.update_status')
+    
+    json_input = {'input': 'data'}
+    must_continue, message, next_service = preprocess_deployment.process(json_input)
+    
+    assert must_continue is True
+    assert message == json_input
+    assert next_service == 'preprocess_end'
+    
+    get_ocr_files_mock.assert_called_once()
+    args, kwargs = get_ocr_files_mock.call_args
+    
+    assert len(args) >= 6  
+    assert 'llm_ocr_conf' in kwargs
+    assert kwargs['llm_ocr_conf']['headers']['x-department'] == 'test'
+    assert kwargs['llm_ocr_conf']['language'] == 'en'
+    
+    preprocess_deployment.merge_files_text.assert_called_once()
+    
+    upload_batch_files_async = main.upload_batch_files_async
+    upload_batch_files_async.assert_called()
 
 if __name__ == '__main__':
     pytest.main()

@@ -92,8 +92,17 @@ def test_get_json_generic(mock_deepcopy, deployment):
 @patch('main.get_dataset_config')
 def test_get_json_specific(mock_get_dataset_config, deployment):
     """Test get_json_specific returns correct output."""
-    mock_get_dataset_config.return_value = {'dataset_id': 'sample_id'}
-    generic = {'project_conf': {'process_id': 'process1', "department":"main"}, 'dataset_conf': {'dataset_id': 'dataset1'}}
+    mock_get_dataset_config.return_value = {'dataset_id': 'sample_id', 'dataset_path': 'path/to/dataset'}
+    generic = {
+        'project_conf': {
+            'process_id': 'process1',
+            'department': 'main'
+        },
+        'dataset_conf': {
+            'dataset_id': 'dataset1',
+            'dataset_path': 'path/to/dataset'
+        }
+    }
     
     specific = deployment.get_json_specific(generic)
     assert 'path_txt' in specific
