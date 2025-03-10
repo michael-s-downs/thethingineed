@@ -68,3 +68,8 @@ variable "CREATE_SB" {
   type        = bool
   description = "Variable to decide if create sb or azure storage queue"
 }
+
+variable "DEPLOY_PRIVATE_ENDPOINT_BY_RESOURCE" {
+  type        = map(bool)
+  description = "Variables to decide if create private endpoint or not by resource"
+}
