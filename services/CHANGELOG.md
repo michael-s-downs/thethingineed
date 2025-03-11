@@ -37,10 +37,18 @@
   - [Improvement] Endpoint get_documents_filenames updated from POST request type to GET request type and to use url params instead of the body. Example: '/get_documents_filenames?index=myindex'
 - flowmgmt-checkend:
   - [Improvement] Quit star imports and set only the required
+- preprocess-start: 
+  - [Improvement] Normalized path structure for Microsoft Azure Storage Explorer by extracting request_id from dataset_path and building standardized paths
 - preprocess-extract:
   - [Improvement] Quit star imports and set only the required
+  - [Improvement] Limited pages extracted for language detection with configurable environment variable (LLM_OCR_PAGE_LIMIT)
+- preprocess-ocr:
+  - [Improvement] Implemented asynchronous methods for file download and upload operations to improve performance
+  - [Improvement] Standardized path structure for Microsoft Azure Storage Explorer
 - common:
   - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+  - [Improvement] Refactored the format_path_files function to use os.path for more robust path handling
+  - [Improvement] Enhanced extract_images_conditional function to use standardized path construction and asynchronous upload.
 - ALL:
   - [Improvement] Update and fix status_codes
   - [Improvement] Fixed maintainability warnings from sonarqube
