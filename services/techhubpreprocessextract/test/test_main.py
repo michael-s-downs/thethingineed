@@ -1518,4 +1518,76 @@ class TestPreprocessExtractDeployment:
         assert must_continue is True
         assert next_service == "preprocess_ocr"
 
+    @patch("main.Process")
+    @patch("main.update_status")
+    @patch("main.upload_object")
+    @patch("main.download_file")
+    @patch("main.get_num_pages")
+    @patch("os.remove")
+    @patch("main.remove_local_files")
+    @patch("os.getenv", return_value="3")
+    def test_process_with_ocr_conf_no_query_alt(
+        self,
+        mock_getenv,
+        mock_remove_local_files,
+        mock_os_remove,
+        mock_get_num_pages,
+        mock_download_file,
+        mock_upload_object,
+        mock_update_status,
+        mock_process,
+    ):
+        """Alternative approach to test OCR config with no query"""
+        json_input = {
+            "generic": {
+                "preprocess_conf": {
+                    "page_limit": 10, 
+                    "ocr_conf": {"some_config": "value"}  
+                }
+            },
+            "specific": {
+                "path_txt": "/txt",
+                "path_cells": "/cells",
+                "path_text": "/text",
+                "document": {"filename": "example.pdf"},
+            },
+            "document": {"filename": "example.pdf"},
+        }
 
+        mock_proc = MagicMock()
+        mock_process.return_value = mock_proc
+        mock_proc.is_alive.return_value = False
+        
+        extract_text_func = None
+        
+        def process_side_effect(*args, **kwargs):
+            nonlocal extract_text_func
+            extract_text_func = args[1]  
+            return mock_proc
+        
+        mock_process.side_effect = process_side_effect
+        
+        mock_manager = MagicMock()
+        mock_return_dict = {'lang': "en", 'text': "text", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
+        mock_manager().dict.return_value = mock_return_dict
+        
+        with patch("main.Manager", return_value=mock_manager), \
+            patch("main.get_generic", return_value=json_input["generic"]), \
+            patch("main.get_specific", return_value=json_input["specific"]), \
+            patch("main.get_document", return_value={"filename": "example.pdf"}), \
+            patch("main.get_project_type", return_value="text"), \
+            patch("main.get_force_ocr", return_value=False), \
+            patch("main.get_languages", return_value=["en"]), \
+            patch("main.get_do_cells_text", return_value=False), \
+            patch("main.get_do_lines_text", return_value=False), \
+            patch("main.get_do_segments", return_value=False), \
+            patch("main.extract_text") as mock_extract_text:
+            
+            must_continue, message, next_service = self.deployment.process(json_input)
+            
+            assert json_input["generic"]["preprocess_conf"]["page_limit"] == 3
+            
+            assert mock_process.called
+            
+            assert must_continue is True
+            assert next_service == PREPROCESS_END_SERVICE

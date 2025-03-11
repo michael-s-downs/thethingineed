@@ -427,6 +427,7 @@ Appart from that cases, a normal flow for the preprocess extract component is th
 2. Once the file has been downloaded (mandatory to extract the case) it will be extracted if necessary and if it has been extracted, it will be uploaded to the storage and the 'preprocess-extract' component will send the next message to the 'preprocess-end'. Otherwise if the 'force_ocr' parameter is passed as 'True' or the text could not be extracted it will go to 'preprocess-ocr' and the text file will not be uploaded to the storage.
 3. In the cases that the flow must continue for the 'preprocess-ocr', 'preprocess-extract' will generate the images (one page is one image file) and upload them to the file storage, inserting the path in the input JSON and sending it to the 'preprocess-ocr'.
 
+When using PDFMiner for language detection in LLM OCR, the component now limits the number of pages processed for language detection using the optional 'LLM_OCR_PAGE_LIMIT' environment variable (5 by default), improving efficiency for large documents.
 
 #### Environment variables
 * <b>PROVIDER</b>: Cloud service to use to load the configuration files (aws or azure).
@@ -438,6 +439,7 @@ Appart from that cases, a normal flow for the preprocess extract component is th
 * <b>REDIS_DB_STATUS</b>: Identifier of redis database to save process status (int)
 * <b>STORAGE_BACKEND</b>: Name of bucket/blob to store configuration files and all the process related files.
 * <b>STORAGE_DATA</b>: Name of bucket/blob to store datasets.
+* <b>LLM_OCR_PAGE_LIMIT</b>: Configurable limit for the number of pages extracted for language detection when using LLM OCR.
 * Optional:
   - <b>SECRETS_PATH</b>: Path to the secrets folder.
   - <b>TENANT:</b> Tenant where the process is running.
@@ -471,6 +473,8 @@ These different OCRs, share the same flow except the 'LLMAPI' working as queue t
 2. Then batch the pages and send them to the specified OCR. If 'LLMAPI' working as queue selected the batches will not be done as works by queues and rate limit with the service is more difficult to generate (we recommend using a pool of models to avoid it in the LLM calling).
 3. If the OCR extraction goes right the pages will be merged and uploaded to the storage (both merged and individually).
 4. This component, will always end in the 'preprocess-end' component even if there is an error during the flow.
+
+Recent performance improvements include implementation of asynchronous methods for images download and upload operations, significantly improving processing speed, especially for batches with multiple pages.
 
 #### Environment variables
 

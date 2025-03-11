@@ -124,14 +124,15 @@ class PreprocessStartDeployment(BaseDeployment):
         process_id = project_conf.get('process_id')
         dataset_id = dataset_conf.get('dataset_id')
         department = project_conf.get('department')
-        base_path = os.path.join(department, dataset_id)
+        request_id = dataset_conf.get('dataset_path').split("/")[-1]
+        base_path = "/".join([department, dataset_id, request_id])
 
         specific = {
-            'path_txt': os.path.join(base_path, "txt"),
-            'path_text': os.path.join(base_path, "text"),
-            'path_img': os.path.join(base_path, "imgs"),
-            'path_cells': os.path.join(base_path, "cells"),
-            'path_tables': os.path.join(base_path, "tables"),
+            'path_txt': "/".join([base_path, "txt"]),
+            'path_text': "/".join([base_path, "text"]),
+            'path_img': "/".join([base_path, "imgs"]),
+            'path_cells': "/".join([base_path, "cells"]),
+            'path_tables': "/".join([base_path, "tables"]),
             'dataset': {
                 'dataset_key': self.sep.join([process_id, dataset_id])
             }
