@@ -427,7 +427,7 @@ Appart from that cases, a normal flow for the preprocess extract component is th
 2. Once the file has been downloaded (mandatory to extract the case) it will be extracted if necessary and if it has been extracted, it will be uploaded to the storage and the 'preprocess-extract' component will send the next message to the 'preprocess-end'. Otherwise if the 'force_ocr' parameter is passed as 'True' or the text could not be extracted it will go to 'preprocess-ocr' and the text file will not be uploaded to the storage.
 3. In the cases that the flow must continue for the 'preprocess-ocr', 'preprocess-extract' will generate the images (one page is one image file) and upload them to the file storage, inserting the path in the input JSON and sending it to the 'preprocess-ocr'.
 
-When using LLM OCR for language detection, the component now limits the number of pages processed for language detection using the configurable LLM_OCR_PAGE_LIMIT environment variable, improving efficiency for large documents.
+When using PDFMiner for language detection in LLM OCR, the component now limits the number of pages processed for language detection using the optional 'LLM_OCR_PAGE_LIMIT' environment variable (5 by default), improving efficiency for large documents.
 
 #### Environment variables
 * <b>PROVIDER</b>: Cloud service to use to load the configuration files (aws or azure).
@@ -474,7 +474,7 @@ These different OCRs, share the same flow except the 'LLMAPI' working as queue t
 3. If the OCR extraction goes right the pages will be merged and uploaded to the storage (both merged and individually).
 4. This component, will always end in the 'preprocess-end' component even if there is an error during the flow.
 
-Recent performance improvements include implementation of asynchronous methods for file download and upload operations, significantly improving processing speed, especially for batches with multiple pages.
+Recent performance improvements include implementation of asynchronous methods for images download and upload operations, significantly improving processing speed, especially for batches with multiple pages.
 
 #### Environment variables
 
