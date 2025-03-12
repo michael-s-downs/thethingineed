@@ -171,6 +171,18 @@ class ParserInfoindexing(Parser):
         self.index = vector_storage_conf['index']
         self.metadata_primary_keys = self.get_metadata_primary_keys(vector_storage_conf)
         self.vector_storage = self.get_vector_storage(vector_storages, vector_storage_conf)
+        self.db_type = self.get_db_type(vector_storage_conf)
+    
+    def get_db_type(self, vector_storage_conf):
+        db_type = vector_storage_conf.get("db_type")
+        if not db_type:
+            self.logger.info("No db_type received, using elastic search.")
+            return "LLamaIndex_elastic"
+        if not isinstance(db_type, str):
+            raise PrintableGenaiError(400, "Param from vector_storage_conf 'db_type' must be a list")
+        
+        return db_type
+        
 
     def get_metadata_primary_keys(self, vector_storage_conf):
         metadata_primary_keys = vector_storage_conf.get('metadata_primary_keys')

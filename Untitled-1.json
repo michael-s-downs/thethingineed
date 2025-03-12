@@ -1,0 +1,34 @@
+{
+    "session_id": "41bb11f6-6892-49d2-b42b-584c2d11e511",
+    "template": {
+        "name": "retrieve_reference",
+        "params": {
+            "query": "explain the main requierements from ESRS 1",
+            "index": "kh42ei40wrszua3dyros",
+            "filters": {
+                "item_id": [
+                    "3eacee1a-e2b1-4267-af1a-f155c132b122"
+                ]
+            },
+            "model": "techhub-pool-world-gpt-4o",
+            "platform": "azure",
+            "llm_template": "rag_with_references",
+            "top_k": 5,
+            "system": "You are an helpful assistant.",
+            "embedding_model": "techhub-pool-world-ada-002",
+            "rescoring_function": "mean",
+            "strategy_mode": "reciprocal_rerank",
+            "sort_desc": false,
+            "sort_type": "date",
+            "groupby_method": "max",
+            "groupby_type": "docscore",
+            "groupby_desc": true
+        }
+    },
+    "persist": {
+        "type": "chat",
+        "params": {
+            "max_persistence": 20
+        }
+    }
+}

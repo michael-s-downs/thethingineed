@@ -148,6 +148,7 @@ class PersistDict():
             )
             del self.PD[session_id]
         except Exception as ex:
+            del self.PD[session_id]
             raise PrintableGenaiError(status_code=500, message=f"{ex}. \nError saving session to redis.")
             
     def __getitem__(self, key):
