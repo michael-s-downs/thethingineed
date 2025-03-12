@@ -8,9 +8,12 @@ from unittest.mock import MagicMock, patch
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
-from common.models_manager import BaseModelConfigManager
-from generatives import (ManagerModel, GenerativeModel, ChatGPTModel, GenerativeModel, DalleModel,
-                         ChatGPTVision, ChatClaudeModel, ChatClaudeVision, LlamaModel, ChatNova, ChatNovaVision, NovaModel)
+from models.managergeneratives import ManagerModel
+
+from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel, ChatGPTOVisionModel
+from models.claudemodel import ChatClaudeModel, ChatClaudeVision
+from models.llamamodel import LlamaModel
+from models.novamodel import ChatNova, ChatNovaVision, NovaModel
 
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
@@ -49,7 +52,7 @@ claude_model = {
 llama3_model = {
     "model": "meta-llama-3-70b-NorthVirginiaEast",
     "model_id": "meta.llama3-70b-instruct-v1:0",
-    "model_type": "llama3-v1-70b",
+    "model_type": "llama3-70b-v1",
     "max_input_tokens": 8000,
     "zone": "us-east-1",
     "message": "chatLlama3",
@@ -60,7 +63,7 @@ llama3_model = {
 claude3_model = {
     "model": "claude-3-haiku-ParisWest",
     "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
-    "model_type": "claude-v3-haiku",
+    "model_type": "claude-3-5-haiku-v1:0",
     "max_input_tokens": 200000,
     "zone": "eu-west-3",
     "message": "chatClaude-v",
@@ -99,6 +102,37 @@ nova_v_model = {
 	"zone": "us-east-1",
 	"message": "chatNova-v",
 	"model_pool": ["techhubdev-pool-us-nova-lite-1:0","techhubdev-pool-world-nova-lite-1:0","techhub-pool-world-nova-lite-1:0"],
+    "models_credentials": {}
+}
+
+o_model={
+    "model": "techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31",
+    "model_type": "gpt-o3-mini",
+    "max_input_tokens": 200000,
+    "zone": "techhubdev-SwedenCentral",
+    "api_version": "2024-12-01-preview",
+    "model_pool": ["techhubdev-pool-eu-gpt-o3-mini","techhubdev-pool-world-gpt-o3-mini", "techhub-pool-world-gpt-o3-mini"],
+    "models_credentials": {}
+}
+
+o1_mini_model = {
+    "model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12",
+    "model_type": "gpt-o1-mini",
+    "max_input_tokens": 128000,
+    "zone": "techhubdev-SwedenCentral",
+    "api_version": "2024-12-01-preview",
+    "model_pool": ["techhubdev-pool-eu-gpt-o3-mini","techhubdev-pool-world-gpt-o3-mini", "techhub-pool-world-gpt-o3-mini"],
+    "models_credentials": {}
+}
+
+o_v_model={
+    "model": "techhubdev-SwedenCentral-gpt-o1-2024-12-17",
+    "model_type": "gpt-o1",
+	"max_input_tokens": 200000,
+	"max_img_size_mb": 20.00,
+	"zone": "techhubdev-SwedenCentral",
+	"api_version": "2024-12-01-preview",
+	"model_pool": ["techhubdev-pool-eu-gpt-o1","techhubdev-pool-world-gpt-o1","techhub-pool-world-gpt-o1"],
     "models_credentials": {}
 }
 
@@ -150,9 +184,6 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
         gpt = ManagerModel.get_model({"model": gpt_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(gpt, ChatGPTModel)
-        manager_models_config.get_model.return_value = copy.deepcopy(claude_model)
-        claude = ManagerModel.get_model({"model": claude_model['model']}, "bedrock", available_pools, manager_models_config)
-        assert isinstance(claude, ChatClaudeModel)
         manager_models_config.get_model.return_value = copy.deepcopy(dalle_model)
         dalle = ManagerModel.get_model({"model": dalle_model['model']}, "azure", available_pools, manager_models_config)
         assert isinstance(dalle, DalleModel)
@@ -168,6 +199,15 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(nova_v_model)
         novav = ManagerModel.get_model({"model": nova_v_model['model']}, "bedrock", available_pools, manager_models_config)
         assert isinstance(novav, ChatNovaVision)
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        chatgpto = ManagerModel.get_model({"model": o_model['model'], "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+        assert isinstance(chatgpto, ChatGPTOModel)
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+        chatgpt_o1_mini = ManagerModel.get_model({"model": o1_mini_model['model']}, "azure",available_pools, manager_models_config)
+        assert isinstance(chatgpt_o1_mini, ChatGPTOModel)
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        chatgptovision = ManagerModel.get_model({"model": o_v_model['model'], "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+        assert isinstance(chatgptovision, ChatGPTOVisionModel)
 
 
     def test_pool_model(self):
@@ -176,40 +216,62 @@ class TestManagerGeneratives:
         gptv = ManagerModel.get_model({"model": "techhubinc-pool-world-gpt-4o"}, "azure", available_pools, manager_models_config)
         assert isinstance(gptv, ChatGPTVision)
 
+    def test_get_model_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
 
+        with pytest.raises(PrintableGenaiError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31", "max_tokens": 1000}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: max_tokens not supported in model: techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31"
+
+    def test_get_model_reasoning_effort_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+
+        with pytest.raises(ValueError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12", "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: 'reasoning_effort' not supported in model: 'gpt-o1-mini'."
+
+    def test_get_model_stop_error(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o1_mini_model)
+
+        with pytest.raises(ValueError) as exc_info:
+            ManagerModel.get_model({"model": "techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12", "stop": []}, "azure", available_pools, manager_models_config)
+
+        assert "Parameter: 'stop' not supported in model: 'gpt-o1-mini'."
 
 class TestGPTModel:
 
     def test_parse_data(self):
         conf = {
             "model": gpt_model['model'],
-            "functions": [
-                {
-                    "name": "get_age",
-                    "description": "Get the age of the user that use the app.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "age": {
-                                "type": "string",
-                                "description": "user age"
-                            }
-
-                        }
-                    }
-                }
-            ],
-            "function_call": "auto",
             "seed": 42,
             "response_format": "json_object",
-            "max_tokens": 100
+            "max_tokens": 100,
+            "tools":[
+                {
+                    "name": "print_sentiment_scores",
+                    "description": "Prints the sentiment scores of a given text.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                            "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                            "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                        },
+                        "required": ["positive_score", "negative_score", "neutral_score"]
+                    }
+                }
+            ]
         }
         manager_models_config = MagicMock()
         manager_models_config.get_model.return_value = copy.deepcopy(gpt_model)
         gpt = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
         gpt.set_message(message_dict)
         gpt.parse_data()
-        assert gpt.functions == conf["functions"]
 
         conf['response_format'] = "dd"
         conf['model'] = gpt_model['model']
@@ -244,10 +306,6 @@ class TestGPTModel:
         result = gpt.get_result(mock_response)
         assert result['status_code'] == 400 and result['error_message'] == "content_filter"
 
-        mock_response['choices'] = [{"finish_reason": "function_call", "message": {"function_call": {"arguments": "age=20"}}}]
-        result = gpt.get_result(mock_response)
-        assert result['result']['answer'] == "age=20"
-
         mock_response['choices'] = [{"finish_reason": "ss"}]
         with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
                                                                 "{'finish_reason': 'ss'}.")):
@@ -276,6 +334,51 @@ class TestGPTModel:
         expected_output = (f"{{model:{conf['model']}, max_tokens:{conf['max_tokens']}, "
                            f"temperature:{conf['temperature']}, n:{conf['n']}}}")
         assert repr(gpt) == expected_output
+
+    def test_tools(self):
+        message = {"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again.", "template": {
+            "system": "You are a helpful assistant.",
+            "user": "Answer me gently the query: $query"
+        }
+        }
+        mock_response = {'choices': [{'content_filter_results': {}, 'finish_reason': 'tool_calls', 'index': 0, 'logprobs': None, 'message': {'content': None, 'refusal': None, 'role': 'assistant', 'tool_calls': [{'function': {'arguments': '{"positive_score":0.1,"negative_score":0.7,"neutral_score":0.2}', 'name': 'print_sentiment_scores'}, 'id': 'call_AzZFOq16VLlCccgHOy8IOnSF', 'type': 'function'}]}}],'usage': {'completion_tokens': 33, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 137, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 170}}
+        conf = copy.deepcopy(gpt_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 0
+        conf['max_tokens'] = 100
+        conf['n'] = 1
+        conf['tools'] = [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                    },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
+        gpt = ChatGPTModel(**conf)
+        gpt.set_message(message)
+        result = gpt.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' in result['result']
+
+        conf.pop('temperature')
+        conf.pop('max_tokens')
+        gpt = ChatGPTOModel(**conf)
+        gpt.set_message(message)
+        result = gpt.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' in result['result']
+
+        gpt = ChatGPTOVisionModel(**conf)
+        gpt.set_message(message)
+        result = gpt.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' in result['result']
 
 
 class TestClaudeModel:
@@ -317,6 +420,39 @@ class TestClaudeModel:
         expected_output = (f"{{model:{conf['model']}, max_tokens:{conf['max_tokens']}, "
                            f"temperature:{conf['temperature']}}}")
         assert repr(gpt) == expected_output
+
+    def test_tools(self):
+        message = {"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again.", "template": {
+            "system": "You are a helpful assistant.",
+            "user": "Answer me gently the query: $query"
+        }
+        }
+        mock_response = {'ResponseMetadata': {'RequestId': '07598a2a-f809-43fa-b04a-3fb5134566c2', 'HTTPStatusCode': 200}, 'contentType': 'application/json', 'body': io.StringIO(json.dumps({'id': 'msg_bdrk_01FwnSnRp4ddqxycpffLkK1n', 'type': 'message', 'role': 'assistant', 'model': 'claude-3-5-sonnet-20240620', 'content': [{'type': 'text', 'text': "To analyze the sentiment of this statement, we can use the print_sentiment_scores function. This will help us understand the overall sentiment of your experience with the product and customer service. Let's break it down and use the tool to get a more precise analysis."}, {'type': 'tool_use', 'id': 'toolu_bdrk_013Kn9Tnkh7WBDufhV7tPNhL', 'name': 'print_sentiment_scores', 'input': {'positive_score': 0.1, 'negative_score': 0.6, 'neutral_score': 0.3}}], 'stop_reason': 'tool_use', 'stop_sequence': None, 'usage': {'input_tokens': 491, 'output_tokens': 155}}))}
+        conf = copy.deepcopy(claude_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 0
+        conf['max_tokens'] = 100
+        conf['tools'] = [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                    },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
+        claude = ChatClaudeModel(**conf)
+        claude.set_message(message)
+        result = claude.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' in result['result']
+
 
 class TestLlamaModel:
     def test_persistence(self):
@@ -517,3 +653,226 @@ class TestNovaModel:
         }
         result = nova.get_result(mock_response)
         assert result['error_message'] == 'error'
+
+    def test_repr(self):
+        conf = copy.deepcopy(nova_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 1
+        conf['max_tokens'] = 100
+        conf['bag_tokens'] = []
+        conf['top_p'] = 0.9
+        conf['top_k'] = 50
+        conf['stop'] = None
+        conf['pool_name'] = "techhubdev-pool-world-nova-micro-1:0"
+        nova = NovaModel(**conf)
+        expected_output = (f"{{model:{conf['model']}, max_tokens:{conf['max_tokens']}, "
+                           f"temperature:{conf['temperature']}}}")
+        assert repr(nova) == expected_output
+
+    def test_tools(self):
+        message = {"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again.", "template": {
+            "system": "You are a helpful assistant.",
+            "user": "Answer me gently the query: $query"
+        }
+        }
+        mock_response = {'ResponseMetadata': {'RequestId': 'f62372f4-3c07-4dd7-a300-f5d68e787c40', 'HTTPStatusCode': 200}, 'contentType': 'application/json', 'body': io.StringIO(json.dumps({'output': {'message': {'content': [{'text': '<thinking> The user has provided a statement about their experience with a product and customer service. To understand the sentiment behind this statement, I can use the provided tool to calculate sentiment scores. The statement contains both positive and negative sentiments, so I will use the `print_sentiment_scores` tool to get the scores.</thinking>\n'}, {'toolUse': {'name': 'print_sentiment_scores', 'toolUseId': '1c3d7d35-9319-44d8-beb5-1e7a68ef5799', 'input': {'neutral_score': 0.2, 'positive_score': 0.5, 'negative_score': 0.3}}}], 'role': 'assistant'}}, 'stopReason': 'tool_use', 'usage': {'inputTokens': 519, 'outputTokens': 178, 'totalTokens': 697, 'cacheReadInputTokenCount': 0, 'cacheWriteInputTokenCount': 0}}))}
+        conf = copy.deepcopy(nova_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 1
+        conf['max_tokens'] = 100
+        conf['bag_tokens'] = 50
+        conf['top_p'] = 0.9
+        conf['top_k'] = 50
+        conf['stop'] = None
+        conf['pool_name'] = "techhubdev-pool-world-nova-micro-1:0"
+        conf['tools'] = [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                    },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
+        nova = ChatNova(**conf)
+        nova.set_message(message)
+        result = nova.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' in result['result']
+
+        message = {
+            "query": "hello how ae you?",
+            "template": {
+                "system": "You are a helpful assistant.",
+                "user": "Answer me gently the query: $query"
+            }
+        }
+        mock_response = {'ResponseMetadata': {'RequestId': 'f62372f4-3c07-4dd7-a300-f5d68e787c40', 'HTTPStatusCode': 200}, 'contentType': 'application/json', 'body': io.StringIO(json.dumps({'output': {'message': {'content': [{'text': "<thinking> The User has asked a general question about how I am, but this toolset does not include a way to respond to such a question. Therefore, I should inform the User that I cannot provide a personal response to this type of question.</thinking>\nI'm here to help with any information or tasks you need. How can I assist you today?"}], 'role': 'assistant'}}, 'stopReason': 'end_turn', 'usage': {'inputTokens': 503, 'outputTokens': 74, 'totalTokens': 577, 'cacheReadInputTokenCount': 0, 'cacheWriteInputTokenCount': 0}}))}
+        nova = ChatNova(**conf)
+        nova.set_message(message)
+        result = nova.get_result(mock_response)
+        assert result['status_code'] == 200 and 'tool_calls' not in result['result']
+
+class TestGPTOModel:
+
+    def test_parse_data(self):
+        conf = {
+            "model": o_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100,
+            "reasoning_effort": "low",
+            "tools": [
+                {
+                    "name": "print_sentiment_scores",
+                    "description": "Prints the sentiment scores of a given text.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "positive_score": {"type": "number",
+                                               "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                            "negative_score": {"type": "number",
+                                               "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                            "neutral_score": {"type": "number",
+                                              "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                        },
+                        "required": ["positive_score", "negative_score", "neutral_score"]
+                    }
+                }
+            ]
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        gpt_o = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o.set_message(message_dict)
+        gpt_o.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
+                                                                f"supported for model {conf['model']} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o.set_message(message_dict)
+            gpt_o.parse_data()
+    def test_parse_data_o1_mini(self):
+        conf = {
+            "model": o1_mini_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        gpt_o1_mini = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o1_mini.set_message(message_dict)
+        gpt_o1_mini.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o1_mini_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not supported for model {gpt_o1_mini.model_name} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o1_mini = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o1_mini.set_message(message_dict)
+            gpt_o1_mini.parse_data()
+
+
+    def test_get_result(self):
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"finish_reason": "content_filter"}],
+            'usage': {
+                'prompt_tokens': 0,
+                'completion_tokens': 0,
+                'total_tokens': 0,
+                'completion_tokens_details': {'reasoning_tokens': 0}
+            }
+        }
+        conf = copy.deepcopy(o_model)
+        conf.pop('model_pool')
+        conf['max_completion_tokens'] = 100
+        conf['n'] = 1
+        gpt_o = ChatGPTOModel(**conf)
+        gpt_o.set_message(message_dict)
+        result = gpt_o.get_result(mock_response)
+        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+
+
+        mock_response['choices'] = [{"finish_reason": "ss"}]
+        with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
+                                                                "{'finish_reason': 'ss'}.")):
+            gpt_o.get_result(mock_response)
+
+        mock_response['choices'] = [{"message": {"content": "Not found"}}]
+        result = gpt_o.get_result(mock_response)
+        assert result['result']['answer'] == "Not found"
+
+
+class TestGPTOVisionModel:
+
+    def test_parse_data(self):
+        conf = {
+            "model": o_v_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_completion_tokens": 100,
+            "reasoning_effort": "low"
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        gpt_o_v = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gpt_o_v.set_message(message_dict)
+        gpt_o_v.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = o_v_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
+                                                                f"supported for model {conf['model']} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt_o_v = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+            gpt_o_v.set_message(message_dict)
+            gpt_o_v.parse_data()
+
+
+    def test_get_result(self):
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"finish_reason": "content_filter"}],
+            'usage': {
+                'prompt_tokens': 0,
+                'completion_tokens': 0,
+                'total_tokens': 0,
+                'completion_tokens_details': {'reasoning_tokens': 0}
+            }
+        }
+        conf = copy.deepcopy(o_v_model)
+        conf.pop('model_pool')
+        conf['max_completion_tokens'] = 100
+        conf['n'] = 1
+        gpt_o_v = ChatGPTOVisionModel(**conf)
+        gpt_o_v.set_message(message_dict)
+        result = gpt_o_v.get_result(mock_response)
+        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+
+
+        mock_response['choices'] = [{"finish_reason": "ss"}]
+        with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
+                                                                "{'finish_reason': 'ss'}.")):
+            gpt_o_v.get_result(mock_response)
+
+        mock_response['choices'] = [{"message": {"content": "Not found"}}]
+        result = gpt_o_v.get_result(mock_response)
+        assert result['result']['answer'] == "Not found"

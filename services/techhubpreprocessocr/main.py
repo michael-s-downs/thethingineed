@@ -5,11 +5,13 @@
 import json
 from tempfile import TemporaryFile
 import copy
+import time
+import os
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
 from common.genai_controllers import storage_containers, db_dbs, set_queue, set_storage, set_db
-from common.genai_controllers import get_sizes, bytes_mode, download_files
+from common.genai_controllers import get_sizes, bytes_mode, download_batch_files_async, upload_batch_files_async
 from common.genai_status_control import update_status
 from common.genai_json_parser import *
 from common.preprocess.preprocess_ocr import *
@@ -179,24 +181,29 @@ class PreprocessOCRDeployment(BaseDeployment):
             files = [image['filename'] for image in path_images]
 
             try:
-                for file in files:
-                    logger.debug(f"Downloading image: {file} from storage.")
-                    download_files(workspace, [(file, file)])
+                logger.debug("Downloading images from storage.")
+                normalized_files = [file.replace("\\", "/") for file in files]
+                download_batch_files_async(workspace, normalized_files, local_directory=os.path.dirname(normalized_files[0]))
                 if ocr == "llm-ocr":
                     logger.info("Images will be resized by LLM as llm-ocr model has been selected")
                 else:
                     logger.info("Resizing images if is necesary.")
-                    for file in files:
+                    resized_files = []
+                    for file in normalized_files:
                         _, resized = resize_image(file)
                         if resized:
-                            upload_files(workspace, [(file, file)])
+                            resized_files.append(file)
+                    
+                    if resized_files:
+                        remote_directory = os.path.dirname(resized_files[0])
+                        upload_batch_files_async(workspace, resized_files, remote_directory)
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error resizing images", exc_info=get_exc_info())
                 raise Exception(RESIZING_IMAGE_ERROR)
 
             try:
                 file_sizes = []
-                for file in files:
+                for file in normalized_files:
                     file_sizes.append(get_image_size(file))
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error getting sizes of images from storage", exc_info=get_exc_info())
@@ -207,7 +214,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 prefix_map = {'images': origin_img_path, 'text': origin_text_path, 'cells': origin_cells_path, 'tables': origin_tables_path, 'txt': origin_txt_path}
 
                 path_file_txt = os.path.join(prefix_map['txt'], file_folder_txt).replace("\\", "/")
-                path_file_text = os.path.join(prefix_map['text'], "ocr", file_folder, merge_filename).replace("\\", "/")
+                path_file_text = os.path.join(prefix_map['text'], "ocr", merge_filename).replace("\\", "/")
 
                 if ocr == "llm-ocr" and LLMOCR.get_queue_mode():
                     try:
@@ -215,8 +222,9 @@ class PreprocessOCRDeployment(BaseDeployment):
                         for key, value in extract_docs.items():
                             if key in upload_docs:
                                 upload_docs[key] += value
-                    except Exception:
+                    except Exception as e:
                         self.logger.error(f"[Process {dataset_status_key}] Error while writing in LLM OCR queue", exc_info=get_exc_info())
+                        self.logger.error(f"[Process {dataset_status_key}] LLM OCR specific error message: {str(e)}")
                         raise Exception(LLM_OCR_ERROR)
                 else:
                     for batch_idx, batch in enumerate(chunk(files, file_sizes, ocr_files_size, ocr_batch_length)):
@@ -258,11 +266,22 @@ class PreprocessOCRDeployment(BaseDeployment):
             try:
                 self.logger.info("Uploading files to storage.")
                 upload_docs['text'].append((path_file_text, path_file_text))
-                upload_docs['txt'].append((path_file_txt, path_file_txt))
+
                 for key, paths in upload_docs.items():
-                    if ocr == "llm-ocr" and key not in ["text", "txt"]:
+                    if ocr == "llm-ocr" and key not in ["text"]: 
                         continue # In llm-ocr cells paragraphs words tables and lines are not extracted 
-                    upload_files(workspace, paths)
+        
+                    if paths:
+                        files_by_directory = {}
+                        for remote_path, local_path in paths:
+                            remote_dir = os.path.dirname(remote_path)
+                            if "_pag_" in local_path:
+                                remote_dir = "/".join([remote_dir, "pags"])
+                            
+                            files_by_directory.setdefault(remote_dir, []).append(local_path)
+                        
+                        for remote_dir, local_files in files_by_directory.items():
+                            upload_batch_files_async(workspace, local_files, remote_dir)
             except Exception:
                 self.logger.error(f"[Process {dataset_status_key}] Error uploading files to storage", exc_info=get_exc_info())
                 raise Exception(UPLOADING_FILES_ERROR)

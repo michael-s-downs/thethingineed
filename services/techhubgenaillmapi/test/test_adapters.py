@@ -11,7 +11,8 @@ from unittest.mock import MagicMock, patch
 # Local imports
 from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter, NovaAdapter
 from common.errors.genaierrors import PrintableGenaiError
-from messages import ChatGPTMessage, DalleMessage, ChatGPTvMessage, Claude3Message
+from message.claudemessage import Claude3Message
+from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
 
 no_vision_persistence = [
         [

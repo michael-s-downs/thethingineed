@@ -3,41 +3,58 @@
 
 # Changelog
 
-## vX.X.X (XXXX-XX-XX)
+## v3.1.0 (2025-03-13)
 - genai-compose:
-  - [New] New optional param "prompt_template_name" added to expand query steps to let the user use other llm prompt template while llmapi to expand the query.
-  - [New] New optional param "return_not_allowed" added to filter by permission to return the not allowed documents with the content empty.
-  - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query.
-  - [Improvement] Endpoint delete_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_template?name=mytemplate
-  - [Improvement] Endpoint delete_filer_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /compose/delete_filter_template?name=mytemplate
-  - [Improvement] Endpoint upload_template updated from POST request type to PUT request type.
-  - [Improvement] Endpoint upload_filter_template updated from POST request type to PUT request type.
-  - [Improvement] Endpoint get_template updated from POST request type to GET request type and to use url params instead of the body. Example: /compose/get_template?name=mytemplate
-  - [Improvement] Endpoint get_filter_template updated from POST request type to GET request type and to use url params instead of the body. Example: /compose/get_template?name=mytemplate
-  - [Improvement] Endpoint load_session updated from POST request type to PUT request type.
-  - [Improvement] Updated the response format from string to json.
+  - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
+  - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
+  - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query
+  - [Improvement] Change endpoint '/delete_template updated' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_template?name=mytemplate'
+  - [Improvement] Change endpoint '/delete_filer_template' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_filter_template?name=mytemplate'
+  - [Improvement] Change endpoint '/upload_template updated' from method POST to PUT
+  - [Improvement] Change endpoint '/upload_filter_template' from method POST to PUT
+  - [Improvement] Change endpoint '/get_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+  - [Improvement] Change endpoint '/get_filter_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+  - [Improvement] Change endpoint '/load_session' from method POST to PUT
+  - [Improvement] Updated the response format from string to JSON
 - genai-llmapi:
   - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
-  - [New] Prompt templates splitted into diferent files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
-  - [New] Endpoint reloadconfig deleted, it does nothing with the prompt load change.
-  - [New] Added method to show the word causing the error while loading a json.
-  - [Improvement] Endpoint upload_prompt_template updated from POST request type to PUT request type.
-  - [Improvement] Endpoint delete_prompt_template updated from POST request type to DELETE request type and to use url params instead of the body. Example: /llm/delete_prompt_template?name=mytemplate
-  - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.
+  - [New] Prompt templates splitted into different files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
+  - [New] Deleted endpoint '/reloadconfig', it does nothing with the prompt load change
+  - [New] Added method to show the word causing the error while loading a JSON
+  - [New] Added support for models o1, o1-mini, and o3-mini
+  - [New] Added reasoning and DALL·E models for the 'openai' platform
+    - Add default model in 'src/LLM/conf/default_llm_models.json' for 'openai' platform
+  - [New] Added tools support
+  - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
+  - [Improvement] Change endpoint '/upload_prompt_template' from method POST to PUT
+  - [Improvement] Change endpoint '/delete_prompt_template' from method POST to DELETE and use URL params instead of body. Example: '/llm/delete_prompt_template?name=mytemplate'
+  - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+  - [Improvement] Parameters 'functions' and 'function_call' deprecated
 - genai-inforetrieval:
-  - [Improvement] Changed endpoint delete-documents with delete_documents to match all the other endpoints. 
-  - [Improvement] Endpoint delete_documents updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_documents?index=myindex&filename=myfile&filename=myfile2
-  - [Improvement] Endpoint delete_index updated from POST request type to DELETE request type and to use url params instead of the body. Example: /delete_index?index=myindex
-  - [Improvement] Endpoint get_documents_filenames updated from POST request type to GET request type and to use url params instead of the body. Example: /get_documents_filenames?index=myindex
+  - [Improvement] Changed endpoint '/delete-documents' to '/delete_documents' to match all the other endpoints
+  - [Improvement] Change endpoint '/delete_documents' from method POST to DELETE and use URL params instead of body. Example: '/delete_documents?index=myindex&filename=myfile&filename=myfile2'
+  - [Improvement] Change endpoint '/delete_index from' method POST to DELETE and use URL params instead of body. Example: '/delete_index?index=myindex'
+  - [Improvement] Change endpoint '/get_documents_filenames' from method POST to GET and use URL params instead of body. Example: '/get_documents_filenames?index=myindex'
 - flowmgmt-checkend:
-  - [Improvement] Quit star imports and set only the required.
+  - [Improvement] Quit star imports and set only the required
+- preprocess-start: 
+  - [Improvement] Normalized path structure for cloud storage by extracting request_id from dataset_path and building standardized paths
 - preprocess-extract:
-  - [Improvement] Quit star imports and set only the required.
+  - [Improvement] Quit star imports and set only the required
+  - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
+  - [Improvement] Implemented asynchronous batch methods to improve the images upload performance
+- preprocess-ocr:
+  - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance
+  - [Improvement] Standardized path structure for cloud storage
 - common:
-  - [Improvement] Updated the response format from string to json for sync_deployment and cron_deployment.
+  - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+  - [Improvement] Refactored the 'format_path_files' function to use os.path for more robust path handling
+  - [Improvement] Enhanced 'extract_images_conditional' function to use standardized path construction and asynchronous upload
 - ALL:
   - [Improvement] Update and fix status_codes
   - [Improvement] Fixed maintainability warnings from sonarqube
+  - [Improvement] Update terraform, parametrize create private endpoint by resource
+  - [Improvement] Update helm, add template for elasticsearch and update deployment
 
 
 ## v3.0.0 (2025-01-30)
@@ -371,7 +388,7 @@
         - Add input adaptation method for queue case (get headers)
         - Add output adaptation method for queue case
     - [New] Add support to get input documents from attached disk with optional env vars 'DATA_MOUNT_PATH' and 'DATA_MOUNT_KEY'
-    - [New] Models credentials and url now loaded from secrets
+    - [New] Models credentials and URL now loaded from secrets
     - [Improvement] Update bedrock to latest boto3 version
         - Update dolffia-sdk-services v0.2.1
         - Quit old library from dockerfile
@@ -383,10 +400,10 @@
     - [New] Function to get all the contents from a streamlist joined in one string
     - [Improvement] Update Filter response to use the Context from the streambatch
 - genai-infoindexing:
-    - [New] Models credentials, vector_storages and url now loaded from secrets
+    - [New] Models credentials, vector_storages and URL now loaded from secrets
     - [Improvement] Better diacritics normalization to allow 'ñ' and 'ç'
 - genai-inforetrieval:
-    - [New] Models credentials, vector_storages and url now loaded from secrets
+    - [New] Models credentials, vector_storages and URL now loaded from secrets
     - [Improvement] Documents deletion in InfoRetrieval service refactor (now is done in the connectors class)
     - [Improvement] Better diacritics normalization to allow 'ñ' and 'ç'
 - BUILD:

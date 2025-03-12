@@ -32,4 +32,6 @@ azure-storage-queue==12.12.0
 azure-storage-blob==12.23.1
 azure-storage-file-share==12.18.0
 azure-ai-documentintelligence==1.0.0b4
+aiohttp==3.11.12
+aiofiles==24.1.0
 
