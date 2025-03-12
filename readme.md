@@ -2234,7 +2234,7 @@ def read_pdf_to_base64(file_path):
 base64_pdf_content = read_pdf_to_base64(filename)
 
 payload = {
-  "operation": "indexing",
+    "operation": "indexing",
     "response_url": "http://",
     "indexation_conf": {
         "vector_storage_conf": {
@@ -2249,14 +2249,14 @@ payload = {
     "preprocess_conf":{
         "ocr_conf":{
             "ocr": "llm-ocr",
-            "force_ocr": True,
+            "force_ocr": true,
             "llm_ocr_conf": {
                 "model": "techhub-pool-world-gpt-4o",
                 "platform": "azure",
                 "query": "Do the text and entities extraction of this image",
                 "system": "Act as if you where an OCR program",
                 "max_tokens": 2500,
-                "force_continue": True
+                "force_continue": true
             }
 
         }
@@ -2293,9 +2293,9 @@ And as in the previous case, once the process is complete, the service will send
 }
 ```
 
-* Indexing using Recursive Chunking Method, Multimodal OCR and Index Metadata
+* Indexing using Recursive Chunking Method, Multimodal OCR, Index Metadata and Metadata Primary Keys
 
-This example showcases a request to the Global RAG indexing service using Multimodal OCR with the recursive chunking method. Additionally, the `index_metadata` parameter is set to true to provide extra context about the source and attributes of the file’s content.
+This example showcases a request to the Global RAG indexing service using Multimodal OCR with the recursive chunking method. Additionally, the `index_metadata` parameter is set to true to provide extra context about the source and attributes of the file’s content, and the `` parameter is specified to use those metadata for the unique ID generation allowing to index several documents with the same content but different metadata.
 
 Since the previous example used the simple chunking method, this request should use a different index to ensure proper differentiation and avoid conflicts between indexing strategies.
 
@@ -2325,11 +2325,12 @@ def read_pdf_to_base64(file_path):
 base64_pdf_content = read_pdf_to_base64(filename)
 
 payload = {
-  "operation": "indexing",
+    "operation": "indexing",
     "response_url": "http://",
     "indexation_conf": {
         "vector_storage_conf": {
             "index": "tech_hub_test_recursive"
+            "metadata_primary_keys": ["filename", "document_id"]
         },
         "chunking_method":{
             "method": "recursive",
@@ -2339,20 +2340,20 @@ payload = {
             "sub_window_length": 100
         },
         "models": ["techhub-pool-world-ada-002"],
-        "metadata": {"test": "test"},
-        "index_metadata": True
+        "metadata": {"document_id": "123abc", "year": "2025"},
+        "index_metadata": true
     },
     "preprocess_conf":{
         "ocr_conf":{
             "ocr": "llm-ocr",
-            "force_ocr": True,
+            "force_ocr": true,
             "llm_ocr_conf": {
                 "model": "techhub-pool-world-gpt-4o",
                 "platform": "azure",
                 "query": "Do the text and entities extraction of this image",
                 "system": "Act as if you where an OCR program",
                 "max_tokens": 2500,
-                "force_continue": True
+                "force_continue": true
             }
 
         }
