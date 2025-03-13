@@ -64,6 +64,9 @@ class ActionsManager(AbstractManager):
                             }
                         ],
                         "headers_config": {}
+                    },
+                    "indexation_conf": {
+                        "query": ""
                     }
                 }
             }
@@ -86,20 +89,20 @@ class ActionsManager(AbstractManager):
         if "search_topic" in template_params:
             self.logger.debug("[Process ] Search topic appears in template_params")
 
-            template_dict['action_params']['params']['generic']['index_conf']['query'] = template_params['search_topic']
+            template_dict['action_params']['params']['indexation_conf']['query'] = template_params['search_topic']
 
             self.logger.debug(f"Busqueda para retrieval: {template_params['search_topic']}")
-        query = template_dict['action_params']['params']['generic']['index_conf']['query']
+        query = template_dict['action_params']['params']['indexation_conf']['query']
         if 'based on' in query:
             self.logger.debug("[Process ] \"based on\" appears in the query")
             search_topic = query.split('based on')[1].strip()
             search_topic = search_topic.replace('"', '').replace("'", "").replace('.', '')
-            template_dict['action_params']['params']['generic']['index_conf']['query'] = search_topic
+            template_dict['action_params']['params']['indexation_conf']['query'] = search_topic
 
         self.logger.info("Busqueda para retrieval: %s",
-                         template_dict['action_params']['params']['generic']['index_conf']['query'])
+                         template_dict['action_params']['params']['indexation_conf']['query'])
         self.logger.info("Top_k para retrieval: %s",
-                         template_dict['action_params']['params']['generic']['index_conf']['top_k'])
+                         template_dict['action_params']['params']['indexation_conf']['top_k'])
 
         self.logger.info("[Process ] Template ready for retrieval")
         return template_dict

@@ -7,6 +7,7 @@
 - genai-compose:
   - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
   - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
+  - [New] Update retrieval action to use the latests format. Key 'index_conf' changes to 'indexation_conf' and key 'generic' is not needed
   - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query
   - [Improvement] Change endpoint '/delete_template updated' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_template?name=mytemplate'
   - [Improvement] Change endpoint '/delete_filer_template' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_filter_template?name=mytemplate'
@@ -55,7 +56,6 @@
   - [Improvement] Fixed maintainability warnings from sonarqube
   - [Improvement] Update terraform, parametrize create private endpoint by resource
   - [Improvement] Update helm, add template for elasticsearch and update deployment
-
 
 ## v3.0.0 (2025-01-30)
 - integration-receiver:

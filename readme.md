@@ -540,7 +540,7 @@ The output can be changed passing in the requests some attribute values:
 
     ```json
     {
-        "index_conf": {
+        "indexation_conf": {
             "index": "myindex",
             "rescoring_function": "loglength",
             "query": "What is the function of retrieval?",
@@ -1005,16 +1005,14 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
-                }
+                "indexation_conf": {
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
+                },
+                "process_type": "ir_retrieve"
             },
             "type": "get_chunks"
         }
@@ -3113,15 +3111,12 @@ This action is to retrieve indexed documents based on a query. This is the most 
     "action": "retrieve",
     "action_params": {
         "params": {
-            "generic": {
-                "index_conf": {
-                    "index": "$index",
-                    "query": "$query",
-                    "task": "retrieve",
-                    "top_k": 5,
-                    "filters": "$filters"
-                },
-                "process_type": "retrieve",
+            "indexation_conf": {
+                "index": "$index",
+                "query": "$query",
+                "task": "retrieve",
+                "top_k": 5,
+                "filters": "$filters"
             }
         },
         "type": "get_chunks"
@@ -3898,14 +3893,11 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve"
                 }
             },
             "type": "get_chunks"
@@ -4042,16 +4034,13 @@ Now we add the <i>filter</i> action to the template. The template "retrieve_filt
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4099,7 +4088,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"retrieval_sort”,\n                \"params\": {\n                    \"query\": \"What are the New Year's resolutions?\",\n                    \"index\": \"myindex\",\n                    \"sort_desc\": true,\n                    \"sort_type\": \"sn_number\"\n                }\n            }\n        ,\n            \"persist\": {\n                \"type\": \"chat\",\n                \"params\": {\n                \"max_persistence\": 20\n                }\n            }\n    }}\n}\n\nAnd how the template \"retrieval_sort” would look like:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"index_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  20,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"get_chunks\"\n    }\n  },\n   {\n        \"action\": \"sort\",\n        \"action_params\": {\n            \"params\": {\n                \"desc\": $sort_desc\n            },",
+                    "content": "{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"retrieval_sort”,\n                \"params\": {\n                    \"query\": \"What are the New Year's resolutions?\",\n                    \"index\": \"myindex\",\n                    \"sort_desc\": true,\n                    \"sort_type\": \"sn_number\"\n                }\n            }\n        ,\n            \"persist\": {\n                \"type\": \"chat\",\n                \"params\": {\n                \"max_persistence\": 20\n                }\n            }\n    }}\n}\n\nAnd how the template \"retrieval_sort” would look like:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"indexation_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  20,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"get_chunks\"\n    }\n  },\n   {\n        \"action\": \"sort\",\n        \"action_params\": {\n            \"params\": {\n                \"desc\": $sort_desc\n            },",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
@@ -4170,16 +4159,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4304,16 +4290,13 @@ We will use for this example the template "retrieve_batchmerge_llm":
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4435,16 +4418,13 @@ The <i>retrieve_sort_llm</i> template would be:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4564,16 +4544,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 10,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 10,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4622,7 +4599,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "The template “llm” is:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"type\":  \"streamlist\",\n      \"params\":  {\n        \"streamlist\": [\n          {\n            \"content\":  \"\",\n            \"meta\":  {\n              \"field1\":  \"\"\n            },\n            \"scores\":  {\n              \"bm25\":  1,\n              \"sim-example\":  1\n            }\n          }\n        ],\n        \"generic\":  {\n          \"index_conf\":  {\n            \"query\":  \"$query\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\"\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"template_name\":  \"system_query\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing. \n\nNow if we want to retrieve information from an index, we will add the “index” parameter to the request.",
+                    "content": "The template “llm” is:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"type\":  \"streamlist\",\n      \"params\":  {\n        \"streamlist\": [\n          {\n            \"content\":  \"\",\n            \"meta\":  {\n              \"field1\":  \"\"\n            },\n            \"scores\":  {\n              \"bm25\":  1,\n              \"sim-example\":  1\n            }\n          }\n        ],\n        \"generic\":  {\n          \"indexation_conf\":  {\n            \"query\":  \"$query\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\"\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"template_name\":  \"system_query\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing. \n\nNow if we want to retrieve information from an index, we will add the “index” parameter to the request.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
@@ -4740,16 +4717,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4788,7 +4762,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "[ {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"index_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  5,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"dolffia\"\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\",\n          \"max_input_tokens\": 5000\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"system\": \"You are a helpful assistant\",\n          \"template_name\":  \"system_query_and_context_plus\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nGroupBy: In this example, to call the action it is used “action”: “groupby”.",
+                    "content": "[ {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"params\":  {\n        \"generic\":  {\n          \"indexation_conf\":  {\n            \"add_highlights\":  false,\n            \"index\":  \"$index\",\n            \"query\":  \"$query\",\n            \"task\":  \"retrieve\",\n            \"top_k\":  5,\n            \"filters\":  $filters\n          },\n          \"process_type\":  \"ir_retrieve\"\n        }\n      },\n      \"type\":  \"dolffia\"\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\",\n          \"max_input_tokens\": 5000\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"system\": \"You are a helpful assistant\",\n          \"template_name\":  \"system_query_and_context_plus\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nGroupBy: In this example, to call the action it is used “action”: “groupby”.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/techhubragemeal-dataivandegregoriougarte/request_20241030_081443_481898_g653jt/manual.docx",
                         "sections_headers": "",
@@ -4889,16 +4863,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -5034,16 +5005,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -5204,15 +5172,12 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-						"filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "indexation_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -5279,7 +5244,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "document_id: 39656327-0e14-4a6c-8e08-92319f0b7fca######Content The template “llm” is:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"type\":  \"streamlist\",\n      \"params\":  {\n        \"streamlist\": [\n          {\n            \"content\":  \"\",\n            \"meta\":  {\n              \"field1\":  \"\"\n            },\n            \"scores\":  {\n              \"bm25\":  1,\n              \"sim-example\":  1\n            }\n          }\n        ],\n        \"generic\":  {\n          \"index_conf\":  {\n            \"query\":  \"$query\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\"\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"template_name\":  \"system_query\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing....",
+                    "content": "document_id: 39656327-0e14-4a6c-8e08-92319f0b7fca######Content The template “llm” is:\n[\n  {\n    \"action\":  \"retrieve\",\n    \"action_params\":  {\n      \"type\":  \"streamlist\",\n      \"params\":  {\n        \"streamlist\": [\n          {\n            \"content\":  \"\",\n            \"meta\":  {\n              \"field1\":  \"\"\n            },\n            \"scores\":  {\n              \"bm25\":  1,\n              \"sim-example\":  1\n            }\n          }\n        ],\n        \"generic\":  {\n          \"indexation_conf\":  {\n            \"query\":  \"$query\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"action\":  \"summarize\",\n    \"action_params\":  {\n      \"params\":  {\n        \"llm_metadata\":  {\n          \"model\":  \"gpt-3.5-16k-pool-europe\"\n        },\n        \"platform_metadata\":  {\n          \"platform\":  \"azure\"\n        },\n        \"query_metadata\":  {\n          \"query\":  \"$query\",\n          \"template_name\":  \"system_query\"\n        }\n      },\n      \"type\":  \"llm_content\"\n    }\n  }\n]\n\nAlthough there is a “retrieve” action, it is a “streamlist” action and does nothing....",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",

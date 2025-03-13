@@ -142,11 +142,9 @@ def test_run(template_manager):
             'action': 'retrieve',
             'action_params': {
                 'params': {
-                    'generic': {
-                        'index_conf': {
+                        'indexation_conf': {
                             'query': "sample query"
                         }
-                    }
                 }
             }
         }
@@ -155,8 +153,8 @@ def test_run(template_manager):
     result = template_manager.run(template_dict, template_params)
 
     # Check if the query was updated correctly
-    assert result[0]['action_params']['params']['generic']['index_conf']['query'] == 'new topic'
-    assert result[0]['action_params']['params']['generic']['index_conf']['top_k'] == 5  # default top_k
+    assert result[0]['action_params']['params']['indexation_conf']['query'] == 'new topic'
+    assert result[0]['action_params']['params']['indexation_conf']['top_k'] == 5  # default top_k
 
 def test_run_based_on(template_manager):
     """Test the run method's behavior."""
@@ -165,11 +163,9 @@ def test_run_based_on(template_manager):
             'action': 'retrieve',
             'action_params': {
                 'params': {
-                    'generic': {
-                        'index_conf': {
+                        'indexation_conf': {
                             'query': "based on fernando alonso"
                         }
-                    }
                 }
             }
         }
@@ -178,7 +174,7 @@ def test_run_based_on(template_manager):
     result = template_manager.run(template_dict, template_params)
 
     # Check if the query was updated correctly
-    assert result[0]['action_params']['params']['generic']['index_conf']['query'] == 'fernando alonso'
+    assert result[0]['action_params']['params']['indexation_conf']['query'] == 'fernando alonso'
 
 def test_run_not_top_k(template_manager):
     """Test the run method's behavior."""
@@ -199,11 +195,9 @@ def test_run_not_top_k(template_manager):
             'action': 'retrieve',
             'action_params': {
                 'params': {
-                    'generic': {
-                        'index_conf': {
+                        'indexation_conf': {
                             'query': "sample query"
                         }
-                    }
                 }
             }
         }
@@ -212,8 +206,8 @@ def test_run_not_top_k(template_manager):
     result = temp_man.run(template_dict, template_params)
 
     # Check if the query was updated correctly
-    assert result[0]['action_params']['params']['generic']['index_conf']['query'] == 'sample query'
-    assert result[0]['action_params']['params']['generic']['index_conf']['top_k'] == 5  # default top_k
+    assert result[0]['action_params']['params']['indexation_conf']['query'] == 'sample query'
+    assert result[0]['action_params']['params']['indexation_conf']['top_k'] == 5  # default top_k
 
 @patch('random.choices', side_effect=Exception())
 def test_load_template_name_is_list_but_probs_not_defined(mock_random_choices, template_manager):
