@@ -100,11 +100,9 @@ FILTERED_ACTIONS = [
 						}
 					}
 				],
-                "generic": {
-                    "indexation_conf": {
-                        "query": ""
-                    }
-                }		
+                "indexation_conf": {
+                    "query": ""
+                }
             }	
 		}
 	}
