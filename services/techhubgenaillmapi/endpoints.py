@@ -704,7 +704,15 @@ class VertexPlatform(Platform):
             self.logger.info(
                 f"Calling {self.MODEL_FORMAT} service with data {data_call}"
             )
-            if self.generative_model.model_type in ['gemini-1.5-pro', 'gemini-2.0-flash']:
+
+            answer = requests.post(
+                url=self.url, headers=self.headers, data=data_call, timeout=self.timeout
+            )
+            self.logger.info(f"LLM response: {answer}.")
+            answer = self.parse_response(answer)
+            return answer
+
+            '''if self.generative_model.model_type in ['gemini-1.5-pro', 'gemini-2.0-flash']:
                 answer = requests.post(
                     url=self.url, headers=self.headers, data=data_call, timeout=self.timeout
                 )
@@ -713,7 +721,7 @@ class VertexPlatform(Platform):
                 return answer
             elif self.generative_model.model_type in ['claude-3-5-sonnet-v2', 'claude-3-5-sonnet', 'claude-3-5-haiku']:
                 client = AnthropicVertex(
-                    project_id="",
+                    project_id="techhubdev",
                     region=self.generative_model.zone,
                 )
                 answer = client.messages.create(
@@ -727,7 +735,8 @@ class VertexPlatform(Platform):
                 raise PrintableGenaiError(
                     400,
                     f"Model type '{self.generative_model.model_id}' doesnt exists in vertex platform. ",
-                )
+                )'''
+
         except urllib3.exceptions.ReadTimeoutError:
             self.logger.error(REQUEST_TIMED_OUT_MSG)
             if delta < self.num_retries:
