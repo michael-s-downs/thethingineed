@@ -3897,7 +3897,7 @@ Template:
                     "add_highlights": false,
                     "index": "$index",
                     "query": "$query",
-                    "task": "retrieve",
+                    "task": "retrieve"
                 }
             },
             "type": "get_chunks"
