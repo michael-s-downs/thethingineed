@@ -64,6 +64,9 @@ class ActionsManager(AbstractManager):
                             }
                         ],
                         "headers_config": {}
+                    },
+                    "indexation_conf": {
+                        "query": ""
                     }
                 }
             }

@@ -145,7 +145,7 @@ class Director(AbstractManager):
             action_function = function_map.get(action)
 
             if not action_function:
-                raise self.raise_PrintableGenaiError(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
+                raise self.raise_PrintableGenaiError(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"llm_action\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
             ap = action_params.get('params', {})
 
             if action_function == self.sb.llm_action:

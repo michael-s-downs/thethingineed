@@ -189,8 +189,15 @@ class TemplateManager(AbstractManager):
     def index_conf_retrocompatible(self, template):
         for action in template:
             if action["action"] == "retrieve":
-                if "generic" in action["action_params"]["params"]:
+                if "generic" in action["action_params"]["params"] and action["action_params"]["type"] != "streamlist":
                     action["action_params"]["params"] = action["action_params"]["params"]["generic"]
+                    action["action_params"]["params"]["indexation_conf"] = action["action_params"]["params"]["index_conf"]
+                    del action["action_params"]["params"]["index_conf"]
+                    break
+
+                if "generic" in action["action_params"]["params"] and action["action_params"]["type"] == "streamlist":
+                    action["action_params"]["params"].update(action["action_params"]["params"]["generic"])
+                    del action["action_params"]["params"]["generic"]
                     action["action_params"]["params"]["indexation_conf"] = action["action_params"]["params"]["index_conf"]
                     del action["action_params"]["params"]["index_conf"]
                     break
