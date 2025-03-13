@@ -540,7 +540,7 @@ The output can be changed passing in the requests some attribute values:
 
     ```json
     {
-        "index_conf": {
+        "indexation_conf": {
             "index": "myindex",
             "rescoring_function": "loglength",
             "query": "What is the function of retrieval?",
@@ -1005,16 +1005,14 @@ Every sorting action has a boolean action param called “desc” to set if the 
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
-                }
+                "indexation_conf": {
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
+                },
+                "process_type": "ir_retrieve"
             },
             "type": "get_chunks"
         }
@@ -3113,15 +3111,12 @@ This action is to retrieve indexed documents based on a query. This is the most 
     "action": "retrieve",
     "action_params": {
         "params": {
-            "generic": {
-                "index_conf": {
-                    "index": "$index",
-                    "query": "$query",
-                    "task": "retrieve",
-                    "top_k": 5,
-                    "filters": "$filters"
-                },
-                "process_type": "retrieve",
+            "indexation_conf": {
+                "index": "$index",
+                "query": "$query",
+                "task": "retrieve",
+                "top_k": 5,
+                "filters": "$filters"
             }
         },
         "type": "get_chunks"
@@ -3898,14 +3893,11 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
                 }
             },
             "type": "get_chunks"
@@ -4042,16 +4034,13 @@ Now we add the <i>filter</i> action to the template. The template "retrieve_filt
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4170,16 +4159,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4304,16 +4290,13 @@ We will use for this example the template "retrieve_batchmerge_llm":
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4435,16 +4418,13 @@ The <i>retrieve_sort_llm</i> template would be:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": "$top_k",
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": "$top_k",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4564,16 +4544,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 10,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 10,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4740,16 +4717,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -4889,16 +4863,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -5034,16 +5005,13 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-                        "top_k": 5,
-                        "filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "top_k": 5,
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
@@ -5204,15 +5172,12 @@ Template:
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "add_highlights": false,
-                        "index": "$index",
-                        "query": "$query",
-                        "task": "retrieve",
-						"filters": "$filters"
-                    },
-                    "process_type": "ir_retrieve"
+                "index_conf": {
+                    "add_highlights": false,
+                    "index": "$index",
+                    "query": "$query",
+                    "task": "retrieve",
+                    "filters": "$filters"
                 }
             },
             "type": "get_chunks"
