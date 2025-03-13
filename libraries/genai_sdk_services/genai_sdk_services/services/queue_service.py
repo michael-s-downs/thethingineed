@@ -317,26 +317,38 @@ class AzureServiceBusService(BaseQueueService):
         if max_num <= 0:
             max_num = 1
 
-        if max_num > 10:
-            max_num = 10
-            self.logger.debug("Number of messages in queue greater than 10. Setting 10 as max")
-
-        data = []
+        # if max_num > 10:
+        #     max_num = 10
+        #     self.logger.debug("Number of messages in queue greater than 10. Setting 10 as max")
 
         self.logger.debug("Receiving messages")
-        resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=timeout_operation)
-        if len(resp) != 0:
+
+        data = []
+        resp_acc = []
+        timeout_op = timeout_operation
+        while len(data) < max_num:
+            # Limited by messages size, read until messages count limit
+            resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=timeout_op)
+            resp_acc.extend(resp)
+            
             for msg in resp:
                 data.append(json.loads(format(msg)))
                 if delete:
                     receiver.complete_message(msg)
+
+            # Reduce if more iterations required
+            timeout_op = 5  # seconds
+
+            if len(resp) == 0:
+                break
+
         if len(data) == 0:
             data = None
 
         receiver.close()
         queue_client.close()
 
-        return data, resp
+        return data, resp_acc
 
     def write(self, origin: str, data: str, group_id: str = "grp1") -> bool:
         """ Write a message to the queue
