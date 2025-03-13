@@ -101,7 +101,7 @@ FILTERED_ACTIONS = [
 					}
 				],
                 "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": ""
                     }
                 }		

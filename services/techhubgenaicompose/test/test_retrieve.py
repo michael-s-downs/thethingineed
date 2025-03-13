@@ -32,16 +32,12 @@ def streamlist_params():
 @pytest.fixture
 def chunks_params():
     return {
-        "generic": {
-            "process_type": "ir_retrieve",
-            "index_conf": {
+            "indexation_conf": {
                 "task": "retrieve",
                 "template_name": "system_query_and_context",
                 "query": "example query",
             },
-        },
-        "credentials": {},
-        "specific": {"dataset": {"dataset_key": ""}},
+        
         "headers_config": {"Authorization": "Bearer test_token"},
     }
 
@@ -127,7 +123,7 @@ class TestChunksRetriever:
     @patch("requests.post")
     # Test that the ChunksRetriever raises an error when the query is empty
     def test_chunks_retriever_empty_query(self, mock_post, chunks_params):
-        chunks_params["generic"]["index_conf"]["query"] = ""
+        chunks_params["indexation_conf"]["query"] = ""
         chunks_retriever = ChunksRetriever(chunks_params)
 
         with pytest.raises(PrintableGenaiError) as excinfo:
@@ -145,7 +141,7 @@ class TestChunksRetriever:
     @patch("requests.post")
     # Test that the ChunksRetriever raises an error when the query is missing
     def test_chunks_retriever_missing_query(self, mock_post, chunks_params):
-        del chunks_params["generic"]["index_conf"]["query"]
+        del chunks_params["indexation_conf"]["query"]
         chunks_retriever = ChunksRetriever(chunks_params)
 
         with pytest.raises(PrintableGenaiError) as excinfo:

@@ -83,7 +83,7 @@ class MixQueries(ReformulateMethod):
 
             for action in actions_confs:
                 if action["action"] == "retrieve":
-                    action["action_params"]["params"]["generic"]["index_conf"]["query"] = query
+                    action["action_params"]["params"]["indexation_conf"]["query"] = query
                 if action["action"] == "llm_action":
                     action["action_params"]["params"]["query_metadata"]["query"] = query
                 

@@ -20,8 +20,8 @@ sample_params = {
     "session_id": "12345",
     "PD": MagicMock()
 }
-sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"generic": {"index_conf": {}}}}}
-                        , {"action": "llm_action", "action_params": {"params": {"query_metadata": {"index_conf": {}}}}}]
+sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"indexation_conf": {}}}}
+                        , {"action": "llm_action", "action_params": {"params": {"query_metadata": {"indexation_conf": {}}}}}]
 mock_response = {"answer": "modified query"}
 
 # Mock environment variable

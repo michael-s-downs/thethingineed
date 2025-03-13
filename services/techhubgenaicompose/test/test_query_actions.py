@@ -31,11 +31,9 @@ def actions_confs():
             "action": "retrieve",
             "action_params": {
                 "params": {
-                    "generic": {
-                        "index_conf": {
+                        "indexation_conf": {
                             "query": ""
                         }
-                    }
                 }
             }
         }
@@ -302,7 +300,7 @@ def test_lang_expansion_process(mock_parallel_calls, mock_async_call_llm, params
     assert result[1] == "Hello, how are you?"
 
     # Ensure the actions_confs has been updated
-    assert actions_confs[0]["action_params"]["params"]["generic"]["index_conf"]["query"] == query
+    assert actions_confs[0]["action_params"]["params"]["indexation_conf"]["query"] == query
 
 @patch("compose.query_actions.expansion.LangExpansion.async_call_llm")
 @patch("compose.query_actions.expansion.LangExpansion.parallel_calls")
@@ -419,4 +417,4 @@ def test_lang_expansion_step_process(mock_async_call_llm, params, actions_confs,
     assert len(result) == 1
     assert result[0] == "Hola, ¿cómo estás?"
 
-    assert actions_confs[0]["action_params"]["params"]["generic"]["index_conf"]["query"] == "Hola, ¿cómo estás?"
+    assert actions_confs[0]["action_params"]["params"]["indexation_conf"]["query"] == "Hola, ¿cómo estás?"

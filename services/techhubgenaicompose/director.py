@@ -299,7 +299,8 @@ class Director(AbstractManager):
             raise self.raise_PrintableGenaiError(400, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
             raise self.raise_PrintableGenaiError(500, ex)
-        
+
+        template = self.conf_manager.template_m.index_conf_retrocompatible(template)
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
         template_params = self.conf_manager.template_m.set_params(template_params)

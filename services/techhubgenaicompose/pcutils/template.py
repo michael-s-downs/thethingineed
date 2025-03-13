@@ -144,24 +144,24 @@ class TemplateManager(AbstractManager):
                 if "search_topic" in template_params:
                     self.logger.debug("[Process ] Search topic appears in template_params")
 
-                    step['action_params']['params']['generic']['index_conf']['query'] = template_params['search_topic']
-                    if 'top_k' not in step['action_params']['params']['generic']['index_conf']:
-                        step['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
+                    step['action_params']['params']['indexation_conf']['query'] = template_params['search_topic']
+                    if 'top_k' not in step['action_params']['params']['indexation_conf']:
+                        step['action_params']['params']['indexation_conf']['top_k'] = self.top_k
 
                     self.logger.debug(f"Busqueda para retrieval: {template_params['search_topic']}")
-                query = step['action_params']['params']['generic']['index_conf']['query']
+                query = step['action_params']['params']['indexation_conf']['query']
                 if 'based on' in query:
                     self.logger.debug("[Process ] \"based on\" appears in the query")
                     search_topic = query.split('based on')[1].strip()
                     search_topic = search_topic.replace('"', '').replace("'", "").replace('.', '')
-                    step['action_params']['params']['generic']['index_conf']['query'] = search_topic
-                elif 'top_k' not in step['action_params']['params']['generic']['index_conf']:
-                    step['action_params']['params']['generic']['index_conf']['top_k'] = self.top_k
+                    step['action_params']['params']['indexation_conf']['query'] = search_topic
+                elif 'top_k' not in step['action_params']['params']['indexation_conf']:
+                    step['action_params']['params']['indexation_conf']['top_k'] = self.top_k
 
                 self.logger.info("Busqueda para retrieval: %s",
-                                 step['action_params']['params']['generic']['index_conf']['query'])
+                                 step['action_params']['params']['indexation_conf']['query'])
                 self.logger.info("Top_k para retrieval: %s",
-                                 step['action_params']['params']['generic']['index_conf'].get('top_k', "Not necesary"))
+                                 step['action_params']['params']['indexation_conf'].get('top_k', "Not necesary"))
 
         self.logger.info("[Process ] Template ready for retrieval")
         return template_dict
@@ -185,3 +185,15 @@ class TemplateManager(AbstractManager):
                 self.raise_PrintableGenaiError(404, "Compose template not found")
         except ValueError:
             self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {name}")
+    
+    def index_conf_retrocompatible(self, template):
+        for action in template:
+            if action["action"] == "retrieve":
+                if "generic" in action["action_params"]["params"]:
+                    action["action_params"]["params"] = action["action_params"]["params"]["generic"]
+                    action["action_params"]["params"]["indexation_conf"] = action["action_params"]["params"]["index_conf"]
+                    del action["action_params"]["params"]["index_conf"]
+                    break
+        
+        return template
+                
