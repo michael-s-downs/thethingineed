@@ -293,7 +293,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.warning(f"[Process {dataset_status_key}] Error getting languages. Assign language by default", exc_info=get_exc_info())
                 language = "*"
 
-            specific['paths']['text'] = f"{prefix_map['text']}/{os.path.basename(os.path.splitext(filename)[0])}.txt"
+            specific['paths']['text'] = f"{prefix_map['text']}/ocr/{os.path.basename(os.path.splitext(filename)[0])}.txt"
             document['language'] = language
 
             msg = json.dumps({'status': DOCUMENT_PROCESSED, 'msg': "Document processed successfully"})
@@ -312,8 +312,8 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
 
         update_status(redis_status, dataset_status_key, msg)
+        self.logger.info(message)
         return self.must_continue, message, next_service
-
 
 if __name__ == "__main__":
     deploy = PreprocessOCRDeployment()
