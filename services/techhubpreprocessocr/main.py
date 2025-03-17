@@ -293,7 +293,7 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.warning(f"[Process {dataset_status_key}] Error getting languages. Assign language by default", exc_info=get_exc_info())
                 language = "*"
 
-            specific['paths']['text'] = f"{prefix_map['txt']}/{os.path.basename(os.path.splitext(filename)[0])}.txt"
+            specific['paths']['text'] = f"{prefix_map['text']}/{os.path.basename(os.path.splitext(filename)[0])}.txt"
             document['language'] = language
 
             msg = json.dumps({'status': DOCUMENT_PROCESSED, 'msg': "Document processed successfully"})
