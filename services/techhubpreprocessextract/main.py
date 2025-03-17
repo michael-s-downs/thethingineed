@@ -300,7 +300,6 @@ class PreprocessExtractDeployment(BaseDeployment):
             })
 
             self.logger.info("Creating message status for update Redis and decide next step.")
-            self.logger.info(message)
             if not text_extracted and not img_extracted:
                 self.logger.error(f"[Process {dataset_status_key}] Error while extracting texts and images.", exc_info=get_exc_info())
                 raise Exception(EXTRACTING_IMAGES_AND_TEXT_ERROR)
