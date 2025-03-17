@@ -44,6 +44,7 @@
   - [Improvement] Quit star imports and set only the required
   - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
   - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.14)
+  - [Improvement] Normalized path structure for cloud storage
 - preprocess-ocr:
   - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.14)
   - [Improvement] Standardized path structure for cloud storage

@@ -312,7 +312,6 @@ class PreprocessOCRDeployment(BaseDeployment):
                 self.logger.warning(f"[Process {dataset_status_key}] Error while deleting file {filename}.")
 
         update_status(redis_status, dataset_status_key, msg)
-        self.logger.info(message)
         return self.must_continue, message, next_service
 
 if __name__ == "__main__":
