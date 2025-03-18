@@ -3,7 +3,7 @@
 
 # Changelog
 
-## v3.1.0 (2025-03-13)
+## v3.1.0 (2025-03-20)
 - genai-compose:
   - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
   - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
@@ -112,7 +112,7 @@
   - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
   - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval:
-  - [Improvement] Adapt input JSON for coherence purposes with json body refactor
+  - [Improvement] Adapt input JSON for coherence purposes with JSON body refactor
 - genai-compose:
   - [Improvement] Add header 'delegate-token' to permission filter action
 - apigw:
