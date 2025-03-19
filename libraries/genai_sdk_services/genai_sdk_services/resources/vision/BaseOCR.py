@@ -7,6 +7,7 @@ import json
 import re
 import io
 import base64
+import logging
 import requests
 from PIL import Image
 from typing import Tuple
@@ -824,6 +825,10 @@ class LLMOCR(BaseOCR):
     env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND", "LLM_NUM_RETRIES"]
     llm_template_name = "preprocess_ocr"
 
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+
     @staticmethod
     def get_queue_mode() -> bool:
         """Check if the OCR is in queue mode"""
@@ -924,8 +929,9 @@ class LLMOCR(BaseOCR):
                             time.sleep(0.5)
                     if timestamp != 0.0 and time.time() - timestamp > 180.0:
                         if force_continue:
+                            self.logger.info(f"'force_continue' passed with {len(responses)}/{len(files)} files processed")
                             break # Not throw exception to not lose the rest and do the merge (for big files purposes)
-                        raise Exception(f"Timeout reading file {base_filename} from llmqueue")
+                        raise Exception(f"Timeout reading file {base_filename} from llmqueue ({len(responses)}/{len(files)} files processed)")
                 except Exception as ex:
                     raise Exception(f"Error reading from queue: {ex}")
 

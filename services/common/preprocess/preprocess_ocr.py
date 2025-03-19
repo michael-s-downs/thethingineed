@@ -139,13 +139,16 @@ def format_path_files(files: list, prefix_image: str, prefix_folder: str, replac
 
     :param files: list of files
     :param prefix_image: prefix of path to image
-    :param prefix_folder: prefix of path to folder
+    :param prefix_folder: prefix of path to folder 
     :param replace_path: param to replace
     :return: list of files
     """
     returning_files = []
     for target_local_file in files:
-        target_remote_file = target_local_file.replace(prefix_image, prefix_folder + "/ocr").replace(replace_path, "")
-        returning_files.append((target_remote_file, target_local_file))
+        file_name = os.path.basename(target_local_file)
 
+        target_remote_file = os.path.join(prefix_folder, "ocr", file_name).replace("\\", "/")
+
+        returning_files.append((target_remote_file, target_local_file))
+    
     return returning_files
