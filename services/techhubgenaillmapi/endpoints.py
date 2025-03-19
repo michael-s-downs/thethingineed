@@ -605,8 +605,7 @@ class VertexPlatform(Platform):
 
         url = template.safe_substitute(
             MODEL=generative_model.model_id,
-            ZONE=generative_model.zone,
-            PROJECT_ID=project_id
+            API_KEY=generative_model.api_key
         )
         self.logger.debug("url: %s", url)
         return url
@@ -682,7 +681,6 @@ class VertexPlatform(Platform):
         super().set_model(generative_model)
 
         self.headers = {
-            "Authorization": "Bearer " + generative_model.api_key,
             "Content-Type": "application/json",
         }
         self.url = self.build_url(generative_model)

@@ -61,7 +61,7 @@ class GeminiModel(GenerativeModel):
         """
         messages = self.message.preprocess()
         body = {
-                "contents": [messages],
+                "contents": messages,
                 "generationConfig": {
                     "maxOutputTokens": self.max_tokens,
                     "temperature": self.temperature,
