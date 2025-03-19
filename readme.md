@@ -2936,7 +2936,6 @@ This file is the most important one because it stores information about the diff
                 "model_type": "gpt-4o",
                 "max_input_tokens": 4096,
                 "zone": "techhub-AustraliaEast",
-                "message": "chatGPT-v",
                 "api_version": "2024-02-15-preview",
                 "model_pool":[
                     "techhub-pool-world-gpt-4o"           
@@ -2947,7 +2946,6 @@ This file is the most important one because it stores information about the diff
 			"model_type": "dalle3",
 			"max_input_tokens": 4000,
 			"zone": "techhub-AustraliaEast",
-			"message": "dalle",
 			"api_version": "2023-12-01-preview",
 			"model_pool": ["techhub-pool-world-dalle3"]
 		    }
@@ -2960,15 +2958,6 @@ Each parameter for a model configuration is:
 * **model_type**: defined by the user (same models must have the same <i>model_type</i>).
 * **max_input_tokens**: maximum number of tokens accepted by the model as input.
 * **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
-* **message**: type of message that will be used in order to adapt the input to the model's requirements. It could be:
-  - **chatClaude**: Claude models with text capabilities.
-  - **chatClaude-v**: Claude models with text and vision capabilities.
-  - **chatGPT**: ChatGPT models with text capabilities.
-  - **chatGPT-v**: ChatGPT with text and vision capabilities.
-  - **dalle**: Dall-E models (image generation).
-  - **chatLlama3**: Llama 3 and 3-1 models
-  - **chatNova-v**: Nova models with text and vision capabilities
-  - **chatNova**: Nova models with text capabilities
 * **api_version**: version of the api (model) that is being used.
 * **model_pool**: pools the model belongs to.
 
