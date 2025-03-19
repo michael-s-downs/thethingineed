@@ -1608,7 +1608,6 @@ LLMAPI needs 3 config files to run.
                     "model_type": "claude-v2.1",
                     "max_input_tokens": 200000,
                     "zone": "us-east-1",
-                    "message": "chatClaude",
                     "api_version": "bedrock-2023-05-31",
                     "model_pool": [
                         "claude-v2.1-pool-america",
@@ -1623,7 +1622,6 @@ LLMAPI needs 3 config files to run.
                     "max_input_tokens": 128000,
                     "max_img_size_mb": 20.0,
                     "zone": "genAI-EastUs",
-                    "message": "chatGPT-v",
                     "api_version": "2024-02-15-preview",
                     "model_pool": [
                         "gpt-4o-pool-techhub-world"
@@ -1633,7 +1631,6 @@ LLMAPI needs 3 config files to run.
                     "model_type": "gpt-3.5-turbo",
                     "max_input_tokens": 4096,
                     "zone": "genAI-WestEurope",
-                    "message": "chatGPT",
                     "api_version": "2024-02-15-preview",
                     "model_pool": [
                         "gpt-3.5-pool-ew-europe",
@@ -1644,7 +1641,6 @@ LLMAPI needs 3 config files to run.
                     "model_type": "dalle3",
                     "max_input_tokens": 4000,
                     "zone": "genAI-Sweden",
-                    "message": "dalle",
                     "api_version": "2023-12-01-preview",
                     "model_pool": ["dalle3-pool-techhub-world"]
                 }
@@ -1659,16 +1655,6 @@ LLMAPI needs 3 config files to run.
     - <b>max_input_tokens:</b> maximum number of tokens accepted by the model as input
     - <b>max_img_size_mb:</b><i> (only in <b>vision</b> models)</i> maximum size in megabytes that the model accepts per one image
     - <b>zone:</b> place where the model has been deployed (used to get the api-keys)
-    - <b>message:</b> type of message that will be used in order to adapt the input to the model requirements. It could be:
-        - <b>chatClaude:</b> Claude models with text capabilities
-        - <b>chatClaude-v:</b> Claude models with text and vision capabilities
-        - <b>chatGPT:</b> ChatGPT models with text capabilities
-        - <b>chatGPT-v:</b> ChatGPT with text and vision capabilities
-        - <b>chatGPT-o1-mini:</b> o1-mini model with text capabilities
-        - <b>dalle3:</b> Dall-E 3 models (image generation)
-        - <b>chatLlama3:</b> Llama 3 and 3-1 models
-        - <b>chatNova-v:</b> Nova models with text and vision capabilities
-        - <b>chatNova:</b> Nova models with text capabilities
     - <b>api_version:</b> version of the api (model) that is being used
     - <b>model_pool:</b> pools the model belongs to
 
