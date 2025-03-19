@@ -121,7 +121,7 @@ These are the endpoints for each one of the components from the RAG toolkit
 DEPLOYMENT_URL =  "https://<deploymentdomain>"
 
 URL_INTEGRATION_INDEXING = f"{DEPLOYMENT_URL}/integrationasync/process"
-URL_DELETE_INDEX_DOCUMENT = f"{DEPLOYMENT_URL}/retrieve/delete-documents"
+URL_DELETE_INDEX_DOCUMENT = f"{DEPLOYMENT_URL}/retrieve/delete_documents"
 
 URL_LLM = f"{DEPLOYMENT_URL}/llm/predict"
 URL_COMPOSE = f"{DEPLOYMENT_URL}/compose/process"
@@ -3143,7 +3143,7 @@ This action is executed at the streamlist level. The aim is to apply a filter to
 * **Platform (string):** Platform hosting the LLM.
 * **Query (string)**
 * **Template_name (string):** Template name to use while calling genai-llmapi.
-* **Return_not_allowed** (bool):  Flag to return not allowed documents in permissionfilter.
+* **Return_not_allowed** (bool):  Flag to return not allowed documents with empty content in permissionfilter.
 * **Filer_conditions (json/dict):** Conditions to check in the retrieved chunks to filter them. Using “or”, “and” to combine conditions and each condition is structured the same way, {“condition type”: {“metadata name”: “condition”}}
 
 Example of <i>filter</i> action using <u>related_to</u> type:
