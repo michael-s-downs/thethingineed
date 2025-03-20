@@ -257,11 +257,13 @@ class VertexQueryLimiter(QueryLimiter):
 
         for i, message in enumerate(pair):
             new_parts = []
-            current_part = {}
 
             for part in message.get("parts", []):
+                current_part = {}
+
                 if "text" in part and isinstance(part["text"], dict):
                     total_tokens += part["text"].pop("n_tokens", 0)
+                    # Asigna directamente el contenido como valor de text, no como un diccionario anidado
                     current_part["text"] = part["text"]["content"]
 
                 elif "inlineData" in part and isinstance(part["inlineData"], dict):
@@ -271,11 +273,8 @@ class VertexQueryLimiter(QueryLimiter):
                         "mimeType": part["inlineData"].get("mimeType", "")
                     }
 
+                if current_part:
                     new_parts.append(current_part)
-                    current_part = {}
-
-            if current_part:
-                new_parts.append(current_part)
 
             message["parts"] = new_parts
 

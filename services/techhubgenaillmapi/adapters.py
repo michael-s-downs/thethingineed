@@ -456,6 +456,13 @@ class GeminiAdapter(BaseAdapter):
         self.message.substituted_query = self.preprocessed_message[-2:]
         self.available_img_formats = ["JPEG", "PNG", "GIF", "WEBP"] #TODO change available img formats
 
+    def adapt_query_and_persistence(self):
+        """ Method to add the number of tokens to the message"""
+        self._adapt_messages(self.message.substituted_query)
+        self._adapt_messages(self.message.query)
+        for pair in self.message.persistence:
+            self._adapt_messages(pair)
+
     @staticmethod
     def _get_image_tokens(width, height, width_resize, height_resize) -> int:
         """ Resize an image to have the correct format and get the tokens
@@ -485,6 +492,7 @@ class GeminiAdapter(BaseAdapter):
                 elif isinstance(pair['content'], list):
                     pair['parts'] = pair['content']
                     pair.pop('content')
+
         for message in messages:
             for part in message.get("parts", []):
                 if "text" in part:
