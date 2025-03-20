@@ -311,7 +311,7 @@ If a <i>response_url</i> is provided, when the process ends, the service will se
 }
 ```
 
-For further information, see the<i>README</i> section in left menu.  
+For further information, see the <i>README</i> section in left menu.  
 
 ### Writing message in queue (Developer functionality)
 If using just infoindexing module for developing purposes as is not needed to pass through the other components to know how infoindexing works (just an already preprocessed document can be used or a simpler one), a txt file located in a route of the *STORAGE_BACKEND* environment variable and separated by *\t* will be necessary.

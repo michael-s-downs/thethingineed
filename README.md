@@ -3568,7 +3568,7 @@ Once documents have been indexed, it is often necessary to update their informat
   "indexation_conf": {
     "vector_storage_conf": {
       "index": "index_example5",
-      "metadata_primpary_keys": "same_as_before"
+      "metadata_primary_keys": ["filename", "document_id"]
     }
   },
   "documents_metadata": {"doc1.txt": {"content_binary": "aG9sYQ=="}},
