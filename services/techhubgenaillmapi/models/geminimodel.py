@@ -92,94 +92,40 @@ class GeminiModel(GenerativeModel):
                 'error_message': str(response['msg']),
                 'status_code': response['status_code']
             }
-        response_body = json.loads(response.get('body').read())
-        answer = response_body.get('output').get('message').get('content')
-        if len(answer) == 0:
-            return {
-                'status': 'error',
-                'error_message': "There is no response from the model for the request",
-                'status_code': 400
-            }
-        self.logger.info(f"LLM response: {answer}.")
+        candidates = response.get('candidates', [])
+        content = candidates[0].get('content', {}).get('parts', [])
 
-        stop_reason = response_body.get("stopReason", "")
-        if stop_reason == "tool_use":
-            content = response_body.get('output', {}).get('message', {}).get('content', [])
-            thinking_text = ""
-            answer_text = ""
-            tool_calls = []
+        tool_calls = []
+        answer_text = ""
 
-            for item in content:
-                if "text" in item:
-                    text = item['text']
-                    thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
-                    if thinking_match:
-                        thinking_text = thinking_match.group(1).strip()
-                        answer_text = text.replace(thinking_match.group(0), "").strip()
-                    else:
-                        answer_text = text.strip()
-                elif "toolUse" in item:
-                    tool_calls.append({
-                        "name": item["toolUse"].get('name', ''),
-                        "id": item["toolUse"].get('toolUseId', ''),
-                        "inputs": item["toolUse"].get('input', {})
-                    })
+        for part in content:
+            if 'functionCall' in part:
+                tool_calls.append({
+                    "id": "",
+                    "name": part['functionCall'].get('name', ''),
+                    "inputs": part['functionCall'].get('args', {})
+                })
+            elif 'text' in part:
+                answer_text += part.get('text', '').strip() + "\n"
 
-            result = {
-                "status": "finished",
-                "result": {
-                    "thinking": thinking_text,
-                    "answer": answer_text,
-                    "tool_calls": tool_calls,
-                    "input_tokens": response_body.get('usage', {}).get('inputTokens', 0),
-                    "n_tokens": response_body.get('usage', {}).get('totalTokens', 0),
-                    "output_tokens": response_body.get('usage', {}).get('outputTokens', 0),
-                    "query_tokens": self.message.user_query_tokens
-                },
-                "status_code": 200
-            }
-            return result
-        elif self.tools is not None:
-            content = response_body.get('output', {}).get('message', {}).get('content', [])
-            thinking_text = ""
-            answer_text = ""
-            for item in content:
-                text = item.get('text', '')
-                if text:
-                    thinking_match = re.search(r"<thinking>(.*?)</thinking>", text, re.DOTALL)
-                    if thinking_match:
-                        thinking_text = thinking_match.group(1).strip()
-                        answer_text = text.replace(thinking_match.group(0), "").strip()
-                    else:
-                        answer_text = text.strip()
-            result = {
-                "status": "finished",
-                "result": {
-                    "thinking": thinking_text,
-                    "answer": answer_text,
-                    "input_tokens": response_body.get('usage', {}).get('inputTokens', 0),
-                    "n_tokens": response_body.get('usage', {}).get('totalTokens', 0),
-                    "output_tokens": response_body.get('usage', {}).get('outputTokens', 0),
-                    "query_tokens": self.message.user_query_tokens
-                },
-                "status_code": 200
-            }
-            return result
-
-
-        text_generated = {
-            'answer': answer[0].get('text'),
-            'n_tokens': response_body.get('usage').get('totalTokens'),
-            'query_tokens': self.message.user_query_tokens,
-            'output_tokens': response_body.get('usage').get('outputTokens'),
-            'input_tokens': response_body.get('usage').get('inputTokens')
-        }
+        answer_text = answer_text.strip()
 
         result = {
-            'status': "finished",
-            'result': text_generated,
+            'status': 'finished',
+            'result': {
+                'answer': answer_text if answer_text else "",
+                'input_tokens': response.get('usageMetadata', {}).get('promptTokenCount', 0),
+                'n_tokens': response.get('usageMetadata', {}).get('totalTokenCount', 0),
+                'output_tokens': response.get('usageMetadata', {}).get('candidatesTokenCount', 0),
+                'query_tokens': self.message.user_query_tokens,
+                'logprobs': candidates[0].get('avgLogprobs', None)
+            },
             'status_code': 200
         }
+
+        if tool_calls:
+            result['result']['tool_calls'] = tool_calls
+
         return result
 
     def __repr__(self):
@@ -188,26 +134,30 @@ class GeminiModel(GenerativeModel):
                f'max_tokens:{self.max_tokens}, ' \
                f'temperature:{self.temperature}}}'
 
-    def adapt_tools(self, tools): #TODO adapt this fuction for gemini models
-
+    def adapt_tools(self, tools):
         if not tools:
             return tools
+
         adapted_tools = []
 
         for tool in tools:
             adapted_tool = {
-                "toolSpec": {
-                    "name": tool['name'],
-                    "description": tool['description'],
-                    "inputSchema": {
-                        "json": tool['input_schema']
+                "function_declarations": [
+                    {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "parameters": {
+                            "type": tool["input_schema"]["type"],
+                            "properties": tool["input_schema"]["properties"],
+                            "required": tool["input_schema"].get("required", [])
+                        }
                     }
-                }
+                ]
             }
 
             adapted_tools.append(adapted_tool)
 
-        return {"tools": adapted_tools}
+        return adapted_tools
 
 class ChatGemini(GeminiModel):
     MODEL_MESSAGE = "chatGemini"
