@@ -459,7 +459,9 @@ class GeminiAdapter(BaseAdapter):
     def adapt_query_and_persistence(self):
         """ Method to add the number of tokens to the message"""
         self._adapt_messages(self.message.substituted_query)
-        self._adapt_messages(self.message.query)
+        for message in self.message.substituted_query:
+            if message.get('role', '') == "user":
+                self.message.query = [message]
         for pair in self.message.persistence:
             self._adapt_messages(pair)
 
