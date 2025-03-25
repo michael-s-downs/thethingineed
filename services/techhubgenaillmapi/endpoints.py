@@ -655,7 +655,7 @@ class VertexPlatform(Platform):
         elif (
             "error" in answer
             and "code" in answer["error"]
-            and answer["error"]["code"] == "invalid_api_key"
+            and answer["error"]["reason"] == "API_KEY_INVALID"
         ):
             return {
                 "error": answer,

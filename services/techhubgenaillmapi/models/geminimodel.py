@@ -118,7 +118,7 @@ class GeminiModel(GenerativeModel):
                 'n_tokens': response.get('usageMetadata', {}).get('totalTokenCount', 0),
                 'output_tokens': response.get('usageMetadata', {}).get('candidatesTokenCount', 0),
                 'query_tokens': self.message.user_query_tokens,
-                'logprobs': candidates[0].get('avgLogprobs', None)
+                'logprobs': []
             },
             'status_code': 200
         }
