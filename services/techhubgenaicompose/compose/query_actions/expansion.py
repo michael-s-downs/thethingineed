@@ -90,7 +90,7 @@ class StepSplitExpansion(ExpansionMethod):
 
         retriever_result = []
         for retriever in retrieve_action:
-            query = retriever['action_params']['params']['generic']['index_conf']['query']
+            query = retriever['action_params']['params']['indexation_conf']['query']
             STEP_QUERY = f"Input Query: {query}, K queries or lower: {k_steps} \n Response: [List of simpler queries here]"
             if context:
                 STEP_QUERY = f"Context: {context}, {STEP_QUERY}"
@@ -109,7 +109,7 @@ class StepSplitExpansion(ExpansionMethod):
                 if n_q > 10:
                     break
                 queries.append(r)
-                retriever['action_params']['params']['generic']['index_conf']['query'] = r
+                retriever['action_params']['params']['indexation_conf']['query'] = r
                 actions_confs.insert(0, deepcopy(retriever))
         
         return queries
@@ -212,7 +212,7 @@ class LangExpansion(ExpansionMethod):
         retriever_result = []
         for retriever in retrieve_action:
             templates = []
-            query = retriever['action_params']['params']['generic']['index_conf']['query']
+            query = retriever['action_params']['params']['indexation_conf']['query']
             for lang in langs:
                 lang = self.parse_lang(lang)
                 TRANSLATE_QUERY = f"Sentence: <{query}> \n Language: {lang}"
@@ -232,7 +232,7 @@ class LangExpansion(ExpansionMethod):
             for r in result:
                 translated_query = r['answer']
                 queries.append(translated_query)
-                retriever['action_params']['params']['generic']['index_conf']['query'] = translated_query
+                retriever['action_params']['params']['indexation_conf']['query'] = translated_query
                 actions_confs.insert(0, deepcopy(retriever))
         
         return queries

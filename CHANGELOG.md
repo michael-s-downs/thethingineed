@@ -3,122 +3,123 @@
 
 # Changelog
 
-## v3.1.0 (2025-03-13)
+## v3.1.0 (2025-03-20)
 - genai-compose:
-  - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
-  - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
-  - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query
-  - [Improvement] Change endpoint '/delete_template updated' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_template?name=mytemplate'
-  - [Improvement] Change endpoint '/delete_filer_template' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_filter_template?name=mytemplate'
-  - [Improvement] Change endpoint '/upload_template updated' from method POST to PUT
-  - [Improvement] Change endpoint '/upload_filter_template' from method POST to PUT
-  - [Improvement] Change endpoint '/get_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
-  - [Improvement] Change endpoint '/get_filter_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
-  - [Improvement] Change endpoint '/load_session' from method POST to PUT
-  - [Improvement] Updated the response format from string to JSON
+    - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
+    - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
+    - [New] Update retrieval action to use the latests format. Key 'index_conf' changes to 'indexation_conf' and key 'generic' is not needed
+    - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query
+    - [Improvement] Change endpoint '/delete_template updated' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_template?name=mytemplate'
+    - [Improvement] Change endpoint '/delete_filer_template' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_filter_template?name=mytemplate'
+    - [Improvement] Change endpoint '/upload_template updated' from method POST to PUT
+    - [Improvement] Change endpoint '/upload_filter_template' from method POST to PUT
+    - [Improvement] Change endpoint '/get_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+    - [Improvement] Change endpoint '/get_filter_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+    - [Improvement] Change endpoint '/load_session' from method POST to PUT
+    - [Improvement] Updated the response format from string to JSON
 - genai-llmapi:
-  - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
-  - [New] Prompt templates splitted into different files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
-  - [New] Deleted endpoint '/reloadconfig', it does nothing with the prompt load change
-  - [New] Added method to show the word causing the error while loading a JSON
-  - [New] Added support for models o1, o1-mini, and o3-mini
-  - [New] Added reasoning and DALL·E models for the 'openai' platform
-    - Add default model in 'src/LLM/conf/default_llm_models.json' for 'openai' platform
-  - [New] Added tools support
-  - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
-  - [Improvement] Change endpoint '/upload_prompt_template' from method POST to PUT
-  - [Improvement] Change endpoint '/delete_prompt_template' from method POST to DELETE and use URL params instead of body. Example: '/llm/delete_prompt_template?name=mytemplate'
-  - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
-  - [Improvement] Parameters 'functions' and 'function_call' deprecated
+    - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
+    - [New] Prompt templates splitted into different files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
+    - [New] Deleted endpoint '/reloadconfig', it does nothing with the prompt load change
+    - [New] Added method to show the word causing the error while loading a JSON
+    - [New] Added support for models o1, o1-mini, and o3-mini
+    - [New] Added reasoning and DALL·E models for the 'openai' platform
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'openai' platform
+    - [New] Added tools support
+    - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
+    - [Improvement] Change endpoint '/upload_prompt_template' from method POST to PUT
+    - [Improvement] Change endpoint '/delete_prompt_template' from method POST to DELETE and use URL params instead of body. Example: '/llm/delete_prompt_template?name=mytemplate'
+    - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+    - [Improvement] Parameters 'functions' and 'function_call' deprecated
 - genai-inforetrieval:
-  - [Improvement] Changed endpoint '/delete-documents' to '/delete_documents' to match all the other endpoints
-  - [Improvement] Change endpoint '/delete_documents' from method POST to DELETE and use URL params instead of body. Example: '/delete_documents?index=myindex&filename=myfile&filename=myfile2'
-  - [Improvement] Change endpoint '/delete_index from' method POST to DELETE and use URL params instead of body. Example: '/delete_index?index=myindex'
-  - [Improvement] Change endpoint '/get_documents_filenames' from method POST to GET and use URL params instead of body. Example: '/get_documents_filenames?index=myindex'
+    - [Improvement] Changed endpoint '/delete-documents' to '/delete_documents' to match all the other endpoints
+    - [Improvement] Change endpoint '/delete_documents' from method POST to DELETE and use URL params instead of body. Example: '/delete_documents?index=myindex&filename=myfile&filename=myfile2'
+    - [Improvement] Change endpoint '/delete_index from' method POST to DELETE and use URL params instead of body. Example: '/delete_index?index=myindex'
+    - [Improvement] Change endpoint '/get_documents_filenames' from method POST to GET and use URL params instead of body. Example: '/get_documents_filenames?index=myindex'
 - flowmgmt-checkend:
-  - [Improvement] Quit star imports and set only the required
+    - [Improvement] Quit star imports and set only the required
 - preprocess-start: 
-  - [Improvement] Normalized path structure for cloud storage by extracting request_id from dataset_path and building standardized paths
+    - [Improvement] Normalized path structure for cloud storage by extracting request_id from dataset_path and building standardized paths
 - preprocess-extract:
-  - [Improvement] Quit star imports and set only the required
-  - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
-  - [Improvement] Implemented asynchronous batch methods to improve the images upload performance
+    - [Improvement] Quit star imports and set only the required
+    - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Normalized path structure for cloud storage
 - preprocess-ocr:
-  - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance
-  - [Improvement] Standardized path structure for cloud storage
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Standardized path structure for cloud storage
 - common:
-  - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
-  - [Improvement] Refactored the 'format_path_files' function to use os.path for more robust path handling
-  - [Improvement] Enhanced 'extract_images_conditional' function to use standardized path construction and asynchronous upload
+    - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+    - [Improvement] Refactored the 'format_path_files' function to use os.path for more robust path handling
+    - [Improvement] Enhanced 'extract_images_conditional' function to use standardized path construction and asynchronous upload
 - ALL:
-  - [Improvement] Update and fix status_codes
-  - [Improvement] Fixed maintainability warnings from sonarqube
-  - [Improvement] Update terraform, parametrize create private endpoint by resource
-  - [Improvement] Update helm, add template for elasticsearch and update deployment
-
+    - [Improvement] Update and fix status_codes
+    - [Improvement] Fixed maintainability warnings from sonarqube
+    - [Improvement] Update terraform, parametrize create private endpoint by resource
+    - [Improvement] Update helm, add template for elasticsearch and update deployment
 
 ## v3.0.0 (2025-01-30)
 - integration-receiver:
-  - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
-  - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
-  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
-  - [Fix] When error while processing request, return 400 instead of 200
-  - [Fix] When error while processing request, delete base64 to not surpass queue size
+    - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
+    - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
+    - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+    - [Fix] When error while processing request, return 400 instead of 200
+    - [Fix] When error while processing request, delete base64 to not surpass queue size
 - integration-sender:
-  - [New] Input JSON refactor to separate parameters between indexation and preprocess
-  - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
-  - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
-  - [Improvement] Return to client specific error messages from the flow instead of generic error
-  - [Improvement] Small refactors for 'queue' profile: I/O JSON nodes now are 'GenaiRequest' and 'GenaiResponse'
+    - [New] Input JSON refactor to separate parameters between indexation and preprocess
+    - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
+    - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+    - [Improvement] Return to client specific error messages from the flow instead of generic error
+    - [Improvement] Small refactors for 'queue' profile: I/O JSON nodes now are 'GenaiRequest' and 'GenaiResponse'
 - preprocess-start:
-  - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
+    - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
 - preprocess-extract:
-  - [Improvement] JSON flow body refactor (preprocess and indexation)
-  - [Improvement] If 'force_ocr' specified avoid extra processes:
-    - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
-    - If text has been extracted (for language detection) it will not be uploaded
-  - [Improvement] When exception if temporal files created, those are deleted
-  - [Improvement] Required more memory for large documents (3GB recommended)
+    - [Improvement] JSON flow body refactor (preprocess and indexation)
+    - [Improvement] If 'force_ocr' specified avoid extra processes:
+        - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
+        - If text has been extracted (for language detection) it will not be uploaded
+    - [Improvement] When exception if temporal files created, those are deleted
+    - [Improvement] Required more memory for large documents (3GB recommended)
 - preprocess-ocr:
-  - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.9)
-    - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
-    - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
-    - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
-  - [Improvement] JSON flow body refactor (preprocess and indexation)
-  - [Improvement] File sizes now calculated from local files instead storage
-  - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
-  - [Improvement] Resize image method generalization and moved to 'utils.py'
-  - [Improvement] When exception if temporal files created, those are deleted
+    - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.9)
+        - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
+        - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
+        - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
+    - [Improvement] JSON flow body refactor (preprocess and indexation)
+    - [Improvement] File sizes now calculated from local files instead storage
+    - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
+    - [Improvement] Resize image method generalization and moved to 'utils.py'
+    - [Improvement] When exception if temporal files created, those are deleted
 - genai-infoindexing:
-  - [New] New parameter 'index_metadata' to include metadata in the embedding generation
-    - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
-    - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
-    - If omitted or set to 'false', no metadata will be included
-  - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
-    - If provided the list of specific fields (e.g., ['filename', 'uri']), they will be used as primary keys
-    - If omitted, no metadata will be used for the id generation, only document content is taken into account
-    - This allow to have different documents with the same content duplicated in the elastic index with different metadata
-  - [Improvement] JSON flow body refactor
-  - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
+    - [New] New parameter 'index_metadata' to include metadata in the embedding generation
+        - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
+        - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
+        - If omitted or set to 'false', no metadata will be included
+    - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
+        - If provided the list of specific fields (e.g., ['filename', 'uri']), they will be used as primary keys
+        - If omitted, no metadata will be used for the id generation, only document content is taken into account
+        - This allow to have different documents with the same content duplicated in the elastic index with different metadata
+    - [Improvement] JSON flow body refactor
+    - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
 - genai-llmapi:
-  - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
-  - [New] Added resize for an image that exceeds the max allowed by the LLM vision model
-    - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model
-    - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
-  - [Improvement] Better logic to do retries when a model call fails 
-    - Added new optional parameter 'num_retries' in platform metadata to indicate the number of retries.
-    - When a model fails in timeout or rate limit the call is done with another model (if the model passed was a pool if not with the same)
-  - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
-  - [Improvement] Add support for vision in 'MOUNT_KEY' feature
+    - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
+    - [New] Added resize for an image that exceeds the max allowed by the LLM vision model
+        - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model
+        - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
+    - [Improvement] Better logic to do retries when a model call fails 
+        - Added new optional parameter 'num_retries' in platform metadata to indicate the number of retries.
+        - When a model fails in timeout or rate limit the call is done with another model (if the model passed was a pool if not with the same)
+    - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
+    - [Improvement] Add support for vision in 'MOUNT_KEY' feature
 - genai-inforetrieval:
-  - [Improvement] Adapt input JSON for coherence purposes with json body refactor
+    - [Improvement] Adapt input JSON for coherence purposes with JSON body refactor
 - genai-compose:
-  - [Improvement] Add header 'delegate-token' to permission filter action
+    - [Improvement] Add header 'delegate-token' to permission filter action
 - apigw:
-  - [New] Endpoint '/report/{{report_id}}/list' to get limits by report id without api-key header
+    - [New] Endpoint '/report/{{report_id}}/list' to get limits by report id without api-key header
 - ALL:
-  - [New] Sonarqube and test coverage check in azure pipeline
-  - [Improvement] Helm code, update function 'shortname' get value of release name
+    - [New] Sonarqube and test coverage check in azure pipeline
+    - [Improvement] Helm code, update function 'shortname' get value of release name
 
 ## v2.2.0 (2024-12-19)
 - integration-receiver:

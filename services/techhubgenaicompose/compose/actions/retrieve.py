@@ -103,15 +103,10 @@ class ChunksRetriever(RetrieveMethod):
 
     URL = os.environ['URL_RETRIEVE']
     TEMPLATE = {
-        "generic": {
-            "process_type": "ir_retrieve",
-            "index_conf": {
-                "task": "retrieve",
-                "template_name": "system_query_and_context",
-            }
-        },
-        "credentials": {},
-        "specific": {'dataset': {'dataset_key': ''}}
+        "indexation_conf": {
+            "task": "retrieve",
+            "template_name": "system_query_and_context",
+        }
     }
 
     HEADERS = {
@@ -132,7 +127,7 @@ class ChunksRetriever(RetrieveMethod):
         headers.update(self.params.pop("headers_config", {}))
 
         try:
-            if template['generic']['index_conf']['query'] == "":
+            if template['indexation_conf']['query'] == "":
                 raise PrintableGenaiError(status_code=400, message="Query is empty, cannot retrieve")
         except KeyError:
             raise PrintableGenaiError(status_code=404, message="Query not found in the template, cannot retrieve")

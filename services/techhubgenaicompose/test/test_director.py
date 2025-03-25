@@ -149,7 +149,7 @@ def test_load_secrets_partial_failure(mock_glob, mock_getenv, mock_director):
 
 def test_run_conf_manager_actions(mock_director):
     # This method calls multiple internal methods
-    mock_director.conf_manager.template_m.template = '[{\r\n        "action": "retrieve",\r\n        "action_params": {\r\n            "params": {\r\n                "generic": {\r\n                    "index_conf": {\r\n                        "add_highlights": false,\r\n                        "index": "$index",\r\n                        "query": "$query",\r\n                        "task": "retrieve",\r\n\t\t\t\t\t\t"top_k": 5,\r\n\t\t\t\t\t\t"filters": $filters\r\n                    },\r\n                    "process_type": "ir_retrieve"\r\n                }\r\n            },\r\n            "type": "get_chunks"\r\n        }\r\n    }]'
+    mock_director.conf_manager.template_m.template = '[{\r\n        "action": "retrieve",\r\n        "action_params": {\r\n            "params": {\r\n                "generic": {\r\n                    "indexation_conf": {\r\n                        "add_highlights": false,\r\n                        "index": "$index",\r\n                        "query": "$query",\r\n                        "task": "retrieve",\r\n\t\t\t\t\t\t"top_k": 5,\r\n\t\t\t\t\t\t"filters": $filters\r\n                    },\r\n                    "process_type": "ir_retrieve"\r\n                }\r\n            },\r\n            "type": "get_chunks"\r\n        }\r\n    }]'
     mock_director.conf_manager.template_m.query = 'mock_query'
     mock_director.conf_manager.headers = {'mock': 'headers'}
     mock_director.conf_manager.filter_m = MagicMock()
@@ -255,7 +255,7 @@ def mock_director_2():
         "action_params": {
             "params": {
                 "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "index": "index_test",
                         "query": "hello how are you",
                         "task": "retrieve",

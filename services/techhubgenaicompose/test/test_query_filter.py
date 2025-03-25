@@ -16,7 +16,7 @@ sample_params = {
     "headers": {"Authorization": "Bearer mock_token"},
     "template": "mock_template"
 }
-sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"generic": {"index_conf": {}}}}}]
+sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"generic": {"indexation_conf": {}}}}}]
 mock_template_content = json.dumps({
     "substitutions_template": "template",
     "substitutions": [{"from": "modified query", "to": "test query", "extra_words": ["test"]}]
