@@ -601,8 +601,6 @@ class VertexPlatform(Platform):
                 400, f"Model message {generative_model.MODEL_MESSAGE} not supported."
             )
 
-        project_id="techhubdev"
-
         url = template.safe_substitute(
             MODEL=generative_model.model_id,
             API_KEY=generative_model.api_key
