@@ -521,7 +521,7 @@ class GeminiAdapter(BaseAdapter):
         :param image_dict: Image to get tokens from
         :return: int - Number of tokens
         """
-        if image_dict.get('detail'):
+        if image_dict.get('image').get('detail'):
             raise PrintableGenaiError(400, "Detail parameter not allowed in Gemini vision model")
 
         # Get the base64 image resized and the size
@@ -533,7 +533,6 @@ class GeminiAdapter(BaseAdapter):
         else:
             total = image_dict['n_tokens']
 
-        # To change format to nova (no type param is needed)
         image_dict.clear()
         image_dict.update({
             "inlineData": {

@@ -594,8 +594,6 @@ class VertexPlatform(Platform):
         self.logger.debug("Building url.")
         if generative_model.MODEL_MESSAGE in ["chatGemini", "chatGemini-v"]:
             template = Template(self.models_urls.get('VERTEX_GEMINI_URL'))
-        elif generative_model.MODEL_MESSAGE in ["chatClaude", "chatClaude-v"]:
-            template = Template(self.models_urls.get('VERTEX_ANTRHOPIC_URL'))
         else:
             raise PrintableGenaiError(
                 400, f"Model message {generative_model.MODEL_MESSAGE} not supported."
@@ -734,11 +732,6 @@ class VertexPlatform(Platform):
         except requests.exceptions.RequestException as e:
             self.logger.error(f"LLM response: {str(e)}.")
             return {"error": e, "msg": str(e), "status_code": 500}
-        except botocore.exceptions.ClientError as error:
-            self.logger.error(f"Error calling botocore: {error}")
-            message = error.response["Error"]["Message"]
-            status_code = error.response["ResponseMetadata"]["HTTPStatusCode"]
-            return {"error": error, "msg": message, "status_code": status_code}
         except ConnectionError:
             try:
                 self.set_model_retry()

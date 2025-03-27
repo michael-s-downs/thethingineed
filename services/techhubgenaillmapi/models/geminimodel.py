@@ -159,54 +159,10 @@ class GeminiModel(GenerativeModel):
 
         return adapted_tools
 
-class ChatGemini(GeminiModel):
-    MODEL_MESSAGE = "chatGemini"
-    GENERATIVE_MODELS = []
-
-    def __init__(self,
-                 model,
-                 model_id,
-                 model_type,
-                 pool_name,
-                 top_k: int = None,
-                 max_input_tokens: int = 128000,
-                 max_tokens: int = 5000,
-                 bag_tokens: int = 500,
-                 zone: str = "us-east-1",
-                 top_p: float = 0.9,
-                 temperature: float = 0.7,
-                 stop: List = ["end_turn"],
-                 models_credentials: dict = None,
-                 tools: List = None):
-        """It is the object in charge of modifying whether the inputs and the outputs of the gpt models
-
-        :param model: Model name used to specify model
-        :param model_id: Model name used in the bedrock endpoint
-        :param model_type: Model type used in the bedrock endpoint
-        :param pool_name: The pool name to use for image generation.
-        :param max_input_tokens: Max number of tokens used
-        :param max_tokens: Max number of tokens used
-        :param bag_tokens: Number of tokens reserved to generative models.
-        :param zone: openai domain used in azure
-        :param api_version: azure api version used
-        :param temperature: Higher values like 0.8 will make the output more random,
-                            while lower values like 0.2 will make it more focused and deterministic
-        :param stop: Up to 4 sequences where the API will stop generating further tokens.
-        :param top_p: Top p value to use in the model
-        :param top_k: Top k value to use in the model
-        :param models_credentials: Credentials to use the model
-        """
-
-        super().__init__(model, model_id, model_type, pool_name, max_input_tokens, max_tokens, bag_tokens, zone, top_p,
-                         top_k, temperature, stop, models_credentials)
-        self.is_vision = False
-        self.tools = self.adapt_tools(tools)
-
-
 class ChatGeminiVision(GeminiModel):
     MODEL_MESSAGE = "chatGemini-v"
     DEFAULT_TEMPLATE_NAME = "system_query_v"
-    GENERATIVE_MODELS = ["gemini-1.5-pro", "gemini-2.0-flash"]
+    GENERATIVE_MODELS = ["gemini-1.5-pro", "gemini-2.0-flash", "gemini-2.5-pro"]
 
     def __init__(self,
                  model,
