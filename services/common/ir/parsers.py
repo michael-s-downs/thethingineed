@@ -171,18 +171,6 @@ class ParserInfoindexing(Parser):
         self.index = vector_storage_conf['index']
         self.metadata_primary_keys = self.get_metadata_primary_keys(vector_storage_conf)
         self.vector_storage = self.get_vector_storage(vector_storages, vector_storage_conf)
-        self.db_type = self.get_db_type(vector_storage_conf)
-    
-    def get_db_type(self, vector_storage_conf):
-        db_type = vector_storage_conf.get("db_type")
-        if not db_type:
-            self.logger.info("No db_type received, using elastic search.")
-            return "LLamaIndex_elastic"
-        if not isinstance(db_type, str):
-            raise PrintableGenaiError(400, "Param from vector_storage_conf 'db_type' must be a list")
-        
-        return db_type
-        
 
     def get_metadata_primary_keys(self, vector_storage_conf):
         metadata_primary_keys = vector_storage_conf.get('metadata_primary_keys')
@@ -293,6 +281,7 @@ class ParserInforetrieval(Parser):
             self.get_rescoring_function(self.index_conf)
             self.get_models(self.index_conf, available_pools, available_models, models_credentials)
             self.get_query(self.index_conf)
+            self.get_vector_storage(self.index_conf)
 
             self.get_x_reporting(json_input['project_conf'])
         except KeyError as ex:
@@ -355,6 +344,9 @@ class ParserInforetrieval(Parser):
         self.query = index_conf['query']
         if langdetect.detect(self.query) != 'ja':
             self.query = self._strip_accents(self.query)
+
+    def get_vector_storage(self, index_conf):
+        self.vector_storage = index_conf.get('vector_storage')
 
     def get_sent_models(self, sent_models, available_pools, available_models, models_credentials) -> list:
         """ Method to get the models to use in the retrieval process

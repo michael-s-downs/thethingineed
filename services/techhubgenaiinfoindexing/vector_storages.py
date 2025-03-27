@@ -280,17 +280,10 @@ class LlamaIndexAzureAI(VectorDB):
             index_name = INDEX_NAME(io.index, model.get('embedding_model'))
             embed_model = get_embed_model(model, self.aws_credentials, is_retrieval=False)
             Settings.embed_model = embed_model
-            metadata_fields = {
-                "uri": "uri",
-                "year": "year"
-                # "uri": self.MetadataIndexFieldType.STRING,
-                # "filename": self.MetadataIndexFieldType.STRING
-            }
 
             # Initialize Azure Search vector store
             vector_store = self.AzureAISearchVectorStore(
                 search_or_index_client=self.connector.index_client,
-                filterable_metadata_field_keys=metadata_fields,
                 hidden_field_keys=["embedding"],
                 index_name=index_name,
                 index_management=self.IndexManagement.CREATE_IF_NOT_EXISTS,

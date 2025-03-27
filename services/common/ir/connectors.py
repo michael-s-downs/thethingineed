@@ -4,6 +4,8 @@
 # Native imports
 from abc import ABC
 from typing import List
+import json
+from collections import Counter
 
 # Installed imports
 from elasticsearch import Elasticsearch, RequestError
@@ -577,11 +579,34 @@ class AiSearchConnector(Connector):
 
         except Exception as e:
             return "error", f"Error retrieving documents: {str(e)}", 400
+    
+    def get_documents_filenames(self, index_name: str, size: int = 10000):
+        """Method to get the filenames from an index"""
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
 
-    def close(self):
-        """Method to close the connection"""
-        self.connection = None
+        try:
+            search_client = SearchClient(
+                endpoint=f"{self.scheme}://{self.host}",
+                index_name=index_name,
+                credential=self.credential
+            )
 
+            search_text = "*"  
+            fields_to_retrieve = ["metadata"]
+            results = search_client.search(search_text, select=fields_to_retrieve)
+            filenames = [json.loads(doc['metadata'])['filename'] for doc in results]
+
+            filenames = dict(Counter(filenames))
+            result = []
+            for key, value in filenames.items():
+                result.append({"chunks": value, "filename":key})
+
+            return "finished", result, 200
+
+        except Exception as e:
+            return "error", f"Error retrieving filenames: {str(e)}", 400
+ 
     def list_indices(self):
         """Method to list all indices"""
         if not self.connection:
