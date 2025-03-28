@@ -467,7 +467,7 @@ class GeminiAdapter(BaseAdapter):
             self._adapt_messages(pair)
 
     @staticmethod
-    def _get_image_tokens(width, height, width_resize, height_resize) -> int:
+    def _get_image_tokens(width, height, width_resize=None, height_resize=None) -> int:
         """ Resize an image to have the correct format and get the tokens
 
         :param width: Width of the image
@@ -476,15 +476,18 @@ class GeminiAdapter(BaseAdapter):
         :param height_resize: Height to resize to
         :return: int - Number of tokens
         """
-        if width > width_resize or height > height_resize:
-            if width > height:
-                height = int(height * height_resize / width)
-                width = width_resize
-            else:
-                width = int(width * width_resize / height)
-                height = height_resize
-        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
-        return int((height * width) / 750)  # Not accurate
+        if width <= 384 and height <= 384:
+            return 258
+        else:
+            tile_width = 768
+            tile_height = 768
+
+            num_tiles_x = ceil(width / tile_width)
+            num_tiles_y = ceil(height / tile_height)
+
+            total_tiles = num_tiles_x * num_tiles_y
+
+            return total_tiles * 258
     def _adapt_messages(self, messages):
         """Method to process messages and adapt text and images accordingly."""
         for pair in messages:
@@ -529,7 +532,7 @@ class GeminiAdapter(BaseAdapter):
 
         # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
         if not image_dict.get('n_tokens'):
-            total = self._get_image_tokens(resized_image.width, resized_image.height, 1568, 1568)
+            total = self._get_image_tokens(resized_image.width, resized_image.height, None, None)
         else:
             total = image_dict['n_tokens']
 

@@ -192,7 +192,6 @@ class BedrockQueryLimiter(QueryLimiter):
         :param persistence: If given indicates that a predecent conversation must me taken into account
         """
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
-        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
 
 class NovaQueryLimiter(QueryLimiter):
@@ -209,7 +208,6 @@ class NovaQueryLimiter(QueryLimiter):
         :param persistence: If given indicates that a predecent conversation must me taken into account
         """
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
-        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
 
     @staticmethod
@@ -241,7 +239,6 @@ class VertexQueryLimiter(QueryLimiter):
         :param persistence: If given indicates that a predecent conversation must me taken into account
         """
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
-        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
     @staticmethod
     def _get_n_tokens(pair: List[dict]) -> int:
