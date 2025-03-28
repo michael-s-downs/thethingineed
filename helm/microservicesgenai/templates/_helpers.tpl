@@ -45,7 +45,7 @@ heritage: {{ .Release.Service }}
 {{- define "queues" -}}
 {{- $queues := .Values.queues | default dict -}}
 {{- $namespace := .Values.namespace -}}
-{{- $provider := .Values.provider -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key := $queues }}
 {{- if $key }}
 {{- if eq $provider "aws" }}
