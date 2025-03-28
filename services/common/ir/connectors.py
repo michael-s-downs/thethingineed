@@ -377,7 +377,10 @@ class ElasticSearchConnector(Connector):
             raise PrintableGenaiError(400, f"Error the connection has not been established")
 
         body = {"query": self._generate_filters(filters)}
-        return self.connection.delete_by_query(index=index_name, body=body)
+        result = self.connection.delete_by_query(index=index_name, body=body)
+        failures, deleted = result.body.get('failures', []), result.body.get('deleted', 0)
+
+        return result, failures, deleted
 
     def close(self):
         """ Method to close the connection to the vector storage database
@@ -550,35 +553,51 @@ class AiSearchConnector(Connector):
         except Exception as e:
             raise PrintableGenaiError(400, f"Error deleting index: {str(e)}")
 
-    def get_documents(self, index_name: str, filters: dict, offset: int = 0, size: int = 25):
-        """Method to get documents from an index"""
-        if not self.connection:
+    def delete_documents(self, index_name: str, filters: dict):
+        """ Method to delete a document from an index
+
+        :param index_name: Index to delete the document from
+        :param filters: Dictionary of desired metadata to delete documents
+        """
+        if self.connection is None:
             raise PrintableGenaiError(400, "Error: the connection has not been established")
 
-        search_client = SearchClient(
-            endpoint=f"{self.scheme}://{self.host}",
-            index_name=index_name,
-            credential=self.credential
-        )
-
         try:
-            filter_string = self._generate_filters(filters)
-            results = search_client.search(
-                search_text="*",
-                filter=filter_string,
-                skip=offset,
-                top=size
+            search_client = SearchClient(
+                endpoint=f"{self.scheme}://{self.host}",
+                index_name=index_name,
+                credential=self.credential
             )
-            
-            chunks = [doc for doc in results]
-            if not chunks:
-                return "error", f"Document not found for filters: {filters}", 400
 
-            parsed_chunks = self._parse_response(chunks)
-            return parsed_chunks
+            search_text = "*"  
+            fields_to_retrieve = ["metadata", "id"]
+            results = search_client.search(search_text, select=fields_to_retrieve)
+            ids_to_delete = []
+            for doc in results:
+                metadata = json.loads(doc['metadata'])
+                if metadata['filename'] in filters['filename']:
+                    ids_to_delete.append(doc['id'])
+            
+
+            if not ids_to_delete:
+                raise PrintableGenaiError(400, f"No documents found with metadata filename(s): {filters}")
+
+            deleted = 0
+            failures = []
+            results = []
+            for doc_id in ids_to_delete:
+                r = search_client.delete_documents(documents={"id": doc_id})
+                if r[0].status_code==200:
+                    deleted+=1
+                else:
+                    failures.append(doc_id)
+
+            return "finished", failures, deleted 
 
         except Exception as e:
-            return "error", f"Error retrieving documents: {str(e)}", 400
+            raise PrintableGenaiError(400, f"Error deleting documents: {str(e)}")
+
+
     
     def get_documents_filenames(self, index_name: str, size: int = 10000):
         """Method to get the filenames from an index"""

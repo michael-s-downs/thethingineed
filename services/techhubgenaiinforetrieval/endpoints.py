@@ -105,9 +105,10 @@ def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
 
     for model in deploy.all_models:
         index_name = INDEX_NAME(index, model)
+        if not connector.exist_index(index_name):
+            continue
         try:
-            result = connector.delete_documents(index_name, filters)
-            failures, deleted = result.body.get('failures', []), result.body.get('deleted', 0)
+            result, failures, deleted = connector.delete_documents(index_name, filters)
 
             if failures:
                 deploy.logger.debug(f"Error deleting documents in index '{index_name}': {result}")
@@ -144,6 +145,8 @@ def delete_index_handler(deploy, request) -> Tuple[Dict, int]:
 
     for model in deploy.all_models:
         index_name = INDEX_NAME(index, model)
+        if not connector.exist_index(index_name):
+            continue
         try:
             connector.delete_index(index_name)
             deleted_count += 1
