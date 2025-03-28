@@ -45,9 +45,14 @@ heritage: {{ .Release.Service }}
 {{- define "queues" -}}
 {{- $queues := .Values.queues | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.provider -}}
 {{- range $key := $queues }}
 {{- if $key }}
+{{- if eq $provider "aws" }}
+{{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s.fifo" $namespace $key }}
+{{- else }}
 {{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s" $namespace $key }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
