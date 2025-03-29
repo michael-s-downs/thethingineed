@@ -71,10 +71,15 @@ heritage: {{ .Release.Service }}
 {{- define "integration" -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key,$value := $integration }}
 {{- if $value }}
 {{- if eq $value "integration-sender" }}
+{{- if eq $provider "aws" }}
+{{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s.fifo" $namespace $value }}
+{{- else }}
 {{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s" $namespace $value }}
+{{- end }}
 {{- else }}
 {{ $key | upper }}: {{ $value }}
 {{- end }}
