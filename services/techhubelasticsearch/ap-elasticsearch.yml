@@ -9,16 +9,17 @@ trigger:
     include:
     - 'services/techhubelasticsearch/'
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
+- group: Variables para CI
 - name: 'projectlocation'
   value: '$(Agent.BuildDirectory)/s'
 - name: 'folderName'
   value: techhubelasticsearch
 - name: 'targetFolderName'
   value: 'elasticsearch'
+
+pool:
+  vmImage: '$(vmImageName)'
 
 stages:
   - stage: Elasticsearch
