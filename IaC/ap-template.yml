@@ -9,13 +9,14 @@ trigger:
     include:
     - 'IaC/*'
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
+- group: Variables para CI
 - group: TerraformBackend
 - name: 'projectlocation'
   value: '$(Agent.BuildDirectory)/s'
+
+pool:
+  vmImage: '$(vmImageName)'
 
 stages:
   - stage: TerraformValidate

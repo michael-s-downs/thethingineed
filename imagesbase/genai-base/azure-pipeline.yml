@@ -20,7 +20,7 @@ variables:
 - name: imageName
   value: '$(genai_base)'
 - name: vmImageName
-  value: 'ubuntu-latest'
+  value: '$(vmImageName)'
 - name: pythonVersion
   value: '$(python_version)'
 - name: feedGenai

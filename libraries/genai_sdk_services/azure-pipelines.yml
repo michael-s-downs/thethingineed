@@ -15,22 +15,22 @@ trigger:
     include:
     - 'genai_sdk_services/__init__.py'
 
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python311:
-      python.version: '3.11'
-
 variables:
+- group: Variables para CI
 - group: Images base params
-
 - name: projectFeed
   value: '$(feed_genai)'
 - name: feedName
   value: '$(artifact_name)'
 - name: python_version
   value: $[replace(variables['python.version'], '.', '')]
+
+pool:
+  vmImage: '$(vmImageName)'
+strategy:
+  matrix:
+    Python311:
+      python.version: '3.11'
 
 steps:
 

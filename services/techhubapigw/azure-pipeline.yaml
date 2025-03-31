@@ -26,7 +26,7 @@ variables:
 - name: sourceName
   value: 'techhubapigw'
 - name:  vmImageName
-  value: 'ubuntu-20.04'
+  value: '$(vmImageName)'
 - name:  registryServerName
   value: '$(registryName).azurecr.io'
 - name: acrRegistryLogin
