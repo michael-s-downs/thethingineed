@@ -2116,7 +2116,9 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-claude-3-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-London| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-Paris| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-
+|gemini-1.5-pro-002|                                                                                                                                      |vertex|
+|gemini-2.0-flash-exp|                                                                                                                                      |vertex|
+|gemini-2.5-pro-exp|                                                                                                                                      |vertex|
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ## Examples
@@ -3416,11 +3418,15 @@ All necessary credentials for the components are stored in secrets for security 
             "AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
             "AZURE_DALLE_URL": " https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
-            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions"
+            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions",
+            "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
         },
         "api-keys": {
             "azure": {
-                "zone": "[SET_API_KEY_VALUE]",
+                "zone": "[SET_API_KEY_VALUE]"
+            },
+            "vertex": {
+              "vertex":"[SET_API_KEY_VALUE]"
             }
         }
     }

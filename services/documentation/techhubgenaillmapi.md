@@ -1663,7 +1663,8 @@ LLMAPI needs 3 config files to run.
   ```json
   {
     "azure":"techhub-pool-world-gpt-4o",
-    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0"
+    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0",
+    "vertex":"gemini-2.0-flash-exp"
   }
   ```
     
