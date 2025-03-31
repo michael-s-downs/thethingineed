@@ -57,6 +57,7 @@
     - [Improvement] Fixed maintainability warnings from sonarqube
     - [Improvement] Update terraform, parametrize create private endpoint by resource
     - [Improvement] Update helm, add template for elasticsearch and update deployment
+    - [Improvement] Changes in helm to allow AWS support
     - [Fix] Update 'genai-sdk-services' to version 0.5.16, added region from environment var 'AWS_REGION_NAME' to all AWS services for roles support
 
 ## v3.0.0 (2025-01-30)
