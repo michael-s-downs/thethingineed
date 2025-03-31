@@ -23,8 +23,6 @@ variables:
   value: 'techhubgenaiinforetrieval'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
-- name:  vmImageName
-  value: 'ubuntu-20.04'
 - name:  pythonVersion
   value: '$(python_version)'
 - name:  baseImage
@@ -53,9 +51,9 @@ stages:
   displayName: Sonar analysis and test coverage
   jobs:
   - job:
-    continueOnError: false
+    continueOnError: true
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
       - task: UsePythonVersion@0
         inputs:

@@ -203,7 +203,7 @@ class S3Service(BaseStorageService):
                         'region_name': os.getenv(self.env_vars[2])
                     }
                 elif eval(os.getenv("AWS_ROLE", "False")):
-                    credentials = {}
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 

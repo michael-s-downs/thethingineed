@@ -37,9 +37,11 @@ spec:
               memory: {{ .Values.limits.memory }}
           volumeMounts:
 {{- range $secret := $loadSecrets }}
+{{- if $secret }}
             - name: {{ $secret }}-credentials
               mountPath: /secrets/{{ $secret }}
               readOnly: true
+{{- end }}
 {{- end }}
 {{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
   {{- range $sa := $loadStorageSecrets }}
@@ -50,10 +52,12 @@ spec:
 {{- end }}
       volumes:         
 {{- range $secret := $loadSecrets }}
+{{- if $secret }}
         - name: {{ $secret }}-credentials
           secret:
             secretName: {{ $secret }}-credentials
             defaultMode: 420
+{{- end }}
 {{- end }}
 {{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
   {{- range $sa := $loadStorageSecrets }}
