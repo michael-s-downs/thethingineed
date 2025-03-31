@@ -553,6 +553,8 @@ class AthenaService(BaseDBService):
                         'secret_key': os.getenv(self.env_vars[1]),
                         'region_name': os.getenv(self.env_vars[2])
                     }
+                elif eval(os.getenv("AWS_ROLE", "False")):
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 
@@ -565,15 +567,15 @@ class AthenaService(BaseDBService):
         :return: Connection
         """
         self.logger.debug("Connecting with Athena database")
-        region_name = self.credentials[origin].get('region_name', "eu-west-1")
+        region_name = self.credentials[origin].get('region_name')
 
         try:
-            return boto3.client(
-                "athena",
-                region_name=region_name,
-                aws_access_key_id=self.credentials[origin]['access_key'],
-                aws_secret_access_key=self.credentials[origin]['secret_key'],
-            )
+            if eval(os.getenv("AWS_ROLE", "False")):
+                db_client = boto3.client("athena", region_name=region_name)
+            else:
+                db_client = boto3.client("athena", aws_access_key_id=self.credentials[origin]['access_key'], aws_secret_access_key=self.credentials[origin]['secret_key'], region_name=region_name)
+            
+            return db_client
         except Exception as ex:
             self.logger.error("Error while connecting to %s" % origin)
             raise ex
@@ -586,14 +588,14 @@ class AthenaService(BaseDBService):
         :return: Connection
         """
         self.logger.debug("Connecting with Athena database.")
-        region_name = self.credentials[origin].get('region_name', "eu-west-1")
-
-        return pyathena.connect(
-            aws_access_key_id=self.credentials[origin]['access_key'],
-            aws_secret_access_key=self.credentials[origin]['secret_key'],
-            s3_staging_dir=f"s3://{origin}/{staging_dir}",
-            region_name=region_name,
-        )
+        region_name = self.credentials[origin].get('region_name')
+        
+        if eval(os.getenv("AWS_ROLE", "False")):
+            db_client = pyathena.connect(region_name=region_name)
+        else:
+            db_client = pyathena.connect(aws_access_key_id=self.credentials[origin]['access_key'], aws_secret_access_key=self.credentials[origin]['secret_key'], s3_staging_dir=f"s3://{origin}/{staging_dir}", region_name=region_name)
+        
+        return db_client
 
     def _get_result(self, client, execution: dict) -> str:
         """ Get the result of the query
