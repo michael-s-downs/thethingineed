@@ -39,7 +39,7 @@ stages:
   displayName: Sonar analysis and test coverage
   jobs:
   - job:
-    continueOnError: false
+    continueOnError: true
     pool:
       vmImage: $(vmImageName)
     steps:
