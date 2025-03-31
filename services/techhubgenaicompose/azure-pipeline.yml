@@ -23,8 +23,6 @@ variables:
   value: 'techhubgenaicompose'
 - name:  projectName
   value: 'TechHubGlobalToolkit'
-- name:  vmImageName
-  value: '$(vmImageName)'
 - name:  pythonVersion
   value: '$(python_version)'
 - name:  baseImage
@@ -55,7 +53,7 @@ stages:
   - job:
     continueOnError: true
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
       - task: UsePythonVersion@0
         inputs:
@@ -137,7 +135,7 @@ stages:
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
     - template: ../ap-template.yml
       parameters:
