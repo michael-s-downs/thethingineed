@@ -25,8 +25,6 @@ variables:
   value: 'TechHubApigw'
 - name: sourceName
   value: 'techhubapigw'
-- name:  vmImageName
-  value: '$(vmImageName)'
 - name:  registryServerName
   value: '$(registryName).azurecr.io'
 - name: acrRegistryLogin
@@ -55,7 +53,7 @@ stages:
   - job:
     continueOnError: true
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
       - script: |
           echo '<?xml version="1.0" encoding="UTF-8"?>' > $(System.DefaultWorkingDirectory)/coverage.xml
@@ -101,7 +99,7 @@ stages:
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
     - template: ../ap-apigw-template.yml
       parameters:
