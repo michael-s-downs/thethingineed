@@ -1502,11 +1502,11 @@ Some instructions to create templates to obtain better results from the LLM:
 
 The files-secrets architecture is:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v1.4.0-config.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-config.png)
 
 Also in case the model param is not provided, the files-secretes architecture would look like this:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-flow-llmapi-config-without-model-param.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-flow-llmapi-config-without-model-param.png)
 
 #### Secrets
 
@@ -1670,13 +1670,13 @@ LLMAPI needs 3 config files to run.
     
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-config-file-uses.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
 
 Another example, where the model parameter is not provided and the default Azure model gpt-3.5-pool-europe is used, is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-config-file-uses-without-model-param.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-config-file-uses-without-model-param.png)
 
 In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as the default model for azure. This means that whenever the model parameter is not explicitly provided during the process call, the system will automatically select gpt-3.5-pool-europe as the default option for handling requests on the Azure platform.  This can be changed modifying the **`default_llm_models.json`** file
 
@@ -1773,7 +1773,7 @@ When the model has been adapted and with the number of tokens of each message (i
 ![alt text](imgs/techhubgenaillmapi/limiters.png)
 
 ### Flow
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-llmapi-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 

@@ -5353,4 +5353,4 @@ The indexing flow is the following:
 
 - LLMAPI
 
-    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-llmapi-decision-flow.png "Process flow")

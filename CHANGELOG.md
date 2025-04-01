@@ -8,6 +8,7 @@
     - [NEW] Added new Vertex platform
     - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
       - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
+      - Updated secret to include the new 'vertex' URL for using Gemini models.
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:
