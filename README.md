@@ -168,7 +168,7 @@ Below is a list of all the parameters that can be included in the request body, 
     * <b>force_ocr</b> (optional): Boolean parameter to force the document to pass through the OCR component 
     * <b>llm_ocr_conf (<i>'llm-ocr' ocr type parameters</i>)</b> (optional): 
       * <b>model</b> (optional): Name of the model (or pool) to be used on each platform. If this parameter is not provided 'gpt-4o-pool-world' will be the default model.
-      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', or 'bedrock'. 'azure' by default.
+      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', 'bedrock' or 'vertex'. 'azure' by default.
       * <b>query</b> (optional): Question or task that you want to ask the model. 
       * <b>system</b> (optional): Variable for chat-based models
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
@@ -2116,7 +2116,9 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-claude-3-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-London| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-Paris| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-
+|gemini-1.5-pro-002|                                                                                                                                      |vertex|
+|gemini-2.0-flash-exp|                                                                                                                                      |vertex|
+|gemini-2.5-pro-exp|                                                                                                                                      |vertex|
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ## Examples
@@ -3416,11 +3418,15 @@ All necessary credentials for the components are stored in secrets for security 
             "AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
             "AZURE_DALLE_URL": " https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
-            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions"
+            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions",
+            "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
         },
         "api-keys": {
             "azure": {
-                "zone": "[SET_API_KEY_VALUE]",
+                "zone": "[SET_API_KEY_VALUE]"
+            },
+            "vertex": {
+              "vertex":"[SET_API_KEY_VALUE]"
             }
         }
     }
@@ -5347,4 +5353,4 @@ The indexing flow is the following:
 
 - LLMAPI
 
-    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-llmapi-decision-flow.png "Process flow")

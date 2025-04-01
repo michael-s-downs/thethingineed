@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 # Local imports
-from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter, NovaAdapter
+from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter, NovaAdapter, GeminiAdapter
 from common.errors.genaierrors import PrintableGenaiError
 from message.claudemessage import Claude3Message
 from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
@@ -71,7 +71,7 @@ class TestManagerAdapters:
 
     def test_get_possible_platforms(self):
         platforms = ManagerAdapters.get_possible_adapters()
-        assert platforms == ["claude", "gpt4v", "dalle", "base", "nova"]
+        assert platforms == ["claude", "gpt4v", "dalle", "base", "nova", "gemini"]
 
     def test_all_adapters(self):
         self.conf['adapter'] = "gpt4v"
@@ -82,11 +82,14 @@ class TestManagerAdapters:
         adapter_dalle = ManagerAdapters.get_adapter(self.conf)
         self.conf['adapter'] = "base"
         adapter_base = ManagerAdapters.get_adapter(self.conf)
+        self.conf['adapter'] = "gemini"
+        adapter_gemini = ManagerAdapters.get_adapter(self.conf)
 
         assert isinstance(adapter_gpt4v, GPT4VAdapter)
         assert isinstance(adapter_claude3, Claude3Adapter)
         assert isinstance(adapter_dalle, DalleAdapter)
         assert isinstance(adapter_base, BaseAdapter)
+        assert isinstance(adapter_gemini, GeminiAdapter)
 
     def test_wrong_adapter(self):
         self.conf['adapter'] = "nonexistent"
@@ -442,3 +445,26 @@ class TestNovaAdapter:
             with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format ['JPEG', 'PNG', 'GIF', 'WEBP']")):
                 mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
                 adapter._adapt_image(image_b64)
+
+class TestGeminiAdapter:
+    def test_get_image_tokens(self):
+        tokens1 = GeminiAdapter._get_image_tokens(2000, 1500, 1000, 1000) # Outside range
+        tokens2 = GeminiAdapter._get_image_tokens(800, 600, 1000, 1000) # Inside range
+        tokens3 = GeminiAdapter._get_image_tokens(1500, 2000, 1000, 1000) # Inside range
+        assert tokens1 == 1000
+        assert tokens2 == 640
+        assert tokens3 == 1000
+
+    def test_adapt_text(self):
+        text = {"content": "fgh", "n_tokens": 9}
+        GeminiAdapter._adapt_text(self, text)
+        assert text == {"content": "fgh", "n_tokens": 9}
+
+    def test_adapt_image(self):
+        image = {"image":{
+                    "url": "https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png",
+                    "detail":"high"
+                }
+        }
+        with pytest.raises(PrintableGenaiError, match="Detail parameter not allowed in Gemini vision model"):
+            GeminiAdapter._adapt_image(self, image)
