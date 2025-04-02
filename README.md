@@ -158,7 +158,7 @@ Below is a list of all the parameters that can be included in the request body, 
 
     <i>For further information about the chunking methods, see the infoindexing component detailed information</i>
 
-  * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map-searchmodels_mapjson). 
+  * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map). 
   * <b>metadata</b> (optional): Custom metadata to associate to all documents sent in this call. Currently, if you want to specify different values for each document, you will have to send each document individually in different calls.
   * <b>index_metadata</b> (optional):  This parameter, which can be either true to include only the filename and users` metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings generation.
 
@@ -3012,7 +3012,9 @@ In this config file, each model (separated by platforms) needs different paramet
 
 
 ##### Integration config files `src/integration/`
-##### Models map `/search/models_map.json`
+##### Models map
+Path: `/search/models_map.json`
+
 This file stores the information about the embedding models needed in the infoindexing queue message. The file looks like:
 
 ```json
