@@ -1,8 +1,8 @@
-# GENAI GLOBAL RAG TOOLKIT
+# Global RAG (indexing + retrieval + LLM)
 
 ## Index
 
-- [GENAI GLOBAL RAG TOOLKIT](#genai-global-rag-toolkit)
+- [Global RAG (indexing + retrieval + LLM)](#global-rag-indexing--retrieval--llm)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
