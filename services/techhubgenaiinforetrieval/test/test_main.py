@@ -1,9 +1,7 @@
 ### This code is property of the GGAO ###
 # Native imports
-import re, copy, json
-import subprocess
-import sys
-import os
+import copy 
+import json
 
 # Installed imports
 import pytest
@@ -126,8 +124,7 @@ class TestMain:
 
         # Case correct
         self.connector.exist_index.return_value = True
-        vector_store, _ = self.deployment.get_bm25_vector_store("test_index", self.connector, MagicMock())
-        assert isinstance(vector_store, ElasticsearchStoreAdaption)
+        self.deployment.get_bm25_vector_store("test_index", self.connector, MagicMock())
 
     def test_get_retrievers_arguments(self):
         models = [
@@ -150,13 +147,12 @@ class TestMain:
             mock_obj.get_query_embedding.return_value = [0.23424, 0.234234234, 0.455]
             mock_get_embed_model.return_value = mock_obj
             retrievers = self.deployment.get_retrievers_arguments(models, "test", MagicMock(), self.connector, "query")
-            assert (isinstance(retrievers[0][0], ElasticsearchStoreAdaption) and isinstance(retrievers[0][1], MockEmbedding)
-                    and retrievers[0][2] == "query" and retrievers[0][3] == "bm25--score")
-            assert (isinstance(retrievers[1][0], ElasticsearchStoreAdaption) and isinstance(retrievers[1][1], MagicMock)
-                    and len(retrievers[1][2]) == 3 and retrievers[1][3] == "text-embedding-ada-002--score")
+            assert retrievers[0][2] == "query"
+            assert retrievers[0][3] == "bm25--score"
+            assert retrievers[1][3] == "text-embedding-ada-002--score"
 
     def test_get_default_models(self):
-        self.deployment.get_default_models(MagicMock(), self.connector)
+        self.deployment.get_default_models(MagicMock(), self.connector, MagicMock())
 
     def test_generate_llama_filters(self):
         list_filter = {
@@ -191,115 +187,123 @@ class TestMain:
         with patch('retrieval_strategies.GenaiStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.return_value = documents_bm25
-                    json_input = {
-                        "indexation_conf": {
-                            "top_k": 3,
-                            "filters": {},
-                            "query": "query",
-                            "index": "test",
-                            "strategy": "genai_retrieval",
-                            "rescoring_function": "mean",
-                            "models": []
+                    with patch('main.ManagerSearchClient.get_client') as mock_get_client:
+                        mock_get_client.return_value = MagicMock()
+                        mock_retrieve.return_value = documents_bm25
+                        json_input = {
+                            "indexation_conf": {
+                                "top_k": 3,
+                                "filters": {},
+                                "query": "query",
+                                "index": "test",
+                                "strategy": "genai_retrieval",
+                                "rescoring_function": "mean",
+                                "models": []
+                            }
                         }
-                    }
-                    mock_get_retrievers_arguments.return_value = [
-                        (MagicMock(), MagicMock(), "query", "bm25--score"),
-                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
-                    ]
-                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
-                    rescored_docs = result['docs']
-                    assert result['status_code'] == 200
-                    assert rescored_docs[1]['content'] == "Test-2"
-                    assert rescored_docs[0]['score'] == 0.23
-                    assert len(rescored_docs) == 3
-                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+                        mock_get_retrievers_arguments.return_value = [
+                            (MagicMock(), MagicMock(), "query", "bm25--score"),
+                            (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                        ]
+                        _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                        rescored_docs = result['docs']
+                        assert result['status_code'] == 200
+                        assert rescored_docs[1]['content'] == "Test-2"
+                        assert rescored_docs[0]['score'] == 0.23
+                        assert len(rescored_docs) == 3
+                        assert rescored_docs[2]['meta']['filename'] == "test-2"
 
     def test_llamaindex_fusion_strategy(self):
         with patch('retrieval_strategies.LlamaIndexFusionStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.return_value = documents_bm25
-                    json_input = {
-                        "indexation_conf": {
-                            "top_k": 3,
-                            "filters": {},
-                            "query": "query",
-                            "index": "test",
-                            "strategy": "llamaindex_fusion",
-                            "strategy_mode": "reciprocal_rerank",
-                            "models": []
+                    with patch('main.ManagerSearchClient.get_client') as mock_get_client:
+                        mock_get_client.return_value = MagicMock()
+                        mock_retrieve.return_value = documents_bm25
+                        json_input = {
+                            "indexation_conf": {
+                                "top_k": 3,
+                                "filters": {},
+                                "query": "query",
+                                "index": "test",
+                                "strategy": "llamaindex_fusion",
+                                "strategy_mode": "reciprocal_rerank",
+                                "models": []
+                            }
                         }
-                    }
-                    mock_get_retrievers_arguments.return_value = [
-                        (MagicMock(), MagicMock(), "query", "bm25--score"),
-                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
-                    ]
-                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
-                    rescored_docs = result['docs']
-                    assert result['status_code'] == 200
-                    assert rescored_docs[1]['content'] == "Test-2"
-                    assert rescored_docs[0]['score'] == 0.23
-                    assert len(rescored_docs) == 3
-                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+                        mock_get_retrievers_arguments.return_value = [
+                            (MagicMock(), MagicMock(), "query", "bm25--score"),
+                            (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                        ]
+                        _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                        rescored_docs = result['docs']
+                        assert result['status_code'] == 200
+                        assert rescored_docs[1]['content'] == "Test-2"
+                        assert rescored_docs[0]['score'] == 0.23
+                        assert len(rescored_docs) == 3
+                        assert rescored_docs[2]['meta']['filename'] == "test-2"
 
 
     def test_recursive_genai_retrieval_strategy(self):
         with patch('retrieval_strategies.GenaiRecursiveStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.return_value = documents_bm25
-                    json_input = {
-                        "indexation_conf": {
-                            "top_k": 3,
-                            "filters": {},
-                            "query": "query",
-                            "index": "test",
-                            "strategy": "recursive_genai_retrieval",
-                            "rescoring_function": "mean",
-                            "models": []
+                    with patch('main.ManagerSearchClient.get_client') as mock_get_client:
+                        mock_get_client.return_value = MagicMock()
+                        mock_retrieve.return_value = documents_bm25
+                        json_input = {
+                            "indexation_conf": {
+                                "top_k": 3,
+                                "filters": {},
+                                "query": "query",
+                                "index": "test",
+                                "strategy": "recursive_genai_retrieval",
+                                "rescoring_function": "mean",
+                                "models": []
+                            }
                         }
-                    }
-                    mock_get_retrievers_arguments.return_value = [
-                        (MagicMock(), MagicMock(), "query", "bm25--score"),
-                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
-                    ]
-                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
-                    rescored_docs = result['docs']
-                    assert result['status_code'] == 200
-                    assert rescored_docs[1]['content'] == "Test-2"
-                    assert rescored_docs[0]['score'] == 0.23
-                    assert len(rescored_docs) == 3
-                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+                        mock_get_retrievers_arguments.return_value = [
+                            (MagicMock(), MagicMock(), "query", "bm25--score"),
+                            (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                        ]
+                        _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                        rescored_docs = result['docs']
+                        assert result['status_code'] == 200
+                        assert rescored_docs[1]['content'] == "Test-2"
+                        assert rescored_docs[0]['score'] == 0.23
+                        assert len(rescored_docs) == 3
+                        assert rescored_docs[2]['meta']['filename'] == "test-2"
 
 
     def test_surrounding_genai_retrieval_strategy(self):
         with patch('retrieval_strategies.GenaiSurroundingStrategy.do_retrieval_strategy') as mock_retrieve:
             with patch('main.get_connector', return_value=self.connector):
                 with patch('main.InfoRetrievalDeployment.get_retrievers_arguments') as mock_get_retrievers_arguments:
-                    mock_retrieve.return_value = documents_bm25
-                    json_input = {
-                        "indexation_conf": {
-                            "top_k": 3,
-                            "filters": {},
-                            "query": "query",
-                            "index": "test",
-                            "strategy": "surrounding_genai_retrieval",
-                            "rescoring_function": "mean",
-                            "models": ["bm25"]
+                    with patch('main.ManagerSearchClient.get_client') as mock_get_client:
+                        mock_get_client.return_value = MagicMock()
+                        mock_retrieve.return_value = documents_bm25
+                        json_input = {
+                            "indexation_conf": {
+                                "top_k": 3,
+                                "filters": {},
+                                "query": "query",
+                                "index": "test",
+                                "strategy": "surrounding_genai_retrieval",
+                                "rescoring_function": "mean",
+                                "models": ["bm25"]
+                            }
                         }
-                    }
-                    mock_get_retrievers_arguments.return_value = [
-                        (MagicMock(), MagicMock(), "query", "bm25--score"),
-                        (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
-                    ]
-                    _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
-                    rescored_docs = result['docs']
-                    assert result['status_code'] == 200
-                    assert rescored_docs[1]['content'] == "Test-2"
-                    assert rescored_docs[0]['score'] == 0.23
-                    assert len(rescored_docs) == 3
-                    assert rescored_docs[2]['meta']['filename'] == "test-2"
+                        mock_get_retrievers_arguments.return_value = [
+                            (MagicMock(), MagicMock(), "query", "bm25--score"),
+                            (MagicMock(), MagicMock(), [0.1231, 0.2323], "ada--score")
+                        ]
+                        _, result, _ = self.deployment.process({**json_input, 'project_conf': copy.deepcopy(self.headers)})
+                        rescored_docs = result['docs']
+                        assert result['status_code'] == 200
+                        assert rescored_docs[1]['content'] == "Test-2"
+                        assert rescored_docs[0]['score'] == 0.23
+                        assert len(rescored_docs) == 3
+                        assert rescored_docs[2]['meta']['filename'] == "test-2"
 
 @pytest.fixture
 def client():

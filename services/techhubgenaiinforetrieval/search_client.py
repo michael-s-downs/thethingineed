@@ -90,12 +90,12 @@ class ManagerSearchClient(object):
         for client in ManagerSearchClient.SEARCH_TYPES:
             if client.is_connector_type(connector.MODEL_FORMAT):
                 return client(connector, index_name)
-        raise PrintableGenaiError(400, f"Platform type doesnt exist {connector.MODEL_FORMAT}. "
+        raise PrintableGenaiError(400, f"Vector database type doesnt exist {connector.MODEL_FORMAT}. "
                          f"Possible values: {ManagerSearchClient.get_possible_clients()}")
 
     @staticmethod
     def get_possible_clients() -> List:
         """ Method to list the clients: [elastic, azure_ai_search]
         """
-        return [store.SEARCH_CLIENT for store in ManagerSearchClient.SEARCH_TYPES]
+        return [store.SEARCH_TYPE for store in ManagerSearchClient.SEARCH_TYPES]
 

@@ -3,6 +3,13 @@
 
 # Changelog
 
+## vX.X.X (xxxx-xx-xx)
+- genai-inforetrieval:
+    - [New] Added support to Azure AI Search.
+
+- genai-infoindexing:
+    - [New] Added support to Azure AI Search.
+
 ## v3.1.0 (2025-03-20)
 - genai-compose:
     - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
