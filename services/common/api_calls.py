@@ -661,6 +661,7 @@ def indexing(request_json: dict) -> dict:
     metadata = request_json.setdefault('documents_metadata', {})
     models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
     files_need_indexing = []
+    process_id = request_json.get('input_json', {}).get('process_id') 
 
     if files:
         for file_path in files:
@@ -678,10 +679,15 @@ def indexing(request_json: dict) -> dict:
                 'indexation_conf': request_json['indexation_conf'],
                 'preprocess_conf': request_json['preprocess_conf'],
                 'integration': request_json,
-                'process_id': f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}",
                 'tracking': request_json.get('tracking', {})
             }
 
+            if process_id:
+                request_params['process_id'] = process_id
+                request_params['preprocess_conf']['preprocess_reuse'] = True
+            else:
+                request_params['process_id'] = f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}"
+                
             request_params['indexation_conf']['models'] = [models_map[model] for model in models]
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('ocr', request_json['client_profile']['default_ocr'])
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', request_json['client_profile'].get('force_ocr', False))

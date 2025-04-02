@@ -430,11 +430,20 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, 
-                          _validate_models, _validate_chunking_method, _validate_ocr, 
-                          _validate_metadata_primary_keys, _validate_index_metadata]
+    if request_json['input_json'].get('operation') == "preprocess":
+        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr]
+        if not request_json['input_json'].get('process_id', ''):
+            validate_functions.append(_validate_docsmetadata)
+    else:
+        validate_functions = [_validate_index, _validate_operation, _validate_response_url, 
+                            _validate_models, _validate_chunking_method, _validate_ocr, 
+                            _validate_metadata_primary_keys, _validate_index_metadata]
+        
+        if not request_json['input_json'].get('process_id', ''):
+            validate_functions.append(_validate_docsmetadata)
+    
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
-
+    
     return valid, ", ".join(messages_list)
 
 def validate_input_delete(request_json: dict, input_files: list) -> Tuple[bool, str]:

@@ -267,40 +267,38 @@ def _async_extraction_request_generate(request_params: dict, request_files: list
 
 def _async_indexing_request_generate(request_params: dict, request_files: list) -> dict:
     """ Fill JSON template to send async indexing request
-
+    
     :param request_params: Params to fill JSON template
     :param request_files: Files to process
     :return: JSON to send request
     """
     template = json.loads(open(templates_path + "async_indexing.json", 'r').read())
-
+        
     if not 'csv_method' in request_params:
         dataset_path = _generate_dataset(request_files, request_params['folder'], request_params['indexation_conf']['metadata'])
     else:
         dataset_path = f"{request_files[0]}"
         template['csv'] = True
-
+    
     template['dataset_conf']['dataset_csv_path'] = dataset_path
     template['dataset_conf']['dataset_path'] = request_params['folder']
-
+    
     # To merge recursively
     merge(template['indexation_conf'], request_params['indexation_conf'])
     merge(template['preprocess_conf'], request_params['preprocess_conf'])
-
-
+    
     if 'languages' in request_params:
         template['languages'] = request_params['languages']
     if 'timeout' in request_params:
         template['timeout_sender'] = request_params['timeout']
-    if request_params.get('process_id', ""):
-        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     if request_params.get('integration', {}):
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
         template['tracking'] = request_params['tracking']
-
+    if 'process_id' in request_params:
+        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     template['url_sender'] = provider_resources.queue_url
-
+    
     return template
 
 def _sync_preprocess_request(apigw_params: dict, request_params: dict, request_file: str) -> dict:

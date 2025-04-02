@@ -81,6 +81,7 @@ def adapt_input_base(request_json: dict, input_files: list) -> Tuple[dict, list]
 
     request_json['apigw_params'].update(input_json.get('headers', {}))
     request_json['documents_folder'] = input_json.get('documents_folder', request_json['documents_folder'])
+    request_json['persist_preprocess'] = input_json.get('persist_preprocess', False) 
 
     return request_json, input_files
 
