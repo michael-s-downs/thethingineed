@@ -469,7 +469,9 @@ def test_delete_documents(client):
     }
     query_params = f"?index={body['index']}&filename={body['delete']['filename'][0]}"
     with patch('endpoints.get_connector') as mock_get_connector:
-        mock_get_connector.return_value = get_connector()
+        mock_get_connector = MagicMock()
+        
+        
 
         # Send the DELETE request with query parameters
         response = client.delete(f"/delete_documents{query_params}")
