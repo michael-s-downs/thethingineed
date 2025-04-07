@@ -9,6 +9,11 @@
 
 - genai-infoindexing:
     - [New] Added support to Azure AI Search.
+- genai-llmapi:
+    - [NEW] Added new Vertex platform
+    - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:
@@ -64,6 +69,9 @@
     - [Improvement] Fixed maintainability warnings from sonarqube
     - [Improvement] Update terraform, parametrize create private endpoint by resource
     - [Improvement] Update helm, add template for elasticsearch and update deployment
+    - [Improvement] Changes in helm to allow AWS support
+    - [Improvement] Get 'vmImageName' from Azure Library variables (increase Ubuntu deprecated version)
+    - [Fix] Update 'genai-sdk-services' to version 0.5.16, added region from environment var 'AWS_REGION_NAME' to all AWS services for roles support
 
 ## v3.0.0 (2025-01-30)
 - integration-receiver:

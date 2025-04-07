@@ -192,7 +192,6 @@ class BedrockQueryLimiter(QueryLimiter):
         :param persistence: If given indicates that a predecent conversation must me taken into account
         """
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
-        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
 
 class NovaQueryLimiter(QueryLimiter):
@@ -209,7 +208,6 @@ class NovaQueryLimiter(QueryLimiter):
         :param persistence: If given indicates that a predecent conversation must me taken into account
         """
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
-        self.encoding = GPT2TokenizerFast.from_pretrained('Xenova/claude-tokenizer')
         self.max_images = 20
 
     @staticmethod
@@ -227,8 +225,74 @@ class NovaQueryLimiter(QueryLimiter):
                         num_images += 1
         return num_images
 
+class VertexQueryLimiter(QueryLimiter):
+    MODEL_FORMAT = "vertex"
+
+    def __init__(self, message: Message, model: str, max_tokens: int, bag_tokens: int,
+                 persistence: List[dict] = None) -> None:
+        """ Class that limits the number of tokens for the claude model
+
+        :param message: Message like class
+        :param model: Model name
+        :param max_tokens: Maximum numbre of tokens
+        :param bag_tokens: Number of tokens reserved to generative models.
+        :param persistence: If given indicates that a predecent conversation must me taken into account
+        """
+        super().__init__(message, model, max_tokens, bag_tokens, persistence)
+        self.max_images = 20
+    @staticmethod
+    def _get_n_tokens(pair: List[dict]) -> int:
+        """
+        Method to get the number of tokens from the message list and modify it.
+
+        :param pair: List of messages.
+        :return: Total number of tokens.
+        """
+        total_tokens = 0
+
+        for i, message in enumerate(pair):
+            new_parts = []
+
+            for part in message.get("parts", []):
+                current_part = {}
+
+                if "text" in part and isinstance(part["text"], dict):
+                    total_tokens += part["text"].pop("n_tokens", 0)
+                    current_part["text"] = part["text"]["content"]
+
+                elif "inlineData" in part and isinstance(part["inlineData"], dict):
+                    total_tokens += part["inlineData"].pop("n_tokens", 0)
+                    current_part["inlineData"] = {
+                        "data": part["inlineData"].get("data", ""),
+                        "mimeType": part["inlineData"].get("mimeType", "")
+                    }
+
+                if current_part:
+                    new_parts.append(current_part)
+
+            message["parts"] = new_parts
+
+        return total_tokens
+
+    @staticmethod
+    def _get_num_images(pair: List[dict]) -> int:
+        """
+        Method to get the number of images in the message.
+
+        :param pair: List of messages.
+        :return: Number of images.
+        """
+        num_images = 0
+        for message in pair:
+            for part in message.get("parts", []):
+                if "inlineData" in part and isinstance(part["inlineData"], dict):
+                    mime_type = part["inlineData"].get("mimeType", "")
+                    if mime_type.startswith("image/"):
+                        num_images += 1
+        return num_images
+
 class ManagerQueryLimiter(object):
-    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter]
+    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter]
 
     @staticmethod
     def get_limiter(conf: dict) -> QueryLimiter:

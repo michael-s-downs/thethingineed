@@ -9,12 +9,13 @@ from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOMod
 from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision
+from models.geminimodel import ChatGeminiVision
 from common.models_manager import BaseModelConfigManager
 from generatives import GenerativeModel
 
 
 class ManagerModel(object):
-    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision, ChatGPTOModel, ChatGPTOVisionModel]
+    MODEL_TYPES = [ChatGPTModel, ChatClaudeModel, DalleModel, ChatClaudeVision, ChatGPTVision, LlamaModel, ChatNova, ChatNovaVision, ChatGPTOModel, ChatGPTOVisionModel, ChatGeminiVision]
 
     @staticmethod
     def find_model_in_available_models(model_in: str, available_models: List[dict]) -> dict:

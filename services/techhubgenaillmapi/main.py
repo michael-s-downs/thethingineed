@@ -152,7 +152,7 @@ class LLMDeployment(BaseDeployment):
             raise ValueError(f"Invalid template name '{template_name}'")
 
         else:
-            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGPT-o"] and isinstance(query, str):
+            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGemini-v"] and isinstance(query, str):
                 model.DEFAULT_TEMPLATE_NAME = "system_query"
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]

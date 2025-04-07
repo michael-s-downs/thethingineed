@@ -1,8 +1,8 @@
-# GENAI GLOBAL RAG TOOLKIT
+# Global RAG (indexing + retrieval + LLM)
 
 ## Index
 
-- [GENAI GLOBAL RAG TOOLKIT](#genai-global-rag-toolkit)
+- [Global RAG (indexing + retrieval + LLM)](#global-rag-indexing--retrieval--llm)
   - [Index](#index)
   - [Overview](#overview)
     - [Key features](#key-features)
@@ -158,7 +158,7 @@ Below is a list of all the parameters that can be included in the request body, 
 
     <i>For further information about the chunking methods, see the infoindexing component detailed information</i>
 
-  * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map-searchmodels_mapjson). 
+  * <b>models</b> (optional): Parameter to choose the embedding model which will be used to the embedding generation. The model must appear in the <i>/integration/search/models_map.json</i> file explained in [models map explanation](#models-map). 
   * <b>metadata</b> (optional): Custom metadata to associate to all documents sent in this call. Currently, if you want to specify different values for each document, you will have to send each document individually in different calls.
   * <b>index_metadata</b> (optional):  This parameter, which can be either true to include only the filename and users` metadata or a list specifying the metadata fields to include, is used to add metadata to the embeddings generation.
 
@@ -168,7 +168,7 @@ Below is a list of all the parameters that can be included in the request body, 
     * <b>force_ocr</b> (optional): Boolean parameter to force the document to pass through the OCR component 
     * <b>llm_ocr_conf (<i>'llm-ocr' ocr type parameters</i>)</b> (optional): 
       * <b>model</b> (optional): Name of the model (or pool) to be used on each platform. If this parameter is not provided 'gpt-4o-pool-world' will be the default model.
-      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', or 'bedrock'. 'azure' by default.
+      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', 'bedrock' or 'vertex'. 'azure' by default.
       * <b>query</b> (optional): Question or task that you want to ask the model. 
       * <b>system</b> (optional): Variable for chat-based models
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
@@ -2116,7 +2116,9 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-claude-3-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-London| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
 |techhubdev-claude-3-sonnet-v1:0-Paris| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-
+|gemini-1.5-pro-002|                                                                                                                                      |vertex|
+|gemini-2.0-flash-exp|                                                                                                                                      |vertex|
+|gemini-2.5-pro-exp|                                                                                                                                      |vertex|
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ## Examples
@@ -3010,7 +3012,9 @@ In this config file, each model (separated by platforms) needs different paramet
 
 
 ##### Integration config files `src/integration/`
-##### Models map `/search/models_map.json`
+##### Models map
+Path: `/search/models_map.json`
+
 This file stores the information about the embedding models needed in the infoindexing queue message. The file looks like:
 
 ```json
@@ -3416,11 +3420,15 @@ All necessary credentials for the components are stored in secrets for security 
             "AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
             "AZURE_DALLE_URL": " https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
-            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions"
+            "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions",
+            "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
         },
         "api-keys": {
             "azure": {
-                "zone": "[SET_API_KEY_VALUE]",
+                "zone": "[SET_API_KEY_VALUE]"
+            },
+            "vertex": {
+              "vertex":"[SET_API_KEY_VALUE]"
             }
         }
     }
@@ -5347,4 +5355,4 @@ The indexing flow is the following:
 
 - LLMAPI
 
-    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png "Process flow")
+    ![alt text](services/documentation/imgs/techhubgenaillmapi/genai-llmapi-llmapi-decision-flow.png "Process flow")

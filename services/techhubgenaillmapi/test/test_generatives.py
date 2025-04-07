@@ -14,6 +14,7 @@ from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOMod
 from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision, NovaModel
+from models.geminimodel import ChatGeminiVision
 
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
@@ -136,9 +137,21 @@ o_v_model={
     "models_credentials": {}
 }
 
+gemini_model={
+    "model": "techhubdev-gemini-2.0-flash-exp",
+    "model_id": "gemini-2.0-flash-exp",
+    "model_type": "gemini-2.0-flash",
+    "max_input_tokens": 4000,
+    "zone": "us-central1",
+    "message": "chatGemini-v",
+    "model_pool": [],
+    "models_credentials": {}
+}
+
 available_models = {
     "azure": [copy.deepcopy(gpt_model), copy.deepcopy(dalle_model), copy.deepcopy(gpt_v_model)],
-    "bedrock": [copy.deepcopy(claude_model), copy.deepcopy(llama3_model), copy.deepcopy(claude3_model), copy.deepcopy(nova_model), copy.deepcopy(nova_v_model)]
+    "bedrock": [copy.deepcopy(claude_model), copy.deepcopy(llama3_model), copy.deepcopy(claude3_model), copy.deepcopy(nova_model), copy.deepcopy(nova_v_model)],
+    "vertex": [copy.deepcopy(gemini_model)]
 }
 
 available_pools = {
@@ -208,6 +221,9 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(o_v_model)
         chatgptovision = ManagerModel.get_model({"model": o_v_model['model'], "reasoning_effort": "low"}, "azure", available_pools, manager_models_config)
         assert isinstance(chatgptovision, ChatGPTOVisionModel)
+        manager_models_config.get_model.return_value = copy.deepcopy(gemini_model)
+        geminiv = ManagerModel.get_model({"model": gemini_model['model']}, "vertex", available_pools, manager_models_config)
+        assert isinstance(geminiv, ChatGeminiVision)
 
 
     def test_pool_model(self):
@@ -876,3 +892,115 @@ class TestGPTOVisionModel:
         mock_response['choices'] = [{"message": {"content": "Not found"}}]
         result = gpt_o_v.get_result(mock_response)
         assert result['result']['answer'] == "Not found"
+
+class TestGeminiModel:
+    def test_parse_data(self):
+        conf = {
+            "model": gemini_model['model'],
+            "top_k": 100,
+            "tools": [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {
+                            "type": "number",
+                            "description": "The positive sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "negative_score": {
+                            "type": "number",
+                            "description": "The negative sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "neutral_score": {
+                            "type": "number",
+                            "description": "The neutral sentiment score, ranging from 0.0 to 1.0."
+                        }
+                    },
+                    "required": [
+                        "positive_score",
+                        "negative_score",
+                        "neutral_score"
+                    ]
+                }
+            }
+        ]
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(gemini_model)
+        gemini_v = ManagerModel.get_model(conf, "azure", available_pools, manager_models_config)
+        gemini_v.set_message(message_dict)
+        gemini_v.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = gemini_model['model']
+        conf["response_format"] = "json_object"
+        manager_models_config.get_model.return_value = copy.deepcopy(gemini_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Parameter: 'response_format' not supported in model: 'techhubdev-gemini-2.0-flash-exp'")):
+
+            gemini_v = ManagerModel.get_model(conf, "vertex", available_pools, manager_models_config)
+            gemini_v.set_message(message_dict)
+            gemini_v.parse_data()
+
+    def test_get_result(self):
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(gemini_model)
+        geminiv = ManagerModel.get_model({"model": gemini_model['model']}, "vertex", available_pools, manager_models_config)
+
+        mock_message = MagicMock()
+        mock_message.user_query_tokens = 50
+        geminiv.message = mock_message
+
+        response_1 = {
+            'ResponseMetadata': {'HTTPStatusCode': 400},
+            'body': MagicMock()
+        }
+        response_1['body'].read.return_value = json.dumps({'error': 'Bad Request'})
+        result_1 = geminiv.get_result(response_1)
+        assert result_1['status'] == 'error'
+        assert result_1['status_code'] == 400
+        assert result_1['error_message'] == {'error': 'Bad Request'}
+
+        response_2 = {
+            'status_code': 500,
+            'msg': 'Internal Server Error'
+        }
+        result_2 = geminiv.get_result(response_2)
+        assert result_2['status'] == 'error'
+        assert result_2['status_code'] == 500
+        assert result_2['error_message'] == 'Internal Server Error'
+
+        response_3 = {
+            'candidates': [{
+                'content': {'parts': [{'text': 'Hello, world!'}]}
+            }],
+            'usageMetadata': {
+                'promptTokenCount': 10,
+                'totalTokenCount': 20,
+                'candidatesTokenCount': 5
+            }
+        }
+        result_3 = geminiv.get_result(response_3)
+        assert result_3['status'] == 'finished'
+        assert result_3['result']['answer'] == 'Hello, world!'
+        assert result_3['result']['input_tokens'] == 10
+        assert result_3['result']['n_tokens'] == 20
+        assert result_3['result']['output_tokens'] == 5
+        assert result_3['result']['query_tokens'] == 50
+        assert result_3['status_code'] == 200
+
+        response_4 = {
+            'candidates': [{
+                'content': {'parts': [{'functionCall': {'name': 'getWeather', 'args': {'location': 'NYC'}}}]}
+            }],
+            'usageMetadata': {}
+        }
+        result_4 = geminiv.get_result(response_4)
+        assert result_4['status'] == 'finished'
+        assert result_4['result']['tool_calls'] == [{
+            'id': '',
+            'name': 'getWeather',
+            'inputs': {'location': 'NYC'}
+        }]
+        assert result_4['status_code'] == 200
