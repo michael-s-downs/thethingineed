@@ -8,9 +8,8 @@ from typing import List
 from common.errors.genaierrors import PrintableGenaiError
 
 from elasticsearch_adaption import ElasticsearchStoreAdaption  # Custom class that adapts the elasticsearch store to improve filters
-from elasticsearch.helpers.vectorstore import AsyncDenseVectorStrategy, AsyncBM25Strategy
+from elasticsearch.helpers.vectorstore import AsyncBM25Strategy
 from elasticsearch import AsyncElasticsearch
-from azure.search.documents.aio import SearchClient as AsyncAzureSearchClient
 from azure.search.documents.indexes import SearchIndexClient as AzSearchIndexClient
 
 from llama_index.vector_stores.azureaisearch import AzureAISearchVectorStore

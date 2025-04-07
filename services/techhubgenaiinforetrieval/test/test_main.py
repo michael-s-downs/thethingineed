@@ -469,11 +469,11 @@ def test_delete_documents(client):
     }
     query_params = f"?index={body['index']}&filename={body['delete']['filename'][0]}"
     with patch('endpoints.get_connector') as mock_get_connector:
-        mock_get_connector = MagicMock()
-        
-        
+        mock_connector = MagicMock()
+        mock_get_connector.return_value = mock_connector
 
-        # Send the DELETE request with query parameters
+        mock_connector.delete_documents.return_value = ("mocked_result", [], 1)
+
         response = client.delete(f"/delete_documents{query_params}")
         result = response.json.get('result')
         assert response.status_code == 200
@@ -511,17 +511,8 @@ def test_delete_documents_exeception(client):
         assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
 
         mock_connector.delete_documents.side_effect = None
-        mock_connector.delete_documents.return_value = MagicMock(
-            body={"failures": [{"reason": "test failure"}], "deleted": 0}
-        )
-        response = client.delete(f"/delete_documents{query_params}")
-        result = response.json
-        assert response.status_code == 400
-        assert "Documents not found for filters: {'filename': ['test.pdf']}" in result.get('error_message')
+        mock_connector.delete_documents.return_value =("error", [{"reason": "test failure"}], 0)
 
-        mock_connector.delete_documents.return_value = MagicMock(
-            body={"failures": [], "deleted": 0}
-        )
         response = client.delete(f"/delete_documents{query_params}")
         result = response.json
         assert response.status_code == 400

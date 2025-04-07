@@ -28,7 +28,7 @@ async def test_elastic_client():
         
         assert isinstance(client.client, AsyncElasticsearch)
         
-        with patch("elasticsearch_adaption.ElasticsearchStoreAdaption", autospec=True) as mock_store:
+        with patch("search_client.ElasticsearchStoreAdaption", autospec=True) as mock_store:
             mock_store_instance = MagicMock(spec=ElasticsearchStoreAdaption)
             mock_store.return_value = mock_store_instance
             store = client.create_store("test-index")
@@ -50,7 +50,7 @@ async def test_azure_ai_client():
         
         assert isinstance(client.client, AzSearchIndexClient)
         
-        with patch("llama_index.vector_stores.azureaisearch.AzureAISearchVectorStore", autospec=True) as mock_store:
+        with patch("search_client.AzureAISearchVectorStore", autospec=True) as mock_store:
             mock_store_instance = MagicMock(spec=AzureAISearchVectorStore)
             mock_store.return_value = mock_store_instance
             store = client.create_store("test-index")

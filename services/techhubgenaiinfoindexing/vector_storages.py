@@ -5,9 +5,6 @@
 from abc import ABC
 from typing import List
 import logging
-import uuid
-import re
-import json
 import os
 import time
 
@@ -32,6 +29,15 @@ from common.errors.genaierrors import PrintableGenaiError
 
 from chunking_methods import ManagerChunkingMethods
 
+from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
+from elasticsearch.helpers.errors import BulkIndexError
+from elastic_transport import ConnectionTimeout
+from elasticsearch import AsyncElasticsearch
+from llama_index.vector_stores.elasticsearch import ElasticsearchStore
+
+from azure.core.exceptions import ServiceRequestError
+from llama_index.vector_stores.azureaisearch import AzureAISearchVectorStore
+from llama_index.vector_stores.azureaisearch import IndexManagement
 
 class VectorDB(ABC):
     MODEL_FORMAT = "VectorDB"
@@ -130,11 +136,6 @@ class VectorDB(ABC):
 
 
 class LlamaIndexElastic(VectorDB):
-    from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
-    from elasticsearch.helpers.errors import BulkIndexError
-    from elastic_transport import ConnectionTimeout
-    from elasticsearch import AsyncElasticsearch
-    from llama_index.vector_stores.elasticsearch import ElasticsearchStore
 
     MODEL_FORMAT = "elastic"
     URI_BASEPATH = {
@@ -154,7 +155,7 @@ class LlamaIndexElastic(VectorDB):
                 self.connector.assert_correct_index_metadata(INDEX_NAME(io.index, model.get('embedding_model')),
                                                              docs,
                                                              ["_node_content", "_node_type","doc_id", "ref_doc_id", "document_id"])
-        except self.ElasticConnectionError:
+        except ElasticConnectionError:
             self.logger.error("Connection to elastic failed. Check if the elastic service is running.",
                               exc_info=get_exc_info())
             host = io.vector_storage.get("vector_storage_host")
@@ -175,7 +176,7 @@ class LlamaIndexElastic(VectorDB):
             index_name = INDEX_NAME(io.index, model.get('embedding_model'))
             embed_model = get_embed_model(model, self.aws_credentials, is_retrieval=False)
             Settings.embed_model = embed_model
-            vector_store = self.ElasticsearchStore(index_name=index_name, es_client=self.AsyncElasticsearch(hosts=f"{self.connector.scheme}://{self.connector.host}:{self.connector.port}",
+            vector_store = ElasticsearchStore(index_name=index_name, es_client=AsyncElasticsearch(hosts=f"{self.connector.scheme}://{self.connector.host}:{self.connector.port}",
                                            basic_auth=(self.connector.username, self.connector.password),
                                            verify_certs=False, request_timeout=30))
 
@@ -212,7 +213,7 @@ class LlamaIndexElastic(VectorDB):
             for nodes in nodes_per_doc:
                 index.insert_nodes(nodes, show_progress=True)
             return delta + 1
-        except (self.BulkIndexError, self.ConnectionTimeout):
+        except (BulkIndexError, ConnectionTimeout):
             docs_filenames = set([node.metadata.get('filename') for nodes in nodes_per_doc for node in nodes])
             self.logger.warning(f"BulkingIndexError/ConnectionTimeout detected while indexing{list(docs_filenames)}, retrying, try {delta + 1}/{max_retries}")
             time.sleep(4)
@@ -232,14 +233,6 @@ class LlamaIndexElastic(VectorDB):
 
 
 class LlamaIndexAzureAI(VectorDB):
-    from azure.core.exceptions import ServiceRequestError
-    from azure.search.documents import SearchClient
-    from azure.core.credentials import AzureKeyCredential
-    from llama_index.vector_stores.azureaisearch import AzureAISearchVectorStore
-    from llama_index.vector_stores.azureaisearch import (
-        IndexManagement,
-        MetadataIndexFieldType,
-    )
 
     MODEL_FORMAT = "ai_search"
     URI_BASEPATH = {
@@ -259,7 +252,7 @@ class LlamaIndexAzureAI(VectorDB):
                 self.connector.assert_correct_index_metadata(INDEX_NAME(io.index, model.get('embedding_model')),
                                                              docs,
                                                              ["_node_content", "_node_type", "doc_id", "ref_doc_id", "document_id"])
-        except self.ServiceRequestError:
+        except ServiceRequestError:
             self.logger.error("Connection to Azure AI Search failed. Check if the service is running.",
                               exc_info=get_exc_info())
             host = io.vector_storage.get("vector_storage_host")
@@ -282,11 +275,11 @@ class LlamaIndexAzureAI(VectorDB):
             Settings.embed_model = embed_model
 
             # Initialize Azure Search vector store
-            vector_store = self.AzureAISearchVectorStore(
+            vector_store = AzureAISearchVectorStore(
                 search_or_index_client=self.connector.index_client,
                 hidden_field_keys=["embedding"],
                 index_name=index_name,
-                index_management=self.IndexManagement.CREATE_IF_NOT_EXISTS,
+                index_management=IndexManagement.CREATE_IF_NOT_EXISTS,
                 id_field_key="id",
                 chunk_field_key="content",
                 embedding_field_key="embeddings",
@@ -330,7 +323,7 @@ class LlamaIndexAzureAI(VectorDB):
             for nodes in nodes_per_doc:
                 index.insert_nodes(nodes, show_progress=True)
             return delta + 1
-        except self.ServiceRequestError:
+        except ServiceRequestError:
             docs_filenames = set([node.metadata.get('filename') for nodes in nodes_per_doc for node in nodes])
             self.logger.warning(f"ServiceRequestError detected while indexing{list(docs_filenames)}, retrying, try {delta + 1}/{max_retries}")
             time.sleep(4)
