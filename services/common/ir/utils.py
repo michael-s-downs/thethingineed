@@ -80,13 +80,12 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
     elif platform == "huggingface":
         if is_retrieval:
             # Normally in huggingface the retrieval model is different from the embedding model
-            return HuggingFaceEmbedding(model_name=model.get('retriever_model'))
-        return HuggingFaceEmbedding(model_name=model.get('embedding_model'))
+            return HuggingFaceEmbedding(model_name=model.get('retriever_model'), model_kwargs={'trust_remote_code': True})
+        return HuggingFaceEmbedding(model_name=model.get('embedding_model'), model_kwargs={'trust_remote_code': True})
     elif platform == "vertex":
         return GoogleGenAIEmbedding(
             model_name=model.get('embedding_model'),
             api_key=model.get('api_key'),
         )
-
     else:
         raise ValueError(f"Platform {platform} not supported")
