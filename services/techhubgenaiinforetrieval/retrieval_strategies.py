@@ -305,23 +305,23 @@ class GenaiRecursiveStrategy(GenaiStrategy):
         all_nodes_dict = {}
         all_nodes = []
         for node in nodes:
-            node_content_dict = json.loads(node['_source']['metadata']['_node_content'])
+            node_content_dict = self.connector.get_metadata_node_content(node)
             relationships = {}
             for type, content in node_content_dict['relationships'].items():
                 relationships[NodeRelationship(type)] = RelatedNodeInfo(hash=content['hash'], node_id=content['node_id'],
                                                                         metadata=content['metadata'],
                                                                         node_type=ObjectType(content['node_type']))
 
-            text_node = TextNode(text=node['_source']['content'], metadata=node_content_dict['metadata'],
-                                 embedding=node['_source']['embedding'],
+            text_node = TextNode(text=self.connector.get_content(node), metadata=node_content_dict['metadata'],
+                                 embedding=self.connector.get_embeddings(node),
                                  excluded_embed_metadata_keys=node_content_dict['excluded_embed_metadata_keys'],
                                  excluded_llm_metadata_keys=node_content_dict['excluded_llm_metadata_keys'],
                                  end_char_idx=node_content_dict['end_char_idx'], relationships=relationships,
                                  start_char_idx=node_content_dict['start_char_idx'],
                                  metadata_seperator=node_content_dict['metadata_seperator'],
                                  metadata_template=node_content_dict['metadata_template'],
-                                 text_template=node_content_dict['text_template'], id_=node['_id'])
-            index_node = IndexNode.from_text_node(text_node, node['_source']['metadata']['index_id'])
+                                 text_template=node_content_dict['text_template'], id_=self.connector.get_id(node))
+            index_node = IndexNode.from_text_node(text_node, self.connector.get_metadata_index_id(node))
             all_nodes_dict[index_node.node_id] = index_node
             all_nodes.append(index_node)
         return all_nodes_dict, all_nodes

@@ -224,7 +224,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                     resource = f"retrieval/{model}/tokens"
                     self.report_api(tokens, "", input_object.x_reporting, resource, "", "TOKENS")
 
-                resource = f"retrieval/process/call"
+                resource = "retrieval/process/call"
                 self.report_api(1, "", input_object.x_reporting, resource, "")
 
             return self.must_continue, {

@@ -148,8 +148,22 @@ class LlamaIndexElastic(VectorDB):
         super().__init__(connector, workspace, origin, aws_credentials)
 
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
+        """
+        Processes the input data and validates the metadata against the index.
+
+        This method extracts documents from the provided DataFrame and markdown files,
+        then checks the metadata of these documents against the existing index metadata
+        for each model specified in the input object. If the connection to the elastic
+        service fails, an error is logged and a PrintableGenaiError is raised.
+
+        :param io: Parser object containing input configurations and model details.
+        :param df: DataFrame containing the data to be processed.
+        :param markdown_files: List of markdown files associated with the data.
+        :return: A list of processed documents.
+        :raises PrintableGenaiError: If the connection to the elastic service is not available.
+        """
         docs = self._get_documents_from_dataframe(df, markdown_files,
-                                             io.txt_path, io.csv, io.do_titles, io.do_tables)
+                                                  io.txt_path, io.csv, io.do_titles, io.do_tables)
         try:
             for model in io.models:
                 self.connector.assert_correct_index_metadata(INDEX_NAME(io.index, model.get('embedding_model')),
@@ -163,7 +177,21 @@ class LlamaIndexElastic(VectorDB):
         return docs
 
     def index_documents(self, docs: List, io: Parser) -> List:
-        """Index documents in the document store"""
+        """
+        Index documents in the document store with embeddings generation.
+
+        This method processes a list of documents and indexes them into the document store
+        using the specified chunking method and embedding models. It calculates the number
+        of tokens for each document and reports the indexing status to an API.
+
+        Args:
+            docs (List): A list of documents to be indexed.
+            io (Parser): A Parser object containing input configurations and model details.
+
+        Returns:
+            List: A list of dictionaries reporting the number of pages and tokens processed
+                  for each embedding model.
+        """
         list_report_to_api = []
         n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
         chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
@@ -245,6 +273,25 @@ class LlamaIndexAzureAI(VectorDB):
         super().__init__(connector, workspace, origin, aws_credentials)
 
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
+        """
+        Process data from a DataFrame and markdown files, and validate index metadata.
+
+        This method extracts documents from the provided DataFrame and markdown files,
+        then checks the metadata of these documents against the existing index metadata
+        for each model specified in the input object. If the connection to Azure AI Search
+        fails, an error is logged and a PrintableGenaiError is raised.
+
+        Args:
+            io (Parser): An object containing input parameters and configurations.
+            df (pd.DataFrame): A DataFrame containing data to be processed.
+            markdown_files (List): A list of markdown files to be processed.
+
+        Returns:
+            List: A list of processed documents.
+
+        Raises:
+            PrintableGenaiError: If the connection to Azure AI Search is not available.
+        """
         docs = self._get_documents_from_dataframe(df, markdown_files,
                                              io.txt_path, io.csv, io.do_titles, io.do_tables)
         try:
@@ -260,7 +307,22 @@ class LlamaIndexAzureAI(VectorDB):
         return docs
 
     def index_documents(self, docs: List, io: Parser) -> List:
-        """Index documents in Azure AI Search"""
+        """
+        Index documents in Azure AI Search.
+
+        This method processes a list of documents and indexes them into Azure AI Search.
+        It calculates the number of tokens in the documents, determines the chunking method,
+        and generates embeddings for each document model. The documents are then indexed
+        into the Azure AI Search vector store, and a report is generated for each model
+        indicating the number of pages and tokens processed.
+
+        Args:
+            docs (List): A list of documents to be indexed.
+            io (Parser): An object containing input parameters and configurations.
+
+        Returns:
+            List: A list of reports for each model, detailing the number of pages and tokens processed.
+        """
         list_report_to_api = []
         n_tokens = sum(len(self.encoding.encode(doc.text)) for doc in docs)
         chunking_method = ManagerChunkingMethods.get_chunking_method({**io.chunking_method, "origin": self.origin,
@@ -339,7 +401,6 @@ class LlamaIndexAzureAI(VectorDB):
 
             self.logger.warning(f"Nodes deleted due to: {type(e).__name__}; {e.args}")
             raise ConnectionError(f"Max num of retries reached while indexing {docs_filenames}")
-
 
 
 class ManagerVectorDB(object):
