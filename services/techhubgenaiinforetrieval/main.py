@@ -7,11 +7,6 @@
 import tiktoken
 
 from flask import Flask, request
-from elasticsearch_adaption import \
-    ElasticsearchStoreAdaption  # Custom class that adapts the elasticsearch store to improve filters
-# In the version 0.3.3 it's impossible to use multiple filters in the same query
-from elasticsearch.helpers.vectorstore import AsyncDenseVectorStrategy, AsyncBM25Strategy
-from elasticsearch import AsyncElasticsearch
 from llama_index.core import MockEmbedding
 
 

@@ -53,14 +53,6 @@ class VectorDB(ABC):
         logger_handler = LoggerHandler(VECTOR_DB_SERVICE, level=os.environ.get('LOG_LEVEL', "INFO"))
         self.logger = logger_handler.logger
 
-
-    def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
-        pass
-
-    def index_documents(self, docs: List, io: Parser) -> List:
-        pass
-
-
     @classmethod
     def is_vector_database_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
