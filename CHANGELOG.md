@@ -5,10 +5,10 @@
 
 ## vX.X.X (xxxx-xx-xx)
 - genai-inforetrieval:
-    - [New] Added support to Azure AI Search.
+    - [New] Added support to Azure AI Search as a new vector storage.
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
 - genai-infoindexing:
-    - [New] Added support to Azure AI Search.
+    - [New] Added support to Azure AI Search as a new vector storage.
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
 - genai-llmapi:
     - [NEW] Added new Vertex platform

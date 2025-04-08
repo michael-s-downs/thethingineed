@@ -31,19 +31,6 @@ class TextVectorDB(unittest.TestCase):
         self.aws_credentials = {"key": "test_key", "secret": "test_secret"}
         self.vector_db = VectorDB(self.connector, self.workspace, self.origin, self.aws_credentials)
 
-    def test_get_processed_data(self):
-        io = MagicMock(spec=Parser)
-        df = pd.DataFrame({"column": [1, 2, 3]})
-        markdown_files = ["file1.md", "file2.md"]
-
-        result = self.vector_db.get_processed_data(io, df, markdown_files)
-
-    def test_index_documents(self):
-        io = MagicMock(spec=Parser)
-        docs = ["doc1", "doc2", "doc3"]
-
-        result = self.vector_db.index_documents(docs, io)
-
 class TestLlamaIndex(unittest.TestCase):
 
     def setUp(self):

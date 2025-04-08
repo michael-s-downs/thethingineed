@@ -284,6 +284,9 @@ def test_genai_recursive_do_retrieval_strategy():
         retrievers_arguments = [
             (MagicMock(), MagicMock(), "query", "bm25--score")
         ]
+        mock_nodes_parsed = MagicMock()
+        mock_nodes_parsed.return_value = (MagicMock(), MagicMock())
+        strategy.get_all_nodes_parsed = mock_nodes_parsed
         input_object = ManagerParser().get_parsed_object({"type": "inforetrieval", "json_input": json_input,
                                                           "available_models": [ada_002_germany],
                                                           "available_pools": {'ada-pool': ['ada-002-germany']},
