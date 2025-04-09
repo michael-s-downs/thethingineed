@@ -7,9 +7,15 @@
 - genai-inforetrieval:
     - [New] Added support to Azure AI Search as a new vector storage.
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
+    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models text-embedding-004 and gemini-embedding-exp-03-07 in 'src/ir/conf/models_config.json'
+        - Add default models in 'src/ir/conf/default_embedding_models.json'
 - genai-infoindexing:
     - [New] Added support to Azure AI Search as a new vector storage.
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
+    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models text-embedding-004 and gemini-embedding-exp-03-07 in 'src/ir/conf/models_config.json'
+        - Add default models in 'src/ir/conf/default_embedding_models.json'
 - genai-llmapi:
     - [NEW] Added new Vertex platform
     - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
