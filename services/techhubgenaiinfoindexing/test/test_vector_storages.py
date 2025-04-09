@@ -1,20 +1,19 @@
+
 import unittest
 from unittest.mock import patch, MagicMock
 import pytest
 
-from elastic_transport import ConnectionTimeout
 from elasticsearch.helpers import BulkIndexError
 from httpx import TimeoutException
-from openai import RateLimitError, APIStatusError
 
-from vector_storages import VectorDB, LlamaIndex, ManagerVectorDB
+from vector_storages import VectorDB, LlamaIndexElastic, ManagerVectorDB, LlamaIndexAzureAI
 from elasticsearch.exceptions import ConnectionError as ElasticConnectionError
 from common.errors.genaierrors import PrintableGenaiError
-from common.utils import ELASTICSEARCH_INDEX
 from common.ir.connectors import Connector
 from common.ir.parsers import Parser
 import pandas as pd
 from typing import List
+from llama_index.core import Document
 
 class MockVectorDB(VectorDB):
     def get_processed_data(self, io: Parser, df: pd.DataFrame, markdown_files: List) -> List:
@@ -32,19 +31,6 @@ class TextVectorDB(unittest.TestCase):
         self.aws_credentials = {"key": "test_key", "secret": "test_secret"}
         self.vector_db = VectorDB(self.connector, self.workspace, self.origin, self.aws_credentials)
 
-    def test_get_processed_data(self):
-        io = MagicMock(spec=Parser)
-        df = pd.DataFrame({"column": [1, 2, 3]})
-        markdown_files = ["file1.md", "file2.md"]
-
-        result = self.vector_db.get_processed_data(io, df, markdown_files)
-
-    def test_index_documents(self):
-        io = MagicMock(spec=Parser)
-        docs = ["doc1", "doc2", "doc3"]
-
-        result = self.vector_db.index_documents(docs, io)
-
 class TestLlamaIndex(unittest.TestCase):
 
     def setUp(self):
@@ -52,15 +38,15 @@ class TestLlamaIndex(unittest.TestCase):
         self.workspace = "workspace_path"
         self.origin = "origin_path"
         self.aws_credentials = {"key": "dummy_key", "secret": "dummy_secret"}
-        self.vector_db = LlamaIndex(self.connector, self.workspace, self.origin, self.aws_credentials)
+        self.vector_db = LlamaIndexElastic(self.connector, self.workspace, self.origin, self.aws_credentials)
         self.vector_db.logger = MagicMock()
 
         self.connector_mock = MagicMock()
         self.logger_mock = MagicMock()
-        self.lama_index = LlamaIndex(connector=self.connector_mock, workspace='test_workspace', origin='test_origin', aws_credentials=None)
+        self.lama_index = LlamaIndexElastic(connector=self.connector_mock, workspace='test_workspace', origin='test_origin', aws_credentials=None)
         self.lama_index.logger = self.logger_mock
 
-    @patch.object(LlamaIndex, 'get_processed_data', return_value=['mock_document'])
+    @patch.object(LlamaIndexElastic, 'get_processed_data', return_value=['mock_document'])
     def test_call_get_processed_data(self, mock_get_processed_data):
         """Test that get_processed_data is called with correct parameters."""
         mock_parser = MagicMock()
@@ -76,7 +62,7 @@ class TestLlamaIndex(unittest.TestCase):
 
         self.assertEqual(result, ['mock_document'])
 
-    @patch.object(LlamaIndex, 'index_documents', return_value=[{'status': 'success'}])
+    @patch.object(LlamaIndexElastic, 'index_documents', return_value=[{'status': 'success'}])
     def test_call_index_documents(self, mock_index_documents):
         """Test that index_documents is called with correct parameters."""
         docs = [MagicMock()]
@@ -95,7 +81,7 @@ class TestLlamaIndex(unittest.TestCase):
         logger_instance = MagicMock()
         mock_logger_handler.return_value.logger = logger_instance
 
-        vector_db = LlamaIndex(self.connector, self.workspace, self.origin, self.aws_credentials)
+        vector_db = LlamaIndexElastic(self.connector, self.workspace, self.origin, self.aws_credentials)
 
         self.assertEqual(vector_db.connector, self.connector)
         self.assertEqual(vector_db.workspace, self.workspace)
@@ -105,15 +91,15 @@ class TestLlamaIndex(unittest.TestCase):
 
     def test_is_platform_type(self):
         """Test the is_platform_type method."""
-        self.assertTrue(LlamaIndex.is_vector_database_type("LlamaIndex"))
-        self.assertFalse(LlamaIndex.is_vector_database_type("OtherType"))
+        self.assertTrue(LlamaIndexElastic.is_vector_database_type("elastic"))
+        self.assertFalse(LlamaIndexElastic.is_vector_database_type("OtherType"))
 
     def test_get_processed_data_success(self):
         mock_connector = MagicMock()
         mock_parser = MagicMock()
         mock_logger = MagicMock()
 
-        llama_index = LlamaIndex(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
+        llama_index = LlamaIndexElastic(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
         llama_index.logger = mock_logger
 
         mock_parser.models = [{'embedding_model': 'test_model'}]
@@ -143,7 +129,7 @@ class TestLlamaIndex(unittest.TestCase):
         mock_connector = MagicMock(spec=Connector)
         mock_logger = MagicMock()
 
-        llama_index = LlamaIndex(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
+        llama_index = LlamaIndexElastic(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
         llama_index.logger = mock_logger
 
         mock_parser = MagicMock()
@@ -228,7 +214,7 @@ class TestLlamaIndex(unittest.TestCase):
         """Test the _strip_accents method."""
         input_text = "áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙäëïöüÄËÏÖÜâêîôûÂÊÎÔÛ"
         expected_text = "aeiouAEIOUaeiouAEIOUaeiouAEIOUaeiouAEIOU"
-        result = LlamaIndex._strip_accents(input_text)
+        result = LlamaIndexElastic._strip_accents(input_text)
         self.assertEqual(result, expected_text)
 
     def test_initialize_metadata(self):
@@ -283,7 +269,8 @@ class TestLlamaIndex(unittest.TestCase):
         self.assertEqual(result, 1)
         mock_vector_index.return_value.insert_nodes.assert_called()
 
-    def test_write_nodes_connection_error(self):
+    @patch("time.sleep", return_value=None)
+    def test_write_nodes_connection_error(self, mock_sleep):
         instance = self.vector_db
         nodes_per_doc = []
         embed_model = MagicMock()
@@ -324,7 +311,8 @@ class TestLlamaIndex(unittest.TestCase):
         self.vector_db.logger.warning.assert_called()
         mock_sleep.assert_called_with(50)
 
-    def test_manage_indexing_exception(self):
+    @patch("time.sleep", return_value=None)
+    def test_manage_indexing_exception(self, mock_sleep):
         """Test the _manage_indexing_exception method."""
         index_name = "test_index"
         models = [{"embedding_model": "test_model"}]
@@ -334,7 +322,8 @@ class TestLlamaIndex(unittest.TestCase):
 
         self.connector.delete_documents.assert_called()
 
-    def test_manage_indexing_exception_with_failures(self):
+    @patch("time.sleep", return_value=None)
+    def test_manage_indexing_exception_with_failures(self, mock_sleep):
 
         self.connector_mock.delete_documents.return_value = MagicMock(
             body={'failures': ['some_failure'], 'deleted': 0}
@@ -344,7 +333,8 @@ class TestLlamaIndex(unittest.TestCase):
 
         self.logger_mock.debug.assert_called_with("Result deleting documents in index test_index_test_model: Error deleting documents")
 
-    def test_manage_indexing_exception_with_no_deletions(self):
+    @patch("time.sleep", return_value=None)
+    def test_manage_indexing_exception_with_no_deletions(self, mock_sleep):
         self.connector_mock.delete_documents.return_value = MagicMock(
             body={'failures': [], 'deleted': 0}
         )
@@ -358,13 +348,13 @@ class TestManagerVectorDB(unittest.TestCase):
     def setUp(self):
         self.conf_invalid = {"type": "InvalidType", "connector": MagicMock(), "workspace": "workspace", "origin": "origin", "aws_credentials": {}}
 
-    @patch("vector_storages.ManagerVectorDB.MODEL_TYPES", [LlamaIndex])
+    @patch("vector_storages.ManagerVectorDB.MODEL_TYPES", [LlamaIndexElastic])
     def test_get_vector_database(self):
         """Test get_vector_database."""
-        conf = {"type": "LlamaIndex", "connector": MagicMock(), "workspace": "workspace",
+        conf = {"type": "elastic", "connector": MagicMock(), "workspace": "workspace",
                 "origin": "origin", "aws_credentials": {}}
         vector_db = ManagerVectorDB.get_vector_database(conf)
-        self.assertIsInstance(vector_db, LlamaIndex)
+        self.assertIsInstance(vector_db, LlamaIndexElastic)
 
     def test_get_vector_database_with_invalid_type(self):
         """Test that verifies that an exception is thrown when an invalid type is passed."""
@@ -378,8 +368,146 @@ class TestManagerVectorDB(unittest.TestCase):
     def test_get_possible_platforms(self):
         """Test get_possible_platforms."""
         platforms = ManagerVectorDB.get_possible_vector_databases()
-        self.assertIn("LlamaIndex", platforms)
+        self.assertIn("elastic", platforms)
+
+    def test_get_vector_database_with_valid_type(self):
+        """Test that verifies that a valid type returns the correct instance."""
+        conf = {"type": "elastic", "connector": MagicMock(), "workspace": "workspace",
+                "origin": "origin", "aws_credentials": {}}
+        vector_db = ManagerVectorDB.get_vector_database(conf)
+        self.assertIsInstance(vector_db, LlamaIndexElastic)
+
+    def test_get_possible_vector_databases(self):
+        """Test that verifies the possible vector databases are returned correctly."""
+        possible_databases = ManagerVectorDB.get_possible_vector_databases()
+        self.assertIn("elastic", possible_databases)
+        self.assertIn("ai_search", possible_databases)
 
 
-if __name__ == "__main__":
-    unittest.main()
+
+
+
+@pytest.fixture
+def mock_connector():
+    return MagicMock()
+
+
+@pytest.fixture
+def mock_parser():
+    return MagicMock(
+        txt_path="dummy_path",
+        csv=False,
+        do_titles=True,
+        do_tables=True,
+        index="test_index",
+        models=[{'embedding_model': 'model1'}],
+        vector_storage={"vector_storage_host": "dummy_host"},
+        process_type="test_process",
+        specific={"document": {"n_pags": 1}},
+        chunking_method={}
+    )
+
+
+@pytest.fixture
+def sample_dataframe():
+    return pd.DataFrame({
+        'text': ['hello world', 'こんにちは世界'],
+        'Url': ['doc1.txt', 'doc2.txt'],
+        'CategoryId': [1, 2],
+        'meta1': ['m1', 'm2']
+    })
+
+
+@pytest.fixture
+def markdown_files():
+    return [True, False]
+
+
+@patch("vector_storages.langdetect.detect", side_effect=["en", "ja"])
+@patch("vector_storages.LlamaIndexAzureAI._initialize_metadata")
+def test_get_documents_from_dataframe(mock_meta, mock_lang, mock_connector, sample_dataframe, markdown_files):
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+    result = instance._get_documents_from_dataframe(sample_dataframe, markdown_files, "dummy_path", False, True, True)
+    
+    assert isinstance(result[0], Document)
+    assert result[0].text == "hello world"
+    assert "meta1" in result[0].metadata
+
+
+def test_is_vector_database_type():
+    assert VectorDB.is_vector_database_type("VectorDB")
+    assert not VectorDB.is_vector_database_type("OtherDB")
+
+
+def test_strip_accents():
+    s = "áéíóú"
+    expected = "aeiou"
+    assert VectorDB._strip_accents(s) == expected
+
+
+@patch("vector_storages.get_exc_info", return_value="trace")
+def test_get_processed_data_connection_error(mock_exc, mock_connector, mock_parser, sample_dataframe, markdown_files):
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+    
+    with patch("vector_storages.langdetect.detect", return_value="en"):
+        with patch.object(instance, '_initialize_metadata'):
+            with pytest.raises(Exception):
+                instance.get_processed_data(mock_parser, sample_dataframe, markdown_files)
+
+
+@patch("vector_storages.LlamaIndexAzureAI._write_nodes", return_value=1)
+@patch("vector_storages.get_embed_model")
+@patch("vector_storages.AzureAISearchVectorStore")
+@patch("vector_storages.Settings")
+def test_index_documents(mock_settings, mock_store, mock_embed, mock_write, mock_connector, mock_parser, sample_dataframe, markdown_files):
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+    
+    with patch.object(instance, '_get_documents_from_dataframe') as mock_docs, \
+         patch("vector_storages.ManagerChunkingMethods.get_chunking_method") as mock_chunk:
+
+        doc = Document(text="sample text", metadata={"filename": "doc.txt"})
+        mock_docs.return_value = [doc]
+        mock_chunk.return_value.get_chunks.return_value = [[doc]]
+
+        reports = instance.index_documents([doc], mock_parser)
+        assert isinstance(reports, list)
+
+
+@patch("vector_storages.StorageContext.from_defaults")
+@patch("vector_storages.VectorStoreIndex")
+def test_write_nodes_success(mock_index, mock_storage, mock_connector):
+    mock_node = Document(text="test", metadata={"filename": "test.txt"})
+    vector_store = MagicMock()
+    embed_model = MagicMock()
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+
+    mock_index.return_value.insert_nodes.return_value = None
+
+    result = instance._write_nodes([[mock_node]], embed_model, vector_store, [{}], "test_index")
+    assert result == 1
+
+
+@patch("time.sleep", return_value=None)
+@patch("vector_storages.LlamaIndexAzureAI._manage_indexing_exception")
+@patch("vector_storages.StorageContext.from_defaults")
+@patch("vector_storages.VectorStoreIndex")
+def test_write_nodes_exception(mock_sleep, mock_index, mock_storage, mock_manage, mock_connector):
+    mock_node = Document(text="test", metadata={"filename": "test.txt"})
+    vector_store = MagicMock()
+    embed_model = MagicMock()
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+
+    mock_index.side_effect = Exception("error")
+
+    with pytest.raises(ConnectionError):
+        instance._write_nodes([[mock_node]], embed_model, vector_store, [{"embedding_model": "m1"}], "test_index")
+
+
+
+@patch("time.sleep", return_value=None)
+def test_manage_indexing_exception(mock_sleep, mock_connector):
+    instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
+    mock_connector.delete_documents.return_value.body = {"deleted": 1, "failures": []}
+
+    instance._manage_indexing_exception("test_index", [{"embedding_model": "test_model"}], ["doc.txt"])
+

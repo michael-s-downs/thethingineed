@@ -14,7 +14,7 @@
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Components](#components)
     - [Core Concepts](#core-concepts)
-    - [Architecture](#architecture)
+    - [Vector storages](#vector-storages)
   - [Calling Retrieval](#calling-retrieval)
     - [Examples](#examples)
       - [Simple retrieval call: `url/process`](#simple-retrieval-call-urlprocess)
@@ -197,7 +197,14 @@ This service uses the user's query to retrieve information from the vector datab
 - **Embedding model**: Model that converts high-dimensional data (such as words, images, or items) into low-dimensional vectors. These vectors, called embeddings, capture the semantic relationships between the data points.
 - **Index**: Data structure used to improve the speed and efficiency of data retrieval operations that organizes and optimizes the storage of the embeddings.
 
-### Architecture
+### Vector storages
+
+Global RAG can use diferent vector databases to store document chunks and its embeddings. The supported ones are:
+
+- [ElasticSearch](https://www.elastic.co/es/elasticsearch)
+- [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/)
+
+To get more information about how to configure the secret file refer to Secrets section.
 
 ## Calling Retrieval
 
@@ -750,32 +757,56 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 
 
 - **`vector_storage_config.json`**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/". The format of the secret is as follows:
+
+  - **ElasticSearch**: 
     ```json
     {
         "vector_storage_supported": [{
                 "vector_storage_name": "elastic-develop",
                 "vector_storage_type": "elastic",
-                "vector_storage_host": "*host*",
+                "vector_storage_host": "[SET_HOST_VALUE]",
                 "vector_storage_schema": "https",
                 "vector_storage_port": 9200,
                 "vector_storage_username": "elastic",
-                "vector_storage_password": "*password*"
+                "vector_storage_password": "[SET_PASSWORD_VALUE]"
             },
             . . .
         ]
     }
     ```
 
-    The different parameters (only for elastic as is the available one) are:
-    - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE).
-    - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
-    - **vector_storage_host**: Host of the vector storage.
-    - **vector_storage_schema**: Schema of the vector storage.
-    - **vector_storage_port**: Port where the vector storage is located.
-    - **vector_storage_username**: Username to access to the vector storage.
-    - **vector_storage_password**: Password to access to the vector storage.
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_port:** Port where the vector storage is located.
+    - **vector_storage_username:** Username to access to the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage.
 
-<br/>
+  - **Azure AI Search**:
+
+    ```json
+    {
+        "vector_storage_supported": [
+            {
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_type": "ai_search",
+                "vector_storage_schema": "https",
+                "vector_storage_name": "ai_search_techhubragemeal",
+                "vector_storage_key": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage (Azure key).
 
 #### Configuration files
 

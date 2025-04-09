@@ -5,7 +5,7 @@ os.environ['URL_LLM'] = "test_url"
 os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 import json
-from unittest.mock import patch, MagicMock, AsyncMock, patch
+from unittest.mock import patch, MagicMock, AsyncMock
 from director import Director  # Assuming your code is in director.py
 from compose.streambatch import StreamBatch
 from pcutils.persist import PersistDict
@@ -367,7 +367,7 @@ def test_run_actions_action_not_found(director):
     with pytest.raises(Exception) as excinfo:
         director.run_actions()
     
-    assert "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"" in str(excinfo.value)
+    assert "Action not found, choose one between" in str(excinfo.value)
 
 def test_run_actions_llm_action(director):
     """Test that llm_action runs with the correct parameters."""

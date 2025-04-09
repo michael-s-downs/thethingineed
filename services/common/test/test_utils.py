@@ -13,7 +13,7 @@ from utils import (
     load_secrets,
     get_error_word_from_exception,
     get_models,
-    ELASTICSEARCH_INDEX,
+    INDEX_NAME,
     resize_image
 )
 
@@ -127,8 +127,8 @@ def test_get_models_with_key_dict_error():
         get_models(available_models, available_pools, "platform_error", "aws")
 
 def test_elasticsearch_index():
-    assert ELASTICSEARCH_INDEX("index", "model") == "index_model"
-    assert ELASTICSEARCH_INDEX("index:name", "model") == "index_name_model"
+    assert INDEX_NAME("index", "model") == "index_model"
+    assert INDEX_NAME("index:name", "model") == "index_name_model"
 
 @patch("PIL.Image.open")
 @patch("os.stat")

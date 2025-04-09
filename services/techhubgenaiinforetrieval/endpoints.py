@@ -4,7 +4,7 @@
 from flask import request
 from typing import Tuple, Dict
 from common.ir.utils import get_connector
-from common.utils import ELASTICSEARCH_INDEX
+from common.utils import INDEX_NAME
 from common.genai_json_parser import get_exc_info
 import elasticsearch.exceptions 
 from common.utils import get_models
@@ -22,7 +22,9 @@ def get_documents_filenames_handler(deploy, request) -> Tuple[Dict, int]:
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
 
     for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
+        index_name = INDEX_NAME(index, model)
+        if not connector.exist_index(index_name):
+            continue
         try:
             status, result, status_code = connector.get_documents_filenames(index_name)
             connector.close()
@@ -51,7 +53,7 @@ def retrieve_documents_handler(deploy, request) -> Tuple[Dict, int]:
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
+        index_name = INDEX_NAME(index, model)
         try:
             status, result, status_code = connector.get_documents(index_name, filters)
             connector.close()
@@ -102,10 +104,11 @@ def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
     deleted_count = 0
 
     for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
+        index_name = INDEX_NAME(index, model)
+        if not connector.exist_index(index_name):
+            continue
         try:
-            result = connector.delete_documents(index_name, filters)
-            failures, deleted = result.body.get('failures', []), result.body.get('deleted', 0)
+            result, failures, deleted = connector.delete_documents(index_name, filters)
 
             if failures:
                 deploy.logger.debug(f"Error deleting documents in index '{index_name}': {result}")
@@ -141,7 +144,9 @@ def delete_index_handler(deploy, request) -> Tuple[Dict, int]:
     deleted_count = 0
 
     for model in deploy.all_models:
-        index_name = ELASTICSEARCH_INDEX(index, model)
+        index_name = INDEX_NAME(index, model)
+        if not connector.exist_index(index_name):
+            continue
         try:
             connector.delete_index(index_name)
             deleted_count += 1

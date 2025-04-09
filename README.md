@@ -33,6 +33,7 @@
     - [LLM Prompt Templates](#llm-prompt-templates)
     - [Models embeddings](#models-embeddings)
     - [Models LLM](#models-llm)
+    - [Vector storages](#vector-storages)
   - [Examples](#examples)
     - [Indexing Examples](#indexing-examples)
     - [Compose Examples](#compose-examples)
@@ -57,7 +58,7 @@
           - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
           - [Templates `/prompts/**.json`](#templates-promptsjson)
         - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
-        - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
+        - [Models map](#models-map)
         - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval--infoindexing-config-files-srcir)
           - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
           - [Default embedding models `/conf/default_embedding_models.json`](#default-embedding-models-confdefault_embedding_modelsjson)
@@ -148,6 +149,7 @@ Below is a list of all the parameters that can be included in the request body, 
   * <b>vector_storage_conf</b>:
     * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]). 
     * <b>metadata_primary_keys</b> (optional): This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
+    * <b>vector_storage</b> (optional): Name of the vector_storage data base to use. This name must be the same as one of the names set in the secret vector_storage_config.json file.
   * <b>chunking_method</b>
     * <b>window_length</b> (optional): Integer value to specify the window length for text chunking purposes, 300 by default.
     * <b>window_overlap</b> (optional): Integer value to specify the window overlapping for text chunking purposes, 10 by default.
@@ -2123,6 +2125,15 @@ The available models depend on the region where the suscription is deployed. Mak
 |gemini-2.5-pro-exp|                                                                                                                                      |vertex|
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
+### Vector storages
+
+Global RAG can use diferent vector databases to store document chunks and its embeddings. The supported ones are:
+
+- [ElasticSearch](https://www.elastic.co/es/elasticsearch)
+- [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/)
+
+To get more information about how to configure the secret file refer to Secrets section.
+
 ## Examples
 
 ### Indexing Examples
@@ -3399,6 +3410,8 @@ Example for <i>llm_action</i> action with <u>llm_segment</u> type:
 All necessary credentials for the components are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). The different secrets that are used in the components are:
 
 * **Vector storages configuration**:file where data such as credentials, URLs, etc., from the different supported vector storages are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/" making the full path <i>"secrets/vector-storage/vector_storage_config.json"</i>. The format of the secret is as follows:
+
+  - **ElasticSearch**: 
     ```json
     {
         "vector_storage_supported": [{
@@ -3415,14 +3428,38 @@ All necessary credentials for the components are stored in secrets for security 
     }
     ```
 
-    The different parameters (only for elastic as is the available one) are:
+    Parameters:
     - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
-    - **vector_storage_type:** Type of the vector storage selected (currently, only "elastic" is allowed).
+    - **vector_storage_type:** Type of the vector storage selected.
     - **vector_storage_host:** Host of the vector storage.
     - **vector_storage_schema:** Schema of the vector storage.
     - **vector_storage_port:** Port where the vector storage is located.
     - **vector_storage_username:** Username to access to the vector storage.
     - **vector_storage_password:** Password to access to the vector storage.
+
+  - **Azure AI Search**: 
+
+    ```json
+    {
+        "vector_storage_supported": [
+            {
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_type": "ai_search",
+                "vector_storage_schema": "https",
+                "vector_storage_name": "ai_search_techhubragemeal",
+                "vector_storage_key": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage (Azure key).
 
 * **Models api-keys and urls**: file where URLs and API-Keys from the models are stored. This fields are separated, because api-keys are shared by the models for each region and the url's are always the same for a same type of models. The custom path for this secret is "models/", making the full path <i>"secrets/models/models.json"</i>. The secret looks like:  
     ```json

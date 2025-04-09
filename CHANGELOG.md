@@ -3,7 +3,13 @@
 
 # Changelog
 
-## vX.X.X
+## vX.X.X (xxxx-xx-xx)
+- genai-inforetrieval:
+    - [New] Added support to Azure AI Search as a new vector storage.
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
+- genai-infoindexing:
+    - [New] Added support to Azure AI Search as a new vector storage.
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance.
 - genai-llmapi:
     - [NEW] Added new Vertex platform
     - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
