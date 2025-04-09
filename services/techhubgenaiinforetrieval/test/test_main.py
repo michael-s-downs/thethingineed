@@ -451,6 +451,19 @@ def test_process(client):
         response = client.post("/process", json=json_input, headers=copy.deepcopy(TestMain.headers))
         assert response.status_code == 200
 
+def test_process_vertex(client):
+    with patch('main.deploy.sync_deployment') as mock_post:
+        mock_post.return_value = {"status_code": 200, "result": "success", "status": "finished"}
+        json_input = {
+            "indexation_conf": {
+                "index": "test_index",
+                "query": "Why is good to live in Zaragoza?",
+                "top_k": 10
+            }
+        }
+        response = client.post("/process", json=json_input, headers=copy.deepcopy(TestMain.headers))
+        assert response.status_code == 200
+
 def test_healthcheck(client):
     response = client.get("/healthcheck")
     response = json.loads(response.text)

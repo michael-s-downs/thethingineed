@@ -530,8 +530,12 @@ All necessary credentials for the indexing flow are stored in secrets for securi
             "openai": {
                 "openai": "*sk-...*"
             },
-            "bedrock": 
-                {. . .}
+            "bedrock":{
+              . . .
+            },
+            "vertex": {
+              "vertex": "*api-key*"
+            }
         }
     }
     ```
@@ -604,6 +608,14 @@ Apart from the five secrets explained above, the system needs another configurat
           "retriever_model": ""
         },
         ...
+      ],
+      "vertex": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "model_pool": []
+        },
+        ...    
       ]
     }
   }
@@ -625,6 +637,10 @@ Apart from the five secrets explained above, the system needs another configurat
         - **embedding_model_name**: same as before
         - **embedding_model**: same as before
         - **retriever_model**: model used when retrieving information (in hugging-face models normally are different)
+    * <u>Vertex models</u>:
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **model_pool**: pools the model belongs to
 
 An example where the rest of the data is extracted from the message:
 ![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)

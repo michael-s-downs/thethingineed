@@ -1796,6 +1796,8 @@ The available models depend on the region where the suscription is deployed. Mak
 |techhubdev-cohere-multilingual-v3-Paris|techhubdev-pool-ue-cohere-multilingual-v3, techhubdev-pool-world-cohere-multilingual-v3, techhub-pool-world-cohere-multilingual-v3|bedrock|
 |dpr-encoder|No pools (huggingface models are downloaded)|huggingface|
 |dunzhang-stella-1.5B-v5|No pools (huggingface models are downloaded)|huggingface|
+|techhubdev-text-embedding-004|techhub-pool-world-text-embedding-004|vertex|
+|techhubdev-gemini-embedding-exp|techhub-pool-world-gemini-embedding-exp|vertex|
 
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
@@ -3005,10 +3007,19 @@ In this config file, each model (separated by platforms) needs different paramet
   - **azure_deployment_name**: deployment name of the embedding model in azure.
   - **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
   - **model_pool**: pools the model belongs to.
+- **Bedrock**:
+  - **embedding_model_name**: same as before
+  - **embedding_model**: same as before
+  - **zone**: place where the model has been deployed
+  - **model_pool**: pools the model belongs to
 - **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
   - **embedding_model_name**: same as before.
   - **embedding_model**: same as before.
   - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different).
+- **Vertex**:
+  - **embedding_model_name**: same as before
+  - **embedding_model**: same as before
+  - **model_pool**: pools the model belongs to
 
 
 ##### Integration config files `src/integration/`
