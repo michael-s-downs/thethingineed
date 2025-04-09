@@ -1,2 +1,0 @@
-llama-index-embeddings-google-genai==0.1.0
-xformers==0.0.29.post3
