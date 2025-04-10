@@ -1623,122 +1623,122 @@ The available models depend on the region where the suscription is deployed. Mak
 
 | Model Name | Pools                                                                   | Platform |
 |------------|-------------------------------------------------------------------------|----------|
-|text-embedding-3-large| techhub-pool-world-ada-3-large                                          |Azure|
-|text-embedding-ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-AustraliaEast-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-BrazilSouth-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-CanadaEast-Ada-3-large| techhub-pool-world-ada-3-large                                          |Azure|
-|techhub-CanadaEast-Ada-3-small| techhub-pool-world-ada-3-small                                          |Azure|
-|techhub-CanadaEast-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-EastUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-EastUS-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             |Azure|
-|techhub-EastUS-Ada-3-small| techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small             |Azure|
-|techhub-EastUS2-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             |Azure|
-|techhub-EastUS2-Ada-3-small| techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small             |Azure|
-|techhub-EastUS2-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-FranceCentral-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-FranceCentral-Ada-3-large| techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large             |Azure|
-|techhub-NorthCentralUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-NorwayEast-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-SouthAfricaNorth-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-SouthCentralUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-SouthIndia-Ada-3-large| techhub-pool-world-ada-3-large                                          |Azure|
-|techhub-SouthIndia-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-SwedenCentral-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-SwedenCentral-Ada-3-large| techhub-pool-world-ada-3-large                                          |Azure|
-|techhub-SwitzerlandNorth-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-UKSouth-Ada-3-large| techhub-pool-world-ada-3-large                                          |Azure|
-|techhub-UKSouth-Ada-002| techhub-pool-world-ada-002                                              |Azure|
-|techhub-WestEurope-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-WestUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-WestUS3-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     |Azure|
-|techhub-WestUS3-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             |Azure|
-|techhub-cohere-english-v3-NorthVirginia| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-NorthVirginia| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-Oregon| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-Oregon| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-Tokyo| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-Tokyo| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-Singapore| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-Singapore| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-Frankfurt| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-Frankfurt| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-London| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-London| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-english-v3-Paris| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-cohere-multilingual-v3-Paris| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhub-titan-v2:0-NorthVirginia| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               |Bedrock|
-|techhub-titan-v1:0-NorthVirginia| techhub-pool-us-titan-v1:0, techhub-pool-world-titan-v1:0               |Bedrock|
-|techhub-titan-v2:0-Ohio| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               |Bedrock|
-|techhub-titan-v2:0-Oregon| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               |Bedrock|
-|techhub-titan-v1:0-Oregon| techhub-pool-us-titan-v1:0, techhub-pool-world-titan-v1:0               |Bedrock|
-|techhub-titan-v2:0-Frankfurt| techhub-pool-eu-titan-v2:0, techhub-pool-world-titan-v2:0               |Bedrock|
-|techhub-titan-v1:0-Frankfurt| techhub-pool-eu-titan-v1:0, techhub-pool-world-titan-v1:0               |Bedrock|
-|techhub-titan-v2:0-London| techhub-pool-eu-titan-v2:0, techhub-pool-world-titan-v2:0               |Bedrock|
-|techhub-titan-v1:0-Tokyo| techhub-pool-ap-titan-v1:0, techhub-pool-world-titan-v1:0               |Bedrock|
-|dpr-encoder|                                                                         |Hugging Face|
-|dunzhang-stella-1.5B-v5|                                                                         |Hugging Face|
+|text-embedding-3-large| techhub-pool-world-ada-3-large                                          | azure    |
+|text-embedding-ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-AustraliaEast-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-BrazilSouth-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-CanadaEast-Ada-3-large| techhub-pool-world-ada-3-large                                          | azure    |
+|techhub-CanadaEast-Ada-3-small| techhub-pool-world-ada-3-small                                          | azure    |
+|techhub-CanadaEast-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-EastUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-EastUS-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             | azure    |
+|techhub-EastUS-Ada-3-small| techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small             | azure    |
+|techhub-EastUS2-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             | azure    |
+|techhub-EastUS2-Ada-3-small| techhub-pool-us-ada-3-small, techhub-pool-world-ada-3-small             | azure    |
+|techhub-EastUS2-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-FranceCentral-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-FranceCentral-Ada-3-large| techhub-pool-eu-ada-3-large, techhub-pool-world-ada-3-large             | azure    |
+|techhub-NorthCentralUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-NorwayEast-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-SouthAfricaNorth-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-SouthCentralUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-SouthIndia-Ada-3-large| techhub-pool-world-ada-3-large                                          | azure    |
+|techhub-SouthIndia-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-SwedenCentral-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-SwedenCentral-Ada-3-large| techhub-pool-world-ada-3-large                                          | azure    |
+|techhub-SwitzerlandNorth-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-UKSouth-Ada-3-large| techhub-pool-world-ada-3-large                                          | azure    |
+|techhub-UKSouth-Ada-002| techhub-pool-world-ada-002                                              | azure    |
+|techhub-WestEurope-Ada-002| techhub-pool-eu-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-WestUS-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-WestUS3-Ada-002| techhub-pool-us-ada-002, techhub-pool-world-ada-002                     | azure    |
+|techhub-WestUS3-Ada-3-large| techhub-pool-us-ada-3-large, techhub-pool-world-ada-3-large             | azure    |
+|techhub-cohere-english-v3-NorthVirginia| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-NorthVirginia| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-Oregon| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-Oregon| techhub-pool-us-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-Tokyo| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-Tokyo| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-Singapore| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-Singapore| techhub-pool-ap-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-Frankfurt| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-Frankfurt| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-London| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-London| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-english-v3-Paris| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-cohere-multilingual-v3-Paris| techhub-pool-eu-cohere-english-v3, techhub-pool-world-cohere-english-v3 | bedrock  |
+|techhub-titan-v2:0-NorthVirginia| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               | bedrock  |
+|techhub-titan-v1:0-NorthVirginia| techhub-pool-us-titan-v1:0, techhub-pool-world-titan-v1:0               | bedrock  |
+|techhub-titan-v2:0-Ohio| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               | bedrock  |
+|techhub-titan-v2:0-Oregon| techhub-pool-us-titan-v2:0, techhub-pool-world-titan-v2:0               | bedrock  |
+|techhub-titan-v1:0-Oregon| techhub-pool-us-titan-v1:0, techhub-pool-world-titan-v1:0               | bedrock  |
+|techhub-titan-v2:0-Frankfurt| techhub-pool-eu-titan-v2:0, techhub-pool-world-titan-v2:0               | bedrock  |
+|techhub-titan-v1:0-Frankfurt| techhub-pool-eu-titan-v1:0, techhub-pool-world-titan-v1:0               | bedrock  |
+|techhub-titan-v2:0-London| techhub-pool-eu-titan-v2:0, techhub-pool-world-titan-v2:0               | bedrock  |
+|techhub-titan-v1:0-Tokyo| techhub-pool-ap-titan-v1:0, techhub-pool-world-titan-v1:0               | bedrock  |
+|dpr-encoder|                                                                         | huggingface |
+|dunzhang-stella-1.5B-v5|                                                                         | huggingface |
 
 <br/><strong>INC region</strong><br/>
 
 | Model Name | Pools                                                                                                               | Platform |
 |------------|---------------------------------------------------------------------------------------------------------------------|----------|
-|text-embedding-ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-AustraliaEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-BrazilSouth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-CanadaEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-CanadaEast-Ada-3-small| techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                                                   |Azure|
-|techhubinc-CanadaEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-EastUS-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |Azure|
-|techhubinc-EastUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-EastUS-Ada-3-small| techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                   |Azure|
-|techhubinc-EastUS2-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |Azure|
-|techhubinc-EastUS2-Ada-3-small| techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                   |Azure|
-|techhubinc-EastUS2-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-FranceCentral-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-FranceCentral-Ada-3-large| techhubinc-pool-eu-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |Azure|
-|techhubinc-JapanEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-NorthCentralUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-NorwayEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-NorwayEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-SouthAfricaNorth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-SouthCentralUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-SouthIndia-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-SouthIndia-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-SwedenCentral-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-SwedenCentral-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-SwitzerlandNorth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-UKSouth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |Azure|
-|techhubinc-UKSouth-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |Azure|
-|techhubinc-WestEurope-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-WestUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-WestUS3-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |Azure|
-|techhubinc-WestUS3-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |Azure|
-|techhubinc-cohere-english-v3-NorthVirginia| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-NorthVirginia| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-Oregon| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-Oregon| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-Tokyo| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-Tokyo| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-Singapore| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-Singapore| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-Frankfurt| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-Frankfurt| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-London| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-London| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-english-v3-Paris| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-cohere-multilingual-v3-Paris| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |Bedrock|
-|techhubinc-titan-v2:0-NorthVirginia| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |Bedrock|
-|techhubinc-titan-v1:0-NorthVirginia| techhubinc-pool-us-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |Bedrock|
-|techhubinc-titan-v2:0-Ohio| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |Bedrock|
-|techhubinc-titan-v2:0-Oregon| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |Bedrock|
-|techhubinc-titan-v1:0-Oregon| techhubinc-pool-us-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |Bedrock|
-|techhubinc-titan-v2:0-Frankfurt| techhubinc-pool-eu-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |Bedrock|
-|techhubinc-titan-v1:0-Frankfurt| techhubinc-pool-eu-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |Bedrock|
-|techhubinc-titan-v2:0-London| techhubinc-pool-eu-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |Bedrock|
-|techhubinc-titan-v1:0-Tokyo| techhubinc-pool-ap-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |Bedrock|
-|dpr-encoder|                                                                                                                     |Hugging Face|
-|dunzhang-stella-1.5B-v5|                                                                                                                     |Hugging Face|
+|text-embedding-ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-AustraliaEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-BrazilSouth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-CanadaEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-CanadaEast-Ada-3-small| techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                                                   |azure|
+|techhubinc-CanadaEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-EastUS-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |azure|
+|techhubinc-EastUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-EastUS-Ada-3-small| techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                   |azure|
+|techhubinc-EastUS2-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |azure|
+|techhubinc-EastUS2-Ada-3-small| techhubinc-pool-us-ada-3-small, techhubinc-pool-world-ada-3-small, techhub-pool-world-ada-3-small                   |azure|
+|techhubinc-EastUS2-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-FranceCentral-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-FranceCentral-Ada-3-large| techhubinc-pool-eu-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |azure|
+|techhubinc-JapanEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-NorthCentralUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-NorwayEast-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-NorwayEast-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-SouthAfricaNorth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-SouthCentralUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-SouthIndia-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-SouthIndia-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-SwedenCentral-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-SwedenCentral-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-SwitzerlandNorth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-UKSouth-Ada-002| techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                                                           |azure|
+|techhubinc-UKSouth-Ada-3-large| techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                                                   |azure|
+|techhubinc-WestEurope-Ada-002| techhubinc-pool-eu-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-WestUS-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-WestUS3-Ada-002| techhubinc-pool-us-ada-002, techhubinc-pool-world-ada-002, techhub-pool-world-ada-002                               |azure|
+|techhubinc-WestUS3-Ada-3-large| techhubinc-pool-us-ada-3-large, techhubinc-pool-world-ada-3-large, techhub-pool-world-ada-3-large                   |azure|
+|techhubinc-cohere-english-v3-NorthVirginia| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-NorthVirginia| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-Oregon| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-Oregon| techhubinc-pool-us-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-Tokyo| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-Tokyo| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-Singapore| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-Singapore| techhubinc-pool-ap-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-Frankfurt| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-Frankfurt| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-London| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-London| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-english-v3-Paris| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-cohere-multilingual-v3-Paris| techhubinc-pool-eu-cohere-english-v3, techhubinc-pool-world-cohere-english-v3, techhub-pool-world-cohere-english-v3 |bedrock|
+|techhubinc-titan-v2:0-NorthVirginia| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |bedrock|
+|techhubinc-titan-v1:0-NorthVirginia| techhubinc-pool-us-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |bedrock|
+|techhubinc-titan-v2:0-Ohio| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |bedrock|
+|techhubinc-titan-v2:0-Oregon| techhubinc-pool-us-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |bedrock|
+|techhubinc-titan-v1:0-Oregon| techhubinc-pool-us-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |bedrock|
+|techhubinc-titan-v2:0-Frankfurt| techhubinc-pool-eu-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |bedrock|
+|techhubinc-titan-v1:0-Frankfurt| techhubinc-pool-eu-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |bedrock|
+|techhubinc-titan-v2:0-London| techhubinc-pool-eu-titan-v2:0, techhubinc-pool-world-titan-v2:0, techhub-pool-world-titan-v2:0                      |bedrock|
+|techhubinc-titan-v1:0-Tokyo| techhubinc-pool-ap-titan-v1:0, techhubinc-pool-world-titan-v1:0, techhub-pool-world-titan-v1:0                      |bedrock|
+|dpr-encoder|                                                                                                                     |huggingface|
+|dunzhang-stella-1.5B-v5|                                                                                                                     |huggingface|
 
 <br/><strong>DEV region</strong><br/>
 
@@ -1812,195 +1812,195 @@ The available models depend on the region where the suscription is deployed. Mak
 
 | Model Name | Pools | Platform |
 |------------|-------|----------|
-|gpt-35-turbo-16k|techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|gpt-4o-mini|techhub-pool-world-gpt-4o-mini|Azure|
-|gpt-4o-judge|techhub-pool-world-gpt-4o|Azure|
-|techhub-AustraliaEast-DallE-3|techhub-pool-world-dalle3|Azure|
-|techhub-AustraliaEast-GPT4-Vision|techhub-pool-world-gpt-4v|Azure|
-|techhub-AustraliaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-BrazilSouth-GPT4o-20240513|techhub-pool-world-gpt-4-turbo|Azure|
-|techhub-CanadaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-EastUS-DallE-3|techhub-pool-us-dalle3, techhub-pool-world-dalle3|Azure|
-|techhub-EastUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhub-EastUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-EastUS2-gpt-35-turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhub-EastUS2-gpt-4o-2024-05-13|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-EastUS2-gpt-4o-mini-2024-07-18|techhub-pool-us-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|Azure|
-|techhub-EastUS2-gpt-4-turbo-2024-04-09|techhub-pool-us-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhub-FranceCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-GermanyWestCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-KoreaCentral-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-NorthCentralUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhub-NorthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-NorwayEast-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-PolandCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-SouthAfricaNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-SouthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-SouthIndia-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-SwedenCentral-DallE-3|techhub-pool-world-dalle3|Azure|
-|techhub-SwedenCentral-GPT4-Turbo-202400409|techhub-pool-eu-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhub-SwedenCentral-GPT4-Vision|techhub-pool-eu-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhub-SwedenCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-SwitzerlandNorth-GPT4-Vision|techhub-pool-world-gpt-4v|Azure|
-|techhub-SwitzerlandNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-UKSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|Azure|
-|techhub-WestEurope-GPT4o-20240513|techhub-pool-eu-gpt-4o,techhub-pool-world-gpt-4o|Azure|
-|techhub-WestUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-WestUS-GPT4-Vision|techhub-pool-us-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhub-amazon.nova-micro-v1-NorthVirginia|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhub-amazon.nova-lite-v1-NorthVirginia|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhub-amazon.nova-pro-v1:0-NorthVirginia|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhub-amazon.nova-micro-v1-Ohio|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhub-amazon.nova-lite-v1-Ohio|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhub-amazon.nova-pro-v1:0-Ohio|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhub-amazon.nova-micro-v1-Oregon|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhub-amazon.nova-lite-v1-Oregon|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhub-amazon.nova-pro-v1:0-Oregon|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-NorthVirginia|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-haiku-v1:0-NorthVirginia|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v2:0-NorthVirginia|techhub-pool-us-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-Ohio|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-haiku-v1:0-Ohio|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-Ohio|techhub-pool-us-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-Oregon|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-haiku-v1:0-Oregon|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v2:0-Oregon|techhub-pool-us-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-Oregon|techhub-pool-us-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-Oregon|techhub-pool-us-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-Tokyo|techhub-pool-ap-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-Tokyo|techhub-pool-ap-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-Tokyo|techhub-pool-ap-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-Frankfurt|techhub-pool-eu-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-Frankfurt|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-Frankfurt|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-claude-3-5-sonnet-v1:0-Paris|techhub-pool-eu-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-Paris|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-Paris|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-claude-3-haiku-v1:0-London|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-London|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-claude-3-sonnet-v1:0-Singapore|techhub-pool-ap-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhub-meta-llama-3-70b-v1:0-NorthVirginia|techhub-pool-us-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhub-meta-llama-3-8b-v1:0-NorthVirginia|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhub-meta-llama-3-1-70b-v1:0-NorthVirginia|techhub-pool-us-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|Bedrock|
-|techhub-meta-llama-3-1-8b-v1:0-NorthVirginia|techhub-pool-us-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|Bedrock|
-|techhub-meta-llama-3-70b-v1:0-Oregon|techhub-pool-us-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhub-meta-llama-3-8b-v1:0-Oregon|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhub-meta-llama-3-1-405b-v1:0-Oregon|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhub-meta-llama-3-1-70b-v1:0-Oregon|techhub-pool-us-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|Bedrock|
-|techhub-meta-llama-3-1-8b-v1:0-Oregon|techhub-pool-us-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|Bedrock|
-|techhub-meta-llama-3-70b-v1:0-London|techhub-pool-eu-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhub-meta-llama-3-8b-v1:0-London|techhub-pool-eu-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
+|gpt-35-turbo-16k|techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|gpt-4o-mini|techhub-pool-world-gpt-4o-mini|azure|
+|gpt-4o-judge|techhub-pool-world-gpt-4o|azure|
+|techhub-AustraliaEast-DallE-3|techhub-pool-world-dalle3|azure|
+|techhub-AustraliaEast-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+|techhub-AustraliaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-BrazilSouth-GPT4o-20240513|techhub-pool-world-gpt-4-turbo|azure|
+|techhub-CanadaEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-EastUS-DallE-3|techhub-pool-us-dalle3, techhub-pool-world-dalle3|azure|
+|techhub-EastUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-EastUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-EastUS2-gpt-35-turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-EastUS2-gpt-4o-2024-05-13|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-EastUS2-gpt-4o-mini-2024-07-18|techhub-pool-us-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|azure|
+|techhub-EastUS2-gpt-4-turbo-2024-04-09|techhub-pool-us-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhub-FranceCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-GermanyWestCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-KoreaCentral-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-NorthCentralUS-GPT35Turbo-16k-0613|techhub-pool-us-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhub-NorthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-NorwayEast-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-PolandCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-SouthAfricaNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-SouthCentralUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-SouthIndia-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-SwedenCentral-DallE-3|techhub-pool-world-dalle3|azure|
+|techhub-SwedenCentral-GPT4-Turbo-202400409|techhub-pool-eu-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhub-SwedenCentral-GPT4-Vision|techhub-pool-eu-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhub-SwedenCentral-GPT4o-20240513|techhub-pool-eu-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-SwitzerlandNorth-GPT4-Vision|techhub-pool-world-gpt-4v|azure|
+|techhub-SwitzerlandNorth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-UKSouth-GPT4o-20240513|techhub-pool-world-gpt-4o|azure|
+|techhub-WestEurope-GPT4o-20240513|techhub-pool-eu-gpt-4o,techhub-pool-world-gpt-4o|azure|
+|techhub-WestUS-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-WestUS-GPT4-Vision|techhub-pool-us-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhub-WestUS3-GPT4o-20240513|techhub-pool-us-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhub-amazon.nova-micro-v1-NorthVirginia|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhub-amazon.nova-lite-v1-NorthVirginia|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhub-amazon.nova-pro-v1:0-NorthVirginia|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhub-amazon.nova-micro-v1-Ohio|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhub-amazon.nova-lite-v1-Ohio|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhub-amazon.nova-pro-v1:0-Ohio|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhub-amazon.nova-micro-v1-Oregon|techhub-pool-us-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhub-amazon.nova-lite-v1-Oregon|techhub-pool-us-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhub-amazon.nova-pro-v1:0-Oregon|techhub-pool-us-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-NorthVirginia|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-5-haiku-v1:0-NorthVirginia|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v2:0-NorthVirginia|techhub-pool-us-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-Ohio|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-5-haiku-v1:0-Ohio|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhub-claude-3-haiku-v1:0-Ohio|techhub-pool-us-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-Oregon|techhub-pool-us-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-5-haiku-v1:0-Oregon|techhub-pool-us-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v2:0-Oregon|techhub-pool-us-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhub-claude-3-haiku-v1:0-Oregon|techhub-pool-us-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-Oregon|techhub-pool-us-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-Tokyo|techhub-pool-ap-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-haiku-v1:0-Tokyo|techhub-pool-ap-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-Tokyo|techhub-pool-ap-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-Frankfurt|techhub-pool-eu-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-haiku-v1:0-Frankfurt|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-Frankfurt|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-claude-3-5-sonnet-v1:0-Paris|techhub-pool-eu-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhub-claude-3-haiku-v1:0-Paris|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-Paris|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-claude-3-haiku-v1:0-London|techhub-pool-eu-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-London|techhub-pool-eu-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-claude-3-sonnet-v1:0-Singapore|techhub-pool-ap-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhub-meta-llama-3-70b-v1:0-NorthVirginia|techhub-pool-us-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhub-meta-llama-3-8b-v1:0-NorthVirginia|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhub-meta-llama-3-1-70b-v1:0-NorthVirginia|techhub-pool-us-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|bedrock|
+|techhub-meta-llama-3-1-8b-v1:0-NorthVirginia|techhub-pool-us-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|bedrock|
+|techhub-meta-llama-3-70b-v1:0-Oregon|techhub-pool-us-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhub-meta-llama-3-8b-v1:0-Oregon|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhub-meta-llama-3-1-405b-v1:0-Oregon|techhub-pool-us-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhub-meta-llama-3-1-70b-v1:0-Oregon|techhub-pool-us-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|bedrock|
+|techhub-meta-llama-3-1-8b-v1:0-Oregon|techhub-pool-us-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|bedrock|
+|techhub-meta-llama-3-70b-v1:0-London|techhub-pool-eu-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhub-meta-llama-3-8b-v1:0-London|techhub-pool-eu-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
 
 <br/><strong>INC region</strong><br/>
 
 | Model Name | Pools | Platform |
 |------------|-------|----------|
-|techhubinc-AustraliaEast-dall-e-3|techhubinc-pool-world-dalle3, techhub-pool-world-dalle3|Azure|
-|techhubinc-AustraliaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-AustraliaEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhubinc-AustraliaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-AustraliaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-35-turbo-16k, techhub-pool-world-gpt-35-turbo-16k|Azure|
-|techhubinc-BrazilSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-BrazilSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-CanadaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-CanadaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-CanadaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-EastUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-EastUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-EastUS-dall-e-3|techhubinc-pool-us-dalle3, techhubinc-pool-world-dalle3, techhub-pool-world-dalle3|Azure|
-|techhubinc-EastUS-gpt-4o-2024-05-13|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-EastUS-gpt-4o-mini-2024-07-18|techhubinc-pool-us-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|Azure|
-|techhubinc-EastUS2-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-EastUS2-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-EastUS2-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-FranceCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-FranceCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-FranceCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-GermanyWestCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-GermanyWestCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-JapanEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-JapanEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-JapanEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-JapanEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhubinc-KoreaCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-KoreaCentral-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-NorthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-NorthCentralUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-NorthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-NorwayEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-NorwayEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-PolandCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-PolandCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-PolandCentral-gpt-4o-mini-2024-07-18|techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|Azure|
-|techhubinc-SouthAfricaNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-SouthAfricaNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-SouthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-SouthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-SouthIndia-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-SouthIndia-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-SwedenCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-SwedenCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-SwedenCentral-gpt-4-vision-preview|techhubinc-pool-eu-gpt-4v, techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhubinc-SwedenCentral-gpt-4o-2024-08-06|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-SwedenCentral-gpt-4o-mini-2024-07-18|techhubinc-pool-eu-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|Azure|
-|techhubinc-SwitzerlandNorth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-SwitzerlandNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-SwitzerlandNorth-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhubinc-SwitzerlandNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-UKSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-UKSouth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|Azure|
-|techhubinc-UKSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-WestEurope-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo,techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-WestEurope-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o,techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-WestUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-WestUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|Azure|
-|techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|Azure|
-|techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|Azure|
-|techhubinc-amazon.nova-micro-v1-NorthVirginia|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhubinc-amazon.nova-lite-v1-NorthVirginia|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhubinc-amazon.nova-pro-v1:0-NorthVirginia|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhubinc-amazon.nova-micro-v1-Ohio|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhubinc-amazon.nova-lite-v1-Ohio|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhubinc-amazon.nova-pro-v1:0-Ohio|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhubinc-amazon.nova-micro-v1-Oregon|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|Bedrock|
-|techhubinc-amazon.nova-lite-v1-Oregon|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|Bedrock|
-|techhubinc-amazon.nova-pro-v1:0-Oregon|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-NorthVirginia|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-haiku-v1:0-NorthVirginia|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v2:0-NorthVirginia|techhubinc-pool-us-claude-3-5-sonnet-2:0, techhubinc-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-Ohio|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-haiku-v1:0-Ohio|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-Ohio|techhubinc-pool-us-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-Oregon|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-haiku-v1:0-Oregon|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v2:0-Oregon|techhubinc-pool-us-claude-3-5-sonnet-2:0, techhubinc-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-Oregon|techhubinc-pool-us-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-Oregon|techhubinc-pool-us-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-Tokyo|techhubinc-pool-ap-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-Tokyo|techhubinc-pool-ap-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-Tokyo|techhubinc-pool-ap-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-5-sonnet-v1:0-Paris|techhubinc-pool-eu-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-Paris|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-Paris|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-haiku-v1:0-London|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-London|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-claude-3-sonnet-v1:0-Singapore|techhubinc-pool-ap-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|Bedrock|
-|techhubinc-meta-llama-3-70b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhubinc-meta-llama-3-8b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhubinc-meta-llama-3-1-70b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-1-70b-1:0, techhubinc-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|Bedrock|
-|techhubinc-meta-llama-3-1-8b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-1-8b-1:0, techhubinc-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|Bedrock|
-|techhubinc-meta-llama-3-70b-v1:0-Oregon|techhubinc-pool-us-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhubinc-meta-llama-3-8b-v1:0-Oregon|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhubinc-meta-llama-3-1-405b-v1:0-Oregon|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
-|techhubinc-meta-llama-3-1-70b-v1:0-Oregon|techhubinc-pool-us-llama3-1-70b-1:0, techhubinc-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|Bedrock|
-|techhubinc-meta-llama-3-1-8b-v1:0-Oregon|techhubinc-pool-us-llama3-1-8b-1:0, techhubinc-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|Bedrock|
-|techhubinc-meta-llama-3-70b-v1:0-London|techhubinc-pool-eu-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|Bedrock|
-|techhubinc-meta-llama-3-8b-v1:0-London|techhubinc-pool-eu-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|Bedrock|
+|techhubinc-AustraliaEast-dall-e-3|techhubinc-pool-world-dalle3, techhub-pool-world-dalle3|azure|
+|techhubinc-AustraliaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-AustraliaEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhubinc-AustraliaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-AustraliaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-35-turbo-16k, techhub-pool-world-gpt-35-turbo-16k|azure|
+|techhubinc-BrazilSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-BrazilSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-CanadaEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-CanadaEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-CanadaEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-EastUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-EastUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-EastUS-dall-e-3|techhubinc-pool-us-dalle3, techhubinc-pool-world-dalle3, techhub-pool-world-dalle3|azure|
+|techhubinc-EastUS-gpt-4o-2024-05-13|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-EastUS-gpt-4o-mini-2024-07-18|techhubinc-pool-us-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|azure|
+|techhubinc-EastUS2-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-EastUS2-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-EastUS2-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-FranceCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-FranceCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-FranceCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-GermanyWestCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-GermanyWestCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-JapanEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-JapanEast-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-JapanEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-JapanEast-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhubinc-KoreaCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-KoreaCentral-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-NorthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-NorthCentralUS-gpt-35-turbo-16k-0613|techhubinc-pool-us-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-NorthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-NorwayEast-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-NorwayEast-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-PolandCentral-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-PolandCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-PolandCentral-gpt-4o-mini-2024-07-18|techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|azure|
+|techhubinc-SouthAfricaNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthAfricaNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-SouthCentralUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthCentralUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-SouthIndia-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-SouthIndia-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-SwedenCentral-gpt-35-turbo-16k-0613|techhubinc-pool-eu-gpt-3.5-turbo-16k, techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-SwedenCentral-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-SwedenCentral-gpt-4-vision-preview|techhubinc-pool-eu-gpt-4v, techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhubinc-SwedenCentral-gpt-4o-2024-08-06|techhubinc-pool-eu-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-SwedenCentral-gpt-4o-mini-2024-07-18|techhubinc-pool-eu-gpt-4o-mini, techhubinc-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini|azure|
+|techhubinc-SwitzerlandNorth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-SwitzerlandNorth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-SwitzerlandNorth-gpt-4-vision-preview|techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhubinc-SwitzerlandNorth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-UKSouth-gpt-4o-2024-05-13|techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-UKSouth-gpt-35-turbo-16k-0613|techhubinc-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k|azure|
+|techhubinc-UKSouth-gpt-4-turbo-2024-04-09|techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestEurope-gpt-4-turbo-2024-04-09|techhubinc-pool-eu-gpt-4-turbo,techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestEurope-gpt-4o-2024-05-13|techhubinc-pool-eu-gpt-4o,techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-WestUS-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-WestUS-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestUS-gpt-4-vision-preview|techhubinc-pool-us-gpt-4v, techhubinc-pool-world-gpt-4v, techhub-pool-world-gpt-4v|azure|
+|techhubinc-WestUS3-gpt-4-turbo-2024-04-09|techhubinc-pool-us-gpt-4-turbo, techhubinc-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo|azure|
+|techhubinc-WestUS3-gpt-4o-2024-08-06|techhubinc-pool-us-gpt-4o, techhubinc-pool-world-gpt-4o, techhub-pool-world-gpt-4o|azure|
+|techhubinc-amazon.nova-micro-v1-NorthVirginia|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhubinc-amazon.nova-lite-v1-NorthVirginia|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhubinc-amazon.nova-pro-v1:0-NorthVirginia|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhubinc-amazon.nova-micro-v1-Ohio|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhubinc-amazon.nova-lite-v1-Ohio|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhubinc-amazon.nova-pro-v1:0-Ohio|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhubinc-amazon.nova-micro-v1-Oregon|techhubinc-pool-us-nova-micro-1:0, techhubinc-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0|bedrock|
+|techhubinc-amazon.nova-lite-v1-Oregon|techhubinc-pool-us-nova-lite-1:0, techhubinc-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0|bedrock|
+|techhubinc-amazon.nova-pro-v1:0-Oregon|techhubinc-pool-us-nova-pro-1:0, techhubinc-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-NorthVirginia|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-haiku-v1:0-NorthVirginia|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v2:0-NorthVirginia|techhubinc-pool-us-claude-3-5-sonnet-2:0, techhubinc-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-Ohio|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-haiku-v1:0-Ohio|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-Ohio|techhubinc-pool-us-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-Oregon|techhubinc-pool-us-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-haiku-v1:0-Oregon|techhubinc-pool-us-claude-3-5-haiku-1:0, techhubinc-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v2:0-Oregon|techhubinc-pool-us-claude-3-5-sonnet-2:0, techhubinc-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-Oregon|techhubinc-pool-us-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-Oregon|techhubinc-pool-us-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-Tokyo|techhubinc-pool-ap-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-Tokyo|techhubinc-pool-ap-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-Tokyo|techhubinc-pool-ap-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-Frankfurt|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-claude-3-5-sonnet-v1:0-Paris|techhubinc-pool-eu-claude-3-5-sonnet-1:0, techhubinc-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-Paris|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-Paris|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-claude-3-haiku-v1:0-London|techhubinc-pool-eu-claude-3-haiku-1:0, techhubinc-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-London|techhubinc-pool-eu-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-claude-3-sonnet-v1:0-Singapore|techhubinc-pool-ap-claude-3-sonnet-1:0, techhubinc-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0|bedrock|
+|techhubinc-meta-llama-3-70b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhubinc-meta-llama-3-8b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhubinc-meta-llama-3-1-70b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-1-70b-1:0, techhubinc-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|bedrock|
+|techhubinc-meta-llama-3-1-8b-v1:0-NorthVirginia|techhubinc-pool-us-llama3-1-8b-1:0, techhubinc-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|bedrock|
+|techhubinc-meta-llama-3-70b-v1:0-Oregon|techhubinc-pool-us-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhubinc-meta-llama-3-8b-v1:0-Oregon|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhubinc-meta-llama-3-1-405b-v1:0-Oregon|techhubinc-pool-us-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
+|techhubinc-meta-llama-3-1-70b-v1:0-Oregon|techhubinc-pool-us-llama3-1-70b-1:0, techhubinc-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0|bedrock|
+|techhubinc-meta-llama-3-1-8b-v1:0-Oregon|techhubinc-pool-us-llama3-1-8b-1:0, techhubinc-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0|bedrock|
+|techhubinc-meta-llama-3-70b-v1:0-London|techhubinc-pool-eu-llama3-70b-1:0, techhubinc-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0|bedrock|
+|techhubinc-meta-llama-3-8b-v1:0-London|techhubinc-pool-eu-llama3-8b-1:0, techhubinc-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0|bedrock|
 
 <br/><strong>DEV region</strong><br/>
 
