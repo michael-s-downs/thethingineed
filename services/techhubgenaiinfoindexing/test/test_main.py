@@ -119,6 +119,44 @@ class TestInfoIndexationDeployment():
             }
         }
     }
+    json_input_vertex = {
+        "generic": {
+            "project_conf": {
+                "report_url": "test_url",
+                "process_id": "ir_index_20240125_113850926508AMjg3z3i",
+                "process_type": "ir_index",
+                "department": "test",
+                "csv": False
+            },
+            "preprocess_conf": {
+                "layout_conf": {
+                    "do_titles": True,
+                    "do_tables": True,
+                }
+            },
+            "indexation_conf": {
+                "index": "test_indexing",
+                "windows_overlap": 10,
+                "windows_length": 300,
+                "models": [
+                    {
+                        "embedding_model": "text-embedding-004",
+                        "platform": "vertex",
+                        "alias": "text-embedding-004-test-1"
+                    }
+                ],
+                "vector_storage": "elastic-test"
+            }
+        },
+        "specific": {
+            "dataset": {
+                "dataset_key": "ir_index_20240125_113850926508AMjg3z3i:ir_index_20240125_113850926508AMjg3z3i",
+            },
+            "paths": {
+                "text": "test/infoindexing/data/indexes/ir_index_20240125_113850926508AMjg3z3i/txt/prodsimpl/docs/NOTA TECNICA RIESGO COLECTIVO producto 5.txt",
+            }
+        }
+    }
     deployment = get_indexing_deployment()
 
     @patch("common.deployment_utils.BaseDeployment.async_deployment")
@@ -203,3 +241,28 @@ class TestInfoIndexationDeployment():
                             assert indexation_response[1] == 200
                             assert indexation_response[2] == "Indexing finished"
 
+    def test_process_vertex(self):
+        with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
+            with patch('common.ir.parsers.ManagerParser.get_parsed_object') as mock_get_parsed_object:
+                with patch('vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
+                    with patch('common.ir.connectors.ManagerConnector.get_connector') as mock_get_connector:
+                        with patch('main.update_full_status', side_effect=lambda redis_status, dataset_status_key, status_code, message:
+                        (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
+                            storage_manager = MagicMock()
+                            storage_manager.get_specific_files.return_value = MagicMock(), []
+                            mock_get_file_storage.return_value = storage_manager
+
+                            vector_database = MagicMock()
+                            vector_database.get_processed_data.return_value = ["doc1-test"]
+                            vector_database.index_documents.return_value = [{'ir_index/test-embedding-model/pages': {'num': 14, 'type': 'PAGS'},
+                                                                             'ir_index/test-embedding-model/tokens': {'num': 9391, 'type': 'TOKENS'}}]
+                            mock_get_vector_db.return_value = vector_database
+
+                            mock_get_connector.return_value = get_connector()
+                            mock_get_connector.assert_correct_index_conf = MagicMock()
+
+                            self.deployment.process(self.json_input_vertex)
+                            indexation_response = mock_update_full_status.call_args[0][1:]
+
+                            assert indexation_response[1] == 200
+                            assert indexation_response[2] == "Indexing finished"

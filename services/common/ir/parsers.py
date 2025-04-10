@@ -63,6 +63,15 @@ class Parser(ABC):
                 "embedding_model": model_selected.get('embedding_model'),
                 "retriever_model": model_selected.get('retriever_model')
             }
+        elif platform == "vertex":
+            return {
+                "alias": alias,
+                "platform": platform,
+                "embedding_model": model_selected.get('embedding_model'),
+                "retriever_model": model_selected.get('retriever_model'),
+                "api_key": models_credentials['api-keys'][platform][platform],
+
+            }
         else:
             raise PrintableGenaiError(400, f"Platform {platform} not supported")
 

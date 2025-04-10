@@ -741,8 +741,12 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
             "openai": {
                 "openai": "*sk-...*"
             },
-            "bedrock": 
-                {. . .}
+            "bedrock":{
+              . . .
+            },
+            "vertex": {
+              "vertex": "*api-key*"
+            }
         }
     }
     ```
@@ -841,6 +845,15 @@ Inforetrieval requires two configuration files and one optional file:
                     "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
                     "retriever_model": "sentence-transformers/facebook-dpr-question_encoder-single-nq-base"
                 }
+            ],
+            "vertex": [
+              {
+                "embedding_model_name": "text-embedding-004",
+                "embedding_model": "text-embedding-004",
+                "model_pool": [
+                  "techhub-pool-world-text-embedding-004"
+                ]
+              }
             ]
         }
     }
@@ -865,6 +878,11 @@ Inforetrieval requires two configuration files and one optional file:
         - embedding_model_name: same as before.
         - embedding_model: same as before.
         - retriever_model: model used when retrieving information (in hugging-face models normally are different).
+    
+    * **vertex**:
+        - embedding_model_name: same as before.
+        - embedding_model: same as before.
+        - model_pool: pools the model belongs to.
 
 - **`default_embedding_models.json`**: This config file is needed to specify which model is going to be used when in the retrieval call, no models are passed and the retrieval is going to be done with all the embedding models used in indexation. The file is stored in "src/ir/conf" and it has to be based on the previous file. The bm25 field is mandatory as it's used always in the indexation process:
     ```json
@@ -879,7 +897,8 @@ Inforetrieval requires two configuration files and one optional file:
     {
         "bm25":"bm25",
         "text-embedding-ada-002": "ada-002-pool-europe",
-        "cohere.embed-english-v3": "cohere-english-v3-america"
+        "cohere.embed-english-v3": "cohere-english-v3-america",
+        "text-embedding-004": "techhub-pool-world-text-embedding-004"
     }
     ```
 
