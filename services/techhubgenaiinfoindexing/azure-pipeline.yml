@@ -135,7 +135,7 @@ stages:
   jobs:
   - job:
     pool:
-      name: TechHub Pipelines
+      vmImage: '$(vmImageName)'
     steps:
     - template: ../ap-template.yml
       parameters:
@@ -154,3 +154,4 @@ stages:
         templateType: '$(templateType)'
         description: '$(description)'
         libraryFeed: '$(feedGenai)'
+        passTrivy: 'false'
