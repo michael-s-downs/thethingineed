@@ -2,9 +2,6 @@
     "process_type": "preprocess",
     "project_type": "text",
     "languages": ["*"],
-    "force_ocr": false,
-    "extract_tables": false,
-    "origins": {"ocr":  "aws-ocr"},
     "dataset_conf": {
         "dataset_path": "",
         "dataset_csv_path": "",
@@ -14,16 +11,21 @@
     "preprocess_conf": {
         "num_pag_ini": 0,
         "page_limit": 1000,
-        "page_limit_preimage": 3,
-        "parameters_preimage": [],
-        "parameters_pretext": {
-            "test_size": 0.2,
-            "stratify": true,
-            "lowercase": true,
-            "remove_numbers": true,
-            "simbols": true,
-            "word_length": true,
-            "escape_sequences": true
+        "layout_conf": {
+            "do_lines_text": false,
+            "do_lines_ocr": false,
+            "lines_conf": {
+                "do_lines_result": false,
+                "model": "checkpoint-41806"
+            },
+            "do_titles": false,
+            "do_tables": false,
+            "tables_conf": {
+                "sep": ";"
+            }
+        },
+        "ocr_conf":{
+            "extract_tables": false
         }
     }
 }

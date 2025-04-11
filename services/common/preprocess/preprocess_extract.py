@@ -80,7 +80,6 @@ def get_num_pages(filename: str, page_limit: int) -> int:
 
     return num_pags
 
-
 def extract_text(file: str, num_pags: int, generic: dict, specific: dict, do_cells_text: bool = True, do_lines_text: bool = False, return_dict: dict = {}):
     """ Extract text of the document
 
@@ -142,23 +141,30 @@ def extract_text(file: str, num_pags: int, generic: dict, specific: dict, do_cel
             if not text_corrupted:
                 process_type = generic['project_conf']['process_type']
 
-                if process_type == "ir_index":
-                    metadata = specific['document']['metadata']
-                    text = format_indexing_metadata(text, file, num_pags, metadata)
+                if process_type == "ir_index" or process_type == "preprocess":
+                    if process_type == "ir_index" or "metadata" in specific.get('document', {}):
+                        metadata = specific['document'].get('metadata', {})
+                        text = format_indexing_metadata(text, file, num_pags, metadata)
+                    
+                    return_dict['lang'] = lang
+                    return_dict['text'] = text
+                    return_dict['extraction'] = extraction
+                    return_dict['boxes'] = boxes
+                    return_dict['cells'] = cells
+                    return_dict['lines'] = lines
                 else:
-                    raise ValueError(f"Type of process {process_type} is not supported.")
-
-                return_dict['lang'] = lang
-                return_dict['text'] = text
-                return_dict['extraction'] = extraction
-                return_dict['boxes'] = boxes
-                return_dict['cells'] = cells
-                return_dict['lines'] = lines
+                    logger.warning(f"Process type '{process_type}' is not directly supported. Treating as standard text extraction.")
+                    return_dict['lang'] = lang
+                    return_dict['text'] = text
+                    return_dict['extraction'] = extraction
+                    return_dict['boxes'] = boxes
+                    return_dict['cells'] = cells
+                    return_dict['lines'] = lines
             else:
                 return_dict.update(empty_result)
     except Exception:
+        logger.error("Error in extract_text function", exc_info=get_exc_info())
         return_dict.update(empty_result)
-
 
 def extract_images(filename: str, generic: dict) -> List[dict]:
     """ Extract images of the document

@@ -171,7 +171,7 @@ def update_request(response_json: dict):
 
                 file_metadata = request_json.get('documents_metadata', {}).setdefault(filename, {})
                 file_metadata['ocr_used'] = request_json.get('client_profile', {}).get('default_ocr', "")
-                file_metadata['async'] = "queue" if os.getenv('API_QUEUE_DELETE_URL', "") else True
+                file_metadata['async'] = "queue" if os.getenv('CORE_QUEUE_DELETE_URL', "") else True
                 file_metadata['status'] = "waiting"
                 file_metadata['process_id'] = process_id
 
@@ -213,3 +213,4 @@ def update_request(response_json: dict):
             logger.warning(f"No request corresponding to process_id '{process_id}'")
     else:
         logger.warning("Bad response from API without process_id")
+

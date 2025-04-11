@@ -98,41 +98,43 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
     request_json['documents'] = [f"{request_json['documents_folder']}/{doc}".replace("//", "/") for doc in request_json['documents_metadata']]
 
     # Define pipeline based in operation requested
-    if request_json['input_json']['operation'] == "indexing":
-        request_json['client_profile']['pipeline'] = ["indexing"]
-
-    if request_json['input_json'].get('indexation_conf', {}):
-        request_json['indexation_conf'] = request_json['input_json']['indexation_conf']
-
-        request_json['indexation_conf'].setdefault('models', ["techhub-pool-world-ada-002"])
-        request_json['indexation_conf'].setdefault('metadata', {})
-    else:
-        # Retrocompatibility mode
-        request_json['indexation_conf'] = {}
-        request_json['indexation_conf']['vector_storage_conf'] = {
-            'index': request_json['input_json'].get('index')
-        }
-
-        # Retrocompatibility mode
-        request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
-        # Overwrite if exists, but default values if not
-        request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
-        request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
-        request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
-        request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
-        request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
-        request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
+    operation = request_json['input_json']['operation']
     
-        # Delete none items from dicts and add chunking method to indexation_conf
-        request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
-        request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+    if operation == "preprocess":
+        request_json['client_profile']['pipeline'] = ["preprocess"]
+    elif operation == "indexing":
+        request_json['client_profile']['pipeline'] = ["indexing"]
+        
+        if request_json['input_json'].get('indexation_conf', {}):
+            request_json['indexation_conf'] = request_json['input_json']['indexation_conf']
+            request_json['indexation_conf'].setdefault('models', ["techhub-pool-world-ada-002"])
+            request_json['indexation_conf'].setdefault('metadata', {})
+        else:
+            # Retrocompatibility mode
+            request_json['indexation_conf'] = {}
+            request_json['indexation_conf']['vector_storage_conf'] = {
+                'index': request_json['input_json'].get('index')
+            }
 
-        # Retrocompatibility mode
-        request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
-        request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
+            # Retrocompatibility mode
+            request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
+            # Overwrite if exists, but default values if not
+            request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
+            request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
+            request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
+            request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
+            request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
+            request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
+        
+            # Delete none items from dicts and add chunking method to indexation_conf
+            request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+            request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
 
-
-    request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+            # Retrocompatibility mode
+            request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
+            request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
+            
+        request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
 
     return request_json, input_files
 

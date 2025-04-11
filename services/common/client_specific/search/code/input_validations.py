@@ -136,7 +136,7 @@ def _validate_operation(request_json: dict) -> Tuple[bool, list]:
     valid, messages = _validate_param(request_json['input_json'], 'operation', str)
 
     if valid:
-        operations = ["indexing", "delete"]
+        operations = ["indexing", "delete", "preprocess"]
 
         if request_json['input_json']['operation'] not in operations:
             valid = False

@@ -13,7 +13,7 @@ from datetime import datetime
 # Custom imports
 import conf_utils
 import docs_utils
-import api_calls
+import core_calls
 import requests_manager
 import provider_resources
 from logging_handler import logger
@@ -201,7 +201,7 @@ def delete_data(request_json: dict):
 
         if not request_json.get('persist_preprocess', False):
             logger.debug("Deleting results from container and database")
-            api_calls.delete(request_json)
+            core_calls.delete(request_json)
 
 def receive_request(request: object) -> Tuple[dict, dict]:
     """ Logic to receive request from client,

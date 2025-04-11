@@ -5,7 +5,7 @@
     "validate_input": "input_validations.validate_input_default",
     "adapt_input": "io_adaptations.adapt_input_default",
     "adapt_output": "io_adaptations.adapt_output_default",
-    "indexing": "api_calls.indexing",
+    "indexing": "core_calls.indexing",
     "response_async": "response_calls.response_api_default",
     "init_logic": "custom_operations.send_tracking_input",
     "finally_logic": "custom_operations.send_tracking_output"
