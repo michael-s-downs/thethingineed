@@ -4,7 +4,6 @@
 # Native imports
 import json
 import string
-import os
 from random import choice
 from copy import deepcopy
 from datetime import datetime, timedelta
