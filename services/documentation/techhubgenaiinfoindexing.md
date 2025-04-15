@@ -8,6 +8,7 @@
     - [Key Features](#key-features)
   - [Getting started](#getting-started)
   - [Concepts and Definitions](#concepts-and-definitions)
+  - [Vector storages](#vector-storages)
   - [Chunking Methods](#chunking-methods)
   - [Embeddings Generation](#embeddings-generation)
   - [Vector Storage. Chunk id generation](#vector-storage-chunk-id-generation)
@@ -101,6 +102,15 @@ To understand the indexing module, there are a few concepts that we need to defi
 * **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
 * **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
 * **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
+
+## Vector storages
+
+Global RAG can use diferent vector databases to store document chunks and its embeddings. The supported ones are:
+
+- [ElasticSearch](https://www.elastic.co/es/elasticsearch)
+- [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/)
+
+To get more information about how to configure the secret file refer to Secrets section.
 
 ## Chunking Methods
 
@@ -530,8 +540,12 @@ All necessary credentials for the indexing flow are stored in secrets for securi
             "openai": {
                 "openai": "*sk-...*"
             },
-            "bedrock": 
-                {. . .}
+            "bedrock":{
+              . . .
+            },
+            "vertex": {
+              "vertex": "*api-key*"
+            }
         }
     }
     ```
@@ -541,33 +555,56 @@ All necessary credentials for the indexing flow are stored in secrets for securi
 
 
 - **`vector_storage_config.json`**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/". The format of the secret is as follows:
-  ```json
-  {
-    "vector_storage_supported": [
-      {
-        "vector_storage_name": "vector-storage-name",
-        "vector_storage_type": "elastic",
-        "vector_storage_host": "host",
-        "vector_storage_schema": "https",
-        "vector_storage_port": 9200,
-        "vector_storage_username": "username",
-        "vector_storage_password": "password"
-      },
-      {
-        ...
-      },
-      ...
-    ]
-  }
-  ```
-  Below is an explanation of the different parameters (for ElasticSearch vector database):
-  - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
-  - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
-  - **vector_storage_host**: Host of the vector storage.
-  - **vector_storage_schema**: Schema of the vector storage.
-  - **vector_storage_port**: Port where the vector storage is located.
-  - **vector_storage_username**: Username to access to the vector storage.
-  - **vector_storage_password**: Password to access to the vector storage.
+
+  - **ElasticSearch**: 
+    ```json
+    {
+        "vector_storage_supported": [{
+                "vector_storage_name": "elastic-develop",
+                "vector_storage_type": "elastic",
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_schema": "https",
+                "vector_storage_port": 9200,
+                "vector_storage_username": "elastic",
+                "vector_storage_password": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_port:** Port where the vector storage is located.
+    - **vector_storage_username:** Username to access to the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage.
+
+  - **Azure AI Search**:
+
+    ```json
+    {
+        "vector_storage_supported": [
+            {
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_type": "ai_search",
+                "vector_storage_schema": "https",
+                "vector_storage_name": "ai_search_techhubragemeal",
+                "vector_storage_key": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage (Azure key).
 
 ### Configuration files
 Apart from the five secrets explained above, the system needs another configuration file, that must be stored in the backend storage defined, under the path "src/ir/conf":
@@ -604,6 +641,14 @@ Apart from the five secrets explained above, the system needs another configurat
           "retriever_model": ""
         },
         ...
+      ],
+      "vertex": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "model_pool": []
+        },
+        ...    
       ]
     }
   }
@@ -625,6 +670,10 @@ Apart from the five secrets explained above, the system needs another configurat
         - **embedding_model_name**: same as before
         - **embedding_model**: same as before
         - **retriever_model**: model used when retrieving information (in hugging-face models normally are different)
+    * <u>Vertex models</u>:
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **model_pool**: pools the model belongs to
 
 An example where the rest of the data is extracted from the message:
 ![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)

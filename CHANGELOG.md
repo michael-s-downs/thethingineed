@@ -3,10 +3,27 @@
 
 # Changelog
 
-## vX.X.X
+## vX.X.X (xxxx-xx-xx)
+- genai-inforetrieval:
+    - [NEW] Added new Vertex platform
+    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/ir/conf/models_config.json'
+        - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
+    - [New] Added support to Azure AI Search as a new vector storage
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance
+- genai-infoindexing:
+    - [NEW] Added new Vertex platform
+    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/ir/conf/models_config.json'
+        - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
+    - [New] Added support to Azure AI Search as a new vector storage
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance
 - genai-llmapi:
     - [NEW] Added new Vertex platform
     - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
+        - Add models configuration in 'src/LLM/conf/models_config.json'
         - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
 

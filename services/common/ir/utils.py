@@ -10,6 +10,7 @@ from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.embeddings.bedrock import BedrockEmbedding
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.embeddings import BaseEmbedding
+from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 
 # Custom imports
 from common.genai_controllers import load_file, provider
@@ -85,5 +86,10 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
             EMBED_MODEL = HuggingFaceEmbedding(model_name=model.get('embedding_model'), trust_remote_code=True)
 
         return EMBED_MODEL
+    elif platform == "vertex":
+        return GoogleGenAIEmbedding(
+            model_name=model.get('embedding_model'),
+            api_key=model.get('api_key'),
+        )
     else:
         raise ValueError(f"Platform {platform} not supported")
