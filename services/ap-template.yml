@@ -52,6 +52,9 @@ parameters:
 - name: libraryFeed
   default: ''
   type: string
+- name: passTrivy
+  default: 'true'
+  type: boolean
 
 steps:
 
@@ -171,6 +174,7 @@ steps:
     options: --timeout 10m0s
     exitCode: 0
   displayName: Trivy image scan
+  condition:  and(succeeded(), ${{ parameters.passTrivy }})
 
 # Push image docker with tag numeric
 - bash: docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}'
