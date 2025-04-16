@@ -303,13 +303,87 @@ class TestGPTModel:
 
     def test_get_result(self):
         mock_response = {
-            'status_code': 200,
-            'choices': [{"finish_reason": "content_filter"}],
-            'usage': {
-                'prompt_tokens': 0,
-                'completion_tokens': 0,
-                'total_tokens': 0,
-            }
+            'status_code': 400,
+            'error': '''
+                {
+                    "error": {
+                        "message": "",
+                        "type": null,
+                        "param": "prompt",
+                        "code": "content_filter",
+                        "status": 400,
+                        "innererror": {
+                            "code": "ResponsibleAIPolicyViolation",
+                            "content_filter_result": {
+                                "hate": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "jailbreak": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "profanity": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "self_harm": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "sexual": {
+                                    "filtered": false,
+                                    "severity": "safe"
+                                },
+                                "violence": {
+                                    "filtered": true,
+                                    "severity": "low"
+                                }
+                            }
+                        }
+                    }
+                }
+                ''',
+            'msg': '''
+                {
+                    "error": {
+                        "message": "",
+                        "type": null,
+                        "param": "prompt",
+                        "code": "content_filter",
+                        "status": 400,
+                        "innererror": {
+                            "code": "ResponsibleAIPolicyViolation",
+                            "content_filter_result": {
+                                "hate": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "jailbreak": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "profanity": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "self_harm": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "sexual": {
+                                    "filtered": false,
+                                    "severity": "safe"
+                                },
+                                "violence": {
+                                    "filtered": true,
+                                    "severity": "low"
+                                }
+                            }
+                        }
+                    }
+                }
+                '''
         }
         conf = copy.deepcopy(gpt_model)
         conf.pop('model_pool')
@@ -320,14 +394,35 @@ class TestGPTModel:
         gpt = ChatGPTModel(**conf)
         gpt.set_message(message_dict)
         result = gpt.get_result(mock_response)
-        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+        assert result['status_code'] == 400
+        assert result['status'] == 'error'
+        assert "Content filter triggered" in result['error_message']
+        assert "hate(medium)" in result['error_message']
+        assert "self_harm(medium)" in result['error_message']
+        assert "violence(low)" in result['error_message']
 
-        mock_response['choices'] = [{"finish_reason": "ss"}]
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"finish_reason": "ss"}],
+            'usage': {
+                'prompt_tokens': 10,
+                'completion_tokens': 5,
+                'total_tokens': 15
+            }
+        }
         with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
                                                                 "{'finish_reason': 'ss'}.")):
             gpt.get_result(mock_response)
 
-        mock_response['choices'] = [{"message": {"content": "Not found"}}]
+        mock_response = {
+            'status_code': 200,
+            'choices': [{"message": {"content": "Not found"}}],
+            'usage': {
+                'prompt_tokens': 10,
+                'completion_tokens': 5,
+                'total_tokens': 15
+            }
+        }
         result = gpt.get_result(mock_response)
         assert result['result']['answer'] == "Not found"
 
@@ -569,13 +664,13 @@ class TestDalle:
 
     def test_get_result(self):
         mock_response = {
-            'status_code': 200,
-            'data': [{"finish_reason": "content_filter"}],
-            'usage': {
-                'prompt_tokens': 0,
-                'completion_tokens': 0,
-                'total_tokens': 0,
-            }
+            'status_code': 400,
+            'error': '''
+                   {"created":1744726022,"error":{"code":"contentFilter","message":"Your task failed as a result of our safety system."}}
+               ''',
+            'msg': '''
+                   {"created":1744726022,"error":{"code":"contentFilter","message":"Your task failed as a result of our safety system."}}
+               '''
         }
         conf = copy.deepcopy(dalle_model)
         conf.pop('model_pool')
@@ -584,7 +679,7 @@ class TestDalle:
         dalle = DalleModel(**conf)
         dalle.set_message(message_dict)
         result = dalle.get_result(mock_response)
-        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+        assert result['error_message'] == "Content filter triggered, review your prompt."
 
         mock_response['status_code'] = 400
         mock_response['msg'] = "aaa"
@@ -806,14 +901,87 @@ class TestGPTOModel:
 
     def test_get_result(self):
         mock_response = {
-            'status_code': 200,
-            'choices': [{"finish_reason": "content_filter"}],
-            'usage': {
-                'prompt_tokens': 0,
-                'completion_tokens': 0,
-                'total_tokens': 0,
-                'completion_tokens_details': {'reasoning_tokens': 0}
-            }
+            'status_code': 400,
+            'error': '''
+                {
+                    "error": {
+                        "message": "",
+                        "type": null,
+                        "param": "prompt",
+                        "code": "content_filter",
+                        "status": 400,
+                        "innererror": {
+                            "code": "ResponsibleAIPolicyViolation",
+                            "content_filter_result": {
+                                "hate": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "jailbreak": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "profanity": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "self_harm": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "sexual": {
+                                    "filtered": false,
+                                    "severity": "safe"
+                                },
+                                "violence": {
+                                    "filtered": true,
+                                    "severity": "low"
+                                }
+                            }
+                        }
+                    }
+                }
+                ''',
+            'msg': '''
+                {
+                    "error": {
+                        "message": "",
+                        "type": null,
+                        "param": "prompt",
+                        "code": "content_filter",
+                        "status": 400,
+                        "innererror": {
+                            "code": "ResponsibleAIPolicyViolation",
+                            "content_filter_result": {
+                                "hate": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "jailbreak": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "profanity": {
+                                    "filtered": false,
+                                    "detected": false
+                                },
+                                "self_harm": {
+                                    "filtered": true,
+                                    "severity": "medium"
+                                },
+                                "sexual": {
+                                    "filtered": false,
+                                    "severity": "safe"
+                                },
+                                "violence": {
+                                    "filtered": true,
+                                    "severity": "low"
+                                }
+                            }
+                        }
+                    }
+                }
+                '''
         }
         conf = copy.deepcopy(o_model)
         conf.pop('model_pool')
@@ -822,10 +990,21 @@ class TestGPTOModel:
         gpt_o = ChatGPTOModel(**conf)
         gpt_o.set_message(message_dict)
         result = gpt_o.get_result(mock_response)
-        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+        assert result['status_code'] == 400
+        assert result['status'] == 'error'
+        assert "Content filter triggered" in result['error_message']
+        assert "hate(medium)" in result['error_message']
+        assert "self_harm(medium)" in result['error_message']
+        assert "violence(low)" in result['error_message']
 
-
+        mock_response['status_code'] = 200
         mock_response['choices'] = [{"finish_reason": "ss"}]
+        mock_response['usage'] = {
+            'prompt_tokens': 0,
+            'completion_tokens': 0,
+            'total_tokens': 0,
+            'completion_tokens_details': {'reasoning_tokens': 0}
+        }
         with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
                                                                 "{'finish_reason': 'ss'}.")):
             gpt_o.get_result(mock_response)
@@ -865,14 +1044,87 @@ class TestGPTOVisionModel:
 
     def test_get_result(self):
         mock_response = {
-            'status_code': 200,
-            'choices': [{"finish_reason": "content_filter"}],
-            'usage': {
-                'prompt_tokens': 0,
-                'completion_tokens': 0,
-                'total_tokens': 0,
-                'completion_tokens_details': {'reasoning_tokens': 0}
-            }
+            'status_code': 400,
+            'error': '''
+                        {
+                            "error": {
+                                "message": "",
+                                "type": null,
+                                "param": "prompt",
+                                "code": "content_filter",
+                                "status": 400,
+                                "innererror": {
+                                    "code": "ResponsibleAIPolicyViolation",
+                                    "content_filter_result": {
+                                        "hate": {
+                                            "filtered": true,
+                                            "severity": "medium"
+                                        },
+                                        "jailbreak": {
+                                            "filtered": false,
+                                            "detected": false
+                                        },
+                                        "profanity": {
+                                            "filtered": false,
+                                            "detected": false
+                                        },
+                                        "self_harm": {
+                                            "filtered": true,
+                                            "severity": "medium"
+                                        },
+                                        "sexual": {
+                                            "filtered": false,
+                                            "severity": "safe"
+                                        },
+                                        "violence": {
+                                            "filtered": true,
+                                            "severity": "low"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ''',
+            'msg': '''
+                        {
+                            "error": {
+                                "message": "",
+                                "type": null,
+                                "param": "prompt",
+                                "code": "content_filter",
+                                "status": 400,
+                                "innererror": {
+                                    "code": "ResponsibleAIPolicyViolation",
+                                    "content_filter_result": {
+                                        "hate": {
+                                            "filtered": true,
+                                            "severity": "medium"
+                                        },
+                                        "jailbreak": {
+                                            "filtered": false,
+                                            "detected": false
+                                        },
+                                        "profanity": {
+                                            "filtered": false,
+                                            "detected": false
+                                        },
+                                        "self_harm": {
+                                            "filtered": true,
+                                            "severity": "medium"
+                                        },
+                                        "sexual": {
+                                            "filtered": false,
+                                            "severity": "safe"
+                                        },
+                                        "violence": {
+                                            "filtered": true,
+                                            "severity": "low"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        '''
         }
         conf = copy.deepcopy(o_v_model)
         conf.pop('model_pool')
@@ -881,10 +1133,21 @@ class TestGPTOVisionModel:
         gpt_o_v = ChatGPTOVisionModel(**conf)
         gpt_o_v.set_message(message_dict)
         result = gpt_o_v.get_result(mock_response)
-        assert result['status_code'] == 400 and result['error_message'] == "content_filter"
+        assert result['status_code'] == 400
+        assert result['status'] == 'error'
+        assert "Content filter triggered" in result['error_message']
+        assert "hate(medium)" in result['error_message']
+        assert "self_harm(medium)" in result['error_message']
+        assert "violence(low)" in result['error_message']
 
-
+        mock_response['status_code'] = 200
         mock_response['choices'] = [{"finish_reason": "ss"}]
+        mock_response['usage'] = {
+            'prompt_tokens': 0,
+            'completion_tokens': 0,
+            'total_tokens': 0,
+            'completion_tokens_details': {'reasoning_tokens': 0}
+        }
         with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Azure format is not as expected: "
                                                                 "{'finish_reason': 'ss'}.")):
             gpt_o_v.get_result(mock_response)

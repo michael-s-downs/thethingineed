@@ -451,9 +451,9 @@ class TestGeminiAdapter:
         tokens1 = GeminiAdapter._get_image_tokens(2000, 1500, 1000, 1000) # Outside range
         tokens2 = GeminiAdapter._get_image_tokens(800, 600, 1000, 1000) # Inside range
         tokens3 = GeminiAdapter._get_image_tokens(1500, 2000, 1000, 1000) # Inside range
-        assert tokens1 == 1000
-        assert tokens2 == 640
-        assert tokens3 == 1000
+        assert tokens1 == 1548
+        assert tokens2 == 516
+        assert tokens3 == 1548
 
     def test_adapt_text(self):
         text = {"content": "fgh", "n_tokens": 9}
