@@ -86,6 +86,7 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
             EMBED_MODEL = HuggingFaceEmbedding(model_name=model.get('embedding_model'), trust_remote_code=True)
 
         return EMBED_MODEL
+
     elif platform == "vertex":
         return GoogleGenAIEmbedding(
             model_name=model.get('embedding_model'),
