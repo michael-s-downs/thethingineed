@@ -7,7 +7,7 @@
 - integration-receiver:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
-    - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable.
+    - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
@@ -18,8 +18,8 @@
         - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
-    - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable.
-    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time.
+    - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable
+    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
 - genai-infoindexing:
     - [New] Added new Vertex platform
@@ -29,7 +29,7 @@
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
-    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time.
+    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
 - genai-llmapi:
     - [New] Added new Vertex platform
     - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
