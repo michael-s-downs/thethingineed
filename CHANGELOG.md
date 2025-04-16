@@ -5,34 +5,34 @@
 
 ## vX.X.X (xxxx-xx-xx)
 - integration-receiver:
-    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
 - integration-sender:
-    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
 - genai-inforetrieval:
-    - [NEW] Added new Vertex platform
-    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+    - [New] Added new Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/ir/conf/models_config.json'
         - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
 - genai-infoindexing:
-    - [NEW] Added new Vertex platform
-    - [NEW] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+    - [New] Added new Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/ir/conf/models_config.json'
         - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
 - genai-llmapi:
-    - [NEW] Added new Vertex platform
-    - [NEW] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
+    - [New] Added new Vertex platform
+    - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
         - Add models configuration in 'src/LLM/conf/models_config.json'
         - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
-    - [improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
+    - [Improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:
