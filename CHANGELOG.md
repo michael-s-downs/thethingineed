@@ -7,6 +7,7 @@
 - integration-receiver:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
+    - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable.
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
@@ -18,6 +19,7 @@
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
     - [New] Added param vector_storage in vector_storage_conf to set either to use elasticsearch or azure ai. If no param received uses the env variable.
+    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time.
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
 - genai-infoindexing:
     - [New] Added new Vertex platform
@@ -35,8 +37,6 @@
         - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [Improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
-- genai-inforetrieval
-    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time.
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:
