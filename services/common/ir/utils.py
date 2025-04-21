@@ -79,7 +79,8 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
                 model_name=model.get('embedding_model')
             )
     elif platform == "huggingface":
-        if EMBED_MODEL is None:
+        global EMBED_MODEL
+        if not EMBED_MODEL:
             if is_retrieval:
                 # Normally in huggingface the retrieval model is different from the embedding model
                 EMBED_MODEL = HuggingFaceEmbedding(model_name=model.get('retriever_model'), trust_remote_code=True )
