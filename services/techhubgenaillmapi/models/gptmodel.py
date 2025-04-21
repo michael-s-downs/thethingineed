@@ -153,7 +153,8 @@ class GPTModel(GenerativeModel):
                     "input_tokens": response['usage']['prompt_tokens'],
                     "n_tokens": response['usage']['total_tokens'],
                     "output_tokens": response['usage']['completion_tokens'],
-                    "query_tokens": self.message.user_query_tokens
+                    "query_tokens": self.message.user_query_tokens,
+                    "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                 },
                 "status_code": 200
             }
@@ -175,7 +176,8 @@ class GPTModel(GenerativeModel):
                 'n_tokens': response['usage']['total_tokens'],
                 'query_tokens': self.message.user_query_tokens,
                 'input_tokens': response['usage']['prompt_tokens'],
-                'output_tokens': response['usage']['completion_tokens']
+                'output_tokens': response['usage']['completion_tokens'],
+                "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
             },
             'status_code': 200
         }
@@ -581,7 +583,8 @@ class ChatGPTOModel(GPTModel):
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
                         "output_tokens": response['usage']['completion_tokens'],
-                        "query_tokens": self.message.user_query_tokens
+                        "query_tokens": self.message.user_query_tokens,
+                        "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                     },
                     "status_code": 200
                 }
@@ -605,7 +608,8 @@ class ChatGPTOModel(GPTModel):
             'query_tokens': self.message.user_query_tokens,
             'input_tokens': response['usage']['prompt_tokens'],
             'output_tokens': response['usage']['completion_tokens'],
-            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens'],
+            "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
         }
         result = {
             'status': "finished",
@@ -748,7 +752,8 @@ class ChatGPTOVisionModel(GPTModel):
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
                         "output_tokens": response['usage']['completion_tokens'],
-                        "query_tokens": self.message.user_query_tokens
+                        "query_tokens": self.message.user_query_tokens,
+                        "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                     },
                     "status_code": 200
                 }
@@ -772,7 +777,8 @@ class ChatGPTOVisionModel(GPTModel):
             'query_tokens': self.message.user_query_tokens,
             'input_tokens': response['usage']['prompt_tokens'],
             'output_tokens': response['usage']['completion_tokens'],
-            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens'],
+            "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
         }
         result = {
             'status': "finished",

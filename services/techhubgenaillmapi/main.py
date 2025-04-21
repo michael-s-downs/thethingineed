@@ -344,20 +344,39 @@ class LLMDeployment(BaseDeployment):
             self.logger.info(f"Result: {result}")
             if result["status_code"] == 200 and not eval(os.getenv("TESTING", "False")):
                 if model.MODEL_MESSAGE == "dalle":
+                    # Caso especial para modelos de imagen
                     reporting_type = "images"
                     n_tokens = 1
+                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                    self.report_api(
+                        n_tokens,
+                        "",
+                        report_url,
+                        resource,
+                        GENAI_LLM_SERVICE,
+                        reporting_type.upper(),
+                    )
                 else:
-                    reporting_type = "tokens"
-                    n_tokens = result["result"]["n_tokens"]
-                resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
-                self.report_api(
-                    n_tokens,
-                    "",
-                    report_url,
-                    resource,
-                    GENAI_LLM_SERVICE,
-                    reporting_type.upper(),
-                )
+                    token_fields = {
+                        "input_tokens": result["result"].get("input_tokens", 0),
+                        "output_tokens": result["result"].get("output_tokens", 0),
+                    }
+                    optional_fields = ["cache_read_tokens", "cache_write_tokens", "cached_tokens"]
+                    for key in optional_fields:
+                        value = result["result"].get(key, 0)
+                        if value > 0:
+                            token_fields[key] = value
+
+                    for reporting_type, tokens in token_fields.items():
+                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                        self.report_api(
+                            tokens,
+                            "",
+                            report_url,
+                            resource,
+                            GENAI_LLM_SERVICE,
+                            reporting_type.upper(),
+                        )
 
         except ValidationError as ex:
             result = self.get_validation_error_response(ex.errors()[0])
