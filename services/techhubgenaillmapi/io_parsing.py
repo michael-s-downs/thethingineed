@@ -486,7 +486,7 @@ class ResponseObject(BaseModel):
     error_message: Optional[str] = None
     result: Optional[Union[str, dict]] = None
     status: Literal['finished', 'error']
-    show_token_details: bool
+    show_token_details: Optional[bool] = False
 
     @field_validator('status')
     def validate_status(cls, v, values: FieldValidationInfo):
@@ -524,10 +524,13 @@ class ResponseObject(BaseModel):
             if self.show_token_details:
                 response['result'] = self.result
             else:
-                result_filtered = {
-                    k: v for k, v in self.result.items()
-                    if k not in ('cached_tokens', 'cache_read_tokens', 'cache_write_tokens')
-                }
+                if isinstance(self.result, dict):
+                    result_filtered = {
+                        k: v for k, v in self.result.items()
+                        if k not in ('cached_tokens', 'cache_read_tokens', 'cache_write_tokens')
+                    }
+                else:
+                    result_filtered = self.result
                 response['result'] = result_filtered
         elif self.status_code != 200 and self.error_message:
             response['error_message'] = self.error_message
