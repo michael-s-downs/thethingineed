@@ -5,6 +5,7 @@ from __future__ import annotations
 
 # Native imports
 import os
+from pyinstrument import Profiler
 
 # Installed imports
 
@@ -66,6 +67,8 @@ class InfoIndexationDeployment(BaseDeployment):
 
     def process(self, json_input: dict):
         self.logger.debug(f"Data entry: {json_input}")
+        profiler = Profiler()
+        profiler.start()
         try:
             input_object = ManagerParser().get_parsed_object({'type': "infoindexing", 'json_input': json_input,
                                                               'available_pools': self.available_pools,
@@ -121,6 +124,8 @@ class InfoIndexationDeployment(BaseDeployment):
             self.connector.close()
 
         update_full_status(self.redis_status, dataset_status_key, status_code, message)
+        profiler.stop()
+        print(profiler.output_text(unicode=True, color=True))
         return self.must_continue, json_input, FLOWMGMT_CHECKEND_SERVICE
 
 
