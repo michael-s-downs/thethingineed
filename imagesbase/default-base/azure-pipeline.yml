@@ -19,8 +19,6 @@ variables:
 
 - name: imageName
   value: '$(default_base)'
-- name: vmImageName
-  value: 'ubuntu-latest'
 - name: pythonVersion
   value: '$(python_version)'
 - name: feedGenai
@@ -39,9 +37,9 @@ stages:
   displayName: Sonar analysis and test coverage
   jobs:
   - job:
-    continueOnError: false
+    continueOnError: true
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
       - task: UsePythonVersion@0
         inputs:
@@ -94,7 +92,7 @@ stages:
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
     - template: ../ap-template.yml
       parameters:

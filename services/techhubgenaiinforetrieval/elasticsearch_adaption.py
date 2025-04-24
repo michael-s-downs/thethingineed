@@ -126,7 +126,7 @@ def _mode_must_match_retrieval_strategy(
         )
 
     if mode == VectorStoreQueryMode.HYBRID and not retrieval_strategy.hybrid:
-        raise ValueError(f"to enable hybrid mode, it must be set in retrieval strategy")
+        raise ValueError("to enable hybrid mode, it must be set in retrieval strategy")
 
 
 class ElasticsearchStoreAdaption(BasePydanticVectorStore):
@@ -480,16 +480,16 @@ class ElasticsearchStoreAdaption(BasePydanticVectorStore):
         """
         _mode_must_match_retrieval_strategy(query.mode, self.retrieval_strategy)
         if query.filters is not None:  # Adaption to do multiple filters in one query
-            filter = [_to_elasticsearch_filter(query.filters)]
+            query_filters = [_to_elasticsearch_filter(query.filters)]
         else:
-            filter = es_filter or []
+            query_filters = es_filter or []
 
         hits = await self._store.search(
             query=query.query_str,
             query_vector=query.query_embedding,
             k=query.similarity_top_k,
             num_candidates=query.similarity_top_k * 10,
-            filter=filter,
+            filter=query_filters,
             custom_query=custom_query,
         )
 
@@ -545,15 +545,6 @@ class ElasticsearchStoreAdaption(BasePydanticVectorStore):
 
     def _to_haystack_similarities(self, scores: List[float]) -> List[float]:
         np_scores = np.asarray(scores)
-        """
-        if isinstance(self.retrieval_strategy, AsyncDenseVectorStrategy):
-            final_scores = []
-            for score in scores:
-                if self.retrieval_strategy.distance == DistanceMetric.COSINE:
-                    final_scores.append(float((score + 1) / 2))
-                else:
-                    final_scores.append(float(expit(score / 100)))
-        """
         if isinstance(self.retrieval_strategy, AsyncBM25Strategy):
             final_scores = expit(np_scores / 8).tolist()
         else:

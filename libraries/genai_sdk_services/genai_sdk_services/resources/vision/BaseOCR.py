@@ -154,6 +154,8 @@ class Textract(BaseOCR):
                         'secret_key': os.getenv(self.env_vars[1]),
                         'region_name': os.getenv(self.env_vars[2])
                     }
+                elif eval(os.getenv("AWS_ROLE", "False")):
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 
@@ -171,15 +173,13 @@ class Textract(BaseOCR):
 
         bytes_mode = kwargs.get('bytes_mode', False)
 
-        region_name = self.credentials.get('region_name', "eu-west-1")
-
-        client = boto3.client(
-            "textract",
-            aws_access_key_id=self.credentials['access_key'],
-            aws_secret_access_key=self.credentials['secret_key'],
-            region_name=region_name
-        )
-
+        region_name = self.credentials.get('region_name')
+        
+        if eval(os.getenv("AWS_ROLE", "False")):
+            client = boto3.client("textract", region_name=region_name)
+        else:
+            client = boto3.client("textract", aws_access_key_id=self.credentials['access_key'], aws_secret_access_key=self.credentials['secret_key'], region_name=region_name)
+        
         returning_texts = []
         returning_blocks = []
         returning_paragraphs = []

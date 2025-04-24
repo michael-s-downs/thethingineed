@@ -5,6 +5,7 @@ from __future__ import annotations
 
 # Native imports
 import os
+from pyinstrument import Profiler
 
 # Installed imports
 
@@ -66,6 +67,8 @@ class InfoIndexationDeployment(BaseDeployment):
 
     def process(self, json_input: dict):
         self.logger.debug(f"Data entry: {json_input}")
+        profiler = Profiler()
+        profiler.start()
         try:
             input_object = ManagerParser().get_parsed_object({'type': "infoindexing", 'json_input': json_input,
                                                               'available_pools': self.available_pools,
@@ -87,7 +90,7 @@ class InfoIndexationDeployment(BaseDeployment):
 
             # check if the models used are the same
             self.connector.assert_correct_index_conf(input_object.index, input_object.chunking_method['method'], self.all_models, input_object.models)
-            vector_db = ManagerVectorDB.get_vector_database({'type': "LlamaIndex", 'connector': self.connector,
+            vector_db = ManagerVectorDB.get_vector_database({'type': self.connector.MODEL_FORMAT, 'connector': self.connector,
                                                              'workspace': self.workspace, 'origin': self.origin,
                                                              'aws_credentials': self.aws_credentials})
 
@@ -121,6 +124,8 @@ class InfoIndexationDeployment(BaseDeployment):
             self.connector.close()
 
         update_full_status(self.redis_status, dataset_status_key, status_code, message)
+        profiler.stop()
+        print(profiler.output_text(unicode=True, color=True))
         return self.must_continue, json_input, FLOWMGMT_CHECKEND_SERVICE
 
 

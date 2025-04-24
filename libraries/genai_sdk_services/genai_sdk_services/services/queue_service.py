@@ -121,7 +121,7 @@ class AWSQueueService(BaseQueueService):
                         'region_name': os.getenv(self.env_vars[2])
                     }
                 elif eval(os.getenv("AWS_ROLE", "False")):
-                    credentials = {}
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 
@@ -138,7 +138,7 @@ class AWSQueueService(BaseQueueService):
             return self.clients[origin]
 
         self.logger.debug("Connection created")
-        region_name = self.credentials[origin].get('region_name', "eu-west-1")
+        region_name = self.credentials[origin].get('region_name')
 
         if eval(os.getenv("AWS_ROLE", "False")):
             session = boto3.Session(region_name=region_name)

@@ -280,7 +280,7 @@ class Property(BaseModel):
 class PlatformMetadata(BaseModel):
     # Platform metadata
     timeout: Optional[PositiveInt] = None
-    platform: Literal['azure', 'bedrock', 'openai']
+    platform: Literal['azure', 'bedrock', 'openai', 'vertex']
     num_retries: Optional[PositiveInt] = None
 
     class Config:

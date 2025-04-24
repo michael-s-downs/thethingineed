@@ -38,6 +38,7 @@ from io_parsing import (
     adapt_input_queue,
 )
 from common.utils import get_models
+from pyinstrument import Profiler
 
 TEMPLATEPATH = "src/LLM/prompts"
 
@@ -152,7 +153,7 @@ class LLMDeployment(BaseDeployment):
             raise ValueError(f"Invalid template name '{template_name}'")
 
         else:
-            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGPT-o"] and isinstance(query, str):
+            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGemini-v"] and isinstance(query, str):
                 model.DEFAULT_TEMPLATE_NAME = "system_query"
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]
@@ -320,6 +321,8 @@ class LLMDeployment(BaseDeployment):
 
         """
         self.logger.info(f"Request received. Data: {json_input}")
+        profiler = Profiler()
+        profiler.start()
         exc_info = get_exc_info()
         queue_metadata = None
 
@@ -382,6 +385,10 @@ class LLMDeployment(BaseDeployment):
             self.logger.error(f"[Process] Error while processing: {ex}.", exc_info=exc_info)
             result = {'status': 'error', 'error_message': str(ex), 'status_code': 500}
 
+        profiler.stop()
+
+
+        print(profiler.output_text(unicode=True, color=True))
         return ResponseObject(**result).get_response_predict(queue_metadata)
 
 

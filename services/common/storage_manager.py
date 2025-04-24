@@ -343,7 +343,8 @@ class IRStorageManager(BaseStorageManager):
             if do_titles or do_tables:
                 mtext_path = os.path.splitext(txt_path)[0] + "_markdowns.txt"
                 m_text = self.load_file(self.workspace, mtext_path)
-                if m_text is None: raise PrintableGenaiError(400, f"File {mtext_path} not found in IRStorage")
+                if m_text is None: 
+                    raise PrintableGenaiError(400, f"File {mtext_path} not found in IRStorage")
                 m_text = m_text.decode().strip()
                 text = m_text if m_text is not None else text
             df = pd.DataFrame({'Url': [url], 'CategoryId': [""], 'text': [text]})

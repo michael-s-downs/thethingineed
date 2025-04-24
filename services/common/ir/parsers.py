@@ -63,6 +63,15 @@ class Parser(ABC):
                 "embedding_model": model_selected.get('embedding_model'),
                 "retriever_model": model_selected.get('retriever_model')
             }
+        elif platform == "vertex":
+            return {
+                "alias": alias,
+                "platform": platform,
+                "embedding_model": model_selected.get('embedding_model'),
+                "retriever_model": model_selected.get('retriever_model'),
+                "api_key": models_credentials['api-keys'][platform][platform],
+
+            }
         else:
             raise PrintableGenaiError(400, f"Platform {platform} not supported")
 
@@ -281,6 +290,7 @@ class ParserInforetrieval(Parser):
             self.get_rescoring_function(self.index_conf)
             self.get_models(self.index_conf, available_pools, available_models, models_credentials)
             self.get_query(self.index_conf)
+            self.get_vector_storage(self.index_conf)
 
             self.get_x_reporting(json_input['project_conf'])
         except KeyError as ex:
@@ -343,6 +353,9 @@ class ParserInforetrieval(Parser):
         self.query = index_conf['query']
         if langdetect.detect(self.query) != 'ja':
             self.query = self._strip_accents(self.query)
+
+    def get_vector_storage(self, index_conf):
+        self.vector_storage = index_conf.get('vector_storage')
 
     def get_sent_models(self, sent_models, available_pools, available_models, models_credentials) -> list:
         """ Method to get the models to use in the retrieval process

@@ -45,9 +45,14 @@ heritage: {{ .Release.Service }}
 {{- define "queues" -}}
 {{- $queues := .Values.queues | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key := $queues }}
 {{- if $key }}
+{{- if eq $provider "aws" }}
+{{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s.fifo" $namespace $key }}
+{{- else }}
 {{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s" $namespace $key }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -66,10 +71,15 @@ heritage: {{ .Release.Service }}
 {{- define "integration" -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key,$value := $integration }}
 {{- if $value }}
 {{- if eq $value "integration-sender" }}
+{{- if eq $provider "aws" }}
+{{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s.fifo" $namespace $value }}
+{{- else }}
 {{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s" $namespace $value }}
+{{- end }}
 {{- else }}
 {{ $key | upper }}: {{ $value }}
 {{- end }}

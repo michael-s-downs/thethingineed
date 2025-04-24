@@ -3,5 +3,5 @@ output "mysql_password" {
 }
 
 output "mysql_host" {
-    value = aws_db_instance.mysql.endpoint
+    value = split(":", aws_db_instance.mysql.endpoint)[0]
 }
