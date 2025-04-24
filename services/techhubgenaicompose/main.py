@@ -1,4 +1,8 @@
 ### This code is property of the GGAO ###
+from pyinstrument import Profiler
+
+import sys
+import os
 
 # Native imports
 import json
@@ -64,6 +68,10 @@ class ComposeDeployment(BaseDeployment):
         :param : Json input of the processes
         """
         self.logger.info("Request received")
+        profiler = Profiler()
+        profiler.start()
+
+
         try:
             generic = get_generic(json_input)
             dataset_status_key = get_dataset_status_key(json_input)
@@ -88,6 +96,11 @@ class ComposeDeployment(BaseDeployment):
 
         resource = "compose/process/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, dataset_status_key)
+
+        profiler.stop()
+
+
+        print(profiler.output_text(unicode=True, color=True))
 
         return self.must_continue, output, ""
 

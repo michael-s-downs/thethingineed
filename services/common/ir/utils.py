@@ -18,6 +18,7 @@ from common.ir.connectors import Connector, ManagerConnector
 
 IR_INDICES = "src/ir/index/"
 INDEX_STORAGE = lambda index: IR_INDICES + index + ".json"
+EMBED_MODEL = None
 
 
 
@@ -78,10 +79,15 @@ def get_embed_model(model: dict, aws_credentials: dict, is_retrieval: bool) -> B
                 model_name=model.get('embedding_model')
             )
     elif platform == "huggingface":
-        if is_retrieval:
-            # Normally in huggingface the retrieval model is different from the embedding model
-            return HuggingFaceEmbedding(model_name=model.get('retriever_model'), trust_remote_code=True )
-        return HuggingFaceEmbedding(model_name=model.get('embedding_model'), trust_remote_code=True)
+        global EMBED_MODEL
+        if not EMBED_MODEL:
+            if is_retrieval:
+                # Normally in huggingface the retrieval model is different from the embedding model
+                EMBED_MODEL = HuggingFaceEmbedding(model_name=model.get('retriever_model'), trust_remote_code=True )
+            EMBED_MODEL = HuggingFaceEmbedding(model_name=model.get('embedding_model'), trust_remote_code=True)
+
+        return EMBED_MODEL
+
     elif platform == "vertex":
         return GoogleGenAIEmbedding(
             model_name=model.get('embedding_model'),

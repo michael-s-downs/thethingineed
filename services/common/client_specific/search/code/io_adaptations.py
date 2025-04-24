@@ -130,8 +130,7 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
         request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
         request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
 
-
-    request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+    request_json['indexation_conf']['vector_storage_conf'].setdefault('vector_storage', request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE")))
 
     return request_json, input_files
 
