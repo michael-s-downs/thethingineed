@@ -161,7 +161,9 @@ class NovaModel(GenerativeModel):
                     "input_tokens": response_body.get('usage', {}).get('inputTokens', 0),
                     "n_tokens": response_body.get('usage', {}).get('totalTokens', 0),
                     "output_tokens": response_body.get('usage', {}).get('outputTokens', 0),
-                    "query_tokens": self.message.user_query_tokens
+                    "query_tokens": self.message.user_query_tokens,
+                    "cache_read_tokens": response_body.get('usage', {}).get('cacheReadInputTokenCount', 0),
+                    "cache_write_tokens": response_body.get('usage', {}).get('cacheWriteInputTokenCount', 0)
                 },
                 "status_code": 200
             }
@@ -173,7 +175,9 @@ class NovaModel(GenerativeModel):
             'n_tokens': response_body.get('usage').get('totalTokens'),
             'query_tokens': self.message.user_query_tokens,
             'output_tokens': response_body.get('usage').get('outputTokens'),
-            'input_tokens': response_body.get('usage').get('inputTokens')
+            'input_tokens': response_body.get('usage').get('inputTokens'),
+            "cache_read_tokens": response_body.get('usage', {}).get('cacheReadInputTokenCount', 0),
+            "cache_write_tokens": response_body.get('usage', {}).get('cacheWriteInputTokenCount', 0)
         }
 
         result = {

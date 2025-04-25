@@ -1166,7 +1166,8 @@ The requests structure must be as follows:
         "model": "gpt-3.5-pool-techhub-europe",
         "max_input_tokens": 600,
         "max_tokens": 1000,
-        "temperature": 0
+        "temperature": 0,
+        "show_token_details":true
     
     },
     "platform_metadata": {
@@ -1184,6 +1185,8 @@ The response structure must be as follows:
     "status": "finished",
     "result": {
         "answer": "NTT Data",
+        "cache_read_tokens": 0,
+        "cache_write_tokens": 0,
         "logprobs": [],
         "n_tokens": 134,
         "query_tokens": 80,
@@ -1217,6 +1220,7 @@ The response structure must be as follows:
     + size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
     + style (optional): Output style of the image [vivid, natural], default as vivid
   - tools(optional): List of tools defined by the user that could be used by the model (models such as DALLE ar not able to use tools)
+  - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
 
 * platform_metadata (required):
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, “bedrock” or "vertex".
@@ -1230,7 +1234,8 @@ When using reasoning models, it is important to consider the different `llm_meta
   - max_completion_tokens (optional): In reasoning models, the `max_tokens` parameter is no longer supported. Instead, `max_completion_tokens` defines the maximum number of tokens the model can generate, including both the tokens visible to the user and the tokens used for reasoning.
   - reasoning_effort (optional): This parameter guides the model on how many reasoning tokens it should generate before producing a response to the prompt. It can be set to `[low, medium, or high]`. The higher the effort setting, the longer the model will take to process the request, generally resulting in a larger number of reasoning tokens. By default, it is set to `medium`. (Some models, such as `o1-mini`, do not yet support this parameter.)
   - tools(optional): List of tools defined by the user that could be used by the model
-
+  - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
+  
 Specifically for DALLE the request parameters are:
 
 * query_metadata: Data related to the query:
@@ -1248,6 +1253,7 @@ Specifically for DALLE the request parameters are:
   - size: Output size format [\1024x1024\, \1792x1024\, \1024x1792\] default as \1024x1024\
   - style: Output style of the image [vivid, natural], default as vivid,
   - user: Helps Openai tracking the user
+  - - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
 
 * platform_metadata: Data related to the platform where the language model stays
   - platform: Name of the platform that will be used [azure, bedrock, openai, vertex]

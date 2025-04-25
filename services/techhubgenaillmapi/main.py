@@ -200,8 +200,11 @@ class LLMDeployment(BaseDeployment):
     def parse_model(self, llm_metadata: dict, platform: Platform):
         llm_metadata["default_model"] = self.default_models.get(platform.MODEL_FORMAT)
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(
-            exclude_unset=True, exclude_none=True
+            exclude_none=True
         )
+        show_token_details =parsed_llm_metadata.get('show_token_details', False)
+        parsed_llm_metadata.pop('show_token_details')
+
         parsed_llm_metadata["models_credentials"] = self.models_credentials.get(
             "api-keys"
         ).get(platform.MODEL_FORMAT, {})
@@ -223,7 +226,7 @@ class LLMDeployment(BaseDeployment):
                 400,
                 "Error, in dalle3 the maximum number of characters in the prompt is 4000",
             )
-        return model, tools
+        return model, tools, show_token_details
 
     def parse_query(self, query_metadata: dict, model: GenerativeModel):
         query_metadata["is_vision_model"] = model.is_vision
@@ -282,12 +285,12 @@ class LLMDeployment(BaseDeployment):
             )
 
         platform = self.parse_platform(json_input.get("platform_metadata", {}))
-        model, tools = self.parse_model(json_input.get("llm_metadata", {}), platform)
+        model, tools, show_token_details = self.parse_model(json_input.get("llm_metadata", {}), platform)
         query_metadata = self.parse_query(json_input.get("query_metadata", {}), model)
         project_conf = self.parse_project_conf(
             json_input.get("project_conf", {}), model, platform
         )
-        return query_metadata, model, platform, project_conf["x_reporting"], tools
+        return query_metadata, model, platform, project_conf["x_reporting"], tools, show_token_details
 
     def get_validation_error_response(self, error):
         """Get validation error response
@@ -331,7 +334,7 @@ class LLMDeployment(BaseDeployment):
             json_input, queue_metadata = adapt_input_queue(json_input)
 
             # Parse and check input
-            query_metadata, model, platform, report_url, tools = self.parse_input(json_input)
+            query_metadata, model, platform, report_url, tools, show_token_details = self.parse_input(json_input)
 
             # Set model
             platform.set_model(model)
@@ -345,22 +348,41 @@ class LLMDeployment(BaseDeployment):
             # Format result
             result = model.get_result(response)
             self.logger.info(f"Result: {result}")
+            result['show_token_details'] = show_token_details
             if result["status_code"] == 200 and not eval(os.getenv("TESTING", "False")):
                 if model.MODEL_MESSAGE == "dalle":
                     reporting_type = "images"
                     n_tokens = 1
+                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                    self.report_api(
+                        n_tokens,
+                        "",
+                        report_url,
+                        resource,
+                        GENAI_LLM_SERVICE,
+                        reporting_type.upper(),
+                    )
                 else:
-                    reporting_type = "tokens"
-                    n_tokens = result["result"]["n_tokens"]
-                resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
-                self.report_api(
-                    n_tokens,
-                    "",
-                    report_url,
-                    resource,
-                    GENAI_LLM_SERVICE,
-                    reporting_type.upper(),
-                )
+                    token_fields = {
+                        "input_tokens": result["result"].get("input_tokens", 0),
+                        "output_tokens": result["result"].get("output_tokens", 0),
+                    }
+                    optional_fields = ["cache_read_tokens", "cache_write_tokens", "cached_tokens"]
+                    for key in optional_fields:
+                        value = result["result"].get(key, 0)
+                        if value > 0:
+                            token_fields[key] = value
+
+                    for reporting_type, tokens in token_fields.items():
+                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                        self.report_api(
+                            tokens,
+                            "",
+                            report_url,
+                            resource,
+                            GENAI_LLM_SERVICE,
+                            reporting_type.upper(),
+                        )
 
         except ValidationError as ex:
             result = self.get_validation_error_response(ex.errors()[0])
