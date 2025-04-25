@@ -351,7 +351,6 @@ class LLMDeployment(BaseDeployment):
             result['show_token_details'] = show_token_details
             if result["status_code"] == 200 and not eval(os.getenv("TESTING", "False")):
                 if model.MODEL_MESSAGE == "dalle":
-                    # Caso especial para modelos de imagen
                     reporting_type = "images"
                     n_tokens = 1
                     resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
