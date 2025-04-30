@@ -4,6 +4,7 @@
 
 - [Global RAG (indexing + retrieval + LLM)](#global-rag-indexing--retrieval--llm)
   - [Index](#index)
+  - [Contact](#contact)
   - [Overview](#overview)
     - [Key features](#key-features)
     - [Component architecture](#component-architecture)
@@ -91,6 +92,11 @@
   - [Process Flow](#process-flow)
     - [INDEXING Flow](#indexing-flow)
     - [COMPOSE Flow](#compose-flow)
+
+## Contact
+
+Francisco Javier Garcia Viartola (francisco.javier.garcia.viartola@nttdata.com)
+
 
 ## Overview
 
