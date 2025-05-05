@@ -1,7 +1,5 @@
 ### This code is property of the GGAO ###
 
-
-from pyinstrument import Profiler
 # Native imports
 
 # Installed imports
@@ -171,8 +169,6 @@ class InfoRetrievalDeployment(BaseDeployment):
     def process(self, json_input: dict):
         try:
             self.logger.debug(f"Data entry: {json_input}")
-            profiler = Profiler()
-            profiler.start()
             input_object = ManagerParser().get_parsed_object({"type": "inforetrieval", "json_input": json_input,
                                                               "available_models": self.available_models,
                                                               "available_pools": self.available_pools,
@@ -225,10 +221,6 @@ class InfoRetrievalDeployment(BaseDeployment):
                 resource = "retrieval/process/call"
                 self.report_api(1, "", input_object.x_reporting, resource, "")
 
-            profiler.stop()
-
-
-            print(profiler.output_text(unicode=True, color=True))
             return self.must_continue, {
                 "status_code": 200,
                 "docs": self.parse_output(sorted_documents[:input_object.top_k], input_object.query),
