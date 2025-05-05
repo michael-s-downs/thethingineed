@@ -19,9 +19,17 @@ class LangFuseManager(AbstractManager):
             langfuse_config (dict): The configuration for LangFuse integration.
         """
         self.langfuse = None
+        if os.getenv("LANGFUSE", False) == "true":
+            langfuse_config = {
+                "secret_key": os.getenv("LANGFUSE_SECRET_KEY", None),
+                "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
+                "host": os.getenv("LANGFUSE_HOST", None)
+            }
+            self.langfuse = Langfuse(**langfuse_config)
+            
         self.trace = None
     
-    def parse(self, compose_config, session_id):
+    def parse(self, compose_config):
         """
         Parses the compose configuration and initializes the LangFuse integration.
 
@@ -32,12 +40,10 @@ class LangFuseManager(AbstractManager):
         Returns:
             LangFuseManager: The LangFuseManager instance.
         """
-        if compose_config.get("langfuse") or os.getenv("LANGFUSE", False) == "true":
-            langfuse_config = {
-                "secret_key": os.getenv("LANGFUSE_SECRET_KEY", None),
-                "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
-                "host": os.getenv("LANGFUSE_HOST", None)
-            }
+        if self.langfuse:
+            return self
+
+        if compose_config.get("langfuse"):
             langfuse_params = compose_config.get("langfuse")
             if isinstance(langfuse_params, dict):
                 langfuse_config = {
@@ -47,11 +53,14 @@ class LangFuseManager(AbstractManager):
                 }
                 
             self.langfuse = Langfuse(**langfuse_config)
-            self.trace = self.langfuse.trace(
-                session_id=session_id
-            )
 
         return self
+
+    def create_trace(self, session_id):
+        self.trace = self.langfuse.trace(
+            session_id=session_id
+        )
+
 
 
     def update_metadata(self, metadata):
@@ -187,4 +196,9 @@ class LangFuseManager(AbstractManager):
         if self.langfuse is None:
             return
 
-        self.langfuse.flush()
+        # self.langfuse.flush()
+    
+    def load_template(self, template_name):
+        prompt = self.langfuse.get_prompt(template_name)
+        return prompt
+        

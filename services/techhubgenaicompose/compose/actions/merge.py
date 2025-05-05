@@ -131,6 +131,7 @@ class MetaMerge(MergeMethod):
             template = params.get("template", self.DEFAULT_FIELD)
             sep = params.get("sep", "-##########-")
             grouping_key = params.get("grouping_key", None)
+            langfuse_m = params.get("langfuse")
         else:
             template = self.DEFAULT_FIELD
             sep = "-##########-"
@@ -138,7 +139,8 @@ class MetaMerge(MergeMethod):
 
         if "$" not in template:
             try:
-                template = load_file(storage_containers['workspace'], f"{IRStorage_PATH}/{template}.json").decode()
+                template = langfuse_m.load_template(template)
+                template = template.prompt
                 if not template:
                     raise PrintableGenaiError(400, "Template empty")
             except ValueError:

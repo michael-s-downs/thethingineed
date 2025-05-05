@@ -62,12 +62,12 @@ class Director(AbstractManager):
         self.conf_manager.langfuse_m.flush()
         return output
 
-    def run(self):
+    def run(self, langfuse_m):
         """Runs the director process, with all classes 
         Returns:
             dict: output
         """
-        self.conf_manager = ConfManager(self.compose_conf, self.apigw_params)
+        self.conf_manager = ConfManager(self.compose_conf, self.apigw_params, langfuse_m)
         self.logger.info(f"Persist dict before{self.PD.PD.keys()}")
         if self.conf_manager.persist_m:
             self.PD.get_from_redis(self.conf_manager.session_id, self.conf_manager.headers['x-tenant'])
@@ -110,6 +110,9 @@ class Director(AbstractManager):
                 ap["PD"] = self.PD
                 ap["lang"] = self.conf_manager.lang
                 ap["session_id"] = self.conf_manager.session_id
+            
+            if action_function == filter_query:
+                ap["langfuse"] = self.conf_manager.langfuse_m
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             ap["headers"]= self.conf_manager.headers
@@ -158,6 +161,10 @@ class Director(AbstractManager):
             if action_function == self.sb.filter_response:
                 ap["headers"] = self.conf_manager.headers
                 ap["query"] = self.conf_manager.template_m.query
+                ap["langfuse"] = self.conf_manager.langfuse_m
+            
+            if action_function == self.sb.merge:
+                ap["langfuse"] = self.conf_manager.langfuse_m
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             action_function(action_params['type'], ap if ap else {})
@@ -261,7 +268,6 @@ class Director(AbstractManager):
         return template
 
     def fix_merge(self, s):
-        # Replace $ with "$" but avoid affecting the template parameter
         result = ""
         in_template = False
         in_merge = False
@@ -286,10 +292,15 @@ class Director(AbstractManager):
                dict: template 
         """
         template_params = self.conf_manager.template_m.params
+        template_params = self.conf_manager.template_m.set_params(template_params)
 
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
-        template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
+        
+        # template = self.conf_manager.template_m.template.compile(**template_params)
+        template = self.conf_manager.template_m.template.prompt
+        template = re.sub(r'"\$([^"]+)"', r'$\1', template)
+
         template = re.sub(r'\$(\w+)', r'"$\1"', template)
         template = self.fix_merge(template)
         try:
@@ -303,7 +314,6 @@ class Director(AbstractManager):
         template = self.conf_manager.template_m.index_conf_retrocompatible(template)
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
-        template_params = self.conf_manager.template_m.set_params(template_params)
 
         try:
             if self.conf_manager.persist_m:

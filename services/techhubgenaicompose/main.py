@@ -20,6 +20,7 @@ from common.services import GENAI_COMPOSE_SERVICE
 from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.genai_status_control import update_status
 from director import Director
+from langfusemanager import LangFuseManager
 
 
 TEMPLATES_PATH = "src/compose/templates/"
@@ -31,6 +32,7 @@ class ComposeDeployment(BaseDeployment):
         super().__init__()
         set_storage(storage_containers)
         set_db(db_dbs)
+        self.langfuse_m = LangFuseManager()
 
     @property
     def must_continue(self) -> bool:
@@ -92,13 +94,12 @@ class ComposeDeployment(BaseDeployment):
         except Exception as ex:
             raise PrintableGenaiError(500, ex)
 
-        output = Director(compose_conf, apigw_params).run()
+        output = Director(compose_conf, apigw_params).run(self.langfuse_m)
 
         resource = "compose/process/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, dataset_status_key)
 
         profiler.stop()
-
 
         print(profiler.output_text(unicode=True, color=True))
 

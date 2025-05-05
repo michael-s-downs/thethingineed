@@ -40,7 +40,7 @@ class FilterMethod(ABC):
         """Process the streamlist given the method
         """
 
-    def load_filtertemplate(self, templatename):
+    def load_filtertemplate(self, templatename, langfuse_m):
         """Loads query filter templates from compose_conf json input.
 
         Args:
@@ -50,7 +50,9 @@ class FilterMethod(ABC):
             Parsed JSON data of the loaded template.
         """
         try:
-            template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
+            # template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
+            template = langfuse_m.load_template(templatename)
+            template = template.prompt
             if not template:
                 raise PrintableGenaiError(404, f"Filter template file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
@@ -117,7 +119,7 @@ class FilterGPT(FilterMethod):
         headers = params.pop("headers")
         templatename = params.get("template")
         
-        self.filter_template = self.load_filtertemplate(templatename)
+        self.filter_template = self.load_filtertemplate(templatename, params.pop("langfuse"))
 
         substitutions_template = self.filter_template.get("substitutions_template")
         substitutions = self.filter_template.get("substitutions")

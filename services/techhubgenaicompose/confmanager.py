@@ -21,7 +21,7 @@ IRStorage_TEMPLATEPATH = "src/compose/templates"
 
 class ConfManager(AbstractManager):
 
-    def __init__(self, compose_config, apigw_params) -> None:
+    def __init__(self, compose_config, apigw_params, langfuse_m) -> None:
         """Class to manage and read params/actions set in the compose_conf input json.
 
         Args:
@@ -34,14 +34,15 @@ class ConfManager(AbstractManager):
         self.logger.debug(f"APIgw params: {apigw_params}")
         self.apigw_params = apigw_params
         self.department = self.apigw_params.get("x-department", "main")
+        self.langfuse_m = langfuse_m.parse(compose_config)
         self.session_id = self.parse_session(compose_config)
+        self.langfuse_m.create_trace(self.session_id)
         self.clear_quotes = False
         self.template_m = None
         self.persist_m = None
         self.filter_m = None
         self.lang = None
         self.reformulate_m = None
-        self.langfuse_m = None
         self.update_model_from_defaults()
         self.set_detector()
         self.parse_conf_actions(compose_config)
@@ -56,12 +57,11 @@ class ConfManager(AbstractManager):
         self.headers = compose_config['headers_config'] if "headers_config" in compose_config else deepcopy(
             self.apigw_params)
         self.clear_quotes = compose_config.get("clear_quotes", self.clear_quotes)
-        self.template_m = TemplateManager().parse(compose_config)
+        self.template_m = TemplateManager().parse(compose_config, self.langfuse_m)
         self.persist_m = PersistManager().parse(compose_config)
+        self.langfuse_m.update_metadata(compose_config)
         if self.template_m.query is not None:
             self.lang = self.parse_lang(compose_config, self.template_m.query)
-        self.langfuse_m = LangFuseManager().parse(compose_config, self.session_id)
-        self.langfuse_m.update_metadata(compose_config)
         self.logger.debug("Compose_conf parse END")
 
     def parse_session(self, compose_config) -> string:
@@ -81,35 +81,40 @@ class ConfManager(AbstractManager):
         model_request = compose_config.get('template').get('params').get('model')
         name = compose_config.get('template').get('name')
         model_template = None
-        try:
-            template = load_file(storage_containers['workspace'], f"{IRStorage_TEMPLATEPATH}/{name}.json").decode()
-            if not template:
-                self.raise_PrintableGenaiError(404, "Compose template not found")
-            pattern_llm_action = r'("action":\s*"summarize"|"action":\s*"llm_action")'
-            match = re.search(pattern_llm_action, template)
-            if match:
-                template = template[match.end():]
-                pattern_model = r'"model":\s*"([^"]+)"'
-                models_in_template = re.findall(pattern_model, template)
-                model_template = models_in_template[0]
-            else:
-                model_template = ""
-        except Exception:
-            if name:
-                self.raise_PrintableGenaiError(404, f"Template file doesn't exists for name {name}")
-            else:
-                self.raise_PrintableGenaiError(400, "Mandatory param <name> not found in template.")
-
-        if isinstance(model_template, str) and len(model_template) > 0:
-            if model_template[0] != '$':
-                model = model_template
-            else:
-                if isinstance(model_request, str):
-                    model = model_request
+        if not model_request:
+            try:
+                template = self.langfuse_m.load_template(name)
+                template = template.prompt
+                #template = load_file(storage_containers['workspace'], f"{IRStorage_TEMPLATEPATH}/{name}.json").decode()
+                if not template:
+                    self.raise_PrintableGenaiError(404, "Compose template not found")
+                pattern_llm_action = r'("action":\s*"summarize"|"action":\s*"llm_action")'
+                match = re.search(pattern_llm_action, template)
+                if match:
+                    template = template[match.end():]
+                    pattern_model = r'"model":\s*"([^"]+)"'
+                    models_in_template = re.findall(pattern_model, template)
+                    model_template = models_in_template[0]
                 else:
-                    self.raise_PrintableGenaiError(400, "There is no model defined in the request or template")
+                    model_template = ""
+            except Exception:
+                if name:
+                    self.raise_PrintableGenaiError(404, f"Template file doesn't exists for name {name}")
+                else:
+                    self.raise_PrintableGenaiError(400, "Mandatory param <name> not found in template.")
+
+            if isinstance(model_template, str) and len(model_template) > 0:
+                if model_template[0] != '$':
+                    model = model_template
+                else:
+                    if isinstance(model_request, str):
+                        model = model_request
+                    else:
+                        self.raise_PrintableGenaiError(400, "There is no model defined in the request or template")
+            else:
+                model = model_template
         else:
-            model = model_template
+            model = model_request
 
         model = self.clean_model(model)
         if session_id is None or not session_id:
