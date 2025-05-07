@@ -16,7 +16,7 @@
     - [Improvement] Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
-        - Add models configuration in 'src/integration/search/models_map.json.json'
+        - Add models configuration in 'src/integration/search/models_map.json'
     - [Improvement] Replaced 'API' references with 'CORE' in 'environment_variables.txt'
     - [Improvement] Updated 'main.py' to use 'core_calls' instead of 'api_calls'
     - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
