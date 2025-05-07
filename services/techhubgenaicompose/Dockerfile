@@ -11,7 +11,6 @@ COPY ./uhis_docker /opt/uhis_docker
 # CREATE DEFAULT DIRECTORY AND INSTALL REQUIREMENTS
 WORKDIR /opt/uhis_docker
 RUN pip install -r requirements.txt
-RUN pip install pyinstrument
 
 # CLEAN
 RUN apt-get -y remove build-essential && \
