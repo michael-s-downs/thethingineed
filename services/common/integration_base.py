@@ -13,7 +13,7 @@ from datetime import datetime
 # Custom imports
 import conf_utils
 import docs_utils
-import api_calls
+import core_calls
 import requests_manager
 import provider_resources
 from logging_handler import logger
@@ -199,8 +199,9 @@ def delete_data(request_json: dict):
         logger.debug("Deleting documents from container")
         provider_resources.storage_remove_files(request_json['integration_id'], os.getenv('STORAGE_DATA'))
 
-        logger.debug("Deleting results from container and database")
-        api_calls.delete(request_json)
+        if not request_json.get('persist_preprocess', False):
+            logger.debug("Deleting results from container and database")
+            core_calls.delete(request_json)
 
 def receive_request(request: object) -> Tuple[dict, dict]:
     """ Logic to receive request from client,

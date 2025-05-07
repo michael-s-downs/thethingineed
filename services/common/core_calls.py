@@ -337,10 +337,10 @@ def extraction_sync(request_json: dict) -> dict:
 
     return request_json
 
-def preprocess_async(request_json: dict) -> dict:
-    """ Process request with step preprocess in async mode,
+def preprocess(request_json: dict) -> dict:
+    """ Process request with step preprocess in any mode,
     collect documents to process without classification,
-    send to process needed documents in async mode,
+    send to process needed documents in async or queue mode,
     check pending processes and finish if ready
 
     :param request_json: Request JSON with all information
@@ -351,48 +351,71 @@ def preprocess_async(request_json: dict) -> dict:
     files = request_json.get('documents', [])
     metadata = request_json.setdefault('documents_metadata', {})
     files_need_preprocess = []
+    process_id = request_json.get('input_json', {}).get('process_id')
 
-    for file_path in files:
-        file_name = docs_utils.parse_file_name(file_path, folder)
-        file_metadata = metadata.get(file_name, {})
+    if files:
+        for file_path in files:
+            file_name = docs_utils.parse_file_name(file_path, folder)
+            file_metadata = metadata.get(file_name, {})
 
-        if file_metadata:
             # Not processing and not finish with error
             if file_metadata.get('status', "") not in ["waiting", "ready", "error"]:
                 files_need_preprocess.append(file_path)
 
-    if files_need_preprocess:
-        request_params = {
-            'folder': folder,
-            'ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('ocr', request_json['client_profile']['default_ocr']),
-            'force_ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
-            'timeout': round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0),
-            'tracking': request_json.get('tracking', {})
-        }
+        if files_need_preprocess:
+            request_params = {
+                'folder': folder,
+                'ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('ocr', request_json['client_profile']['default_ocr']),
+                'force_ocr': request_json.get('preprocess_conf', {}).get('ocr_conf', {}).get('force_ocr', request_json['client_profile'].get('force_ocr', False)),
+                'timeout': round(len(files) * request_json['client_profile'].get('request_flow_timeout', request_flow_timeout), 0),
+                'preprocess_conf': request_json.get('preprocess_conf', {}),
+                'integration': request_json,
+                'tracking': request_json.get('tracking', {})
+            }
 
-        api_response = core_api.async_preprocess_request(apigw_params, request_params, files_need_preprocess)
-        logger.info(f"- Calling {len(files_need_preprocess)} ASYNC PREPROCESS for request '{request_json['integration_id']}' {api_response}")
+            if process_id:
+                request_params['process_id'] = process_id
+                request_params['preprocess_conf']['preprocess_reuse'] = True
+            else:
+                request_params['process_id'] = f"preprocess_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}"
 
-        process_id = api_response.get('process_id', "")
-        process_ids = request_json.setdefault('process_ids', {})
-        process_ids[process_id] = api_response['status']
+            # Check if we should use queue or async mode
+            if os.getenv('CORE_QUEUE_PROCESS_URL', ""):
+                api_response = core_api.queue_preprocess_request(apigw_params, request_params, files_need_preprocess)
+                logger.info(f"- Calling {len(files_need_preprocess)} QUEUE PREPROCESS for request '{request_json['integration_id']}' {api_response}")
+            else:
+                api_response = core_api.async_preprocess_request(apigw_params, request_params, files_need_preprocess)
+                logger.info(f"- Calling {len(files_need_preprocess)} ASYNC PREPROCESS for request '{request_json['integration_id']}' {api_response}")
 
-        # Update files with status and process_id
-        for file_path in files:
-            file_name = docs_utils.parse_file_name(file_path, folder)
-            file_metadata = metadata.setdefault(file_name, {})
-            file_metadata.update(api_response)
-            file_metadata['ocr_used'] = request_params['ocr']
-            file_metadata['async'] = True
+            process_id = api_response.get('process_id', "")
+            process_ids = request_json.setdefault('process_ids', {})
+            process_ids[process_id] = api_response['status']
 
-    for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status == "ready"]:
-        for file_metadata in metadata:
-            if metadata[file_metadata]['process_id'] == process_id:
-                metadata[file_metadata]['status'] = "finish"
+            # Update files with status and process_id
+            for file_path in files:
+                file_name = docs_utils.parse_file_name(file_path, folder)
+                file_metadata = metadata.setdefault(file_name, {})
+                file_metadata.update(api_response)
+                file_metadata['ocr_used'] = request_params['ocr']
+                file_metadata['async'] = "queue" if os.getenv('CORE_QUEUE_PROCESS_URL', "") else True
 
-        request_json['process_ids'][process_id] = "finish"
+        # Process ready or error status
+        for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status in ["ready", "error"]]:
+            for file_metadata in metadata:
+                if metadata[file_metadata]['process_id'] == process_id:
+                    metadata[file_metadata]['status'] = metadata[file_metadata]['status'].replace("ready", "finish")
 
-    request_json['status'] = "waiting" if "waiting" in request_json.get('process_ids', {}).values() else "processing"
+            request_json['process_ids'][process_id] = request_json['process_ids'][process_id].replace("ready", "finish")
+
+        request_json['status'] = "waiting" if "waiting" in request_json.get('process_ids', {}).values() else "processing"
+        request_json['status'] = "error" if "error" in request_json.get('process_ids', {}).values() else request_json['status']
+    else:
+        logger.error("No files to preprocess")
+        request_json['status'] = "error"  # Break flow here to avoid errors
+
+    # Set status to finish
+    if request_json['input_json']['operation'] == "preprocess" and request_json['status'] == "processing":
+        request_json['status'] = "finish"
 
     return request_json
 
@@ -661,6 +684,7 @@ def indexing(request_json: dict) -> dict:
     metadata = request_json.setdefault('documents_metadata', {})
     models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
     files_need_indexing = []
+    process_id = request_json.get('input_json', {}).get('process_id') 
 
     if files:
         for file_path in files:
@@ -678,16 +702,21 @@ def indexing(request_json: dict) -> dict:
                 'indexation_conf': request_json['indexation_conf'],
                 'preprocess_conf': request_json['preprocess_conf'],
                 'integration': request_json,
-                'process_id': f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}",
                 'tracking': request_json.get('tracking', {})
             }
 
+            if process_id:
+                request_params['process_id'] = process_id
+                request_params['preprocess_conf']['preprocess_reuse'] = True
+            else:
+                request_params['process_id'] = f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}"
+                
             request_params['indexation_conf']['models'] = [models_map[model] for model in models]
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('ocr', request_json['client_profile']['default_ocr'])
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', request_json['client_profile'].get('force_ocr', False))
 
 
-            if os.getenv('API_QUEUE_PROCESS_URL', ""):
+            if os.getenv('CORE_QUEUE_PROCESS_URL', ""):
                 api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
                 logger.info(f"- Calling {len(files_need_indexing)} QUEUE INDEXING for request '{request_json['integration_id']}' for index '{request_params['indexation_conf']['vector_storage_conf']['index']}' {api_response}")
             else:
@@ -704,7 +733,7 @@ def indexing(request_json: dict) -> dict:
                 file_metadata = metadata.setdefault(file_name, {})
                 file_metadata.update(api_response)
                 file_metadata['ocr_used'] = request_params['preprocess_conf']['ocr_conf']['ocr']
-                file_metadata['async'] = "queue" if os.getenv('API_QUEUE_PROCESS_URL', "") else True
+                file_metadata['async'] = "queue" if os.getenv('CORE_QUEUE_PROCESS_URL', "") else True
 
         for process_id in [process_id for process_id, status in request_json.get('process_ids', {}).items() if status in ["ready", "error"]]:
             for file_metadata in metadata:
