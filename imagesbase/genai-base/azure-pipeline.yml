@@ -31,6 +31,8 @@ variables:
   value: '$(registryLogin)'
 - name: acrRegistryPassword
   value: '$(registryPassword)'
+- name: source_path
+  value: '$(source_path_images_base)'
 
 stages:
 - stage: SonarAnalysis
@@ -97,8 +99,8 @@ stages:
     - template: ../ap-template.yml
       parameters:
         imageName: '$(imageName)'
-        defaultWorkingDirectory: '$(system.defaultWorkingDirectory)/$(imageName)'
-        sourcesDirectory: '$(Build.SourcesDirectory)/$(imageName)'
+        defaultWorkingDirectory: '$(System.DefaultWorkingDirectory)/${{ variables.source_path }}$(imageName)'
+        sourcesDirectory: '$(System.DefaultWorkingDirectory)/${{ variables.source_path }}$(imageName)'
         tag: '$(Build.BuildNumber)'
         pythonVersion: '$(pythonVersion)'
         libraryFeed: '$(feedGenai)'

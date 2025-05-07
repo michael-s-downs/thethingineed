@@ -118,11 +118,14 @@ class GeminiModel(GenerativeModel):
                 'n_tokens': response.get('usageMetadata', {}).get('totalTokenCount', 0),
                 'output_tokens': response.get('usageMetadata', {}).get('candidatesTokenCount', 0),
                 'query_tokens': self.message.user_query_tokens,
-                'logprobs': []
+                'logprobs': [],
+                'cached_tokens': 0
             },
             'status_code': 200
         }
-
+        thoughts_token_count = response.get('usageMetadata', {}).get('thoughtsTokenCount')
+        if thoughts_token_count is not None:
+            result['result']['reasoning_tokens'] = thoughts_token_count
         if tool_calls:
             result['result']['tool_calls'] = tool_calls
 

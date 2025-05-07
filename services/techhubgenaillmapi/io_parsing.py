@@ -207,6 +207,7 @@ class LLMMetadata(BaseModel):
     model: Optional[str] = None
     default_model: Optional[str] = None
     tools: Optional[list] = None
+    show_token_details: Optional[bool] = False
 
     class Config:
         extra = 'forbid' # To not allow extra fields in the object
@@ -485,6 +486,7 @@ class ResponseObject(BaseModel):
     error_message: Optional[str] = None
     result: Optional[Union[str, dict]] = None
     status: Literal['finished', 'error']
+    show_token_details: Optional[bool] = False
 
     @field_validator('status')
     def validate_status(cls, v, values: FieldValidationInfo):
@@ -519,7 +521,17 @@ class ResponseObject(BaseModel):
             'status_code': self.status_code
         }
         if self.status_code == 200 and self.result:
-            response['result'] = self.result
+            if self.show_token_details:
+                response['result'] = self.result
+            else:
+                if isinstance(self.result, dict):
+                    result_filtered = {
+                        k: v for k, v in self.result.items()
+                        if k not in ('cached_tokens', 'cache_read_tokens', 'cache_write_tokens')
+                    }
+                else:
+                    result_filtered = self.result
+                response['result'] = result_filtered
         elif self.status_code != 200 and self.error_message:
             response['error_message'] = self.error_message
         else:
