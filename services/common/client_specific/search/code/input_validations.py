@@ -431,12 +431,10 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :return: True or False if input is valid and error messages
     """
     if request_json['input_json'].get('operation') == "preprocess":
-        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr]
-        if not request_json['input_json'].get('process_id', ''):
-            validate_functions.append(_validate_docsmetadata)
+        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata]
     else:
-        validate_functions = [_validate_index, _validate_operation, _validate_response_url, 
-                            _validate_models, _validate_chunking_method, _validate_ocr, 
+        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr,
+                            _validate_models, _validate_chunking_method, _validate_index,
                             _validate_metadata_primary_keys, _validate_index_metadata]
         
         if not request_json['input_json'].get('process_id', ''):
