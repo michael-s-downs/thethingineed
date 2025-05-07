@@ -8,11 +8,29 @@
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
+    - [New] Added "preprocess" as a valid operation in validate_operation function in input_validations.py
+    - [New] Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
+    - [Improvement] Updated 'validate_input_default' in 'input_validations.py' to include verification for preprocess operation
+    - [Improvement] Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
+    - [Improvement] Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for preprocess operation
+    - [Improvement] Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
     - [Improvement] Replaced 'API' references with 'CORE' in 'environment_variables.txt'
     - [Improvement] Updated 'main.py' to use 'core_calls' instead of 'api_calls'
+    - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
+    - [Improvement] Modified 'preprocess' function in 'core_calls.py' to support queue and async modes
+    - [Improvement] Enhanced 'indexing' function in 'core_calls.py' to handle process_id for preprocess reuse functionality
+    - [Improvement] Updated all references from 'api_calls' to 'core_calls' in 'integration_base.py'
+    - [Improvement] Added queue detection via 'CORE_QUEUE_DELETE_URL' environment variable in 'update_request' function in 'requests_manager.py'
+    - [Improvement] Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
+    - [Improvement] Updated response handling in 'default.json' to use queue-based mechanism instead of API-based
+    - [Improvement] Updated in 'default.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
+    - [Improvement] Updated in 'japanese.json': Changed 'api_calls' to 'core_calls' in indexing section
+    - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section
+    - [Improvement] Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
+    - [Improvement] Updated environment variables in 'test_api_calls.py' from 'API' to 'CORE'
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
@@ -43,30 +61,10 @@
     - [Improvement] Improved token reporting with more granular metrics
 - preprocess-start:
     - [Improvement] Added file path reconstruction logic for reusing previous preprocess results
-- common:
-    - [New] Added 'async_preprocess_request_generate' function in 'core_api.py' for asynchronous preprocessing
-    - [New] Added 'queue_preprocess_request' function in 'core_api.py' for preprocessing request queuing
-    - [New] Added "preprocess" as a valid operation in validate_operation function in input_validations.py
-    - [New] Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
-    - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
-    - [Improvement] Modified 'preprocess' function in 'core_calls.py' to support queue and async modes
-    - [Improvement] Enhanced 'indexing' function in 'core_calls.py' to handle process_id for preprocess reuse functionality
-    - [Improvement] Added 'process_id' support in '_async_indexing_request_generate' function in 'core_api.py'
-    - [Improvement] Updated 'validate_input_default' in 'input_validations.py' to include verification for preprocess operation
-    - [Improvement] Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
-    - [Improvement] Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for preprocess operation
-    - [Improvement] Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
-    - [Improvement] Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
     - [Improvement] Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
-    - [Improvement] Updated all references from 'api_calls' to 'core_calls' in 'integration_base.py'
-    - [Improvement] Added queue detection via 'CORE_QUEUE_DELETE_URL' environment variable in 'update_request' function in 'requests_manager.py'
-    - [Improvement] Updated response handling in 'default.json' to use queue-based mechanism instead of API-based
-    - [Improvement] Updated in 'default.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
-    - [Improvement] Updated in 'japanese.json': Changed 'api_calls' to 'core_calls' in indexing section
-    - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section
-    - [Improvement] Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
-    - [Improvement] Updated environment variables in 'test_api_calls.py' from 'API' to 'CORE'
-    - [Improvement] Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
+- preprocess-extract:
+    -  [Improvement] Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
+
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:
