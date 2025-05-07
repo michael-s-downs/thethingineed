@@ -307,7 +307,7 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
     :param request_files: Files to process
     :return: JSON to send request
     """
-    template = json.loads(open(templates_path + "async_preprocess.json", 'r').read())
+    template = json.loads(open(templates_path + "async_indexing.json", 'r').read())
         
     if not 'csv_method' in request_params:
         dataset_path = _generate_dataset(request_files, request_params['folder'], request_params['indexation_conf']['metadata'])
@@ -319,6 +319,7 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
     template['dataset_conf']['dataset_path'] = request_params['folder']
     
     # To merge recursively
+    merge(template['indexation_conf'], request_params['indexation_conf'])
     merge(template['preprocess_conf'], request_params['preprocess_conf'])
     
     if 'languages' in request_params:
@@ -329,6 +330,8 @@ def _async_indexing_request_generate(request_params: dict, request_files: list) 
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
         template['tracking'] = request_params['tracking']
+    if 'process_id' in request_params:
+        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     template['url_sender'] = provider_resources.queue_url
     
     return template

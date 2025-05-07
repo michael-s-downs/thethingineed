@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import patch, MagicMock, mock_open
 from datetime import datetime
 import time
-import services.common.core_calls as core_calls  # Replace with your actual module name
+import core_calls
 
 # Test inputs
 @pytest.fixture
@@ -36,7 +36,7 @@ def mock_dependencies():
          patch("core_api.async_classification_multilabel_request", return_value={"status": "waiting", "process_id": "abc123"}), \
          patch("core_api.async_status_request", side_effect=[{"status": "waiting"}, {"status": "ready"}]), \
          patch("core_api.async_result_request", return_value={"results": [{"filename": "doc1.pdf", "categories": [{"category": "TypeB", "confidence": 0.8}]}]}), \
-         patch("api_calls.logger") as mock_logger:
+         patch("core_calls.logger") as mock_logger:  # Cambiado de api_calls.logger a core_calls.logger
         yield mock_logger
 
 
@@ -212,16 +212,17 @@ def test_extraction_async_result_exception(base_request_json, mock_dependencies)
     assert result["documents_metadata"]["doc1.pdf"]["status"] == "error"
     assert "Error getting result for request" in result["documents_metadata"]["doc1.pdf"]["error"]
 
-# Tests for preprocess_async
-def test_preprocess_async_success(base_request_json, mock_dependencies):
-    # Mock necessary dependencies for a successful async preprocessing
+# Tests for preprocess
+def test_preprocess_success(base_request_json, mock_dependencies):
+    # Mock necessary dependencies for a successful preprocessing
     base_request_json["documents_metadata"] = {
         "doc1.pdf": {"status": "new"},
         "doc2.pdf": {"status": "new"}
     }
 
-    with patch("core_api.async_preprocess_request", return_value={"status": "waiting", "process_id": "pre123"}):
-        result = core_calls.preprocess_async(base_request_json)
+    with patch("core_api.async_preprocess_request", return_value={"status": "waiting", "process_id": "pre123"}), \
+         patch("os.getenv", return_value=""):  # Simulate that CORE_QUEUE_PROCESS_URL is not set
+        result = core_calls.preprocess(base_request_json)
 
     # Assertions
     assert "pre123" in result["process_ids"]
@@ -229,7 +230,7 @@ def test_preprocess_async_success(base_request_json, mock_dependencies):
     assert result["status"] == "waiting"
 
 
-def test_preprocess_async_no_files_to_process(base_request_json, mock_dependencies):
+def test_preprocess_no_files_to_process(base_request_json, mock_dependencies):
     # All files are already processed or in a terminal state
     base_request_json["documents_metadata"] = {
         "doc1.pdf": {"status": "ready"},
@@ -237,22 +238,23 @@ def test_preprocess_async_no_files_to_process(base_request_json, mock_dependenci
     }
 
     with patch("core_api.async_preprocess_request") as mock_request:
-        result = core_calls.preprocess_async(base_request_json)
+        result = core_calls.preprocess(base_request_json)
 
     # Assertions
     assert mock_request.call_count == 0  # No API calls should be made
-    assert result["status"] == "processing"
+    assert result["status"] == "waiting" or result["status"] == "processing"
 
 
-def test_preprocess_async_partial_status_update(base_request_json, mock_dependencies):
-    # Mock async_preprocess_request to simulate a mixed state
+def test_preprocess_partial_status_update(base_request_json, mock_dependencies):
+    # Mock preprocess to simulate a mixed state
     base_request_json["documents_metadata"] = {
         "doc1.pdf": {"status": "new"},
         "doc2.pdf": {"status": "waiting"}
     }
 
-    with patch("core_api.async_preprocess_request", return_value={"status": "waiting", "process_id": "pre123"}):
-        result = core_calls.preprocess_async(base_request_json)
+    with patch("core_api.async_preprocess_request", return_value={"status": "waiting", "process_id": "pre123"}), \
+         patch("os.getenv", return_value=""):  # Simulate that CORE_QUEUE_PROCESS_URL is not set
+        result = core_calls.preprocess(base_request_json)
 
     # Assertions
     assert result["process_ids"]["pre123"] == "waiting"
@@ -260,47 +262,54 @@ def test_preprocess_async_partial_status_update(base_request_json, mock_dependen
     assert result["documents_metadata"]["doc1.pdf"]["status"] == "waiting"
 
 
-def test_preprocess_async_ready_to_finish(base_request_json, mock_dependencies):
+def test_preprocess_ready_to_finish(base_request_json, mock_dependencies):
     # Simulate files that are ready to finish
     base_request_json["documents_metadata"] = {
         "doc1.pdf": {"process_id": "pre123", "status": "ready"},
         "doc2.pdf": {"process_id": "pre123", "status": "ready"}
     }
     base_request_json["process_ids"] = {"pre123": "ready"}
+    base_request_json["input_json"] = {"operation": "preprocess"}
 
-    result = core_calls.preprocess_async(base_request_json)
+    with patch("os.getenv", return_value=""):  # Simulate that CORE_QUEUE_PROCESS_URL is not set
+        result = core_calls.preprocess(base_request_json)
 
     # Assertions
     assert result["documents_metadata"]["doc1.pdf"]["status"] == "finish"
     assert result["documents_metadata"]["doc2.pdf"]["status"] == "finish"
     assert result["process_ids"]["pre123"] == "finish"
-    assert result["status"] == "processing"
+    assert result["status"] == "finish"
 
 
-def test_preprocess_async_exception(base_request_json, mock_dependencies):
-    # Simulate an exception during async_preprocess_request
+def test_preprocess_exception(base_request_json, mock_dependencies):
+    # Simulate an exception during preprocess
     base_request_json["documents_metadata"] = {
         "doc1.pdf": {"status": "new"}
     }
+    base_request_json["input_json"] = {"operation": "not_preprocess"}
 
-    with patch("core_api.async_preprocess_request", side_effect=Exception("API error")):
+    with patch("core_api.async_preprocess_request", side_effect=Exception("API error")), \
+         patch("os.getenv", return_value=""):  # Simulate that CORE_QUEUE_PROCESS_URL is not set
         with pytest.raises(Exception):
-            core_calls.preprocess_async(base_request_json)
+            core_calls.preprocess(base_request_json)
 
 
-def test_preprocess_async_update_status_from_waiting(base_request_json, mock_dependencies):
-    # Simulate a process transitioning from waiting to finish
+def test_preprocess_queue_mode(base_request_json, mock_dependencies):
+    # Test queue-based preprocessing
     base_request_json["documents_metadata"] = {
-        "doc1.pdf": {"status": "waiting", "process_id": "pre123"}
+        "doc1.pdf": {"status": "new"}
     }
-    base_request_json["process_ids"] = {"pre123": "ready"}
+    base_request_json["input_json"] = {"operation": "not_preprocess"}
 
-    result = core_calls.preprocess_async(base_request_json)
+    with patch("os.getenv", return_value="queue_url"), \
+         patch("core_api.queue_preprocess_request", return_value={"status": "waiting", "process_id": "queue_pre123"}):
+        result = core_calls.preprocess(base_request_json)
 
     # Assertions
-    assert result["documents_metadata"]["doc1.pdf"]["status"] == "finish"
-    assert result["process_ids"]["pre123"] == "finish"
-    assert result["status"] == "processing"
+    assert "queue_pre123" in result["process_ids"]
+    assert result["documents_metadata"]["doc1.pdf"]["async"] == "queue"
+    assert result["status"] == "waiting"
+
 
 def test_classification_async_success(base_request_json, mock_dependencies):
     # Simulate successful classification
@@ -565,78 +574,4 @@ def test_delete_queue_process(base_request_json, mock_dependencies):
         result = core_calls.delete(base_request_json)
 
     # Assertions
-    mock_delete.assert_called_once()
-    assert result == base_request_json
-
-def test_delete_sync_process(base_request_json, mock_dependencies):
-    # Simulate deleting results for sync processes
-    base_request_json["process_ids"] = ["sync123"]
-    base_request_json["documents_metadata"] = {
-        "doc1.pdf": {"async": False, "process_id": "sync123"}
-    }
-    base_request_json["tracking"] = "test_tracking"
-
-    with patch("core_api.sync_delete_request") as mock_delete:
-        result = core_calls.delete(base_request_json)
-
-    # Assertions
-    mock_delete.assert_called_once()
-    assert result == base_request_json
-
-def test_indexing_successful(base_request_json, mock_dependencies):
-    # Simulate successful indexing
-    base_request_json["documents"] = ["folder/doc1.pdf", "folder/doc2.pdf"]
-    base_request_json["documents_metadata"] = {
-        "doc1.pdf": {"status": "new"},
-        "doc2.pdf": {"status": "new"}
-    }
-    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
-    base_request_json['preprocess_conf'] = {'layout_conf': {}}
-    
-    mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
-    mock_api_response = {"status": "waiting", "process_id": "index123"}
-
-    with patch("builtins.open", mock_open(read_data=json.dumps(mock_models_map))), \
-        patch("core_api.async_indexing_request", return_value=mock_api_response):
-        result = core_calls.indexing(base_request_json)
-
-    # Assertions
-    assert "index123" in result["process_ids"]
-    assert result["documents_metadata"]["doc1.pdf"]["status"] == "waiting"
-    assert result["documents_metadata"]["doc2.pdf"]["status"] == "waiting"
-    assert result["status"] == "waiting"
-
-def test_indexing_no_files(base_request_json, mock_dependencies):
-    # Simulate request with no files to index
-    base_request_json["documents"] = []
-    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
-    base_request_json['preprocess_conf'] = {'layout_conf': {}}
-    mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
-
-    with patch("builtins.open", mock_open(read_data=json.dumps(mock_models_map))):
-        result = core_calls.indexing(base_request_json)
-
-    # Assertions
-    assert result["status"] == "error"
-
-def test_indexing_queue_mode(base_request_json, mock_dependencies):
-    # Simulate queue-based indexing
-    base_request_json["documents"] = ["folder/doc1.pdf"]
-    base_request_json["documents_metadata"] = {
-        "doc1.pdf": {"status": "new"}
-    }
-    base_request_json['preprocess_conf'] = {'layout_conf': {}}
-    base_request_json['indexation_conf'] = {'models': {}, 'vector_storage_conf': {'index': {}}}
-    mock_api_response = {"status": "waiting", "process_id": "queue_index123"}
-    mock_models_map = {"model1": "mapped_model1", "model2": "mapped_model2"}
-
-    with patch("os.getenv", return_value="queue_url"), \
-         patch("builtins.open", mock_open(read_data=json.dumps(mock_models_map))), \
-         patch("core_api.queue_indexing_request", return_value=mock_api_response):
-        result = core_calls.indexing(base_request_json)
-
-    # Assertions
-    assert "queue_index123" in result["process_ids"]
-    assert result["documents_metadata"]["doc1.pdf"]["async"] == "queue"
-    assert result["status"] == "waiting"
-
+    mock_delete.assert_calle

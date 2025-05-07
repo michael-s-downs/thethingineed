@@ -458,11 +458,14 @@ You can reuse a previously preprocessed document by specifying its `process_id`:
   }
 }
 ```
+> **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
 
 #### 3. Standalone Preprocessing
 
 Perform preprocessing without immediate indexing:
 
+> **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
+> 
 ```json
 {
   "operation": "preprocess",
@@ -495,6 +498,7 @@ Perform preprocessing without immediate indexing:
 The `persist_preprocess` parameter controls the retention of preprocessed files:
 - `true`: Preprocessed files and intermediate results are kept in cloud storage
 - `false`: Temporary files are deleted after processing
+- **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`
 
 ### Key Configurations
 

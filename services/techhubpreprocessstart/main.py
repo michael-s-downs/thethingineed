@@ -309,7 +309,7 @@ class PreprocessStartDeployment(BaseDeployment):
                         raise Exception()
         except Exception:
             raise Exception()
-
+    
     def process(self, json_input: dict) -> Tuple[bool, dict, str]:
         """ Main function. Return if the output must be written to next step, the output to write and the next step.
         :return: Tuple[bool, dict, str]
@@ -320,7 +320,8 @@ class PreprocessStartDeployment(BaseDeployment):
         msg = json.dumps({'status': ERROR, 'msg': "Error in preprocess start"})
         redis_status = db_dbs['status']
         dataset_status_key = generate_dataset_status_key(message)
-        must_continue = self.must_continue
+        must_continue = self.must_continue 
+        
         try:
             try:
                 project_conf = get_project_config(message)
@@ -338,7 +339,7 @@ class PreprocessStartDeployment(BaseDeployment):
             if json_input.get('preprocess_conf', {}).get('preprocess_reuse', False):
                 # Use the process_id directly to search for files
                 process_id = json_input.get('dataset_conf', {}).get('dataset_id')
-                process_id if process_id else project_conf.get('process_id')
+                process_id = process_id if process_id else project_conf.get('process_id')
                 self.logger.info(f"Reusing existing process_id: {process_id}")
                 department = project_conf.get('department')
                 
@@ -422,7 +423,7 @@ class PreprocessStartDeployment(BaseDeployment):
                     self.logger.warning(f"Error looking for files: {str(e)}")
                 
                 msg = json.dumps({'status': EXTRACTED_DOCUMENT, 'msg': "Reusing existing process"})
-                must_continue = True
+                must_continue = True  
                 next_service = PREPROCESS_END_SERVICE
             else:
                 try:
@@ -442,6 +443,7 @@ class PreprocessStartDeployment(BaseDeployment):
                 try:
                     self.logger.info("Prepare and sending messages to preprocess extract")
                     self.list_documents(db_provider=db_dbs, df=df, dataset_status_key=dataset_status_key, dataset_conf=dataset_conf, message=message, csv_method=project_conf.get('csv_method', False))
+                    must_continue = False  
                 except Exception:
                     self.logger.error(f"[Process {dataset_status_key}] Error checking files in storage or sending next steep", exc_info=get_exc_info())
                     raise Exception(CHECKING_FILES_STORAGE_ERROR)
@@ -452,12 +454,12 @@ class PreprocessStartDeployment(BaseDeployment):
             dataset_status_key = generate_dataset_status_key(message)
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess start.", exc_info=get_exc_info())
-            must_continue = True
+            must_continue = True 
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
 
         update_status(redis_status, dataset_status_key, msg)
         return must_continue, message, next_service
-    
+
 if __name__ == "__main__":
     deploy = PreprocessStartDeployment()
     deploy.async_deployment()
