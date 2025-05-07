@@ -25,7 +25,6 @@
     - [Improvement] Updated all references from 'api_calls' to 'core_calls' in 'integration_base.py'
     - [Improvement] Added queue detection via 'CORE_QUEUE_DELETE_URL' environment variable in 'update_request' function in 'requests_manager.py'
     - [Improvement] Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
-    - [Improvement] Updated response handling in 'default.json' to use queue-based mechanism instead of API-based
     - [Improvement] Updated in 'default.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
     - [Improvement] Updated in 'japanese.json': Changed 'api_calls' to 'core_calls' in indexing section
     - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section
