@@ -2,6 +2,8 @@
 
 
 import os
+import requests
+from requests.auth import HTTPBasicAuth 
 
 from langfuse import Langfuse
 from basemanager import AbstractManager
@@ -26,6 +28,7 @@ class LangFuseManager(AbstractManager):
                 "host": os.getenv("LANGFUSE_HOST", None)
             }
             self.langfuse = Langfuse(**langfuse_config)
+            self.langfuse_config = langfuse_config
             
         self.trace = None
     
@@ -198,7 +201,27 @@ class LangFuseManager(AbstractManager):
 
         # self.langfuse.flush()
     
-    def load_template(self, template_name):
-        prompt = self.langfuse.get_prompt(template_name)
+    def load_template(self, template_name, label="compose_template"):
+        prompt = self.langfuse.get_prompt(template_name, label=label)
         return prompt
+    
+    def upload_template(self, template_name, template_content, label):
+        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text", labels=[label, "latest"])
+        return result
+    
+    def get_list_templates(self, label):
+        host = self.langfuse_config["host"]
+        sk = self.langfuse_config["secret_key"]
+        pk = self.langfuse_config["public_key"]
+        x = requests.get(
+            f"{host}/api/public/v2/prompts",
+            auth = HTTPBasicAuth(pk, sk),
+            params= {"limit": 50, "label": label}
+        )
+        if x.status_code == 200:
+            return [item['name'] for item in  x.json()["data"]] 
+        
+        raise Exception()
+    
+        
         

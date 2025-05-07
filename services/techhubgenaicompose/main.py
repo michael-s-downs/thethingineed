@@ -190,10 +190,10 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = TEMPLATES_PATH
             if template_filter:
-                path = FILTER_TEMPLATES_PATH
-            upload_object(storage_containers['workspace'], content, path + name + ".json")
+                self.langfuse_m.upload_template(name, content, "compose_filter_template")
+            else:
+                self.langfuse_m.upload_template(name, content, "compose_template")
 
         except Exception as ex:
             error_message = f"Error uploading template file. {ex}"
@@ -267,13 +267,13 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = FILTER_TEMPLATES_PATH
+            label = "compose_filter_template"
         else:
-            str_path = TEMPLATES_PATH
+            label = "compose_template"
+
         self.logger.info("List templates request received")
         try:
-            flows_templates = list_files(storage_containers['workspace'], str_path)
-            flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
+            flows_templates = self.langfuse_m.get_list_templates(label)
 
         except Exception as ex:
             self.logger.error(ex)
@@ -292,10 +292,11 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = FILTER_TEMPLATES_PATH
+            label = "compose_filter_template"
         else:
-            str_path = TEMPLATES_PATH
-        self.logger.info("List templates request received")
+            label = "compose_template"
+
+        self.logger.info("Get template content received")
         try:
             template_name = json_input['name']
 
@@ -305,13 +306,17 @@ class ComposeDeployment(BaseDeployment):
             return self.endpoint_response(404, "", error_message)
 
         try:
-            template_content = load_file(storage_containers['workspace'], f"{str_path}{template_name}.json").decode()
-            template_content = template_content.replace("\r", "")
+            template_content = self.langfuse_m.load_template(template_name, label)
+            template_content = template_content.prompt.replace("\r", "")
             template_content = template_content.replace("\n", "")
-
+        
         except Exception as ex:
             self.logger.error(ex)
-            return self.endpoint_response(500, "", str(ex))
+            if "NotFoundError" in str(ex):
+                return self.endpoint_response(404, "", str(ex))
+            
+            else:
+                return self.endpoint_response(500, "", str(ex))
 
         return self.endpoint_response(200, template_content, "")
 
