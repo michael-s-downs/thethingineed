@@ -103,7 +103,7 @@ class LLMDeployment(BaseDeployment):
     def load_default_templates(self, default_templates_names: list):
         templates = {}
         for template_name in default_templates_names:
-            template = self.load_prompt_template(template_name)
+            template = self.storage_manager.get_template(template_name)
             names = list(template.keys())
             names.sort(key=len)
             base_name = names[0]
@@ -138,7 +138,7 @@ class LLMDeployment(BaseDeployment):
             if lang:
                 template_name = f"{template_name_no_lang}_{lang}"
 
-            templates = self.load_prompt_template(template_name_no_lang)
+            templates = self.storage_manager.get_template(template_name_no_lang)
 
             if template_name in templates:
                 return template_name, templates[template_name]
@@ -157,35 +157,7 @@ class LLMDeployment(BaseDeployment):
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]
 
-    def load_prompt_template(self, name: str):
-        """
-        Loads the template stored in cloud that's going to be used.
-        """
-        try:
-            template_str = load_file(
-                storage_containers["workspace"], f"{TEMPLATEPATH}/{name}.json"
-            )
-            if not template_str:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
 
-            template = json.loads(template_str)
-
-            if not template:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
-
-            return template
-
-        except json.decoder.JSONDecodeError as ex:
-            error_param = get_error_word_from_exception(ex, template_str)
-            raise PrintableGenaiError(
-                500,
-                f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
-            )
-
-        except ValueError:
-            raise PrintableGenaiError(
-                404, f"Prompt template file doesn't exist for name '{name}'"
-            )
 
     def parse_platform(self, platform_metadata: dict):
         parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(
