@@ -165,3 +165,27 @@ def infodelete_sync(request_json: dict) -> dict:
     request_json['status'] = "finished" if api_response else "error"
 
     return request_json
+
+def response_adaptive(request_json: dict, result: dict) -> dict:
+    """ Response logic for profile,
+    send async response with API or queue
+
+    :param request_json: Request JSON with all information
+    :param result: Result to send
+    :return: Request JSON with all information
+    """
+    url = request_json.get('response_url', "")
+
+    if 'process_ids' in request_json and request_json['process_ids']:
+        process_id = next(iter(request_json['process_ids'].keys()))
+        result['process_id'] = process_id
+    
+    if url:
+        status = request_json.get('status', "").upper()
+        logger.info(f"---- Response sent ({status}) to '{url}' for request '{request_json['integration_id']}'")
+        request_json['response_sent'] = send_any_message(url, result)
+    else:
+        logger.warning(f"---- No response URL for request '{request_json['integration_id']}'")
+        request_json['response_sent'] = False
+        
+    return request_json

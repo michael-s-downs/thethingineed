@@ -17,6 +17,7 @@
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
+    - [New] Added 'response_adaptive' function in 'custom_operations.py' to handle both API and queue response methods adaptively
     - [Improvement] Replaced 'API' references with 'CORE' in 'environment_variables.txt'
     - [Improvement] Updated 'main.py' to use 'core_calls' instead of 'api_calls'
     - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
@@ -29,6 +30,7 @@
     - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
     - [Improvement] Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
     - [Improvement] Updated environment variables in 'test_api_calls.py' from 'API' to 'CORE'
+    - [Improvement] Updated 'default.json' to use 'custom_operations.response_adaptive' for supporting both queue-based and API-based response methods
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
