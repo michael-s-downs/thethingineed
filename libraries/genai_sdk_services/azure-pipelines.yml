@@ -24,6 +24,8 @@ variables:
   value: '$(artifact_name)'
 - name: python_version
   value: $[replace(variables['python.version'], '.', '')]
+- name: source_path
+  value: '$(source_path_library)'
 
 pool:
   vmImage: '$(vmImageName)'
@@ -46,9 +48,10 @@ steps:
   displayName: Install magic
 
 - script: |
+    cd $(System.DefaultWorkingDirectory)/${{ variables.source_path }}
     pip install --upgrade pip
     python -m pip install -U setuptools wheel twine==6.0.1
-    python setup.py install
+    pip install .
   displayName: Install dependencies
 
 - script: |
@@ -62,6 +65,8 @@ steps:
   condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Configure twine authentication
 
-- script: twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
+- script: |
+    cd ${{ variables.source_path }}
+    twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
   condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish to artifacts feed
