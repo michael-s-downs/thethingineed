@@ -2,6 +2,7 @@
 
 
 # Native imports
+import os
 from io import BytesIO
 from typing import Tuple
 
@@ -43,6 +44,10 @@ def parse_file_name(file: str, folder: str) -> str:
     """
     file = file.replace("_parsed.pdf", "")
     file_name = file[file.startswith(folder) and len(folder):].lstrip("/")
+
+    if file_name == file:
+        file_name = os.path.basename(file) 
+
     return file_name
 
 def image_to_pdf(image: bytes) -> bytes:

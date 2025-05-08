@@ -11,6 +11,15 @@
   - [Preprocess component distribution](#preprocess-component-distribution)
   - [Configuration](#configuration)
     - [Input json parameters](#input-json-parameters)
+  - [Preprocessing Features](#preprocessing-features)
+    - [Processing Modes](#processing-modes)
+      - [1. Preprocessing with Indexing](#1-preprocessing-with-indexing)
+      - [2. Reusing Preprocessed Documents](#2-reusing-preprocessed-documents)
+      - [3. Standalone Preprocessing](#3-standalone-preprocessing)
+    - [Persist Preprocessing Parameter](#persist-preprocessing-parameter)
+    - [Key Configurations](#key-configurations)
+      - [OCR Configuration Options](#ocr-configuration-options)
+      - [LLM OCR Configuration](#llm-ocr-configuration)
   - [Preprocess components explanation](#preprocess-components-explanation)
     - [Preprocess start](#preprocess-start)
       - [Environment variables](#environment-variables)
@@ -182,6 +191,10 @@ As preprocess_start, manages the organization of the json that goes over all pre
       - If set to `true`, only the filename metadata and the metadata provided by the user will be included.  
       - If provided as a list of specific fields (e.g., `["filename", "uri"]`), only the specified metadata fields will be included.  
       - If omitted or set to `false`, no metadata will be included. 
+  * <b>persist_preprocess</b>: Controls the retention of preprocessed files (default: `false`)
+    - When `true`: Preprocessed files and intermediate results are kept in cloud storage
+    - When `false`: Temporary files are deleted after processing
+ 
 - <b>specific</b>
   - <b>path_txt:</b> Path in the cloud storage where the txt will be uploaded
   - <b>path_text:</b> Path in the cloud storage where the text separated by pages will be uploaded
@@ -372,6 +385,136 @@ Then an example with the following key data could be:
     }
 }
 ```
+
+## Preprocessing Features
+
+The preprocess component supports multiple processing modes and flexible document handling through various configuration options.
+
+### Processing Modes
+
+#### 1. Preprocessing with Indexing
+
+This is the standard mode that combines preprocessing and indexing in a single operation:
+
+```json
+{
+  "operation": "indexing",
+  "response_url": "test--q-integration-callback",
+  "persist_preprocess": true,
+  "indexation_conf": {
+    "vector_storage_conf": {
+      "index": "test_index"
+    },
+    "chunking_method": {
+      "window_overlap": 40,
+      "window_length": 500
+    },
+    "models": ["techhub-pool-world-ada-002"]
+  },
+  "preprocess_conf": {
+    "ocr_conf": {
+      "ocr": "llm-ocr",
+      "force_ocr": true,
+      "llm_ocr_conf": {
+        "model": "techhub-pool-world-gpt-4o",
+        "platform": "azure",
+        "query": "Do the text and entities extraction of this image",
+        "system": "Act as if you were an OCR program",
+        "max_tokens": 2500,
+        "force_continue": true
+      }
+    }
+  },
+  "documents_metadata": {
+    "name_document.pdf": {
+      "content_binary": "base64_encoded_document_content"
+    }
+  }
+}
+```
+
+#### 2. Reusing Preprocessed Documents
+
+You can reuse a previously preprocessed document by specifying its `process_id`:
+
+```json
+{
+  "operation": "indexing",
+  "response_url": "test--q-integration-callback",
+  "process_id": "ir_index_20250409_094944_955580_ywps2z",
+  "persist_preprocess": true,
+  "indexation_conf": {
+    "vector_storage_conf": {
+      "index": "test_index"
+    },
+    "chunking_method": {
+      "window_overlap": 40,
+      "window_length": 500
+    },
+    "models": ["techhub-pool-world-ada-002"]
+  },
+  "documents_metadata": {
+    "name_document.pdf": {}
+  }
+}
+```
+> **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+#### 3. Standalone Preprocessing
+
+Perform preprocessing without immediate indexing:
+
+> **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
+> 
+```json
+{
+  "operation": "preprocess",
+  "response_url": "test--q-integration-callback",
+  "persist_preprocess": true,
+  "preprocess_conf": {
+    "ocr_conf": {
+      "ocr": "llm-ocr",
+      "force_ocr": true,
+      "llm_ocr_conf": {
+        "model": "techhub-pool-world-gpt-4o",
+        "platform": "azure",
+        "query": "Do the text and entities extraction of this image",
+        "system": "Act as if you where an OCR program",
+        "max_tokens": 2500,
+        "force_continue": true
+      }
+    }
+  },
+  "documents_metadata": {
+    "name_document.pdf": {
+      "content_binary": "base64_encoded_document_content"
+    }
+  }
+}
+```
+
+### Persist Preprocessing Parameter
+
+The `persist_preprocess` parameter controls the retention of preprocessed files:
+- `true`: Preprocessed files and intermediate results are kept in cloud storage
+- `false`: Temporary files are deleted after processing
+- **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`
+
+### Key Configurations
+
+#### OCR Configuration Options
+* `ocr`: Specify the OCR engine (e.g., 'llm-ocr', 'azure-ocr', 'aws-ocr')
+* `force_ocr`: Force OCR processing regardless of initial text extraction
+* `llm_ocr_conf`: Detailed configuration for LLM-based OCR
+
+#### LLM OCR Configuration
+* `model`: Specify the LLM model for OCR
+* `platform`: Cloud platform hosting the model
+* `query`: Optional specific query for OCR processing
+* `system`: Optional system prompt for the LLM
+* `max_tokens`: Maximum tokens for processing
+* `force_continue`: Continue processing even if errors occur on specific pages
+
 
 ## Preprocess components explanation
 The flow of a preprocessing pipeline, starting from the user request in 'integration-receiver' would be the following:
