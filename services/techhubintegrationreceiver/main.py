@@ -42,7 +42,7 @@ def process() -> str:
     check_shutdown(request)
 
     logger.info(f"---- Response sent ({request_json['status'].upper()}) for request '{request_json['integration_id']}'")
-    return json.dumps(result)
+    return json.dumps(result), 200 if result['status'] != "error" else 400
 
 @app.route('/healthcheck', methods=['GET'])
 def healthcheck() -> str:

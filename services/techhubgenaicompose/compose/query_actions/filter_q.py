@@ -52,9 +52,9 @@ class FilterMethod(ABC):
         try:
             template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
             if not template:
-                raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
+                raise PrintableGenaiError(404, f"Filter template file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
-            raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
+            raise PrintableGenaiError(404, f"FIlter template file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path") from exc
         return json.loads(template)
 
 
@@ -63,7 +63,7 @@ class FilterExactMatch(FilterMethod):
     """
     TYPE = "exact_match"
 
-    def process(self, params, actions_confs) -> str:
+    def process(self, params = None, actions_confs = None) -> str:
         """Processes the query for exact match substitutions.
 
         Returns:
@@ -75,7 +75,7 @@ class FilterExactMatch(FilterMethod):
         headers = params.pop("headers")
         filtered = False
         for substitution in substitutions:
-            if not "from" in substitution or not "to" in substitution:
+            if "from" not in substitution or "to" not in substitution:
                 raise PrintableGenaiError(status_code=400,
                                           message=f"Substitutions must have a from and to key. Keys: {substitution.keys()}")
         for substitution in substitutions:
@@ -104,7 +104,7 @@ class FilterGPT(FilterMethod):
     URL = os.environ['URL_LLM']
     TEMPLATE = FILTER_TEMPLATE
 
-    def process(self, params, actions_confs) -> str:
+    def process(self, params = None, actions_confs = None) -> str:
         """Processes the query using a GPT model for substitutions.
 
         Returns:
@@ -162,7 +162,7 @@ class FilterFactory:
         Args:
             filter_type (str): Type of the query filter method.
         """
-        self.filtermethod: FilterMethod = None
+        self.filtermethod = None
         for filtermethod in self.FILTERS:
             if filtermethod.TYPE == filter_type:
                 self.filtermethod = filtermethod

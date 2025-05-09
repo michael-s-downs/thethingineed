@@ -18,7 +18,7 @@ spec:
         app: {{ template "name" . }}
     spec:   
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -37,9 +37,11 @@ spec:
               memory: {{ .Values.limits.memory }}
           volumeMounts:
 {{- range $secret := $loadSecrets }}
+{{- if $secret }}
             - name: {{ $secret }}-credentials
               mountPath: /secrets/{{ $secret }}
               readOnly: true
+{{- end }}
 {{- end }}
 {{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
   {{- range $sa := $loadStorageSecrets }}
@@ -50,10 +52,12 @@ spec:
 {{- end }}
       volumes:         
 {{- range $secret := $loadSecrets }}
+{{- if $secret }}
         - name: {{ $secret }}-credentials
           secret:
             secretName: {{ $secret }}-credentials
             defaultMode: 420
+{{- end }}
 {{- end }}
 {{ if ne (.Values.loadStorageSecrets | toString) "empty"}}
   {{- range $sa := $loadStorageSecrets }}
@@ -63,12 +67,7 @@ spec:
             shareName: {{ $sa.shareName }}
   {{- end }}
 {{- end }}
-{{- if and (ne (.Values.nodePool | toString) "none") (ne (.Values.provider | toString) "azure") }}
       nodeSelector:
-        agentpool: {{ .Values.nodePool }}   
-{{- else }}
-      nodeSelector:
-        nodepool: {{ .Values.nodePool }}    
-{{- end }}
+        agentpool: {{ .Values.nodePool }}
       imagePullSecrets:
         - name: {{ .Values.image.nameImagePullSecret }}

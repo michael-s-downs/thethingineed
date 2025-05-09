@@ -11,7 +11,7 @@ from typing import List, Union
 from pdfminer.pdfparser import PDFSyntaxError
 
 # Custom imports
-from common.genai_controllers import upload_files, get_mimetype, get_number_pages, get_texts_from_file, get_images_from_file
+from common.genai_controllers import get_mimetype, get_number_pages, get_texts_from_file, get_images_from_file, upload_batch_files_async
 from common.genai_json_parser import get_exc_info
 from common.logging_handler import LoggerHandler
 from common.preprocess.preprocess_utils import *
@@ -203,15 +203,20 @@ def extract_images_conditional(generic: dict, specific: dict, workspace: Union[s
     i_time = time.time()
     images = extract_images(filename, generic)
 
+    files_to_upload = []
+    remote_directory = "/".join([specific['path_img'], "pags"])
+
     # Upload image to s3 and remove it from dict
     for image in images:
         file_img = os.path.basename(image['filename'])
-        remote_file = os.path.join(specific['path_img'], folder_file, "pags", file_img)
+        remote_file = "/".join([remote_directory, file_img])
 
-        upload_files(workspace, [(remote_file, image['filename'])])
+        files_to_upload.append(image['filename'])
 
-        os.remove(image['filename'])
         image['filename'] = remote_file
+
+    if files_to_upload:
+        upload_batch_files_async(workspace, files_to_upload, remote_directory)
 
     logger.debug(f"End to extract and uploaded images. Time: {round(time.time() - i_time, 2)}.")
 

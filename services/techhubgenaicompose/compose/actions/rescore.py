@@ -16,7 +16,7 @@ class RescoreMethod(ABC):
     Abstract base class for rescore methods.
     """
 
-    TYPE: str = None
+    TYPE: str 
 
     def __init__(self, streamlist: list) -> None:
         """
@@ -113,15 +113,11 @@ class GenaiRescorer(RescoreMethod):
 
     URL = os.environ['URL_RETRIEVE']
     TEMPLATE = {
-        "generic": {
             "process_type": "ir_retrieve",
-            "index_conf": {
+            "indexation_conf": {
                 "task": "retrieve",
                 "template_name": "system_query_and_context",
             }
-        },
-        "credentials": {},
-        "specific": {'dataset': {'dataset_key': ''}}
     }
 
     HEADERS = {
@@ -157,7 +153,7 @@ class GenaiRescorer(RescoreMethod):
         template.update(params)
         headers.update(params.pop("headers_config", {}))
 
-        template['generic']['index_conf'].setdefault('filters', {})['snippet_id'] = list(self.get_document_ids())
+        template['indexation_conf'].setdefault('filters', {})['snippet_id'] = list(self.get_document_ids())
 
         response = requests.post(self.URL, json=template, headers=headers, verify=True)
         if response.status_code != 200:
@@ -199,7 +195,7 @@ class RescoreFactory:
         Args:
             rescore_type (str): Type of rescore method.
         """
-        self.rescoremethod: RescoreMethod = None
+        self.rescoremethod = None
         for rescoremethod in self.RESCORERS:
             if rescoremethod.TYPE == rescore_type:
                 self.rescoremethod = rescoremethod

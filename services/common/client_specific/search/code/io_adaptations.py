@@ -54,8 +54,30 @@ def adapt_input_base(request_json: dict, input_files: list) -> Tuple[dict, list]
     else:
         request_json['client_profile']['custom_functions'].pop('response_async')
 
+    # Define preprocess configuration
+    request_json['preprocess_conf'] = input_json.pop('preprocess_conf', {})
+
+
+    # Define layout_conf
+    layout_conf = request_json['preprocess_conf'].get('layout_conf', {})
+    layout = input_json.get('layout', request_json.get('preprocess_conf', {}).get('layout', False)) # Retrocompatibility (must stay inside preprocess_conf)
+    request_json['preprocess_conf']['layout_conf'] = {
+        'do_lines_text': layout_conf.get('do_lines_text', layout),
+        'do_lines_ocr': layout_conf.get('do_lines_ocr', layout),
+        'lines_conf': {
+            'do_lines_result': layout_conf.get('lines_conf', {}).get('do_lines_result', False),
+            'model': "checkpoint-41806"
+        },
+        'do_titles': layout_conf.get('do_titles', layout),
+        'do_tables': layout_conf.get('do_tables', layout),
+        'tables_conf': {
+            'sep': layout_conf.get('tables_conf', {}).get('sep', "\t")
+        }
+    }
+
+    # Retrocompatibility for force_ocr
     if 'force_ocr' in input_json:
-        request_json['force_ocr'] = input_json.pop('force_ocr')
+        request_json['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', input_json.pop('force_ocr'))
 
     request_json['apigw_params'].update(input_json.get('headers', {}))
     request_json['documents_folder'] = input_json.get('documents_folder', request_json['documents_folder'])
@@ -78,37 +100,43 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
     if request_json['input_json']['operation'] == "indexing":
         request_json['client_profile']['pipeline'] = ["indexing"]
 
-    # Define params to configure index
-    request_json['index_conf'] = {}
-    request_json['index_conf']['index'] = request_json['input_json'].get('index')
-    request_json['index_conf']['metadata'] = request_json['input_json'].get('metadata', {})
-    request_json['index_conf']['models'] = request_json['input_json'].get('models', ["azure_openai_ada"])
-    request_json['index_conf']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
-    request_json['index_conf']['window_length'] = request_json['input_json'].get('window_length', 300)
-    request_json['index_conf']['modify_index'] = request_json['input_json'].get('modify_index', {})
-    request_json['index_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+    if request_json['input_json'].get('indexation_conf', {}):
+        request_json['indexation_conf'] = request_json['input_json']['indexation_conf']
 
-    # Define params to configure layout
-    layout = request_json['input_json'].get('layout', False)
-    request_json['preprocess_conf'] = {}
-    request_json['preprocess_conf']['layout_conf'] = {
-        'do_lines_text': request_json['input_json'].get('do_lines_text', layout),
-        'do_lines_ocr': request_json['input_json'].get('do_lines_ocr', layout),
-        'lines_conf': {
-            'do_lines_result': request_json['input_json'].get('do_lines_result', False),
-            'model': "checkpoint-41806"
-        },
-        'do_titles': request_json['input_json'].get('do_titles', layout),
-        'do_tables': request_json['input_json'].get('do_tables', layout),
-        'tables_conf': {
-            'sep': request_json['input_json'].get('tables_conf', "\t")
+        request_json['indexation_conf'].setdefault('models', ["techhub-pool-world-ada-002"])
+        request_json['indexation_conf'].setdefault('metadata', {})
+    else:
+        # Retrocompatibility mode
+        request_json['indexation_conf'] = {}
+        request_json['indexation_conf']['vector_storage_conf'] = {
+            'index': request_json['input_json'].get('index')
         }
-    }
+
+        # Retrocompatibility mode
+        request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
+        # Overwrite if exists, but default values if not
+        request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
+        request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
+        request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
+        request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
+        request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
+        request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
+    
+        # Delete none items from dicts and add chunking method to indexation_conf
+        request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+        request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+
+        # Retrocompatibility mode
+        request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
+        request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
+
+
+    request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
 
     return request_json, input_files
 
-def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[dict, list]:
-    """ Adapt input for profile knowler_queue
+def adapt_input_queue(request_json: dict, input_files: list) -> Tuple[dict, list]:
+    """ Adapt input for profile queue
 
     :param request_json: Request JSON with all information
     :param input_files: Input files attached from client
@@ -116,7 +144,7 @@ def adapt_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[di
     """
     request_json['tracking'] = deepcopy(request_json['input_json'])
 
-    input_json = request_json['input_json'].pop('APIRequest', {})
+    input_json = request_json['input_json'].pop('GenaiRequest', {})
     request_json['output_json'] = request_json.pop('input_json')
     request_json['input_json'] = input_json
 
@@ -147,7 +175,8 @@ def adapt_output_base(request_json: dict) -> Tuple[dict, dict]:
 
         if process_error:
             result_parsed['status'] = "error"
-            result_parsed['error'] = "Process component not working"
+            msg = [doc.get("error", "") for doc in request_json.get('documents_metadata', {}).values()]
+            result_parsed['error'] = f"Process component not working: {', '.join(msg)}"
 
     return request_json, result_parsed
 
@@ -167,7 +196,7 @@ def adapt_output_default(request_json: dict) -> Tuple[dict, dict]:
         result_parsed['status'] = "Finished"
     if result_parsed['status'] == "error":
         result_parsed['status'] = "Error"
-        result_parsed['error'] = "Unable to index documents"
+        result_parsed.setdefault('error', "Unable to index documents")
 
     metadata = request_json.get('documents_metadata', {})
     result_parsed['docs'] = metadata
@@ -176,8 +205,8 @@ def adapt_output_default(request_json: dict) -> Tuple[dict, dict]:
 
     return request_json, result_parsed
 
-def adapt_output_knowler_queue(request_json: dict) -> Tuple[dict, dict]:
-    """ Adapt output for profile knowler_queue
+def adapt_output_queue(request_json: dict) -> Tuple[dict, dict]:
+    """ Adapt output for profile queue
 
     :param request_json: Request JSON with all information
     :return: Request JSON and output result adapted
@@ -191,7 +220,7 @@ def adapt_output_knowler_queue(request_json: dict) -> Tuple[dict, dict]:
         request_json, result_parsed = adapt_output_default(request_json)
 
     output_json = request_json.pop('output_json', {})
-    output_json['APIResponse'] = result_parsed
+    output_json['GenaiResponse'] = result_parsed
     result_parsed = output_json
 
     return request_json, result_parsed

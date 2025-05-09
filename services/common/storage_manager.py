@@ -62,11 +62,11 @@ class BaseStorageManager(ABC):
         """ Get the equivalences for the default embeddings models """
         pass
 
-    def get_available_models(self):
+    def get_available_models(self) -> dict:
         """ Get the models that can be used """
         pass
 
-    def get_available_pools(self):
+    def get_available_pools(self) -> dict:
         """ Get the pools that can be used """
         pass
 
@@ -75,7 +75,7 @@ class BaseStorageManager(ABC):
         pass
 
     @classmethod
-    def is_platform_type(cls, model_type):
+    def is_file_storage_type(cls, model_type):
         """Checks if a given model type is equel to the model format and thus it must be the one to use.
         """
         return model_type == cls.MODEL_FORMAT
@@ -93,6 +93,9 @@ class BaseStorageManager(ABC):
         :param dat: dict with the template name
         """
         pass
+    def get_default_models(self):
+        """ Get the default models that can be used """
+        pass
 
 
 class LLMStorageManager(BaseStorageManager):
@@ -102,6 +105,7 @@ class LLMStorageManager(BaseStorageManager):
         super().__init__(workspace, origin)
         self.prompts_path = "src/LLM/prompts/"
         self.models_file_path = "src/LLM/conf/models_config.json"
+        self.default_models_file_path = "src/LLM/conf/default_llm_models.json"
         if not self.load_file(self.workspace, self.models_file_path):
             self.models_file_path = "src/compose/conf/models_config.json"
 
@@ -114,6 +118,16 @@ class LLMStorageManager(BaseStorageManager):
                 return json.loads(s3_models_file).get("LLMs")
             else:
                 raise PrintableGenaiError(400, f"Models can't be loaded, maybe the models_config.json is wrong")
+
+    def get_default_models(self):
+        s3_models_file = self.load_file(self.workspace, self.default_models_file_path)
+        if s3_models_file is None or len(s3_models_file) <= 0:
+            raise PrintableGenaiError(400, f"Default models can't be downloaded because {self.default_models_file_path} not found in {self.workspace}")
+        else:
+            if json.loads(s3_models_file):
+                return json.loads(s3_models_file)
+            else:
+                raise PrintableGenaiError(400, f"Default models can't be loaded, maybe the default_models_config.json is wrong")
 
     def get_available_pools(self):
         s3_models_file = self.load_file(self.workspace, self.models_file_path)
@@ -401,14 +415,14 @@ class ManagerStorage(object):
         """
         for loader in ManagerStorage.MODEL_TYPES:
             loader_type = conf.get('type')
-            if loader.is_platform_type(loader_type):
+            if loader.is_file_storage_type(loader_type):
                 conf.pop('type')
                 return loader(**conf)
         raise PrintableGenaiError(400, f"Platform type doesnt exist {conf}. "
-                         f"Possible values: {ManagerStorage.get_possible_platforms()}")
+                         f"Possible values: {ManagerStorage.get_posible_file_storages()}")
 
     @staticmethod
-    def get_possible_platforms() -> List:
+    def get_posible_file_storages() -> List:
         """ Method to list the document loaders: [IRStorage, LLMStorage]
 
         :param conf: Model configuration. Example:  {"type":"IRStorage"}

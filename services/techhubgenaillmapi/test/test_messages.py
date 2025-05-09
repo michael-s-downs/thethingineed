@@ -10,7 +10,12 @@ from unittest.mock import MagicMock, patch
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from messages import ManagerMessages, Message, ChatGPTMessage, ClaudeMessage, DalleMessage, Claude3Message, ChatGPTvMessage, Llama3Message
+
+from message.llamamessage import Llama3Message
+from message.novamessage import NovaVMessage, NovaMessage
+from message.claudemessage import ClaudeMessage, Claude3Message
+from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
+from message.messagemanager import ManagerMessages
 
 no_vision_persistence = [
         [
@@ -69,14 +74,15 @@ class TestManagerMessages:
 
     def test_get_possible_messages(self):
         messages = ManagerMessages.get_possible_messages()
-        assert messages == ['chatGPT', 'chatClaude', 'dalle', 'chatClaude3', 'chatGPT-v', 'chatLlama3']
+        print(messages)
+        assert messages == ['chatGPT', 'chatClaude', 'dalle', 'chatClaude-v', 'chatGPT-v', 'chatGPT-o1-mini', 'chatLlama3', 'chatNova', 'chatNova-v']
 
     def test_all_messages(self):
         self.conf['message'] = "chatGPT-v"
         message_gptv = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "chatClaude"
         message_claude = ManagerMessages.get_message(self.conf)
-        self.conf['message'] = "chatClaude3"
+        self.conf['message'] = "chatClaude-v"
         message_claude3 = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "chatLlama3"
         message_llama = ManagerMessages.get_message(self.conf)
@@ -84,12 +90,15 @@ class TestManagerMessages:
         message_chatgpt = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "dalle"
         message_dalle = ManagerMessages.get_message(self.conf)
+        self.conf['message'] = "chatGPT-o1-mini"
+        message_o1_mini = ManagerMessages.get_message(self.conf)
         assert isinstance(message_gptv, ChatGPTvMessage)
         assert isinstance(message_claude, ClaudeMessage)
         assert isinstance(message_claude3, Claude3Message)
         assert isinstance(message_llama, Llama3Message)
         assert isinstance(message_chatgpt, ChatGPTMessage)
         assert isinstance(message_dalle, DalleMessage)
+        assert isinstance(message_o1_mini, ChatGPTOMiniMessage)
 
 
     def test_wrong_message(self):
@@ -152,6 +161,14 @@ class TestChatGPTvMessage:
         with pytest.raises(PrintableGenaiError, match="Error 400: Context param not allowed in vision models"):
             ChatGPTvMessage(**message)
 
+class TestChatGPTOMiniMessage:
+    def test_system(self):
+        message = copy.deepcopy(message_dict)
+        message['system'] = "You are a helpful assistant."
+        message['template'].pop('system')
+        message_obj = ChatGPTOMiniMessage(**message)
+        assert isinstance(message_obj, ChatGPTOMiniMessage)
+
 class TestChatClaudeMessage:
     def test_system(self):
         message = copy.deepcopy(message_dict)
@@ -181,3 +198,25 @@ class TestLlama3Message:
         message['template'].pop('system')
         message_obj = Llama3Message(**message)
         assert isinstance(message_obj, Llama3Message)
+
+class TestNovaMessage:
+    def test_system(self):
+        message = copy.deepcopy(message_dict)
+        message['system'] = "You are a helpful assistant."
+        message['template'].pop('system')
+        message_obj = NovaMessage(**message)
+        assert isinstance(message_obj, NovaMessage)
+
+class TestNovaVMessage:
+    def test_system(self):
+        message = copy.deepcopy(message_dict_v)
+        message['system'] = "You are a helpful assistant."
+        message['template'].pop('system')
+        message_obj = NovaVMessage(**message)
+        assert isinstance(message_obj, NovaVMessage)
+
+    def test_no_context_allowed(self):
+        message = copy.deepcopy(message_dict_v)
+        message['context'] = "context"
+        with pytest.raises(PrintableGenaiError, match="Error 400: Context param not allowed in vision models"):
+            NovaVMessage(**message)

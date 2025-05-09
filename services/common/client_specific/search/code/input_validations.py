@@ -10,7 +10,9 @@ from typing import Tuple
 # Custom imports
 import conf_utils
 import docs_utils
-
+from common.storage_manager import ManagerStorage
+from common.genai_controllers import storage_containers
+from common.ir.validations import is_available_metadata
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
     """ Validate if param exist, correct type and no empty
@@ -63,12 +65,16 @@ def _validate_index(request_json: dict) -> Tuple[bool, list]:
     :param request_json: Request JSON with all information
     :return: True or False if param is valid and error messages
     """
-    valid, messages = _validate_param(request_json['input_json'], 'index', str)
+    json_body = request_json['input_json']
+    if request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf', {}):
+        json_body = request_json['input_json']['indexation_conf']['vector_storage_conf']
+
+    valid, messages = _validate_param(json_body, 'index', str)
 
     if valid:
         pattern = "[a-z0-9_]"
 
-        if not bool(re.search(f"^{pattern}+$", request_json['input_json']['index'])):
+        if not bool(re.search(f"^{pattern}+$", json_body['index'])):
             valid = False
             messages.append(f"Forbidden chars in param 'index', only allowed {pattern}")
 
@@ -97,15 +103,19 @@ def _validate_models(request_json: dict) -> Tuple[bool, list]:
     valid = True
     messages = []
 
-    if "models" in request_json['input_json']:
-        valid, messages = _validate_param(request_json['input_json'], 'models', list)
+    json_body = request_json['input_json']
+    if request_json['input_json'].get('indexation_conf', {}).get('models', {}):
+        json_body = request_json['input_json']['indexation_conf']
+
+    if "models" in json_body:
+        valid, messages = _validate_param(json_body, 'models', list)
 
         if valid:
             valid_list = []
             messages_list = []
             models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
 
-            for model in request_json['input_json']['models']:
+            for model in json_body['models']:
                 if model in models_map:
                     valid_list.append(True)
                 else:
@@ -213,6 +223,141 @@ def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
 
     return all(valid_list), messages_list
 
+
+def _validate_index_metadata(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param index_metadata"""
+    valid = True
+    messages = []
+    index_metadata = request_json['input_json'].get('indexation_conf', {}).get('index_metadata')
+
+    if index_metadata:
+        chunking_method = request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}).get('method', "simple")
+        metadata = request_json['input_json'].get('indexation_conf', {}).get('metadata', {})
+        if isinstance(index_metadata, list):
+            for key in index_metadata:
+                if not is_available_metadata(metadata, key, chunking_method):
+                    valid = False
+                    messages.append(f"The 'index_metadata' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        elif isinstance(index_metadata, bool):
+            # If it is a boolean, it is valid
+            pass
+        else:
+            valid = False
+            messages.append("The 'index_metadata' must be a list")    
+    return valid, messages
+
+
+def _validate_metadata_primary_keys(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param metadata_primary_keys"""
+    valid = True
+    messages = []
+    metadata_primary_keys = request_json['input_json'].get('indexation_conf', {}).get('vector_storage_conf', {}).get('metadata_primary_keys')
+
+    if metadata_primary_keys:
+        chunking_method = request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}).get('method', "simple")
+        metadata = request_json['input_json'].get('indexation_conf', {}).get('metadata', {})
+        if isinstance(metadata_primary_keys, list):
+            for key in metadata_primary_keys:
+                if not is_available_metadata(metadata, key, chunking_method):
+                    valid = False
+                    messages.append(f"The 'metadata_primary_keys' key ({key}) does not appear in the passed metadata or in the mandatory metadata for the chunking method '{chunking_method}'")
+        else:
+            valid = False
+            messages.append("The 'metadata_primary_keys' must be a list")
+    return valid, messages
+
+def _validate_ocr(request_json: dict) -> Tuple[bool, list]:
+    # Check ocr and llm_ocr_conf parameters
+    messages = []
+    valid = True
+    valid_ocrs = ['azure-ocr', 'aws-ocr', 'llm-ocr', 'tesseract-ocr']
+
+    if not request_json['input_json'].get('preprocess_conf', {}).get('ocr_conf'):
+        return valid, messages
+    ocr_conf = request_json['input_json'].get('preprocess_conf', {}).get('ocr_conf')
+
+    if ocr_conf.get('ocr') not in valid_ocrs:
+        valid = False
+        messages.append(f"The 'ocr' parameter must be one of the supported values: {valid_ocrs}")
+
+    if ocr_conf.get('ocr', "") == 'llm-ocr':
+        if ocr_conf.get('llm_ocr_conf'):
+            if not isinstance(ocr_conf['llm_ocr_conf'], dict):
+                valid = False
+                messages.append("The 'llm_ocr_conf' parameter must be a dictionary")
+            llm_ocr_conf = ocr_conf['llm_ocr_conf']
+            if llm_ocr_conf.get('system') and not llm_ocr_conf.get('query'):
+                valid = False
+                messages.append("The 'query' parameter is mandatory when 'system' is specified")
+            storage_manager = ManagerStorage.get_file_storage({"type": "LLMStorage", "workspace": storage_containers.get('workspace'), "origin": storage_containers.get('origin')})
+            available_pools = storage_manager.get_available_pools()
+            available_models = storage_manager.get_available_models()
+            # Check if the platform is valid
+            if llm_ocr_conf.get('platform') and llm_ocr_conf.get('platform') not in available_models:
+                valid = False
+                messages.append(f"The 'platform' parameter must be one of the supported values: {available_models.keys()}")
+            else:
+                # Check if the model is valid (for a valid model there must be a valid platform)
+                if llm_ocr_conf.get('model') and llm_ocr_conf.get('model') not in available_pools:
+                    found = False
+                    for model in available_models.get(llm_ocr_conf.get('platform'), []):
+                        if llm_ocr_conf.get('model') == model.get('model'):
+                            found = True
+                            break
+                    if not found:
+                        valid = False
+                        messages.append(f"The 'model': '{llm_ocr_conf.get('model')}' parameter must be in the LLM models config file for the platform '{llm_ocr_conf.get('platform')}'")           
+    else:
+        if 'llm_ocr_conf' in ocr_conf:
+            valid = False
+            messages.append("The 'llm_ocr_conf' parameter is only valid when 'ocr' is 'llm-ocr'")
+    return valid, messages
+
+
+def _validate_chunking_method(request_json: dict) -> Tuple[bool, list]:
+    # Check chunking methods (simple not necessary as all mandatory params, have default ones)
+    messages = []
+    valid = True
+
+    json_body = {}
+    if request_json['input_json'].get('indexation_conf', {}).get('chunking_method', {}):
+        json_body = request_json['input_json']['indexation_conf']['chunking_method']
+    else:
+        if request_json['input_json'].get('chunking_method', {}):
+            json_body = request_json['input_json']['chunking_method']
+        if request_json['input_json'].get('window_length'):
+            json_body['window_length'] = request_json['input_json']['window_length']
+        if request_json['input_json'].get('window_overlap'):
+            json_body['window_overlap'] = request_json['input_json']['window_overlap']
+
+    method = json_body.get('method', "simple")
+    if method != "simple":
+        if method == "recursive": 
+            sub_window_overlap = json_body.get('sub_window_overlap') 
+            sub_window_length = json_body.get('sub_window_length')
+            if not (sub_window_overlap and sub_window_length) or json_body.get('windows'):
+                valid = False
+                messages.append("The 'recursive' chunking method must only have the 'sub_window_overlap' and 'sub_window_length' key")
+            else:
+                if sub_window_length > json_body.get('window_length', 300):
+                    valid = False
+                    messages.append("The 'sub_window_length' must be less than 'window_length' (300 by default)")
+                if sub_window_overlap > json_body.get('window_overlap', 10):
+                    valid = False
+                    messages.append("The 'sub_window_overlap' must be less than 'window_overlap' (10 by default)")
+        elif method == "surrounding_context_window":
+            if not json_body.get('windows') or (json_body.get('sub_window_overlap') or json_body.get('sub_window_length')):
+                valid = False
+                messages.append("The 'surrounding_context_window' chunking method must only have the 'windows' key")
+        else:
+            valid = False
+            messages.append(f"Method '{method}' is not a valid chunking type")
+    else:
+        if json_body.get('sub_window_overlap') or json_body.get('sub_window_length') or json_body.get('windows'):
+            valid = False
+            messages.append("The 'simple' chunking method does not need 'sub_window_overlap', 'sub_window_length' or 'windows' parameters")
+    return valid, messages
+
 def _validate_docsfolder(request_json: dict) -> Tuple[bool, list]:
     """ Validate param documents_folder
 
@@ -285,7 +430,9 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, _validate_models]
+    validate_functions = [_validate_index, _validate_operation, _validate_docsmetadata, _validate_response_url, 
+                          _validate_models, _validate_chunking_method, _validate_ocr, 
+                          _validate_metadata_primary_keys, _validate_index_metadata]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)
@@ -297,20 +444,20 @@ def validate_input_delete(request_json: dict, input_files: list) -> Tuple[bool, 
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    validate_functions = [_validate_index, _validate_operation, _validate_response_url, _validate_delete]
+    validate_functions = [_validate_index, _validate_operation, _validate_response_url, _validate_delete,]
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
 
     return valid, ", ".join(messages_list)
 
-def validate_input_knowler_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
-    """ Validate input and report errors for profile knowler_queue
+def validate_input_queue(request_json: dict, input_files: list) -> Tuple[bool, str]:
+    """ Validate input and report errors for profile queue
 
     :param request_json: Request JSON with all information
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
 
-    input_node = 'APIRequest'
+    input_node = 'GenaiRequest'
     input_json = request_json['input_json'].get(input_node, {})
 
     if input_json:

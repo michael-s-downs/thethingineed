@@ -1,5 +1,8 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from compose.actions.filter import (
     FilterMethod,
@@ -15,9 +18,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
 from aioresponses import aioresponses
 from copy import deepcopy
-# import nest_asyncio
-
-# nest_asyncio.apply()
 
 
 class DummyFilter(FilterMethod):
@@ -308,7 +308,7 @@ class TestMetadataFilter:
         with pytest.raises(PrintableGenaiError) as exc_info:
             metadata_filter.process(params)
 
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 400
         assert "Only 'and' or 'or' keys must be defined." in str(exc_info.value)
 
     def test_apply_filter_and_or_combined(self, sample_data):
@@ -432,7 +432,7 @@ class TestPermissionFilter:
         with pytest.raises(PrintableGenaiError) as exc_info:
             permission_filter.process({})
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 404
         assert "Variable URL_ALLOWED_DOCUMENT not found" in str(exc_info.value)
 
     async def test_send_post_request_success(self, permission_filter):
@@ -477,6 +477,24 @@ class TestPermissionFilter:
         assert len(result) == 2
         assert result[0].meta["knowler_id"] == "1"
         assert result[1].meta["knowler_id"] == "3"
+
+    def test_permission_filter_process_return_allowed(self, permission_filter):
+        """Test para cubrir el método process."""
+        permission_filter.URL = "http://example.com"
+        permission_filter.streamlist = [
+            MockStreamChunk(meta={"knowler_id": "1"}),
+            MockStreamChunk(meta={"knowler_id": "2"}),
+            MockStreamChunk(meta={"knowler_id": "3"}),
+        ]
+
+        permission_filter.send_post_request = self.mock_send_post_request
+
+        result = permission_filter.process({"return_not_allowed": True})
+
+        assert len(result) == 3
+        assert result[0].meta["knowler_id"] == "1"
+        assert result[1].meta["knowler_id"] == "3"
+        assert result[2].meta["knowler_id"] == "2"
 
 
 class MockStream:

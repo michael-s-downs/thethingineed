@@ -3,7 +3,7 @@
 
 from flask import request
 from typing import Tuple, Dict
-from common.ir import get_connector
+from common.ir.utils import get_connector
 from common.utils import ELASTICSEARCH_INDEX
 from common.genai_json_parser import get_exc_info
 import elasticsearch.exceptions 
@@ -12,19 +12,19 @@ from common.utils import get_models
 
 def get_documents_filenames_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handle the request to retrieve filenames of documents from the specified index.'''
-    json_input = request.get_json(force=True)
-    index = json_input.get('index', "").strip()
+    dat = {}
+    dat.update(request.args)
+    index = dat.get('index', "").strip()
 
     if not index:
         return {'status': "error", 'error_message': "Missing parameter: index", 'status_code': 400}, 400
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    operation_method = connector.get_documents_filenames
 
     for model in deploy.all_models:
         index_name = ELASTICSEARCH_INDEX(index, model)
         try:
-            status, result, status_code = operation_method(index_name)
+            status, result, status_code = connector.get_documents_filenames(index_name)
             connector.close()
             return {'status': status, 'result': {"status_code": status_code, "docs": result, "status": status}}, status_code
         except elasticsearch.NotFoundError:
@@ -50,12 +50,10 @@ def retrieve_documents_handler(deploy, request) -> Tuple[Dict, int]:
         return {'status': "error", 'error_message': "There must be at least one filter", 'status_code': 400}, 400
 
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
-    operation_method = connector.get_documents
-
     for model in deploy.all_models:
         index_name = ELASTICSEARCH_INDEX(index, model)
         try:
-            status, result, status_code = operation_method(index_name, filters)
+            status, result, status_code = connector.get_documents(index_name, filters)
             connector.close()
             return {
                 'status': status,
@@ -95,10 +93,11 @@ def get_models_handler(deploy) -> Tuple[Dict, int]:
 
 def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handles the request to delete documents from Elasticsearch indexes based on specified filters.'''
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request received with data: {json_input}")
+    dat = request.args
+    deploy.logger.info(f"Request received with data: {dat}")
 
-    index, filters = json_input.get('index', ""), json_input.get('delete', {})
+    index, filters = dat.get('index', ""), dat.getlist('filename')
+    filters = {"filename": filters}
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 
@@ -133,10 +132,11 @@ def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
 
 def delete_index_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handles the request to delete specified Elasticsearch indexes for all available models.'''
-    json_input = request.get_json(force=True)
-    deploy.logger.info(f"Request received with data: {json_input}")
+    dat = {}
+    dat.update(request.args)
+    deploy.logger.info(f"Request received with data: {dat}")
 
-    index = json_input.get('index', "")
+    index = dat.get('index', "")
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 

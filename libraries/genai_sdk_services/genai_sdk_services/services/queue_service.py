@@ -15,6 +15,9 @@ from azure.storage.queue import QueueClient
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 
+timeout_connector = int(os.getenv('QUEUE_TIMEOUT_CONECTOR', "1"))  # seconds
+timeout_operation = int(os.getenv('QUEUE_TIMEOUT_OPERATION', "0")) or None  # seconds
+
 class SingletonABCMeta(ABCMeta):
     _instances = {}
 
@@ -118,7 +121,7 @@ class AWSQueueService(BaseQueueService):
                         'region_name': os.getenv(self.env_vars[2])
                     }
                 elif eval(os.getenv("AWS_ROLE", "False")):
-                    credentials = {}
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 
@@ -135,7 +138,7 @@ class AWSQueueService(BaseQueueService):
             return self.clients[origin]
 
         self.logger.debug("Connection created")
-        region_name = self.credentials[origin].get('region_name', "eu-west-1")
+        region_name = self.credentials[origin].get('region_name')
 
         if eval(os.getenv("AWS_ROLE", "False")):
             session = boto3.Session(region_name=region_name)
@@ -306,7 +309,7 @@ class AzureServiceBusService(BaseQueueService):
         :return: (tuple) Data of the message
         """
         queue_client = self.get_session(origin)
-        receiver = queue_client.get_queue_receiver(origin)
+        receiver = queue_client.get_queue_receiver(origin, socket_timeout=timeout_connector)
         self.receiver[origin] = receiver
 
         self.logger.debug("Reading messages from queue")
@@ -314,26 +317,38 @@ class AzureServiceBusService(BaseQueueService):
         if max_num <= 0:
             max_num = 1
 
-        if max_num > 10:
-            max_num = 10
-            self.logger.debug("Number of messages in queue greater than 10. Setting 10 as max")
-
-        data = []
+        # if max_num > 10:
+        #     max_num = 10
+        #     self.logger.debug("Number of messages in queue greater than 10. Setting 10 as max")
 
         self.logger.debug("Receiving messages")
-        resp = receiver.receive_messages(max_message_count=max_num)
-        if len(resp) != 0:
+
+        data = []
+        resp_acc = []
+        timeout_op = timeout_operation
+        while len(data) < max_num:
+            # Limited by messages size, read until messages count limit
+            resp = receiver.receive_messages(max_message_count=max_num, max_wait_time=timeout_op)
+            resp_acc.extend(resp)
+            
             for msg in resp:
                 data.append(json.loads(format(msg)))
                 if delete:
                     receiver.complete_message(msg)
+
+            # Reduce if more iterations required
+            timeout_op = 5  # seconds
+
+            if len(resp) == 0:
+                break
+
         if len(data) == 0:
             data = None
 
         receiver.close()
         queue_client.close()
 
-        return data, resp
+        return data, resp_acc
 
     def write(self, origin: str, data: str, group_id: str = "grp1") -> bool:
         """ Write a message to the queue
@@ -344,12 +359,12 @@ class AzureServiceBusService(BaseQueueService):
         :return: (bool) Response of the method
         """
         queue_client = self.get_session(origin)
-        sender = queue_client.get_queue_sender(queue_name=origin)
+        sender = queue_client.get_queue_sender(queue_name=origin, socket_timeout=timeout_connector)
 
         self.logger.debug(f"Writing in queue: {data}")
         try:
             message = ServiceBusMessage(json.dumps(data))
-            sender.send_messages(message)
+            sender.send_messages(message, timeout=timeout_operation)
         except Exception as ex:
             raise ex
         else:
@@ -411,7 +426,7 @@ class AzureStorageQueueService(BaseQueueService):
             if not credentials:
                 if os.path.exists(self.secret_path):
                     with open(self.secret_path, "r") as file:
-                        conn_str = json.load(file).get('conn_str_queue', "")
+                        conn_str = json.load(file).get('conn_str_storage', "")
                         credentials = {'conn_str': conn_str, 'queue_name': url}
                 elif os.getenv(self.env_vars[0], ""):
                     credentials = {'conn_str': os.getenv(self.env_vars[0]), 'queue_name': url}
@@ -467,7 +482,7 @@ class AzureStorageQueueService(BaseQueueService):
         data = []
         entries = []
         self.logger.debug("Receiving messages")
-        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5)
+        resp = queue_client.receive_messages(max_messages=max_num, visibility_timeout=5, timeout=timeout_operation)
 
         for msg in resp:
             data.append(json.loads(msg.content))
@@ -495,7 +510,7 @@ class AzureStorageQueueService(BaseQueueService):
 
         self.logger.debug(f"Writing in queue: {data}")
         try:
-            queue_client.send_message(content=json.dumps(data), time_to_live=-1)
+            queue_client.send_message(content=json.dumps(data), time_to_live=-1, timeout=timeout_operation)
         except Exception as ex:
             raise ex
         else:

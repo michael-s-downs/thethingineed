@@ -1,19 +1,15 @@
 ### This code is property of the GGAO ###
 
-import asyncio
-import pytest
 import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
+import pytest
 import json
 from unittest.mock import patch, MagicMock, AsyncMock, patch
 from director import Director  # Assuming your code is in director.py
-from basemanager import AbstractManager
 from compose.streambatch import StreamBatch
 from pcutils.persist import PersistDict
-from confmanager import ConfManager
-from actionsmanager import ActionsManager
-from outputmanager import OutputManager
 from common.errors.genaierrors import PrintableGenaiError
-from compose.query import expansion  # Import the actual expansion function if available
 
 @pytest.fixture
 def mock_director():
@@ -153,7 +149,7 @@ def test_load_secrets_partial_failure(mock_glob, mock_getenv, mock_director):
 
 def test_run_conf_manager_actions(mock_director):
     # This method calls multiple internal methods
-    mock_director.conf_manager.template_m.template = '[{\r\n        "action": "retrieve",\r\n        "action_params": {\r\n            "params": {\r\n                "generic": {\r\n                    "index_conf": {\r\n                        "add_highlights": false,\r\n                        "index": "$index",\r\n                        "query": "$query",\r\n                        "task": "retrieve",\r\n\t\t\t\t\t\t"top_k": 5,\r\n\t\t\t\t\t\t"filters": $filters\r\n                    },\r\n                    "process_type": "ir_retrieve"\r\n                }\r\n            },\r\n            "type": "get_chunks"\r\n        }\r\n    }]'
+    mock_director.conf_manager.template_m.template = '[{\r\n        "action": "retrieve",\r\n        "action_params": {\r\n            "params": {\r\n                "generic": {\r\n                    "indexation_conf": {\r\n                        "add_highlights": false,\r\n                        "index": "$index",\r\n                        "query": "$query",\r\n                        "task": "retrieve",\r\n\t\t\t\t\t\t"top_k": 5,\r\n\t\t\t\t\t\t"filters": $filters\r\n                    },\r\n                    "process_type": "ir_retrieve"\r\n                }\r\n            },\r\n            "type": "get_chunks"\r\n        }\r\n    }]'
     mock_director.conf_manager.template_m.query = 'mock_query'
     mock_director.conf_manager.headers = {'mock': 'headers'}
     mock_director.conf_manager.filter_m = MagicMock()
@@ -259,7 +255,7 @@ def mock_director_2():
         "action_params": {
             "params": {
                 "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "index": "index_test",
                         "query": "hello how are you",
                         "task": "retrieve",

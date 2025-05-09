@@ -69,14 +69,16 @@ def get_indexing_deployment():
 
 
             mock_get_file_storage.return_value = storage_mock_object
-            return InfoIndexationDeployment()
+            with patch("main.set_queue"):
+                return InfoIndexationDeployment()
 
 def get_connector():
     connector = MagicMock(scheme="https", host="localhost", port=9200, username="test", password="test", MODEL_FORMAT="elastic")
-    connector.assert_correct_index_conf = MagicMock(return_value=None)
+    connector.assert_correct_index_conf = MagicMock(return_value=None)  # Correct method mock
     connector.close.return_value = None
     connector.connect.return_value = None
     return connector
+
 
 class TestInfoIndexationDeployment():
     json_input = {
@@ -94,11 +96,10 @@ class TestInfoIndexationDeployment():
                     "do_tables": True,
                 }
             },
-            "index_conf": {
+            "indexation_conf": {
                 "index": "test_indexing",
                 "windows_overlap": 10,
                 "windows_length": 300,
-                "modify_index_docs": {},
                 "models": [
                     {
                         "embedding_model": "text-embedding-ada-002",
@@ -120,41 +121,52 @@ class TestInfoIndexationDeployment():
     }
     deployment = get_indexing_deployment()
 
+    @patch("common.deployment_utils.BaseDeployment.async_deployment")
+    def test_main_execution(self, mock_async_deployment):
+        with patch("builtins.print"):
+            with patch("main.set_queue"):
+                deploy = InfoIndexationDeployment()
+
+        deploy.async_deployment()
+        mock_async_deployment.assert_called_once()
+
     def test_max_num_queue(self):
         assert self.deployment.max_num_queue == 1
 
     def test_exception_init(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            mock_get_file_storage.side_effect = Exception("Error")
-            assert not hasattr(InfoIndexationDeployment(), "available_pools")
+            with patch("main.set_queue"):
+                mock_get_file_storage.side_effect = Exception("Error")
+                assert not hasattr(InfoIndexationDeployment(), "available_pools")
 
     def test_file_storage_testing(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            with patch('common.indexing.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
-                with patch('common.indexing.connectors.ManagerConnector.get_connector') as mock_get_connector:
-                    with patch('os.getenv') as mock_getenv:
-                        with patch('main.update_full_status',
-                                   side_effect=lambda redis_status, dataset_status_key, status_code, message:
-                                   (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
-                            storage_manager = MagicMock()
-                            storage_manager.get_specific_files.return_value = MagicMock(), []
-                            mock_get_file_storage.return_value = storage_manager
+            with patch('common.ir.parsers.ManagerParser.get_parsed_object') as mock_get_parsed_object:
+                with patch('vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
+                    with patch('common.ir.connectors.ManagerConnector.get_connector') as mock_get_connector:
+                        with patch('os.getenv') as mock_getenv:
+                            with patch('main.update_full_status',
+                                       side_effect=lambda redis_status, dataset_status_key, status_code, message:
+                                       (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
+                                storage_manager = MagicMock()
+                                storage_manager.get_specific_files.return_value = MagicMock(), []
+                                mock_get_file_storage.return_value = storage_manager
 
-                            vector_database = MagicMock()
-                            vector_database.get_processed_data.return_value = ["doc1-test"]
-                            vector_database.index_documents.return_value = [{'ir_index/test-embedding-model/pages': {'num': 14, 'type': 'PAGS'},
-                              'ir_index/test-embedding-model/tokens': {'num': 9391, 'type': 'TOKENS'}}]
-                            mock_get_vector_db.return_value = vector_database
+                                vector_database = MagicMock()
+                                vector_database.get_processed_data.return_value = ["doc1-test"]
+                                vector_database.index_documents.return_value = [{'ir_index/test-embedding-model/pages': {'num': 14, 'type': 'PAGS'},
+                                                                                 'ir_index/test-embedding-model/tokens': {'num': 9391, 'type': 'TOKENS'}}]
+                                mock_get_vector_db.return_value = vector_database
 
-                            mock_get_connector.return_value = get_connector()
-                            mock_getenv.return_value = "True"
-                            must_continue, _, output_queue = self.deployment.process(self.json_input)
-                            indexation_response = mock_update_full_status.call_args[0][1:]
+                                mock_get_connector.return_value = get_connector()
+                                mock_getenv.return_value = "True"
+                                must_continue, _, output_queue = self.deployment.process(self.json_input)
+                                indexation_response = mock_update_full_status.call_args[0][1:]
 
-                            assert indexation_response[1] == 200
-                            assert indexation_response[2] == "Indexing finished"
+                                assert indexation_response[1] == 200
+                                assert indexation_response[2] == "Indexing finished"
     def test_exception_process(self):
-        with patch('common.indexing.parsers.ManagerParser.get_parsed_object') as mock_parsers:
+        with patch('common.ir.parsers.ManagerParser.get_parsed_object') as mock_parsers:
             with patch('main.update_full_status',
                        side_effect=lambda redis_status, dataset_status_key, status_code, message:
                        (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
@@ -167,25 +179,27 @@ class TestInfoIndexationDeployment():
 
     def test_process(self):
         with patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage:
-            with patch('common.indexing.vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
-                with patch('common.indexing.connectors.ManagerConnector.get_connector') as mock_get_connector:
-                    with patch('main.update_full_status', side_effect=lambda redis_status, dataset_status_key, status_code, message:
-                      (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
-                        storage_manager = MagicMock()
-                        storage_manager.get_specific_files.return_value = MagicMock(),  []
-                        mock_get_file_storage.return_value = storage_manager
+            with patch('common.ir.parsers.ManagerParser.get_parsed_object') as mock_get_parsed_object:
+                with patch('vector_storages.ManagerVectorDB.get_vector_database') as mock_get_vector_db:
+                    with patch('common.ir.connectors.ManagerConnector.get_connector') as mock_get_connector:
+                        with patch('main.update_full_status', side_effect=lambda redis_status, dataset_status_key, status_code, message:
+                        (redis_status, dataset_status_key, status_code, message)) as mock_update_full_status:
+                            storage_manager = MagicMock()
+                            storage_manager.get_specific_files.return_value = MagicMock(), []
+                            mock_get_file_storage.return_value = storage_manager
 
-                        vector_database = MagicMock()
-                        vector_database.get_processed_data.return_value = ["doc1-test"]
-                        vector_database.index_documents.return_value = [{'ir_index/test-embedding-model/pages': {'num': 14, 'type': 'PAGS'},
-                          'ir_index/test-embedding-model/tokens': {'num': 9391, 'type': 'TOKENS'}}]
-                        mock_get_vector_db.return_value = vector_database
+                            vector_database = MagicMock()
+                            vector_database.get_processed_data.return_value = ["doc1-test"]
+                            vector_database.index_documents.return_value = [{'ir_index/test-embedding-model/pages': {'num': 14, 'type': 'PAGS'},
+                                                                             'ir_index/test-embedding-model/tokens': {'num': 9391, 'type': 'TOKENS'}}]
+                            mock_get_vector_db.return_value = vector_database
 
-                        mock_get_connector.return_value = get_connector()
+                            mock_get_connector.return_value = get_connector()
+                            mock_get_connector.assert_correct_index_conf = MagicMock()
 
-                        self.deployment.process(self.json_input)
-                        indexation_response = mock_update_full_status.call_args[0][1:]
+                            self.deployment.process(self.json_input)
+                            indexation_response = mock_update_full_status.call_args[0][1:]
 
-                        assert indexation_response[1] == 200
-                        assert indexation_response[2] == "Indexing finished"
+                            assert indexation_response[1] == 200
+                            assert indexation_response[2] == "Indexing finished"
 

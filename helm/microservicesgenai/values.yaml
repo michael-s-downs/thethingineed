@@ -107,6 +107,7 @@ ingress:
   enabled: false
   basedomain:
   port: 80
+# Keda
 keda:
   enabled: false
   enabled_object: false
@@ -119,3 +120,14 @@ keda:
   keda_type:
   min_replicas:
   max_replicas:
+  polling_interval: 10
+  cooldown_period: 30
+# Elasticsearch
+elastic:
+  enabled: false
+  version: 8.13.2
+  requests_memory:
+  requests_cpu:
+  limits_memory:
+  limits_cpu:
+  capacity:

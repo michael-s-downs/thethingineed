@@ -2,8 +2,6 @@
 
 import pytest
 from unittest.mock import patch, MagicMock
-import datetime
-import os
 import json
 from main import FlowMgmtCheckTimeoutDeployment  # Assuming this is the correct import path
 
@@ -11,7 +9,7 @@ from main import FlowMgmtCheckTimeoutDeployment  # Assuming this is the correct 
 @pytest.fixture
 def deployment():
     """Fixture to create the deployment instance."""
-    with patch('os.getenv', return_value='test_tenant'):
+    with patch("main.set_queue"):
         return FlowMgmtCheckTimeoutDeployment()
 
 

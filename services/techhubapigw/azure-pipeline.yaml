@@ -17,6 +17,7 @@ variables:
 - group: Variables para CI
 - group: Params Python
 - group: RegistryVariables
+- group: Sonarqube Params
 
 - name: serviceName
   value: 'techhubapigw'
@@ -24,8 +25,6 @@ variables:
   value: 'TechHubApigw'
 - name: sourceName
   value: 'techhubapigw'
-- name:  vmImageName
-  value: 'ubuntu-20.04'
 - name:  registryServerName
   value: '$(registryName).azurecr.io'
 - name: acrRegistryLogin
@@ -48,12 +47,59 @@ variables:
   value: '$(feed_genai)'
 
 stages:
+- stage: SonarAnalysis
+  displayName: Sonar analysis and test coverage
+  jobs:
+  - job:
+    continueOnError: true
+    pool:
+      vmImage: '$(vmImageName)'
+    steps:
+      - script: |
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > $(System.DefaultWorkingDirectory)/coverage.xml
+          echo '<coverage branch-rate="0.0" line-rate="0.0" version="1.0">' >> $(System.DefaultWorkingDirectory)/coverage.xml
+          echo '    <packages/>' >> $(System.DefaultWorkingDirectory)/coverage.xml
+          echo '</coverage>' >> $(System.DefaultWorkingDirectory)/coverage.xml
+        displayName: Coverage report
+        
+      - task: SonarQubePrepare@7
+        inputs:
+          SonarQube: $(sonarqube_service_connection)
+          scannerMode: 'cli'
+          configMode: 'manual'
+          cliProjectKey: $(System.DefinitionName)
+          cliSources: '$(System.DefaultWorkingDirectory)/services/$(serviceName)/'
+          extraProperties: |
+              sonar.projectVersion=1.0
+              sonar.sources=$(System.DefaultWorkingDirectory)/services/$(serviceName)/
+              sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/services/$(serviceName)/coverage.xml
+              sonar.exclusions=**/test/**
+        displayName: Remove parameter
+
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            $params = "$env:SONARQUBE_SCANNER_PARAMS" -replace '"sonar.branch.name":"[\w\.,/,-]*"\,?'
+                Write-Host "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$params"   
+        displayName: Remove parameter
+
+      - task: SonarQubeAnalyze@7
+        inputs:
+          jdkversion: 'JAVA_HOME_17_X64'
+        displayName: Sonar Analyze
+
+      - task: SonarQubePublish@7
+        inputs:
+          pollingTimeoutSec: '300'
+        displayName: Sonar Publish
+
 - stage: Building
-  displayName: Build image
+  displayName: Build image Docker and Trivy scan
   jobs:
   - job:
     pool:
-      vmImage: $(vmImageName)
+      vmImage: '$(vmImageName)'
     steps:
     - template: ../ap-apigw-template.yml
       parameters:

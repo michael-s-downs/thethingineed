@@ -1,10 +1,12 @@
 ### This code is property of the GGAO ###
 
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
-import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
-from compose.query_actions.expansion import ExpansionFactory, LangExpansion
+from compose.query_actions.expansion import ExpansionFactory, LangExpansion, StepSplitExpansion
 from compose.query import expansion
 from common.errors.genaierrors import PrintableGenaiError, GenaiError
 from common.errors.LLM import LLMParser
@@ -29,11 +31,9 @@ def actions_confs():
             "action": "retrieve",
             "action_params": {
                 "params": {
-                    "generic": {
-                        "index_conf": {
+                        "indexation_conf": {
                             "query": ""
                         }
-                    }
                 }
             }
         }
@@ -300,7 +300,7 @@ def test_lang_expansion_process(mock_parallel_calls, mock_async_call_llm, params
     assert result[1] == "Hello, how are you?"
 
     # Ensure the actions_confs has been updated
-    assert actions_confs[0]["action_params"]["params"]["generic"]["index_conf"]["query"] == query
+    assert actions_confs[0]["action_params"]["params"]["indexation_conf"]["query"] == query
 
 @patch("compose.query_actions.expansion.LangExpansion.async_call_llm")
 @patch("compose.query_actions.expansion.LangExpansion.parallel_calls")
@@ -344,3 +344,77 @@ def test_lang_expansion_no_retrieve_action(params, actions_confs, query):
 
     with pytest.raises(PrintableGenaiError):
         LangExpansion(query).process(params, actions_confs)
+
+
+@patch("compose.query_actions.expansion.requests.post")
+def test_call_llm(mock_post, query):
+    mock_response = MagicMock()
+    mock_response.status_code = 200  # Set the status to 200
+    mock_response.json = MagicMock(return_value={"result": {"answer": "Hola, ¿cómo estás?"}})  # Set the json method
+    
+    # Mock the post method to return our mock response
+    mock_post.return_value = mock_response
+
+    step_expansion = StepSplitExpansion(query)
+    template = {"query_metadata": {"query": "Translate this"}}
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    # Call the async function
+    mock_session = MagicMock()
+    mock_session.post = mock_post
+    result = step_expansion.call_llm(template, headers)
+
+    # Validate the result
+    assert result["answer"] == "Hola, ¿cómo estás?"
+
+@patch("compose.query_actions.expansion.requests.post")
+def test_call_llm_400(mock_post, query):
+    mock_response = MagicMock()
+    mock_response.status_code = 400  # Set the status to 200
+    mock_response.json = MagicMock(return_value={"result": {"answer": "Hola, ¿cómo estás?"}})  # Set the json method
+    
+    # Mock the post method to return our mock response
+    mock_post.return_value = mock_response
+
+    step_expansion = StepSplitExpansion(query)
+    template = {"query_metadata": {"query": "Translate this"}}
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    # Call the async function
+    mock_session = MagicMock()
+    mock_session.post = mock_post
+    with pytest.raises(PrintableGenaiError):
+        step_expansion.call_llm(template, headers)
+
+
+@patch("compose.query_actions.expansion.requests.post")
+def test_call_llm_error(mock_post, query):
+    
+    # Mock the post method to return our mock response
+    mock_post.side_effect = Exception
+
+    step_expansion = StepSplitExpansion(query)
+    template = {"query_metadata": {"query": "Translate this"}}
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    # Call the async function
+    mock_session = MagicMock()
+    mock_session.post = mock_post
+    with pytest.raises(PrintableGenaiError):
+        step_expansion.call_llm(template, headers)
+
+
+@patch("compose.query_actions.expansion.StepSplitExpansion.call_llm")
+def test_lang_expansion_step_process(mock_async_call_llm, params, actions_confs, query):
+    mock_async_call_llm.return_value = {"answer": "Hola, ¿cómo estás?"}
+    
+    expansion = StepSplitExpansion(query)
+    params["k_steps"] = 4
+    params["context"] = "hello"
+    params["model"] = "example_model"
+    result = expansion.process(params, actions_confs)
+
+    assert len(result) == 1
+    assert result[0] == "Hola, ¿cómo estás?"
+
+    assert actions_confs[0]["action_params"]["params"]["indexation_conf"]["query"] == "Hola, ¿cómo estás?"

@@ -145,7 +145,7 @@ class Director(AbstractManager):
             action_function = function_map.get(action)
 
             if not action_function:
-                raise self.raise_PrintableGenaiError(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
+                raise self.raise_PrintableGenaiError(404, "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"llm_action\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"")
             ap = action_params.get('params', {})
 
             if action_function == self.sb.llm_action:
@@ -240,7 +240,7 @@ class Director(AbstractManager):
         if "compose_flow" in self.compose_conf or "template" in self.compose_conf:
             template = self.get_compose_flow()
         else:
-            raise self.raise_PrintableGenaiError(404, "Compose config must have whether compose_conf or template arguments")
+            raise self.raise_PrintableGenaiError(400, "Compose config must have whether compose_conf or template arguments")
 
         # Set lang
         self.logger.debug(f"Setting lang: {self.conf_manager.lang} in the template")
@@ -290,16 +290,17 @@ class Director(AbstractManager):
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
         template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
-        template = re.sub(r'\$([A-Za-z0-9_]+)', r'"$\1"', template)
+        template = re.sub(r'\$(\w+)', r'"$\1"', template)
         template = self.fix_merge(template)
         try:
             template = json.loads(template)
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableGenaiError(500, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(400, f"Template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
             raise self.raise_PrintableGenaiError(500, ex)
-        
+
+        template = self.conf_manager.template_m.index_conf_retrocompatible(template)
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
         template_params = self.conf_manager.template_m.set_params(template_params)
@@ -312,6 +313,6 @@ class Director(AbstractManager):
 
         except json.decoder.JSONDecodeError as ex:
             error_param = get_error_word_from_exception(ex, template)
-            raise self.raise_PrintableGenaiError(500, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
+            raise self.raise_PrintableGenaiError(400, f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template}")
         except Exception as ex:
             raise self.raise_PrintableGenaiError(500, ex)

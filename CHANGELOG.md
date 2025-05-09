@@ -1,0 +1,446 @@
+<!-- ### This code is property of the GGAO ### -->
+
+
+# Changelog
+
+## v3.1.0 (2025-03-20)
+- genai-compose:
+    - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
+    - [New] New optional param 'return_not_allowed' added to filter by permission to return the not allowed documents with the content empty
+    - [New] Update retrieval action to use the latests format. Key 'index_conf' changes to 'indexation_conf' and key 'generic' is not needed
+    - [Improvement] Quit examples from default STEP_TEMPLATE used in expand query step action because it generates error with the language of the query
+    - [Improvement] Change endpoint '/delete_template updated' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_template?name=mytemplate'
+    - [Improvement] Change endpoint '/delete_filer_template' from method POST to DELETE and use URL params instead of body. Example: '/compose/delete_filter_template?name=mytemplate'
+    - [Improvement] Change endpoint '/upload_template updated' from method POST to PUT
+    - [Improvement] Change endpoint '/upload_filter_template' from method POST to PUT
+    - [Improvement] Change endpoint '/get_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+    - [Improvement] Change endpoint '/get_filter_template' from method POST to GET and use URL params instead of body. Example: '/compose/get_template?name=mytemplate'
+    - [Improvement] Change endpoint '/load_session' from method POST to PUT
+    - [Improvement] Updated the response format from string to JSON
+- genai-llmapi:
+    - [New] Load the prompt template in each call from cloud storage instead of loading all at the startup
+    - [New] Prompt templates splitted into different files for each one and their language variants. One for system_query, system_query_es, system_query_en, etc
+    - [New] Deleted endpoint '/reloadconfig', it does nothing with the prompt load change
+    - [New] Added method to show the word causing the error while loading a JSON
+    - [New] Added support for models o1, o1-mini, and o3-mini
+    - [New] Added reasoning and DALL·E models for the 'openai' platform
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'openai' platform
+    - [New] Added tools support
+    - [Improvement] Remove parameter 'message' in 'src/LLM/conf/models_config.json' as now is in the code
+    - [Improvement] Change endpoint '/upload_prompt_template' from method POST to PUT
+    - [Improvement] Change endpoint '/delete_prompt_template' from method POST to DELETE and use URL params instead of body. Example: '/llm/delete_prompt_template?name=mytemplate'
+    - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+    - [Improvement] Parameters 'functions' and 'function_call' deprecated
+- genai-inforetrieval:
+    - [Improvement] Changed endpoint '/delete-documents' to '/delete_documents' to match all the other endpoints
+    - [Improvement] Change endpoint '/delete_documents' from method POST to DELETE and use URL params instead of body. Example: '/delete_documents?index=myindex&filename=myfile&filename=myfile2'
+    - [Improvement] Change endpoint '/delete_index from' method POST to DELETE and use URL params instead of body. Example: '/delete_index?index=myindex'
+    - [Improvement] Change endpoint '/get_documents_filenames' from method POST to GET and use URL params instead of body. Example: '/get_documents_filenames?index=myindex'
+- flowmgmt-checkend:
+    - [Improvement] Quit star imports and set only the required
+- preprocess-start: 
+    - [Improvement] Normalized path structure for cloud storage by extracting request_id from dataset_path and building standardized paths
+- preprocess-extract:
+    - [Improvement] Quit star imports and set only the required
+    - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Normalized path structure for cloud storage
+- preprocess-ocr:
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Standardized path structure for cloud storage
+- common:
+    - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
+    - [Improvement] Refactored the 'format_path_files' function to use os.path for more robust path handling
+    - [Improvement] Enhanced 'extract_images_conditional' function to use standardized path construction and asynchronous upload
+- ALL:
+    - [Improvement] Update and fix status_codes
+    - [Improvement] Fixed maintainability warnings from sonarqube
+    - [Improvement] Update terraform, parametrize create private endpoint by resource
+    - [Improvement] Update helm, add template for elasticsearch and update deployment
+    - [Improvement] Changes in helm to allow AWS support
+    - [Improvement] Get 'vmImageName' from Azure Library variables (increase Ubuntu deprecated version)
+    - [Fix] Update 'genai-sdk-services' to version 0.5.16, added region from environment var 'AWS_REGION_NAME' to all AWS services for roles support
+
+## v3.0.0 (2025-01-30)
+- integration-receiver:
+    - [New] New input format to separate parameters between indexation and preprocess (with retrocompatibility)
+    - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
+    - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+    - [Fix] When error while processing request, return 400 instead of 200
+    - [Fix] When error while processing request, delete base64 to not surpass queue size
+- integration-sender:
+    - [New] Input JSON refactor to separate parameters between indexation and preprocess
+    - [New] Support any input parameters for preprocess and indexation processes (including preprocess by 'llm-ocr')
+    - [New] Validation of LLM models when passed for preprocess by 'llm-ocr' (using current 'src/LLM/conf/models_config.json')
+    - [Improvement] Return to client specific error messages from the flow instead of generic error
+    - [Improvement] Small refactors for 'queue' profile: I/O JSON nodes now are 'GenaiRequest' and 'GenaiResponse'
+- preprocess-start:
+    - [Improvement] JSON flow body refactor for preprocess and indexation (updated file 'src/layout.json')
+- preprocess-extract:
+    - [Improvement] JSON flow body refactor (preprocess and indexation)
+    - [Improvement] If 'force_ocr' specified avoid extra processes:
+        - If 'query' passed when 'llm-ocr' PDFMiner is not done as language detection is not necessary
+        - If text has been extracted (for language detection) it will not be uploaded
+    - [Improvement] When exception if temporal files created, those are deleted
+    - [Improvement] Required more memory for large documents (3GB recommended)
+- preprocess-ocr:
+    - [New] Changes to support 'llm-ocr' (minimum genai-sdk-services version==0.5.9)
+        - New required environment variables: 'Q_GENAI_LLMQUEUE_INPUT', 'Q_GENAI_LLMQUEUE_OUTPUT' and 'QUEUE_TIMEOUT_OPERATION' for queue mode, 'URL_LLM' for API mode
+        - New optional environment variable 'LLM_NUM_RETRIES' to specify the possible retries when a model fails, 10 by default
+        - The file 'src/LLM/prompts/preprocess_ocr.json' will be mandatory
+    - [Improvement] JSON flow body refactor (preprocess and indexation)
+    - [Improvement] File sizes now calculated from local files instead storage
+    - [Improvement] In 'llm-ocr' case paragraphs, cells, words and lines not uploaded (not extracted by this ocr)
+    - [Improvement] Resize image method generalization and moved to 'utils.py'
+    - [Improvement] When exception if temporal files created, those are deleted
+- genai-infoindexing:
+    - [New] New parameter 'index_metadata' to include metadata in the embedding generation
+        - If set to 'true', only the filename metadata and the metadata provided by the user will be included  
+        - If provided as a list of specific fields (e.g., ['filename', 'uri']), only the specified metadata fields will be included  
+        - If omitted or set to 'false', no metadata will be included
+    - [New] New parameter 'metadata_primary_keys' to include metadata in the vector storage id generation
+        - If provided the list of specific fields (e.g., ['filename', 'uri']), they will be used as primary keys
+        - If omitted, no metadata will be used for the id generation, only document content is taken into account
+        - This allow to have different documents with the same content duplicated in the elastic index with different metadata
+    - [Improvement] JSON flow body refactor
+    - [Improvement] 'modify_index_docs' parameter deprecated as it was a complex flow and was unused (with the parameter 'metadata_primary_keys' and the delete endpoint the usage can be fully replaced). Less connections with elastic are done too
+- genai-llmapi:
+    - [New] New input for queue case ('queue_metadata') to do llmapi comunication between temporal files (bypass queue size limit)
+    - [New] Added resize for an image that exceeds the max allowed by the LLM vision model
+        - Added new parameter 'max_img_size_mb' in 'src/LLM/conf/models_config.json' to restrict each vision model
+        - To support this feature, all images are now sent to the model in base64 format (URL in input still working)
+    - [Improvement] Better logic to do retries when a model call fails 
+        - Added new optional parameter 'num_retries' in platform metadata to indicate the number of retries.
+        - When a model fails in timeout or rate limit the call is done with another model (if the model passed was a pool if not with the same)
+    - [Improvement] If not 'x-limits' in headers, call apigw to get current limits (mainly for queue case)
+    - [Improvement] Add support for vision in 'MOUNT_KEY' feature
+- genai-inforetrieval:
+    - [Improvement] Adapt input JSON for coherence purposes with JSON body refactor
+- genai-compose:
+    - [Improvement] Add header 'delegate-token' to permission filter action
+- apigw:
+    - [New] Endpoint '/report/{{report_id}}/list' to get limits by report id without api-key header
+- ALL:
+    - [New] Sonarqube and test coverage check in azure pipeline
+    - [Improvement] Helm code, update function 'shortname' get value of release name
+
+## v2.2.0 (2024-12-19)
+- integration-receiver:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
+- integration-sender:
+    - [New] Added new input parameters for the new chunking methods of infoindexing
+    - [Improvement] Input parameters communication between methods simplified
+- genai-infoindexing:
+    - [New] Now several chunking methods available: 'simple' (current), 'recursive' (new), 'surrounding_context_window' (new)
+    - [New] Added method to check that the same chunking method is always used
+    - [New] New logger in debug mode when selecting model from pool
+    - [Improvement] Modules distribution organized
+    - [Improvement] Updated library 'llama-index'
+    - [Improvement] Now field 'snippet_id' same as elasticsearch 'id_'
+- genai-inforetrieval:
+    - [New] Added strategies for new chunking methods: 'recursive_genai_retrieval' for 'recursive' chunking, 'surrounding_genai_retrieval' for 'surrounding_context_window' chunking
+    - [New] Added new library 'llama-index-retrievers-bm25' to support 'recursive_genai_retrieval' strategy
+    - [New] Added method to check that the retrieval strategy fits with the chunking method used
+    - [New] New logger in debug mode when selecting model from pool
+    - [Improvement] Modules distribution organized
+    - [Improvement] Updated library 'llama-index'
+    - [Improvement] Adaption of library 'llama-index-vector-stores-elasticsearch' updated to version 0.3.3 to stay aligned with library 'llama-index'
+- genai-compose:
+    - [New] Action "step expansion" that gets a complex query and splits it into more and simpler queries and creates a new retrieve action step with this new one queries.
+    - [Improvement] Set 'techhubdev-pool-world-gpt-4o-mini' as default model for llmapi call
+- genai-llmapi:
+    - [New] Added models nova-micro, nova-lite and nova-pro for AWS platform
+    - [New] New logger in debug mode when selecting model from pool
+    - [Improvement] Set default model for each platform (based on new config file 'src/LLM/conf/default_llm_models.json')
+    - [Improvement] Refactor message 'chatClaude3' to 'chatClaude-v' (require update 'src/LLM/conf/models_config.json')
+    - [Fix] Improve logic to set as error model responses
+    - [Fix] Apply parameter 'timeout' currently available but not used
+    - [Fix] Fix logger when zone not available in models secrets file
+- preprocess-ocr:
+    - [Fix] Solved error with Azure OCR updating library 'genai-sdk-services' to version 0.4.13
+        - Add environment variable AZ_OCR_API_VERSION to set dynamically or passing inside secret
+        - Set by default 'api_version' to '2024-11-30', to avoid error without environment variable or secret
+- ALL:
+    - [New] Add logic to switch between Bus and Storage Azure queues by boolean env var 'STORAGE_QUEUE', by default 'False' (Bus)
+
+## v2.1.0 (2024-11-28)
+- apigw:
+    - [New] Update CORS with 'allow-cors-origins' to allow direct calls from website
+    - [New] Change default input limit from 30MB to dynamic value by environment variable 'MAX_REQUEST_SIZE'
+- genai-compose:
+    - [New] Endpoint to list templates
+    - [New] Endpoint to list filter templates
+    - [New] Endpoint to get the content of a template
+    - [New] Endpoint to get the content of a filter template
+    - [New] Replace library 'lingua' instead of 'langdetect' to improve language detection (required more memory)
+    - [Fix] Query to minus before langdetect
+    - [Fix] Perist dict not adding new entries
+    - [Fix] Documentation examples
+- genai-llmapi:
+    - [Fix] Endpoint for list templates now shows file name with its templates
+
+## v2.0.0 (2024-11-08)
+- genai-llmapi:
+    - [New] Added pydantic to manage input and output in the io_parsing class (better error handling)
+    - [Change] Prompt models deleted (from code and files)
+    - [Change] Param 'n' deleted as it was not used when parsing model response
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
+    - [Improvement] Code legibility and structure improved with the pydantic class (checking and errors were handled manually before)
+    - [Improvement] Common function in utils to get models endpoint 
+    - [Improvement] Add temperature range control by LLM
+    - [Fix] Get response from bedrock when exception is raised manually
+    - [Fix] When lang template not found, use base template instead
+- genai-inforetrieval:
+    - [New] Added new endpoint of list indices from elasticsearch
+    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
+    - [Improvement] Common function in utils to get models endpoint
+    - [Improvement] Endpoints logic separated into different file from main
+    - [Fix] Endpoints now return error_message in response instead of result when goes wrong
+    - [Fix] Fix bug genai_strategy when all documents extracted from bm25 and ada are the same (not retrieval to complete scores is needed)
+    - [Fix] Added usage of retriever_model parameter in config file when calling huggingface models
+- genai-infoindexing:
+    - [Improvement] Loader class from common/indexing now in common, renamed to storage_manager as manages all operations with the storage
+    - [Improvement] Now elasticsearch index generation without uppercase in the name (avoid elasticsearch errors)
+- genai-compose:
+    - [New] Update and refactor filer query from param call to template action
+    - [New] Update and refactor filer response from param call to template action
+    - [New] Update and refactor reformulate query from param call to template action
+    - [New] Langfuse params host, public key and private key can be set in call params
+    - [New] Added env var 'DEFAULT_LLM_MODEL' to config default templates model
+    - [New] Filter templates folder renamed to "filter_templates" from "queryfilter_templates"
+    - [Improvement] Config model param for action expansion query by lang
+    - [Improvement] Query expansion works with multiple retrieval
+    - [Fix] Make optional env var 'URL_ALLOWED_DOCUMENT' to avoid error if not used
+    - [Fix] Fix models from default templates
+    - [Fix] Query expansion list as copy instead of reference
+    - [Fix] Raise PrintableErrors called wrong
+    - [Fix] Possible langs removed from langdetection
+- apigw:
+    - [New] Added a specific instance of API Gateway for each tenant
+- ALL:
+    - [New] Add unit tests with pytest
+
+## v1.5.0 (2024-09-23)
+- genai-infoindexing:
+    - [New] Titan model added
+    - [New] Cohere english and multilingual models added
+    - [New] Ada small and large models added
+    - [Improvement] Exceptions with GenaiError instead of common exceptions
+    - [Improvement] Index name generation, now done by lambda function in common
+    - [Improvement] Models credentials, done like llmapi models (with api-keys and urls by zones instead of model names)
+    - [Improvement] Now platform azure instead of openai for azure_openai models (in config files)
+    - [Fix] Fix bug titan embeddings always used in bedrock platform
+    - [Fix] Zone instead of region_name in bedrock embedding models config file
+- genai-inforetrieval:
+    - [New] Titan model added
+    - [New] Endpoint to get the available models
+    - [New] Cohere english and multilingual models added
+    - [New] Ada small and large models added
+    - [New] Endpoint to delete an index with its documents from elasticsearch
+    - [New] Can switch between different strategies:
+        - genai_retrieval: 
+          - default strategy and old one with rescoring functions
+          - added rrf rescoring function
+        - llamaindex_fusion:
+            - Done with LlamaIndex QueryFusion (rrf)
+            - New parameter in api call (strategy_mode) to select the mode of the llamaindex_fusion strategy (rescoring)
+    - [Improvement] Index name generation, now done by lambda function in common
+    - [Improvement] Models credentials, done like llmapi models (with api-keys and urls by zones instead of model names)
+    - [Improvement] Fix posnorm rescoring function (in older versions was ordering backwards)
+    - [Improvement] Exceptions with GenaiError instead of common exceptions
+    - [Improvement] Retrieval code and rescoring functions code refactored and simplified
+    - [Improvement] Delete unused parameters in api call (task, process_ir, generic, add_highlights...)
+    - [Improvement] Query embeddings just generated once per call (two in the past) 
+    - [Fix] Fix bug titan embeddings always used in bedrock platform
+    - [Fix] Zone instead of region_name in bedrock embedding models config file
+- genai-compose
+    - [New] Expand query by lang action
+    - [New] Testing with pytest
+    - [Improvement] Configure permission filter by request
+        - Get param 'url_allowed_documents' from call
+        - Add action param 'url_allowed_documents' in template
+        - Deprecated env vars 'URI_PREFIX_KNOWLER', 'URL_ALLOWED_DOCUMENTS_KNOWLER'
+    - [Fix] Error when filters return an empty list
+    - [Fix] Endpoints upload, delete template and filters files
+- genai-llmapi
+    - [New] New endpoint to get the content of a template
+    - [New] New endpoint to get the name of all templates
+    - [New] Added response_format parameter to some gpt models (available ones specified in azure openai portal)
+    - [Improvement] Loader class from common now used
+    - [Improvement] Exceptions with GenaiError instead of common exceptions
+    - [Fix] Endpoints upload and delete prompts templates files
+    - [Fix] Endpoint get model
+    - [Fix] Query now not mandatory in templates
+
+## v1.4.0 (2024-08-26)
+- genai-infoindexing:
+    - [New] Now indexation process done with library 'llama-index' instead of 'haystack'
+        - Chunks split
+        - Embeddings generation
+    - [New] Embeddings generation can be done with cohere
+    - [Improvement] State dict deleted, now everything is done with elastic
+    - [Improvement] When error in indexation, retries after a delay (there are no chunks lost by elastic errors)
+    - [Fix] Fix snippet_number generation
+- genai-inforetrieval:
+    - [New] Endpoint get_documents_filenames to get the files in an elastic index
+    - [New] Now retrieval process done with llama_retrieval library
+    - [New] Retrieval can be done with cohere too
+    - [New] Now able to retrieve document filenames by index 
+    - [Improvement] The model which you want to do the retrieval can be selected in the call
+    - [Improvement] State dict deleted, now everything is done with elastic
+    - [Improvement] Now retrieve_documents can retrieve multiple documents at once and works properly with multiple filters
+    - [Improvement] In retrieve documents, new output structure (dict with filename and his documents inside)
+    - [Improvement] Changes to run Flask with Gunicorn
+    - [Fix] Model not cached to an index when first used, now switches between calls
+    - [Fix] Remove exact match filters
+    - [Fix] Delete documents, works properly with multiple documents and can delete multiple documents at once
+- genai-compose:
+    - [New] Retrieve type "dolffia" changed to "get_chunks". "Dolffia" deprecated.
+    - [New] Added the model from llm_action at the end of session_id string
+    - [New] Endpoints to upload template and filter template
+    - [New] Endpoints to delete template and filter template
+    - [Improvement] Changes to run Flask with Gunicorn
+    - [Fix] Retrieval call with multiple models
+- genai-llmapi:
+    - [New] Endpoints to upload prompt template
+    - [New] Endpoints to delete prompt template
+    - [Fix] Allow answer to be "Not found".
+    - [Improvement] Load json templates well-formed and warns about malformed ones
+    - [Improvement] Changes to run Flask with Gunicorn
+    - [Improvement] Check default templates exist when loading templates
+- ALL:
+    - [Improvement] Change all 'dolffia' references to 'genai'
+
+## v1.3.0 (2024-06-24)
+- BUILD:
+    - [New] Generate helm package to deploy 
+    - [New] Rename library dolffia-sdk-services to genai-sdk-services
+- genai-compose:
+    - [New] Add langfuse to save sessions and traces of each execution
+    - [New] Merge action param "grouping_key" to get the result in multiple chunks instead of one
+    - [Improvement] Merge action saves common metadata for the resulting chunk
+    - [Improvement] When using only llm_action, dont need to set empty retreive action in the template
+    - [Fix] When retrieval returns 0 chunks, raise error
+    - [Fix] Mergebatch working.
+    - [Fix] LLM answer empty to "Answer not found"
+    - [Fix] Each session removes itlself instead of .clear()
+- genai-llmapi:
+    - [New] Add llama3 to available models.
+- common:
+    - [Improvement] PrintableGenaiError shows the exception message in log
+    - [Improvement] Change name of 'dolffia_controller' to 'genai_controller'
+
+
+## v1.2.0 (2024-05-23)
+- common:
+    - [New] Function to get the word that caused an error when parsing a string to a json
+    - [New] Add to services the different LLM classes
+    - [Improvement] Function to detect language, now can select in a variety of languages passed
+- genai-compose:
+    - [New] Adaptions to allow vision queries (image and text)
+    - [New] Number of tokens stored in redis for each element of a vision query
+    - [Improvement] Action MergeBatch now merges all in a streamlist formed by all unique streamchunks
+    - [Improvement] Multiple retrieval improvements:
+        - Now different documents separated in different streamlist with one chunk per document
+        - Now multiple retrieval returns separated streamlists and streamchunks
+- genai-llmapi:
+    - [New] Implementation for vision models (GPT4-v, GPT4-o and Claude3)
+        - New format for this queries (list)
+        - Allow calling just with text (like old versions)
+    - [New] Only non-vision to vision persistence allowed
+    - [New] Pool of models in claude
+    - [New] New endpoint to get available models from the config file (filtering by name or model type)
+    - [Improvement] Refactor:
+        - Errors managed by exceptions
+        - New class adapters to adapt the query and persistence for each model
+        - New class limiters to limit the tokens (replacing CounterTok)
+    - [Improvement] Now claude models can be called by separated messages (before as unique string)
+    - [Improvement] In dall-e models now only user persistence passed (without links or bs64 generated)
+- ALL:
+    - [New] Add GGAO header to all files
+
+## v1.1.0 (2024-05-15)
+- common:
+    - [New] Add generic function to send any message via queue or API
+    - [New] Add optional logic to send tracking message if env var exists
+        - Create generic functions to send tracking message via queue or API
+        - Call tracking function before and after process in sync and async
+    - [New] Add optional logic to pack/unpack I/O JSON inside bigger JSON to propagate
+    - [New] Get optionally custom error response from service in API deployment
+    - [Improvement] Refactor for compatibility with dolffia-sdk-services v0.2:
+        - Don't pass credentials, now are given in library from secrets or env vars
+        - Simplify all related to set credentials with new tuple format
+    - [Improvement] Change name of 'uhis_controller' to 'dolffia_controller'
+    - [Improvement] Rename deployment methods
+    - [Fix] Correctly cast boolean env vars
+- flowmgmt-checkend:
+    - [New] Add optional logic to send tracking message if env var exists
+        - Forward tracking key from input to next component
+        - Add output step inside because send to next step inside
+    - [Improvement] Refactor to use generic function to report response
+- preprocess-start:
+    - [New] Add optional logic to send tracking message if env var exists
+        - Forward tracking key from input to next components
+        - Add output step inside because send to next step inside
+- genai-llmapi:
+    - [New] Modify 'ChatGPTMessage' to accept 'image_urls'
+    - [New] Generalize service to deploy in API or queue mode
+        - Launch deploy mode api/queue based on env var 'QUEUE_MODE'
+        - Set queue or not based on env var 'QUEUE_MODE'
+        - Rename service name based on env var 'QUEUE_MODE'
+        - Add input adaptation method for queue case (get headers)
+        - Add output adaptation method for queue case
+    - [New] Add support to get input documents from attached disk with optional env vars 'DATA_MOUNT_PATH' and 'DATA_MOUNT_KEY'
+    - [New] Models credentials and URL now loaded from secrets
+    - [Improvement] Update bedrock to latest boto3 version
+        - Update dolffia-sdk-services v0.2.1
+        - Quit old library from dockerfile
+        - Update new service name 'bedrock' -> 'bedrock-runtime'
+    - [Fix] Launch service with deployment_utils
+    - [Fix] Images limit in dalle3 working as tokens
+    - [Fix] Change order in llmapi prompt
+- genai-compose:
+    - [New] Function to get all the contents from a streamlist joined in one string
+    - [Improvement] Update Filter response to use the Context from the streambatch
+- genai-infoindexing:
+    - [New] Models credentials, vector_storages and URL now loaded from secrets
+    - [Improvement] Better diacritics normalization to allow 'ñ' and 'ç'
+- genai-inforetrieval:
+    - [New] Models credentials, vector_storages and URL now loaded from secrets
+    - [Improvement] Documents deletion in InfoRetrieval service refactor (now is done in the connectors class)
+    - [Improvement] Better diacritics normalization to allow 'ñ' and 'ç'
+- BUILD:
+    - [Improvement] Force branch 'develop' to use image base with tag 'dev'
+
+## v1.0.0 (2024-04-10)
+- common:
+    - [New] Clean name services
+    - [New] Add functions of uhis-sdk into new module 'preprocess_utils'
+- preprocess-start:
+    - [New] Create a new module based on uhisproxy+listdocuments
+- preprocess-extract:
+    - [New] Create a new module based on extractti
+- preprocess-ocr:
+    - [New] Create a new module based on ocr+ocrprod+ocrmgr
+- preprocess-end:
+    - [New] Create a new module based on checkpreprocess
+- flowmgmt-apiresponse:
+    - [New] Create a new module based on responseasync
+- flowmgmt-checkend:
+    - [New] Create a new module based on checkend
+- flowmgmt-checktimeout:
+    - [New] Create a new module based on checktimeout
+- flowmgmt-infodelete:
+    - [New] Create a new module based on statusinfo
+- genai-infoindexing:
+    - [New] Create a new module based on infoindexing
+- genai-inforetrieval:
+    - [New] Create a new module based on inforetrieval
+- genai-compose:
+    - [New] Create a new module based on compose
+- genai-llmapi:
+    - [New] Create a new module based on llmapi
+- ALL:
+    - [Improvement] Homogenize a defined structure for all services
+    - [Improvement] Refactor and standardize pipelines and dockerfiles

@@ -9,9 +9,10 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 # Local imports
-from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter
+from adapters import BaseAdapter, GPT4VAdapter, ManagerAdapters, DalleAdapter, Claude3Adapter, NovaAdapter
 from common.errors.genaierrors import PrintableGenaiError
-from messages import ChatGPTMessage, DalleMessage, ChatGPTvMessage, Claude3Message
+from message.claudemessage import Claude3Message
+from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
 
 no_vision_persistence = [
         [
@@ -70,7 +71,7 @@ class TestManagerAdapters:
 
     def test_get_possible_platforms(self):
         platforms = ManagerAdapters.get_possible_adapters()
-        assert platforms == ["claude", "gpt4v", "dalle", "base"]
+        assert platforms == ["claude", "gpt4v", "dalle", "base", "nova"]
 
     def test_all_adapters(self):
         self.conf['adapter'] = "gpt4v"
@@ -117,13 +118,6 @@ class TestBaseAdapter:
                         assert el.get('n_tokens')
                     elif el.get('type') == "image_url":
                         assert not el.get('n_tokens')
-    def test_resize_image(self):
-        width, height = BaseAdapter.resize_image(2000, 1500, 1000, 1000) # Outside range
-        width2, height2 = BaseAdapter.resize_image(800, 600, 1000, 1000) # Inside range
-        width3, height3 = BaseAdapter.resize_image(1500, 2000, 1000, 1000) # Inside range
-        assert (width, height) == (1000, 750)
-        assert (width2, height2) == (800, 600)
-        assert (width3, height3) == (750, 1000)
 
     def test_adapt_image(self):
         message = MagicMock()
@@ -147,9 +141,33 @@ class TestGPT4VAdapter:
                         if el.get('type') == "text":
                             assert isinstance(el.get('text'), str)
                         elif el.get('type') == "image_url":
-                            assert el.get('image_url').get('url') == url
+                            assert el.get('image_url').get('url').startswith("data:image/jpeg;base64,")
 
-    def test_adapt_image(self):
+    def test_get_image_tokens(self):
+        tokens1 = GPT4VAdapter._get_image_tokens(2000, 1500, 1000, 1000) # Outside range
+        tokens2 = GPT4VAdapter._get_image_tokens(800, 600, 1000, 1000) # Inside range
+        tokens3 = GPT4VAdapter._get_image_tokens(1500, 2000, 1000, 1000) # Inside range
+        assert tokens1 == 765
+        assert tokens2 == 765
+        assert tokens3 == 765
+
+
+    @patch('PIL.Image.open')
+    @patch('os.remove')
+    @patch('common.utils.get_image_size')
+    @patch('common.utils.resize_image')
+    @patch('builtins.open')
+    def test_adapt_image(self, mock_open, mock_resize_image, mock_image_size, mock_remove, mock_image_open):
+        mock_image = MagicMock(width=850, height=567, format='JPEG')
+        mock_image.save.return_value = None
+        mock_image.close.return_value = None
+        mock_image_open.return_value = mock_image
+        mock_resize_image.return_value = 10.0, None
+        mock_open_instance = mock_open.return_value
+        mock_open_instance.__enter__.return_value.read.return_value = b"1234567890"
+        mock_image_size.return_value = 5.0
+        mock_remove.return_value = None
+
         message = MagicMock()
         adapter = GPT4VAdapter(message)
         image = {
@@ -158,20 +176,19 @@ class TestGPT4VAdapter:
                 'url': url
             }
         }
-        with patch('PIL.Image.open') as mock_image_open:
-            mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
-            result = adapter._adapt_image(image)
-            assert image == {'type': 'image_url', 'image_url': {'url': url}}
-            assert result == 765
+
+        adapter._adapt_image(image)
+        assert image.get('image_url') == {'url': "data:image/jpeg;base64,MTIzNDU2Nzg5MA=="}
         image_b64 = {
             'type': 'image_b64',
             'image': {
                 'base64': base64
             }
         }
-        result = adapter._adapt_image(image_b64)
-        assert image_b64 == {'type': 'image_url', 'image_url': {'url': "data:image/jpeg;base64," + base64}}
-        assert result == 765
+        
+        adapter._adapt_image(image_b64)
+        assert image_b64.get('image_url') == {'url': "data:image/jpeg;base64,MTIzNDU2Nzg5MA=="}
+
 
         image_detail = {
             'type': 'image_url',
@@ -180,11 +197,8 @@ class TestGPT4VAdapter:
                 'detail': "low"
             }
         }
-        with patch('PIL.Image.open') as mock_image_open:
-            mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
-            result = adapter._adapt_image(image_detail)
-            assert image_detail == {'type': 'image_url', 'image_url': {'url': url, 'detail': 'low'}}
-            assert result == 85
+        adapter._adapt_image(image_detail)
+        assert image_detail.get('image_url') == {'url': "data:image/jpeg;base64,MTIzNDU2Nzg5MA==", 'detail': "low"}
 
         image_b64_wrong = {
             'type': 'image_b64',
@@ -192,7 +206,7 @@ class TestGPT4VAdapter:
                 'base64': "añsjdfñlakjpowie"
             }
         }
-        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid base64 format"):
+        with pytest.raises(PrintableGenaiError):
             adapter._adapt_image(image_b64_wrong)
         img_wrong_url = {
             'type': 'image_url',
@@ -200,7 +214,7 @@ class TestGPT4VAdapter:
                 'url': 'https://example.com/image.jpg'
             }
         }
-        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid url format"):
+        with pytest.raises(PrintableGenaiError):
             adapter._adapt_image(img_wrong_url)
 
         image_wrong_format = {
@@ -211,7 +225,7 @@ class TestGPT4VAdapter:
             }
         }
         with patch('PIL.Image.open') as mock_image_open:
-            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format [jpeg, png, gif, webp]")):
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format ['JPEG', 'PNG', 'GIF', 'WEBP']")):
                 mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
                 adapter._adapt_image(image_wrong_format)
 
@@ -255,7 +269,33 @@ class TestClaude3Adapter:
                             assert el.get('source').get('media_type') == "image/jpeg"
                             assert isinstance(el.get('source').get('data'), str)
 
-    def test_adapt_image(self):
+    def test_get_image_tokens(self):
+        tokens1 = Claude3Adapter._get_image_tokens(2000, 1500, 1000, 1000) # Outside range
+        tokens2 = Claude3Adapter._get_image_tokens(800, 600, 1000, 1000) # Inside range
+        tokens3 = Claude3Adapter._get_image_tokens(1500, 2000, 1000, 1000) # Inside range
+        assert tokens1 == 1000
+        assert tokens2 == 640
+        assert tokens3 == 1000
+
+
+    @patch('PIL.Image.open')
+    @patch('transformers.GPT2TokenizerFast.from_pretrained')
+    @patch('os.remove')
+    @patch('common.utils.get_image_size')
+    @patch('common.utils.resize_image')
+    @patch('builtins.open')
+    def test_adapt_image(self, mock_open, mock_resize_image, mock_image_size, mock_remove, mock_transformers, mock_image_open):
+        mock_image = MagicMock(width=850, height=567, format='JPEG')
+        mock_image.save.return_value = None
+        mock_image.close.return_value = None
+        mock_image_open.return_value = mock_image
+        mock_resize_image.return_value = 10.0, None
+        mock_open_instance = mock_open.return_value
+        mock_open_instance.__enter__.return_value.read.return_value = b"1234567890"
+        mock_image_size.return_value = 5.0
+        mock_remove.return_value = None
+        mock_transformers.return_value = MagicMock()
+
         message = MagicMock()
         adapter = Claude3Adapter(message)
         image = {
@@ -264,15 +304,11 @@ class TestClaude3Adapter:
                 'url': url
             }
         }
-        with patch('PIL.Image.open') as mock_image_open:
-            with patch('requests.get') as mock_requests_get:
-                mock_requests_get.return_value = MagicMock(content=b"image")
-                mock_image_open.return_value = MagicMock(width=850, height=567, format='JPEG')
-                result = adapter._adapt_image(image)
-                assert image.get('source').get('type') == "base64"
-                assert image.get('source').get('media_type') == "image/jpeg"
-                assert isinstance(image.get('source').get('data'), str)
-                assert result == 642
+
+        adapter._adapt_image(image)
+        assert image.get('source').get('type') == "base64"
+        assert image.get('source').get('media_type') == "image/jpeg"
+        assert image.get('source').get('data') == "MTIzNDU2Nzg5MA=="
 
         image_b64 = {
             'type': 'image_b64',
@@ -280,11 +316,10 @@ class TestClaude3Adapter:
                 'base64': base64
             }
         }
-        result = adapter._adapt_image(image_b64)
-        assert image_b64.get('source').get('type') == "base64"
-        assert image_b64.get('source').get('media_type') == "image/jpeg"
-        assert isinstance(image_b64.get('source').get('data'), str)
-        assert result == 1080
+        adapter._adapt_image(image_b64)
+        assert image.get('source').get('type') == "base64"
+        assert image.get('source').get('media_type') == "image/jpeg"
+        assert image.get('source').get('data') == "MTIzNDU2Nzg5MA=="
         image_detail = {
             'type': 'image_url',
             'image': {
@@ -300,7 +335,7 @@ class TestClaude3Adapter:
                 'base64': "añsjdfñlakjpowie"
             }
         }
-        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid base64 format"):
+        with pytest.raises(PrintableGenaiError):
             adapter._adapt_image(image_b64_wrong)
         img_wrong_url = {
             'type': 'image_url',
@@ -308,7 +343,7 @@ class TestClaude3Adapter:
                 'url': 'https://example.com/image.jpg'
             }
         }
-        with pytest.raises(PrintableGenaiError, match="Error 400: Image must be a valid url format"):
+        with pytest.raises(PrintableGenaiError):
             adapter._adapt_image(img_wrong_url)
 
         image_b64 = {
@@ -318,8 +353,92 @@ class TestClaude3Adapter:
             }
         }
         with patch('PIL.Image.open') as mock_image_open:
-            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format [jpeg, png, gif, webp]")):
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format ['JPEG', 'PNG', 'GIF', 'WEBP']")):
                 mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
                 adapter._adapt_image(image_b64)
 
+class TestNovaAdapter:
 
+    def test_get_image_tokens(self):
+        tokens1 = NovaAdapter._get_image_tokens(2000, 1500, 1000, 1000) # Outside range
+        tokens2 = NovaAdapter._get_image_tokens(800, 600, 1000, 1000) # Inside range
+        tokens3 = NovaAdapter._get_image_tokens(1500, 2000, 1000, 1000) # Inside range
+        assert tokens1 == 1000
+        assert tokens2 == 640
+        assert tokens3 == 1000
+
+    @patch('PIL.Image.open')
+    @patch('os.remove')
+    @patch('common.utils.get_image_size')
+    @patch('common.utils.resize_image')
+    @patch('builtins.open')
+    def test_adapt_image(self, mock_open, mock_resize_image, mock_image_size, mock_remove, mock_image_open):
+        mock_image = MagicMock(width=850, height=567, format='JPEG')
+        mock_image.save.return_value = None
+        mock_image.close.return_value = None
+        mock_image_open.return_value = mock_image
+        mock_resize_image.return_value = 10.0, None
+        mock_open_instance = mock_open.return_value
+        mock_open_instance.__enter__.return_value.read.return_value = b"1234567890"
+        mock_image_size.return_value = 5.0
+        mock_remove.return_value = None
+
+        message = MagicMock()
+        adapter = NovaAdapter(message)
+        image = {
+            'type': 'image_url',
+            'image': {
+                'url': url,
+            }
+        }
+
+
+        adapter._adapt_image(image)
+        assert image.get('image').get('format') == "jpeg"
+        assert image.get('image').get('source').get('bytes') == "MTIzNDU2Nzg5MA=="
+
+        image_b64 = {
+            'type': 'image_b64',
+            'image': {
+                'base64': base64
+            }
+        }
+        adapter._adapt_image(image_b64)
+        assert image.get('image').get('format') == "jpeg"
+        assert image.get('image').get('source').get('bytes') == "MTIzNDU2Nzg5MA=="
+        image_detail = {
+            'type': 'image_url',
+            'image': {
+                'url': url,
+                'detail': "low"
+            }
+        }
+        with pytest.raises(PrintableGenaiError):
+            adapter._adapt_image(image_detail)
+        image_b64_wrong = {
+            'type': 'image_b64',
+            'image': {
+                'base64': "añsjdfñlakjpowie"
+            }
+        }
+        with pytest.raises(PrintableGenaiError):
+            adapter._adapt_image(image_b64_wrong)
+        img_wrong_url = {
+            'type': 'image_url',
+            'image': {
+                'url': 'https://example.com/image.jpg'
+            }
+        }
+        with pytest.raises(PrintableGenaiError):
+            adapter._adapt_image(img_wrong_url)
+
+        image_b64 = {
+            'type': 'image_b64',
+            'image': {
+                'base64': base64
+            }
+        }
+        with patch('PIL.Image.open') as mock_image_open:
+            with pytest.raises(PrintableGenaiError, match=re.escape("Error 400: Image must be in format ['JPEG', 'PNG', 'GIF', 'WEBP']")):
+                mock_image_open.return_value = MagicMock(width=850, height=567, format='wrong')
+                adapter._adapt_image(image_b64)

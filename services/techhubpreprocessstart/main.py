@@ -12,6 +12,7 @@ from typing import Tuple, Union
 
 # Installed imports
 import pandas as pd
+from mergedeep import merge
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
@@ -21,7 +22,12 @@ from common.genai_status_control import create_status, update_status
 from common.genai_json_parser import get_exc_info, get_dataset_status_key, get_project_config, get_dataset_config, generate_dataset_status_key
 from common.services import PREPROCESS_START_SERVICE, PREPROCESS_EXTRACT_SERVICE, PREPROCESS_END_SERVICE
 from common.status_codes import ERROR, BEGIN_LIST, END_LIST, BEGIN_DOCUMENT
-from common.error_messages import *
+from common.error_messages import (
+    CREATING_STATUS_REDIS_ERROR,
+    PARSING_PARAMETERS_ERROR,
+    GETTING_DATASET_STATUS_KEY_ERROR,
+    CHECKING_FILES_STORAGE_ERROR,
+)
 from common.utils import convert_service_to_queue
 
 
@@ -76,12 +82,10 @@ class PreprocessStartDeployment(BaseDeployment):
 
         dataset_conf = json_input.get('dataset_conf', {})
 
-        preprocess_conf = json_input.get('preprocess_conf', {})
-
         if dataset_conf.get('dataset_id', ""):
             process_id = dataset_conf.get('dataset_id', "")
         else:
-            process_id = process_type + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f_") + "".join([choice(string.ascii_lowercase + string.digits) for i in range(6)])
+            process_id = process_type + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f_") + "".join([choice(string.ascii_lowercase + string.digits) for _ in range(6)])
 
         dataset_conf.setdefault('dataset_id', process_id)
 
@@ -89,24 +93,22 @@ class PreprocessStartDeployment(BaseDeployment):
         generic['project_conf']['timeout_id'] = f"timeout_id_{tenant}:{process_id}"
         generic['project_conf']['process_type'] = process_type
         generic['project_conf']['department'] = department
-        generic['project_conf']['project_type'] = project_type
         generic['project_conf']['report_url'] = report_url
+        generic['project_conf']['tenant'] = tenant
+        generic['project_conf']['project_type'] = project_type
         generic['project_conf']['url_sender'] = json_input.get('url_sender', "")
         generic['project_conf']['timeout_sender'] = json_input.get('timeout_sender', 5)
+        
         generic['dataset_conf'] = dataset_conf
-        generic['preprocess_conf'] = preprocess_conf
 
-        if "origins" in json_input:
-            generic['origins'] = json_input.get('origins', {})
+        
         if "csv" in json_input:
             generic['project_conf']['csv'] = json_input.get('csv', False)
-        if "force_ocr" in json_input:
-            generic['project_conf']['force_ocr'] = json_input.get('force_ocr', False)
-        if "extract_tables" in json_input:
-            generic['project_conf']['extract_tables'] = json_input.get('extract_tables', False)
 
         if process_type == "ir_index":
-            generic['index_conf'] = json_input.get('index_conf', {})
+            merge(generic.setdefault('indexation_conf', {}), json_input.get('indexation_conf', {}))
+            
+        merge(generic.setdefault('preprocess_conf', {}), json_input.get('preprocess_conf', {}))
 
         return generic
 
@@ -122,14 +124,15 @@ class PreprocessStartDeployment(BaseDeployment):
         process_id = project_conf.get('process_id')
         dataset_id = dataset_conf.get('dataset_id')
         department = project_conf.get('department')
-        base_path = os.path.join(department, dataset_id)
+        request_id = dataset_conf.get('dataset_path').split("/")[-1]
+        base_path = "/".join([department, dataset_id, request_id])
 
         specific = {
-            'path_txt': os.path.join(base_path, "txt"),
-            'path_text': os.path.join(base_path, "text"),
-            'path_img': os.path.join(base_path, "imgs"),
-            'path_cells': os.path.join(base_path, "cells"),
-            'path_tables': os.path.join(base_path, "tables"),
+            'path_txt': "/".join([base_path, "txt"]),
+            'path_text': "/".join([base_path, "text"]),
+            'path_img': "/".join([base_path, "imgs"]),
+            'path_cells': "/".join([base_path, "cells"]),
+            'path_tables': "/".join([base_path, "tables"]),
             'dataset': {
                 'dataset_key': self.sep.join([process_id, dataset_id])
             }
@@ -233,7 +236,7 @@ class PreprocessStartDeployment(BaseDeployment):
         })
 
         try:
-            self.logger.info(f"Creating timeout and counter status for timeout")
+            self.logger.info("Creating timeout and counter status for timeout")
             create_status(db_provider['timeout'], timeout_id, json_timeout, None)
         except Exception:
             self.logger.debug(f"[Process {dataset_status_key}] Error creating timeout status", exc_info=get_exc_info())

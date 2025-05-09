@@ -1,20 +1,21 @@
 {{/* vim: set filetype=mustache: */}}
 {{/*Expand the name of the chart.*/}}
 {{- define "name" -}}
-{{- default .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- $name := default .Release.Name -}}
+{{- printf "%s" $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).*/}}
 {{- define "fullname" -}}
-{{- $name := default .Chart.Name -}}
+{{- $name := default .Release.Name -}}
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*Create a default shorty qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).*/}}
 {{- define "shortname" -}}
-{{- $name := default .Chart.Name -}}
+{{- $name := default .Release.Name -}}
 {{- printf "%s" $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -44,9 +45,14 @@ heritage: {{ .Release.Service }}
 {{- define "queues" -}}
 {{- $queues := .Values.queues | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key := $queues }}
 {{- if $key }}
+{{- if eq $provider "aws" }}
+{{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s.fifo" $namespace $key }}
+{{- else }}
 {{ replace "-" "_" (printf "q_%s" $key) | upper }} : {{ printf "%s--q-%s" $namespace $key }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -65,10 +71,15 @@ heritage: {{ .Release.Service }}
 {{- define "integration" -}}
 {{- $integration := .Values.integration | default dict -}}
 {{- $namespace := .Values.namespace -}}
+{{- $provider := .Values.common.provider -}}
 {{- range $key,$value := $integration }}
 {{- if $value }}
 {{- if eq $value "integration-sender" }}
+{{- if eq $provider "aws" }}
+{{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s.fifo" $namespace $value }}
+{{- else }}
 {{ "integration_queue_url" | upper }}: {{ printf "%s--q-%s" $namespace $value }}
+{{- end }}
 {{- else }}
 {{ $key | upper }}: {{ $value }}
 {{- end }}

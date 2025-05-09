@@ -15,7 +15,7 @@ class RetrieveMethod(ABC):
     Abstract base class for retrieve methods.
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, params: Union[List, Dict]) -> None:
         """
@@ -103,15 +103,10 @@ class ChunksRetriever(RetrieveMethod):
 
     URL = os.environ['URL_RETRIEVE']
     TEMPLATE = {
-        "generic": {
-            "process_type": "ir_retrieve",
-            "index_conf": {
-                "task": "retrieve",
-                "template_name": "system_query_and_context",
-            }
-        },
-        "credentials": {},
-        "specific": {'dataset': {'dataset_key': ''}}
+        "indexation_conf": {
+            "task": "retrieve",
+            "template_name": "system_query_and_context",
+        }
     }
 
     HEADERS = {
@@ -132,10 +127,10 @@ class ChunksRetriever(RetrieveMethod):
         headers.update(self.params.pop("headers_config", {}))
 
         try:
-            if template['generic']['index_conf']['query'] == "":
+            if template['indexation_conf']['query'] == "":
                 raise PrintableGenaiError(status_code=400, message="Query is empty, cannot retrieve")
         except KeyError:
-            raise PrintableGenaiError(status_code=400, message="Query not found in the template, cannot retrieve")
+            raise PrintableGenaiError(status_code=404, message="Query not found in the template, cannot retrieve")
 
         response = requests.post(self.URL, json=template, headers=headers, verify=True)
         if response.status_code != 200:
@@ -240,7 +235,7 @@ class RetrieverFactory:
         Args:
             filter_type (str): The type of the filter.
         """
-        self.retrievermethod: RetrieveMethod = None
+        self.retrievermethod = None
         for retrievermethod in self.FILTERS:
             if retrievermethod.TYPE == filter_type:
                 self.retrievermethod = retrievermethod

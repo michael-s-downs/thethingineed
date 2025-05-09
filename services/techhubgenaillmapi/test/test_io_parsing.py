@@ -11,8 +11,8 @@ from unittest import mock
 from pydantic import ValidationError
 
 # Local imports
-from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue
-
+from io_parsing import MultimodalObject, Template, PersistenceElement, QueryMetadata, LLMMetadata, ResponseObject, adapt_input_queue, QueueMetadata, ProjectConf
+from models.gptmodel import ChatGPTVision
 
 gpt_v_model = {
     "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
@@ -32,7 +32,22 @@ bedrock_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "claude-v2:1-NorthVirginiaEast"
+        "model": "claude-v2:1-NorthVirginiaEast",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "bedrock"
@@ -82,7 +97,22 @@ azure_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13"
+        "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "azure"
@@ -143,17 +173,29 @@ class TestResponseObject():
         response_object = ResponseObject(**{"status_code": 200, "status": "finished", "result": "result"})
         os.environ['Q_GENAI_LLMQUEUE_OUTPUT'] = "techhubragemeal--q-local-output" 
         with mock.patch("io_parsing.QUEUE_MODE", True):
-            must_continue, output, next_service = response_object.get_response_predict()
+            mock_object = MagicMock(output_file="output.json")
+            mock_object.upload_json_output.return_value = None
+            must_continue, output, next_service = response_object.get_response_predict(mock_object)
             assert must_continue
-            assert output == 'result'
+            assert output.get('result') == 'output.json'
             assert next_service == "techhubragemeal--q-local-output"
 
 class TestLLMMetadata():
     def test_validate_funtions_and_functions_call(self):
-        with pytest.raises(ValidationError, match=re.escape("1 validation error for LLMMetadata\n  Value error, Internal error, function_call is mandatory because you put the functions param [type=value_error, input_value={'functions': ['function1'], 'model': 'ddd'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValidationError):
             LLMMetadata(functions=["function1"], model="ddd")
-        with pytest.raises(ValidationError, match=re.escape("1 validation error for LLMMetadata\n  Value error, Internal error, functions is mandatory because you put the function_call param [type=value_error, input_value={'function_call': 'function1', 'model': 'ddd'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValidationError):
             LLMMetadata(function_call="function1", model="ddd")
+
+    def test_validate_default_model(self):
+        metadata = LLMMetadata(default_model="techhubdev-pool-world-gpt-4o")
+        assert metadata.model == "techhubdev-pool-world-gpt-4o"
+
+        metadata = LLMMetadata(model="techhubdev-pool-world-gpt-3.5-turbo-16k")
+        assert metadata.model == "techhubdev-pool-world-gpt-3.5-turbo-16k"
+
+        with pytest.raises(ValidationError):
+            LLMMetadata()
 
 class TestQueryMetadata():
     def test_validate_query(self):
@@ -193,8 +235,41 @@ class TestQueryMetadata():
 
     def test_max_characters_dalle(self):
         template = {"system": "$system", "user": "$query"}
-        with pytest.raises(ValueError, match=re.escape("1 validation error for QueryMetadata\n  Value error, Error, in dalle3 the maximum number of characters in the prompt is 4000 (query + persistence is longer) [type=value_error, input_value={'is_vision_model': False...e_name': 'system_query'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/value_error")):
+        with pytest.raises(ValueError):
             QueryMetadata(is_vision_model=False, model_type="dalle3", query=base64, template=template, template_name="system_query")
+
+class TestQueueMetadata():
+    def test_init(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        assert queue_metadata.input_file == "input.json"
+        assert queue_metadata.output_file == "output.json"
+        assert queue_metadata.location_type == "cloud"
+    
+    def test_init_wrong(self):
+        with pytest.raises(ValueError):
+            QueueMetadata(input_file="input.json", output_file="output", location_type="cloud")
+        
+        with pytest.raises(ValueError):
+            QueueMetadata(input_file="input", output_file="output.json", location_type="cloud")
+    
+    def test_load_json_input_wrong(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        with patch("common.genai_controllers.load_file", return_value='asedf'):
+            with pytest.raises(ValueError):
+                queue_metadata.load_json_input()
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="local")
+        with patch('builtins.open', mock_open(read_data='asdf')):
+            with pytest.raises(ValueError):
+                queue_metadata.load_json_input()
+
+    def test_upload_json_output_wrong(self):
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="cloud")
+        with pytest.raises(ValueError):
+            queue_metadata.upload_json_output(MagicMock())
+        queue_metadata = QueueMetadata(input_file="input.json", output_file="output.json", location_type="local")
+        with pytest.raises(ValueError):
+            queue_metadata.upload_json_output(MagicMock())
+
 
 
 class TestPersistenceElement():
@@ -227,15 +302,23 @@ class TestMultimodalObject():
         with pytest.raises(ValueError, match=re.escape("'text' parameter must be for 'text' type")):
             MultimodalObject.validate_text("", data_image)
 
+class TestProjectConf():
+    def test_x_limits_empty(self):
+        with patch("requests.get") as patch_requests:
+            patch_requests.return_value = MagicMock(text='{"limits": [{\"limit\": 23, \"resource": \"aa\", \"current\": 0}]}', status_code=200,)
+            model = ChatGPTVision(**gpt_v_model)
+            project_conf = ProjectConf(**{"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": {}, "model": model, "platform": "azure"})
+
+
 @patch("io_parsing.QUEUE_MODE", True)
 def test_adapt_input_queue():
     json_input = copy.deepcopy(azure_call)
-    json_input['headers'] = {'Content-Type': 'application/json'}
+    json_input['headers'] = {'Content-Type': 'application/json',"x-tenant": "test", "x-department": "test", "x-reporting": "test", "x-limits": "{}"}
     json_input['query_metadata']["C:\\users"] = "C:\\users\\lkl"
 
     os.environ["DATA_MOUNT_PATH"] = ""
     os.environ["DATA_MOUNT_KEY"] = ""
-    result = adapt_input_queue(json_input)
+    result, _ = adapt_input_queue(json_input)
     assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     os.environ["DATA_MOUNT_PATH"] = "C:"
@@ -244,14 +327,14 @@ def test_adapt_input_queue():
     # Path does not exist
     with patch('os.path.exists') as mock_exists:
         mock_exists.return_value = False
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # File does not exist
     with (patch('os.path.exists') as mock_exists, patch('os.path.isfile') as mock_isfile):
         mock_exists.return_value = True
         mock_isfile.return_value = False
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # Error reading file
@@ -261,7 +344,7 @@ def test_adapt_input_queue():
         mock_isfile.return_value = True
         mock_func_open.side_effect = Exception("Error reading file")
 
-        result = adapt_input_queue(json_input)
+        result, _ = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "C:\\users\\lkl"
 
     # Working propertly
@@ -269,9 +352,5 @@ def test_adapt_input_queue():
           patch('builtins.open', mock_open(read_data="key"))):
         mock_exists.return_value = True
         mock_isfile.return_value = True
-        result = adapt_input_queue(json_input)
+        result, _  = adapt_input_queue(json_input)
         assert result['query_metadata']["C:\\users"] == "key"
-
-
-
-

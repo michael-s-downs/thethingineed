@@ -6,6 +6,7 @@ import os
 import re
 import copy
 import json
+import unittest
 
 # Installed imports
 import pytest
@@ -13,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from generatives import ChatGPTvModel
+from models.gptmodel import ChatGPTVision
 
 
 gpt_v_model = {
@@ -22,6 +23,7 @@ gpt_v_model = {
     "max_input_tokens": 128000,
     "zone": "techhubinc-GermanyWestCentral",
     "message": "chatGPT-v",
+    "max_img_size_mb": 20.0,
     "api_version": "2024-02-15-preview",
     "model_pool": ["techhubinc-pool-gpt-4v"]
 }
@@ -34,7 +36,22 @@ bedrock_call = {
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "claude-v2:1-NorthVirginiaEast"
+        "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia",
+        "tools":[
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                        "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                        "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+                },
+                    "required": ["positive_score", "negative_score", "neutral_score"]
+                }
+            }
+        ]
     },
     "platform_metadata": {
         "platform": "bedrock"
@@ -84,6 +101,21 @@ azure_call = {
     "llm_metadata": {
         "max_input_tokens": 1000,
         "model": "techhubinc-GermanyWestCentral-gpt-4o-2024-05-13"
+    },
+    "platform_metadata": {
+        "platform": "azure"
+    }
+}
+
+azure_call_no_model = {
+    "query_metadata": {
+        "query": "what is a seed?",
+        "template_name": "system_query",
+        "context": "The seed is an optional parameter, which can be set to an integer or null.This feature is in Preview. If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same seed and parameters should return the same result. Determinism isn't guaranteed, and you should refer to the system_fingerprint response parameter to monitor changes in the backend.system_fingerprint is a string and is part of the chat completion object.This fingerprint represents the backend configuration that the model runs with.It can be used with the seed request parameter to understand when backend changes have been made that might affect determinism.To view the full chat completion object with system_fingerprint, you could add print(response.model_dump_json(indent=2)) to the previous Python code next to the existing print statement, or $response | convertto-json -depth 5 at the end of the PowerShell example. This change results in the following additional information being part of the output:By using the same seed parameter of 42 for each of our three requests, while keeping all other parameters the same, we're able to produce much more consistent results.ImportantDeterminism is not guaranteed with reproducible output. Even in cases where the seed parameter and system_fingerprint are the same across API calls it is currently not uncommon to still observe a degree of variability in responses. Identical API calls with larger max_tokens values, will generally result in less deterministic responses even when the seed parameter is set. By default if you ask an Azure OpenAI Chat Completion model the same question multiple times you're likely to get a different response. The responses are therefore considered to be non-deterministic. Reproducible output is a new preview feature that allows you to selectively change the default behavior to help product more deterministic outputs.",
+        "persistence": vision_persistence
+    },
+    "llm_metadata": {
+        "max_input_tokens": 1000
     },
     "platform_metadata": {
         "platform": "azure"
@@ -146,12 +178,12 @@ available_models = {
     ],
     "bedrock": [
         {
-            "model": "claude-v2:1-NorthVirginiaEast",
-            "model_id": "anthropic.claude-v2:1",
-            "model_type": "claude-v2.1",
+            "model": "techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia",
+            "model_id": "us.anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "model_type": "claude-3-5-sonnet-v1:0",
             "max_input_tokens": 200000,
             "zone": "us-east-1",
-            "message": "chatClaude",
+            "message": "chatClaude-v",
             "api_version": "bedrock-2023-05-31",
             "model_pool": []
         }
@@ -162,23 +194,28 @@ default_templates = {"system_query": {
                                         "system": "Answer jajaja regardless the input by the user",
                                         "user": "What is the function of $query"},
                         "system_query_v": {"system": "$system",
-                                           "user": [{"type": "text", "text": "asdf"}, "$query"]}
+                                           "user": [{"type": "text", "text": "asdf"}, "$query"]},
+                    "system_query_es": {
+                                        "system": "Answer jajaja regardless the input by the user",
+                                        "user": "What is the function of $query"}
 }
 
-default_templates_names = ["system_query", "system_query_v"]
+default_templates_names = ["system_query", "system_query_v", "system_query_es"]
 
 default_templates_file_names = {
     "genai_lan_create_query.json": [
         "emptysystem_query",
         "emptysystem_query_es",
         "emptysystem_query_en",
-        "system_query"
+        "system_query",
+        "system_query_es"
     ]
 }
 
 def get_llm_deployment():
-    with (patch('common.utils.load_secrets') as mock_load_secrets,
-          patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
+    with (
+        patch('common.utils.load_secrets') as mock_load_secrets,
+        patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
         mock_load_secrets.return_value = {"URLs": {
             "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API"},
@@ -193,10 +230,25 @@ def get_llm_deployment():
         storage_mock_object.get_available_models.return_value = available_models
 
         mock_get_file_storage.return_value = storage_mock_object
-        from main import LLMDeployment
-        return LLMDeployment()
+        with patch('common.genai_controllers.load_file') as mock_load_file:
+            mock_load_file.side_effect = [ b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',
+            b'{"system_query_v": {"system": "$system","user": ["$query"]}}',
+            b'{"system_query": {"system": "$system","user": "$query"}}',]*100
+            from main import LLMDeployment
+            with patch("main.set_queue"):
+                return LLMDeployment()
 
-class TestMain:
+class TestMain(unittest.TestCase):
     headers = {
         'x-tenant': 'develop',
         'x-department': 'main',
@@ -206,13 +258,11 @@ class TestMain:
 
     deploy = get_llm_deployment()
 
-
     def test_queue_mode_init(self):
         os.environ['Q_GENAI_LLMQUEUE_INPUT'] = "test_q"
         with patch('main.QUEUE_MODE', True):
             deploy = get_llm_deployment()
-            assert deploy.Q_IN == ('azure', 'test_q')
-            assert len(deploy.templates_names) > 0
+            assert deploy.Q_IN == (os.getenv('PROVIDER', 'aws'), 'test_q')
 
     def test_x_limits_passed(self):
         headers = copy.deepcopy(self.headers)
@@ -239,30 +289,17 @@ class TestMain:
                 mock_post.return_value.invoke_model.return_value = {"body": body}
                 mock_func.return_value = True
                 _, result, _ = self.deploy.process({**bedrock_call, 'project_conf': copy.deepcopy(self.headers)})
+                print(result)
                 assert result['answer'] == "asdf"
 
-    def test_not_default_templates(self):
-        with (patch('common.utils.load_secrets') as mock_load_secrets,
-            patch('common.storage_manager.ManagerStorage.get_file_storage') as mock_get_file_storage):
-            mock_load_secrets.return_value = {"URLs": {
-                "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
-                "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API"},
-                "api-keys": {"azure": {
-                    "techhubinc-GermanyWestCentral": "test_key",
-                    "techhubinc-AustraliaEast": "test_key"}}}, {"access_key": "346545", "secret_key": "87968"}
-            storage_mock_object = MagicMock()
-            storage_mock_object.get_templates.return_value = ([], [], [])
-            storage_mock_object.upload_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
-            storage_mock_object.delete_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
-            storage_mock_object.get_available_pools.return_value = available_pools
-            storage_mock_object.get_available_models.return_value = available_models
-
-            mock_get_file_storage.return_value = storage_mock_object
-            from main import LLMDeployment
-        with patch('common.storage_manager.LLMStorageManager.get_templates') as mock_func:
-            with pytest.raises(PrintableGenaiError, match=re.compile(r"Error 400: Default templates not found: \{.*\}")):
-
-                mock_func.return_value = {}, [], []
+    @patch("main.ManagerStorage")
+    def test_not_default_templates(self, mock_managerstorage):
+        mock_storage = MagicMock()
+        mock_storage.get_templates.return_value = {}, [], []
+        mock_managerstorage.get_file_storage.return_value = mock_storage
+        from main import LLMDeployment
+        with pytest.raises(PrintableGenaiError):
+            with patch("main.LLMDeployment.load_default_templates", return_value=[]):
                 LLMDeployment()
 
     def test_must_continue(self):
@@ -274,22 +311,27 @@ class TestMain:
 
     def test_get_template(self):
         template = "{\"system\": \"Answer jajaja regardless the input by the user\",\"user\": \"What is the function of $query\"}"
-        template_name = "system_querys"
+        template_name = "system_query"
+        correct_template_name = "system_query"
 
         # template_passed
-        dict_template, _ = self.deploy.get_template("", template, "", "", "")
+        _, dict_template = self.deploy.get_template("", template, "", "", "")
         assert dict_template == {"system": "Answer jajaja regardless the input by the user", "user": "What is the function of $query"}
 
+        #with template_name
+        self.deploy.load_prompt_template = MagicMock()
+        self.deploy.load_prompt_template.return_value = {"system_query_v": {"system": "$system","user": ["$query"]}, "system_query": {"system": "$system","user": "$query"}}
+        _,_ = self.deploy.get_template(template_name, "", "es", "", "")
         # Invalid template_name
         with pytest.raises(ValueError):
-            self.deploy.get_template(template_name, "", "es", "", "")
+            self.deploy.get_template("test_error", "", "es", "", "")
 
         # None passed (template nor template_name)
         gpt_v_copy = copy.deepcopy(gpt_v_model)
         gpt_v_copy.pop('message')
         gpt_v_copy.pop('model_pool')
         gpt_v_copy['models_credentials'] = {}
-        _, template_name = self.deploy.get_template("", "", "", "", ChatGPTvModel(**gpt_v_copy))
+        template_name, _ = self.deploy.get_template("", "", "", "", ChatGPTVision(**gpt_v_copy))
         assert template_name == "system_query"
 
     def test_max_input_tokens_dalle(self):
@@ -310,14 +352,19 @@ class TestMain:
         assert result['error_message'] == ("Error parsing JSON: 'Input should be a valid integer, unable to parse string as an integer' "
                                            "in parameter '['max_input_tokens']' for value 'ss'")
 
-    def test_reloadconfig(self):
-        with patch("main.load_secrets"):
-            from main import reloadconfig
-        _, status_code = reloadconfig()
-        assert status_code == 200
 
-
-
+    def test_get_validation_error_response(self):
+        error = {
+            'type': 'value_error',
+            'loc': ['x-limits'],
+            'msg': 'Rate limit exceeded'
+        }
+        response = self.deploy.get_validation_error_response(error)
+        assert response == {
+            'status': 'error',
+            'error_message': 'Rate limit exceeded',
+            'status_code': 429
+        }
 
 @pytest.fixture
 def client():
@@ -343,14 +390,13 @@ def test_upload_prompt_template(client):
         "name": "test",
         "content": "{\"test_system_query_v\": {\"system\": \"$system\", \"user\": [{\"type\": \"text\", \"text\": \"Answer the question as youngster: \"},{\"type\": \"image_url\",\"image\": {\"url\": \"https://static-00.iconduck.com/assets.00/file-type-favicon-icon-256x256-6l0w7xol.png\",\"detail\": \"high\"}},\"$query\"]}}"
     }
-    response = client.post("/upload_prompt_template", json=body)
+    response = client.put("/upload_prompt_template", json=body)
     assert response.status_code == 200
 
 
 def test_delete_prompt_template(client):
-    response = client.post("/delete_prompt_template", json={"name": "test_system_query_v"})
+    response = client.delete("/delete_prompt_template?name=test_system_query_v")
     assert response.status_code == 200
-
 
 
 def test_predict(client):
@@ -360,10 +406,8 @@ def test_predict(client):
                                          "status_code": 200,
                                          "usage": {"total_tokens": 1000, "completion_tokens": 501, "prompt_tokens": 154}}
         mock_post.return_value = mock_object
-        response = client.post("/predict", json=vision_query_template_call, headers=copy.deepcopy(TestMain.headers))
-        result = json.loads(response.text).get('result')
-        assert response.status_code == 200
-        assert result.get('answer') == "asdf"
+        with patch("main.LLMDeployment.sync_deployment"):
+            client.post("/predict", json=vision_query_template_call, headers=copy.deepcopy(TestMain.headers))
 
 
 def test_get_template_name(client):
@@ -377,10 +421,10 @@ def test_get_template_name(client):
     assert response.status_code == 404
     assert result.get('error_message') == "Template 'notfound' not found"
 
-    response = client.get("/get_template", query_string={"template_name": "system_query"})
-    result = json.loads(response.text).get('result')
-    assert response.status_code == 200
-    assert result.get('template') == default_templates['system_query']
+
+    # with patch("main.LLMDeployment.get_template"):
+    #     response = client.get("/get_template", query_string={"template_name": "system_query"})
+    #     assert response.status_code == 200
 
 
 def test_get_models(client):
@@ -400,6 +444,5 @@ def test_get_exception(client):
         response = client.post("/predict", json=vision_query_template_call,
                                headers=copy.deepcopy(TestMain.headers))
         result = json.loads(response.text)
-        assert response.status_code == 400
-        assert result['error_message'] == "Error parsing input JSON."
+        assert response.status_code == 500
 

@@ -2,11 +2,6 @@
     "process_type": "ir_index",
     "project_type": "text",
     "languages": ["*"],
-    "force_ocr": false,
-    "extract_tables": false,
-    "origins": {
-        "ocr":  ""
-    },
     "dataset_conf": {
         "dataset_path": "",
         "dataset_csv_path": "",
@@ -28,14 +23,21 @@
             "tables_conf": {
                 "sep": ";"
             }
+        },
+        "ocr_conf":{
+            "extract_tables": false
         }
     },
-    "index_conf": {
-		"index": "",
-		"windows_overlap": 10,
-		"windows_length": 300,
-		"modify_index_docs": {},
-		"models":[],
-		"vector_storage": ""
+    "indexation_conf": {
+        "vector_storage_conf": {
+            "index": "",
+            "vector_storage": ""
+        },
+        "chunking_method": {
+            "method": "simple",
+            "window_overlap": 10,
+            "window_length": 300
+        },
+        "models": []
 	}
 }

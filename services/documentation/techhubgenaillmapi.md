@@ -14,9 +14,12 @@
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Core Concepts](#core-concepts)
     - [Architecture](#architecture)
-  - [Calling LLMAPI](#calling-llmapi)
+    - [Reasoning Models](#reasoning-models)
+  - [Calling LLM API](#calling-llm-api)
     - [Simple prediction call:](#simple-prediction-call)
       - [Query types](#query-types)
+      - [Tools](#tools)
+    - [Queue format:](#queue-format)
     - [Get models:](#get-models)
       - [Parameters](#parameters)
       - [Examples](#examples)
@@ -54,12 +57,12 @@ The GENAI LLM API is an advanced solution designed to seamlessly integrate with 
 
 ### Key features
 
-- Multi-platform Support: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
-- Comprehensive Query Handling: Efficiently process queries in various formats, including text and images, to deliver accurate and contextually relevant responses tailored to your business needs.
-- Customizable Parameters: Fine-tune model behavior with adjustable parameters such as token limits, temperature, and response formatting to meet specific organizational requirements.
-- Persistence and Context Management: Maintain conversation context and history to enable more coherent and context-aware interactions, ensuring continuity and improving user experience.
-- Versatile Model Selection: Access a wide range of models across different platforms, optimized for various use cases and geographical regions to support global operations.
-- Image Generation: Leverage DALL-E to generate high-quality images based on textual descriptions, with customizable options for style and resolution to fit diverse visual content needs.
+- **Multi-platform Support**: Seamlessly integrate with major cloud providers like Azure and AWS, ensuring scalability, reliability, and high availability for mission-critical applications.
+- **Comprehensive Query Handling**: Efficiently process queries in several formats, including text and images, to deliver accurate and contextually relevant responses tailored to your business needs.
+- **Customizable Parameters**: Fine-tune the model's behavior with adjustable parameters such as token limits, temperature, and response formatting to meet specific organizational requirements.
+- **Persistence and Context Management**: Maintain conversation context and history to enable more coherent and context-aware interactions, ensuring continuity and improving user experience.
+- **Versatile Model Selection**: Access a wide range of models across different platforms, optimized for various use cases and geographical regions to support global operations.
+- **Image Generation**: Leverage DALL-E to generate high-quality images based on textual descriptions, with customizable options for style and resolution to fit diverse visual content needs.
 
 ## Getting Started
 
@@ -96,7 +99,7 @@ To get more information go to [Environment variables](#environment-variables)
 
 ### Quick Start Guide
 
-Calling LLM Service needs 3 keys: query_metadata, llm_metadata and platform_metadata. The most simple use case would be sending a single question as follows:
+Calling LLM Service needs 3 keys: *query_metadata, llm_metadata* and *platform_metadata*. The simplest use case would be sending a single question as follows:
 
 ```json
 {
@@ -104,7 +107,7 @@ Calling LLM Service needs 3 keys: query_metadata, llm_metadata and platform_meta
         "query": "Where is Paris?"
     },
     "llm_metadata":{
-        "model": "gpt-3.5-pool-techhub-europe"
+        "model": "techhubdev-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata":{
         "platform": "azure"
@@ -121,9 +124,9 @@ and headers if you are running on your local machine:
 "x-limits": ""
 ```
 
-As you can see is an extra header (x-limits) that is not necessary to run the component, but adds a feature to not use a LLM if its cuota has been surpassed. See [X-limits header](#x-limits-header) for more details.
+As you can see, there is an extra header (x-limits) that is not necessary to run the component, but adds a feature to not use a LLM if its cuota has been exceeded. See [X-limits header](#x-limits-header) for more details.
 
-If you are calling the pod use:
+If you are calling the pod you need to use the API key:
 
 ```json
 "x-api-key": "apikey123example"
@@ -143,7 +146,7 @@ If the response looks like this, you are good to go.
         "output_tokens": 29
     },
     "status_code": 200}
-```
+```  
 
 ## Concepts and Definitions
 
@@ -152,7 +155,7 @@ If the response looks like this, you are good to go.
 To understand the LLM module, there are a few concepts that we need to define beforehand:
 
 - **System**: This is a parameter that is sent to the LLM that explains to the model the aim of the task that it must do. For example: "You are an expert. Answer the question if the information is in the context, otherwise answer ‘Not found’".
-- **User**: This is a parameter that contains the query or queries that will be sent to the LLM.
+- **User**: This is a parameter that contains the query or queries that will be sent to the LLM. This parameter is used into templates.
 - **Query**: This is the question or task we want the LLM to answer or perform. For example: “What is the capital of France?” or “Describe this image”.
 - **Context**: This optional parameter contains the additional information we give to the LLM to enhance its performance.
 
@@ -162,12 +165,28 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
-## Calling LLMAPI
+### Reasoning Models
+
+Reasoning models represent a new category of specialized language models. They are designed to break down complex problems into smaller, manageable steps and solve them through explicit logical reasoning. Unlike general-purpose LLMs, which often generate direct answers, reasoning models are specifically trained to demonstrate their thought process in a structured manner.  
+
+Some models, such as `o1`, `o1-mini`, and `o3-mini`, do not explicitly display their reasoning phase, while others do. The reasoning phase illustrates how the model deconstructs a problem into smaller subproblems, explores different approaches, selects the most effective strategies, discards invalid ones, and ultimately determines the best answer.  
+
+This paradigm shift is significant because it changes how some parameters are passed to the model and how the model generates responses. Some tokens produced by reasoning models are reserved for the reasoning process itself. 
+
+In reasoning models like o1, the user can set a maximum token limit that includes both the tokens visible to the user and those used for reasoning using the `"max_completion_tokens"` parameter. This differs from the `"max_tokens"` parameter, which typically defines the total token limit for the entire request, including both the input (prompt) and the output (completion). 
+
+Additionally, certain models allow for configuring the `"reasoning effort"`, which specifies how many reasoning tokens should be generated before formulating a final response to the prompt.  
+
+![alt text](imgs/techhubgenaillmapi/max_completion_tokens.png)
+
+The previous image shows the difference between the `"max_completion_tokens"` and `"max_tokens"` parameters.
+
+## Calling LLM API
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
 ### Simple prediction call:
 
-/predict (POST) 
+Now, we are going to use the <i>/predict (POST)</i> method from the LLM API.
 
 A **simple call for a non-vision model** using persistence would be:
 
@@ -182,7 +201,7 @@ A **simple call for a non-vision model** using persistence would be:
     },
     "llm_metadata": {
         "max_input_tokens": 1000,
-        "model": "gpt-3.5-pool-techhub-europe"
+        "model": "techhubdev-pool-world-gpt-3.5-turbo-16k"
     },
     "platform_metadata": {
         "platform":"azure"
@@ -190,7 +209,7 @@ A **simple call for a non-vision model** using persistence would be:
 }
 ```
 
-As we are not using a “template_name” and we are calling a non-vision model (gpt3.5) the default template would be:
+As we are not using a “template_name” parameter and we are calling a non-vision model (gpt3.5), the default template would be **system_query**:
 
 ```json
 "system_query": {
@@ -199,7 +218,7 @@ As we are not using a “template_name” and we are calling a non-vision model 
 }
 ```
 
-We don’t need to include the param “system” in our request even if it’s needed in the template because there is a default value set as “You are a helpful assistant”.
+We don’t need to include the “system” paramenter in our request even if it’s needed in the template because there is a default value set as “You are a helpful assistant”.
 
 The response received is:
 
@@ -218,7 +237,7 @@ The response received is:
 }
 ```
 
-Let’s see how the same example would look for a **vision model** and let’s add the image of a cat in the query and another image in the persistence. A vision request is similar to a normal call as it only changes the type and format of the query (because vision models accepts normal and vision persistence). Let's take into account that if a vision model has a normal query and persistence, his behavior will be like a normal model (gpt4 or gpt4o). This queries are in a list format with the text (order given to the LLM) and the image associated to the task. Finally in vision models is mandatory to select the maximum tokens for the output (1000 by default):
+Let’s see how the same example would look for a **vision model** and let’s add the image of a cat in the query and another image in the persistence. A vision request is similar to a normal call as it only changes the type and format of the query (because vision models accept normal and vision persistence). Let's take into account that if a vision model has a normal query and persistence, its behavior will be like a normal model (gpt4 or gpt4o). These queries are in a list format with the text (order given to the LLM) and the image associated with the task. Finally in vision models it is mandatory to select the maximum tokens for the output (1000 by default):
 
 ```json
 {
@@ -262,7 +281,7 @@ Let’s see how the same example would look for a **vision model** and let’s a
 
 The content’s format of the user role in the persistence is exactly as the query format.
 
-Again, we haven’t included an specific template_name but in this case as we are calling a vision model with a vision query the default template_name would be:
+Again, we haven’t included an specific template_name but in this case as we are calling a vision model with a vision query the default template_name would be **system_query_v**:
 
 ```json
 "system_query_v": {
@@ -271,7 +290,7 @@ Again, we haven’t included an specific template_name but in this case as we ar
 }
 ```
 
-You can see that the difference between the templates is that for non-vision models the user query is a string while in vision models it is inside a list. This is important because if we are using a string query in a vision template (list query) or vice versa we will receive an error saying that the template query structure does not match the request query structure.
+You can see that the difference between the templates is that for non-vision models the user query is a string while in vision models it is inside a list. This is important because if we use a string query in a vision template (list query) or vice versa we will receive an error saying that the template query structure does not match the request query structure.
 
 The response for the last request looks like:
 
@@ -316,7 +335,7 @@ A **Dalle request** to the LLM Service would be:
 }
 ```
 
-In dall-e persistence, we always send the user role, because the assistant role is always the response of the LLM (b64 or url) and it´s not a meaningful content. In this case, the model will draw a house with a river close. The response would be:
+In dall-e persistence, we always send the user role, because the assistant role is always the response of the LLM (b64 or url) and it's not meaningful content. In this case, the model will draw a house with a river close. The response would be:
 
 ```json
 {
@@ -431,17 +450,17 @@ Vision query:
 ]
 ```
 
-A vision query is a list containing dictionaries with individual queries. This means that, unlike for non-vision models, a single request can contain several queries.
+A vision query is a list containing dictionaries with individual queries. This means that, unlike non-vision models, a single request can contain several queries.
 
 Parameters for vision queries:
 
-- Type (mandatory): The type of query we are going to send. This can be just text or an image in format url or base64. The options for this key are: text/image_url/image_b64
-  - Text: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the llm.
-  - Url: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
-  - Base64: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
-- Text (mandatory when type = text): The text to send to the llm.
-- Image (mandatory when type = image_url or image_b64): Dictionary with the image content ('url' for image_url and 'base64' for image_b64) and another optional parameters:
-  - detail (optional for gpt vision models): The quality of the image analysis. Possible values: 'low', 'high' and 'auto'. Default is 'auto'.
+* **Type** (mandatory): The type of query we are going to send. This can be just text or an image in format url or base64. The options for this key are: *text*, *image_url* or *image_b64*:
+  - *Text*: If the type is “text” this key is mandatory and it contains a string with the question/text to send to the LLM.
+  - *Url*: If the type is “image_url” this key is mandatory, and it contains a string with the url to the image.
+  - *Base64*: If the type is “image_b64” this key is mandatory and it contains a base64 string encoding a image.
+- **Text** (mandatory when type = text): The text to send to the LLM.
+- **Image** (mandatory when type = image_url or image_b64): Dictionary with the image content ('url' for image_url and 'base64' for image_b64) and another optional parameters:
+  - **Detail** (optional for gpt vision models): The quality of the image analysis. Possible values: *'low', 'high'* and *'auto'*. Default is *'auto'*.
 
 The following would be an example of a query containing the three types:
 
@@ -454,7 +473,7 @@ The following would be an example of a query containing the three types:
    {
      "type": "image_url",
      "image": {
-        "url": "https://imagelink.jpg"
+        "url": "https://cdn.britannica.com/16/75616-050-14C369D3/dolphins-mammals-fish-water.jpg"
      }
    },
    {
@@ -466,13 +485,13 @@ The following would be an example of a query containing the three types:
 ]
 ```
 
-*Images formats allowed: jpeg, png, gif and webp*
+Images formats allowed: *jpeg, png, gif* and *webp*.
 
 **Examples**
 
-- Non-vision model requests
+- Non-vision model requests.
 
-    A simple non-vision request with persistence and using the default system and template is:
+    A simple non-vision request with persistence. We are using the default values for system and template:
 
     ```json
     {
@@ -480,7 +499,7 @@ The following would be an example of a query containing the three types:
             "query": "What can I visit there?",
             "persistence": [
                 [{"role": "user", "content": "Where is the capital of France?"},
-                {"role": "assistant", "content": "Paris is located in the northern central part of France."}]
+                {"role": "assistant", "content": "Paris is located in the north-central part of France."}]
             ]
         },
         "llm_metadata": {
@@ -494,7 +513,7 @@ The following would be an example of a query containing the three types:
 
 - Vision model requests
 
-    Now let's recreate the former non-vision request but for a vision model and adding an image.
+    Now let's recreate the former non-vision request but for a vision model and adding an image:
 
     ```json
     {
@@ -581,11 +600,339 @@ The following would be an example of a query containing the three types:
 
     The parameter 'query' (in this example "Google Cloud") will be replaced in the template "$query".
 
+
+#### Tools
+
+Tools are external functions that enhance the model’s capabilities by enabling it to perform specialized tasks beyond its built-in knowledge and reasoning abilities.
+
+These predefined functions allow the model to interact with external data sources, execute computations, and carry out specific actions. Acting as a bridge between the model and real-world applications, tools facilitate dynamic responses based on real-time information.
+
+These tools should be defined by the user in the `llm_metadata` part of the call and it should follow a specific structure:
+- **tools**: List of tools provided by the user. Each tool must include the following properties:  
+  - **name**: The unique name of the tool.  
+  - **description**: A brief explanation of what the tool does.  
+  - **input_schema**: Defines the expected input format for the tool.  
+    - **type**: Specifies the type of input in (e.g., `object`).  
+    - **properties**: Describes the expected properties of the input. Each property may include:  
+      - **type**: The data type of the property (e.g., `string`, `integer`).  
+      - **description** (optional): A brief explanation of the property.  
+      - **enum** (optional): A predefined list of accepted values.  
+      - **items** (optional): If the type is `array`, defines the type of elements it contains.  
+    - **required**: A list of properties that are mandatory for the tool to function correctly.  
+
+An example of tool would be:
+````json
+"tools": [
+    {
+        "name": "print_sentiment_scores",
+        "description": "Prints the sentiment scores of a given text.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "positive_score": {"type": "number", "description": "The positive sentiment score, ranging from 0.0 to 1.0."},
+                "negative_score": {"type": "number", "description": "The negative sentiment score, ranging from 0.0 to 1.0."},
+                "neutral_score": {"type": "number", "description": "The neutral sentiment score, ranging from 0.0 to 1.0."}
+            },
+            "required": ["positive_score", "negative_score", "neutral_score"]
+        }
+    }
+]
+
+````
+In this example the model could use this tool to perform a sentiment analysis based on a given text from the query.
+
+The call body would look like this:
+
+````json
+{
+    "query_metadata": {
+        "query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+    },
+    "llm_metadata": {
+        "max_input_tokens": 1000,
+        "model": "techhubdev-SwedenCentral-gpt-4o-2024-08-06",
+        "tools": [
+            {
+                "name": "print_sentiment_scores",
+                "description": "Prints the sentiment scores of a given text.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "positive_score": {
+                            "type": "number",
+                            "description": "The positive sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "negative_score": {
+                            "type": "number",
+                            "description": "The negative sentiment score, ranging from 0.0 to 1.0."
+                        },
+                        "neutral_score": {
+                            "type": "number",
+                            "description": "The neutral sentiment score, ranging from 0.0 to 1.0."
+                        }
+                    },
+                    "required": [
+                        "positive_score",
+                        "negative_score",
+                        "neutral_score"
+                    ]
+                }
+            }
+        ]
+    },
+    "platform_metadata": {
+        "platform": "azure"
+    }
+}
+````
+
+And the call response would look like this:
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 137,
+        "n_tokens": 170,
+        "output_tokens": 33,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "call_YPRbPlvRiC5xCtDqGjDTC5Mp",
+                "inputs": {
+                    "negative_score": 0.8,
+                    "neutral_score": 0.1,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+When passing a tool to the model in a request, there are two possible outcomes based on the query:
+- **The model does not use the tool**: In this case, it provides a response based solely on the query input.
+- **The model uses the tool**: Depending on the specific model, the response may vary.
+
+When using **Nova** models a `thinking` parameter will be returned, where the model outlines the reasoning steps it will take. Additionally, the actual response is provided in the `answer` field.  
+
+If the necessary parameters for the tool are missing, the `thinking` field will contain a message from the model requesting the required inputs.
+
+Using the previous request as an example, the response from a Nova model would look like this:
+
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 519,
+        "n_tokens": 677,
+        "output_tokens": 158,
+        "query_tokens": 21,
+        "thinking": "I need to analyze the sentiment of the provided text and use the `print_sentiment_scores` tool to extract the sentiment scores for positive, negative, and neutral sentiments.",
+        "tool_calls": [
+            {
+                "id": "2d7855f5-d000-46fc-b982-4a5c36ff963b",
+                "inputs": {
+                    "negative_score": 0.3,
+                    "neutral_score": 0.2,
+                    "positive_score": 0.5
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+If the user requests to use a tool but does not provide the necessary parameters, the model will respond with a request for the missing information. The response would look something like this:  
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "I need a text to analyze. Could you please provide a text for which you want to get the sentiment scores?",
+        "input_tokens": 503,
+        "n_tokens": 602,
+        "output_tokens": 99,
+        "query_tokens": 5,
+        "thinking": "The User has asked to use the `print_sentiment_scores` tool, but has not provided any text to analyze. To use this tool, I need to first obtain the sentiment scores for a given text. Since the text is missing, I will ask the User to provide a text for sentiment analysis."
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+For **Claude** models, the reasoning process is included directly within the response. Therefore, both the reasoning steps and the final answer are unified in a single `answer` parameter.
+
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "To analyze the sentiment of this statement, we can use the print_sentiment_scores function. This will help us understand the overall sentiment expressed in your feedback about the product and customer service experience. Let's proceed with the sentiment analysis:",
+        "input_tokens": 491,
+        "n_tokens": 640,
+        "output_tokens": 149,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "toolu_bdrk_01NhGmhEGoHg38EznWYPJ1GL",
+                "inputs": {
+                    "negative_score": 0.6,
+                    "neutral_score": 0.3,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+If the necessary data is not provided, the response will appear in the `answer` parameter.
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "Certainly! I'd be happy to help you use the print_sentiment_scores function. However, to use this function effectively, we need to provide the required sentiment scores. The function requires three parameters:\n\n1. positive_score\n2. negative_score\n3. neutral_score\n\nThese scores should be numbers ranging from 0.0 to 1.0, representing the sentiment analysis of a given text. Since you haven't provided these scores, I'll need to ask you for them.\n\nCould you please provide the positive, negative, and neutral sentiment scores you'd like to print? For example:\n\n- Positive score: (a number between 0.0 and 1.0)\n- Negative score: (a number between 0.0 and 1.0)\n- Neutral score: (a number between 0.0 and 1.0)\n\nOnce you provide these scores, I'll be able to use the print_sentiment_scores function for you.",
+        "input_tokens": 476,
+        "n_tokens": 693,
+        "output_tokens": 217,
+        "query_tokens": 6
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+**GPT** models do not include any response regarding the model's reasoning or the steps it follows. As a result, the `answer` parameter is returned as an empty string:  
+````json
+"query": "The product was okay, but the customer service was terrible. I probably won't buy from them again."
+````
+````json
+{
+    "result": {
+        "answer": "",
+        "input_tokens": 137,
+        "n_tokens": 170,
+        "output_tokens": 33,
+        "query_tokens": 21,
+        "tool_calls": [
+            {
+                "id": "call_SHChCfGyZUjkwpMDmPa9lrz8",
+                "inputs": {
+                    "negative_score": 0.7,
+                    "neutral_score": 0.2,
+                    "positive_score": 0.1
+                },
+                "name": "print_sentiment_scores"
+            }
+        ]
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+
+However, just like Claude models, if the required information is not provided, the model's response will appear in the `answer` parameter:
+
+````json
+"query": "use print_sentiment_scores"
+````
+````json
+{
+    "result": {
+        "answer": "To use the `print_sentiment_scores` function, I need the sentiment scores for positive, negative, and neutral sentiments. Could you please provide these scores?",
+        "input_tokens": 123,
+        "logprobs": [],
+        "n_tokens": 156,
+        "output_tokens": 33,
+        "query_tokens": 6
+    },
+    "status": "finished",
+    "status_code": 200
+}
+````
+
+### Queue format:
+The LLMAPI component has another way to do the calling (by queue) which requires different parameters and added environment variables in order to do the call.
+
+When llmapi is working with queue format, the ordinary call (with 'query_metadata', 'model_metadata'...) must be written in a json file located in the cloud or in a local path, as the content of the call will be read from there.
+
+The parameters passed in the queue message must be:
+* <b>queue_metadata</b> (required):
+  * <b>input_file</b> (required): Location of the input file to read the call from.
+  * <b>output_file</b> (required): Location of the output file in which the output of the call will be written.
+  * <b>location_type</b> (required): Whether the files are be read from the cloud (storage) or local.
+* <b>headers</b> (required):
+  * <b>x-reporting</b> (required): url to report to 
+  * <b>x-tenant</b> (required): tenant where you have the deployed the module
+  * <b>x-department</b> (required): user identifier
+  * <b>x-limits</b> (optional): If not passed, the models limits will be consulted from the apigw (using the x-reporting url). If passed must be a formatted string, see the format in  [X-limits header](#x-limits-header). (<b>In this case</b> we recommend to not pass this parameter and use it with apigw consulting as last update will be used)
+
+A call example could be:
+
+```json
+{
+    "queue_metadata":{
+        "input_file": "route/to/input/call/file",
+        "output_file": "route/to/answer/output/file",
+        "location_type": "cloud"
+    },
+    "headers": {
+        "x-tenant": "develop",
+        "x-department": "main",
+        "x-reporting": "https://reportingurl.com",
+        "x-limits": "{\"llmapi/azure/gpt-3.5-turbo-16k/tokens\":{\"Limit\":400, \"Current\":450}}"
+    }
+}
+```
+
+In the output queue, this message will be written:
+```json
+{
+  "status": "finished",
+  "status_code": 200,
+  "result": "route/to/answer/output/file",
+  "tracking": {
+    "pipeline": [
+      {
+        "ts": 1737372355.587,
+        "step": "GENAI_LLMQUEUE",
+        "type": "INPUT"
+      },
+      {
+        "ts": 1737372372.202,
+        "step": "GENAI_LLMQUEUE",
+        "type": "OUTPUT"
+      }
+    ]
+  }
+}
+```
+In the result key, the path of the output file is written (if error, the error message will be written there too)
+Finally there are some mandatory environment variables when llmqueue is running:
+
+- QUEUE_MODE: To choose if the llmapi runs in queue or in API format
+- QUEUE_DELETE_ON_READ: True if delete messages when read wanted (recommended to True)
+- Q_GENAI_LLMQUEUE_INPUT: Name of the input queue
+- Q_GENAI_LLMQUEUE_OUTPUT: Name of the output queue
+
 ### Get models:
 
-/get_models (GET) 
+Now, we are going to use the <i>/get_models (GET)</i> method from the LLM API. 
 
-It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'azure' platform would be like this:
+It returns a list of available models filtered by model platform, pool, model_type or zone. A simple call to get all the available models on the 'Azure' platform would be like this:
 
 https://**\<deploymentdomain\>**/llm/get_models?platform=azure
 
@@ -622,18 +969,17 @@ The response would be a list of all the available models on the platform:
 
 #### Parameters
 
-The endpoint expects a get request with the following optional fields (one of them mandatory to do the call propertly) passed by parameters in the url :
+The endpoint expects a GET request with the following optional fields (one of them is mandatory to make the call propertly) passed by parameters in the URL:
 
-- model_type (optional): A string or list of strings representing the model type to filter.
-- pool (optional): A string or list of strings representing the model pools to filter.
-- platform (optional): A string or list of strings representing the platform to filter.
-- zone (optional): A string or list of strings representing the zone to filter.
+- **model_type** (optional): A string or list of strings representing the model type to filter.
+- **pool** (optional): A string or list of strings representing the model pools to filter.
+- **platform** (optional): A string or list of strings representing the platform to filter.
+- **zone** (optional): A string or list of strings representing the zone to filter.
 
 #### Examples
 
 Filter by model pool:
-- Request:
-https://**\<deploymentdomain\>**/llm/get_models?pool=gpt-3.5-pool-europe
+- Request: https://**\<deploymentdomain\>**/llm/get_models?pool=gpt-3.5-pool-europe
 - Response:
 ```json
 {
@@ -706,76 +1052,66 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 ### Endpoints
 
-- /predict (POST): This is the main endpoint, used to call the LLM.
-- /reloadconfig (GET): Used to reload the configuration readed from the files like the models and prompt templates availables. Returns the following json:
+- **/predict (POST)**: This is the main endpoint used to call the LLM.
 
-```json
-{
-    "status": "ok",
-    "status_code": 200
-}
-```
+- **/healthcheck (GET)**: Used to check if the component is available. Returns:
 
-- /healthcheck (GET): Used to check if the component is available. Returns:
+    ```json
+    {
+        "status": "Service available"
+    }
+    ```
 
-```json
-{
-    "status": "Service available"
-}
-```
+- **/get_models (GET)**: Used to get a list with the available models. In the URL we can send: model_type, pool, platform or zone. An example with platform could be the following: https://**\<deploymentdomain\>**/llm/get_models?platform=azure.
 
-- /get_models (GET): Used to get the list with the available models. In the url we can send the model_type, pool, platform or zone. An example with platform could be: https://**\<deploymentdomain\>**/llm/get_models?platform=azure
+    Response:
 
+    ```json
+    {
+        "models": {
+            "azure": [
+                "genai-gpt4o-EastUs",
+                "genai-gpt35-4k-france",
+                "genai-gpt35-16k-france",
+                "genai-gpt4-32k-france",
+                "genai-gpt4-8k-france",
+                "genai-gpt4o-Sweden",
+                "genai-gpt35-16k-sweden",
+                "genai-gpt35-4k-sweden",
+                "genai-gpt4-32k-sweden",
+                "genai-gpt4-8k-sweden",
+                "genai-gpt35-4k-westeurope"
+            ],
+            "pools": [
+                "gpt-3.5-pool-america",
+                "gpt-4-pool-ew-europe",
+                "gpt-3.5-16k-pool-europe",
+                "gpt-4-pool-europe",
+                "gpt-4o-pool-world",
+                "gpt-3.5-16k-pool-uk",
+                "gpt-4-32k-pool-ew-europe"
+            ]
+        }
+    }
+    ```
+
+- **/upload_prompt_template (PUT)**: Used to upload a prompt template JSON file to the cloud storage. The content value must be a JSON converted to a string.
+
+    ```json
+    {
+    "name": "example_template",
+    "content": "{\r\n    \"emptysystem_query\": {\r\n        \"system\": \"\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_query\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_context\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$context\"\r\n    },\r\n    \"fixed_system_query\": {\r\n        \"system\": \"You are a football player\",\r\n        \"user\": \"$query\"\r\n    }\r\n}"
+    }
+    ```
+
+- **/delete_prompt_template (DELETE)**: Used to delete a prompt template JSON file from cloud storage.
+
+https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
+
+- **/list_templates (GET)**: Used to get all the available templates.
 
 Response:
 
-```json
-{
-    "models": {
-        "azure": [
-            "genai-gpt4o-EastUs",
-            "genai-gpt35-4k-france",
-            "genai-gpt35-16k-france",
-            "genai-gpt4-32k-france",
-            "genai-gpt4-8k-france",
-            "genai-gpt4o-Sweden",
-            "genai-gpt35-16k-sweden",
-            "genai-gpt35-4k-sweden",
-            "genai-gpt4-32k-sweden",
-            "genai-gpt4-8k-sweden",
-            "genai-gpt35-4k-westeurope"
-        ],
-        "pools": [
-            "gpt-3.5-pool-america",
-            "gpt-4-pool-ew-europe",
-            "gpt-3.5-16k-pool-europe",
-            "gpt-4-pool-europe",
-            "gpt-4o-pool-world",
-            "gpt-3.5-16k-pool-uk",
-            "gpt-4-32k-pool-ew-europe"
-        ]
-    }
-}
-```
-
-- /upload_prompt_template (POST): Used to upload a prompt template json file to the cloud storage the content value must be a json converted to string.
-
-```json
-{
-  "name": "example_template",
-  "content": "{\r\n    \"emptysystem_query\": {\r\n        \"system\": \"\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_query\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$query\"\r\n    },\r\n    \"system_context\": {\r\n        \"system\": \"$system\",\r\n        \"user\": \"$context\"\r\n    },\r\n    \"fixed_system_query\": {\r\n        \"system\": \"You are a football player\",\r\n        \"user\": \"$query\"\r\n    }\r\n}"
-}
-```
-
-- /delete_prompt_template (POST): Used to delete a prompt template json file from cloud storage.
-
-```json
-{
-  "name": "example_template"
-}
-```
-
-- /list_templates (GET): Used to get all the available templates
 ```json
 {
     "status": "finished",
@@ -794,7 +1130,12 @@ Response:
 }
 ```
 
-- /get_template (GET): Used to get how is a template/prompt: https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query
+- **/get_template (GET)**: Used to get the content of a prompt template:
+  
+https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+
+Response:
+
 ```json
 {
     "template": {
@@ -804,9 +1145,9 @@ Response:
 }
 ```
 
-### Request and Response Formats for /predict
+### Request and Response Formats for <i>/predict</i>
 
-Requests structure must be as follows.
+The requests structure must be as follows:
 
 ```json
 {
@@ -836,7 +1177,7 @@ Requests structure must be as follows.
 }
 ```
 
-Response structure must be as follows
+The response structure must be as follows:
 
 ```json
 {
@@ -855,7 +1196,7 @@ Response structure must be as follows
 
 ### Parameters explanation
 
-- query_metadata (required):
+* query_metadata (required):
   - query (required): Question or task that you want to ask the model (now can be messages to read or images to analyze passed on a list in a new format).
   - context (optional): Context on which to base the question. By default, the model marks the field as empty.
   - system (optional): Variable for chat-based models. By default “You are a helpful assistant” is set.
@@ -864,35 +1205,42 @@ Response structure must be as follows
   - persistence (optional): List of previous interactions (user - system) to maintain a conversation with the model. If the chat is too long, the oldest ones will be deleted. If the number of tokens is exceeded, the persistence will be eliminated first and then the context if necessary. Passed in pairs of conversation.
   - lang (optional): String containing the language we want the LLM to respond. Options: es (spanish), en (english) or ja (japanese). It is necessary to previously define templates for each language. This means that we have a "base_template" without language specification (it will recognise the language from the query) and 3 more templates as "base_template_es", "base_template_en" and "base_template_ja". In this templates we will specify the language in the 'system' parameter.
 
-- llm_metadata (required):
-  - model (optional): Name of the model to be used on each platform, if not indicated “gpt-3.5-pool-europe” is used by default. These are the models available on each platform and their corresponding tokens limit.
+* llm_metadata (required):
+  - model (optional): Name of the model (or pool) to be used on each platform. These are the models available on each platform and their corresponding tokens limit. If this parameter is not provided, a default model is assigned based on the platform and the config file.
   - max_input_tokens (optional): Maximum number of tokens to be sent in the request. If the maximum size is exceeded, it will be cut from the context, leaving space for the model response.
   - max_tokens (optional): Maximum number of tokens to generate in the response.
   - temperature (optional): Temperature to use. Value between 0 and 2 (in Bedrock 0-1). Higher values like 0.8 make the output more random. Lower values like 0.2 make it more deterministic. By default 0.
-  - stop (optional): Up to 4 strings where the API will stop generating more tokens.
-  - **functions (*Warning!*):** Deprecated by OpenAI but still working. List of functions the model may generate JSON inputs for. Only in OpenAI and Azure.
-  - **function_call (*Warning!*):**  Deprecated by OpenAI but still working. Required if functions is sent. Possible values: “auto”, “none”, or {"name": "my_function"}. For full information: <https://platform.openai.com/docs/api-reference/chat/create#chat-create-function_call>
-  - seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
+  - stop (optional): Up to 4 strings where the API will stop generating more tokens.- seed: (only in GPT models) used to replicate the same output from the model (not always the same). This param is in beta  **_(only in azure platform)_**.
   - response_format (optional): The values available to manage the output format of the image generation models are [url, bs64_json] and for text generation models (only avaliable in selected ones by Azure OpenAI) is [json_object].
   - For image generation:
-    - quality (optional): quality of the output image [“standard”, “hd”] default as standard
-    - size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
-    - style (optional): Output style of the image [vivid, natural], default as vivid
+    + quality (optional): quality of the output image [“standard”, “hd”] default as standard
+    + size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
+    + style (optional): Output style of the image [vivid, natural], default as vivid
+  - tools(optional): List of tools defined by the user that could be used by the model (models such as DALLE ar not able to use tools)
 
-- platform_metadata (required):
+* platform_metadata (required):
   - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
   - timeout (optional): Maximum time to response. By default is 30s if this value is not passed.
+  - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
+
+When using reasoning models, it is important to consider the different `llm_metadata` parameters:
+* llm_metadata: Data related to the language model:
+  - model: The reasoning model that will be used.
+  - max_input_tokens (optional): The maximum number of tokens used in the request.
+  - max_completion_tokens (optional): In reasoning models, the `max_tokens` parameter is no longer supported. Instead, `max_completion_tokens` defines the maximum number of tokens the model can generate, including both the tokens visible to the user and the tokens used for reasoning.
+  - reasoning_effort (optional): This parameter guides the model on how many reasoning tokens it should generate before producing a response to the prompt. It can be set to `[low, medium, or high]`. The higher the effort setting, the longer the model will take to process the request, generally resulting in a larger number of reasoning tokens. By default, it is set to `medium`. (Some models, such as `o1-mini`, do not yet support this parameter.)
+  - tools(optional): List of tools defined by the user that could be used by the model
 
 Specifically for DALLE the request parameters are:
 
-- query_metadata: Data related to the query:
+* query_metadata: Data related to the query:
   - query: Data related with the photo to generate
   - template_name: Name of the template that will be used
   - template: Template that will be used
   - lang: Language of the query
   - persistence: memory of the chat with chatgpt
 
-- llm_metadata: Data related to the language model
+* llm_metadata: Data related to the language model:
   - model: Model used (can be a pool),
   - max_input_tokens: Max number of tokens used in the request
   - response_format: Output format of the image [url, bs64_json]
@@ -901,9 +1249,10 @@ Specifically for DALLE the request parameters are:
   - style: Output style of the image [vivid, natural], default as vivid,
   - user: Helps Openai tracking the user
 
-- platform_metadata: Data related to the platform where the language model stays
-  - platform: Name of the platform that will be used [azure],
+* platform_metadata: Data related to the platform where the language model stays
+  - platform: Name of the platform that will be used [azure, bedrock, openai]
   - timeout: Maximum waiting time of the request default as 60
+  - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
 
 ### Persistence format
 Persistence is a list of previous interactions in pairs (user - assistant) written along the conversation with the model. If the chat is too long (number of tokens exceeded), the oldest ones will be deleted. The **_context_** parameter, has priority over this one in order to fit the number of tokens for the model. In images, each model has a maximum (GPT's=10, Claude3=20). An example of basic persistence would be:
@@ -940,6 +1289,7 @@ Furthermore, an example of persistence incluiding images in url format (the imag
   ...
 ]
 ```
+<br/>
 
 ### Error Handling
 
@@ -980,6 +1330,7 @@ Furthermore, an example of persistence incluiding images in url format (the imag
 |Detail parameter not allowed in Claude vision models|In the ‘image’ diccionary the key ‘detail’ is only accepted for GPT-v models.|
 |Internal error, query is mandatory|Key ‘query’ is mandatory in the request.|
 |<p>Model: {wrong\_model} model</p><p>is not supported in platform azure.</p>|Incorrect or not supported model for chosen platform.|
+| Error parsing JSON: '<error>' in parameter '<parameter>' for value '<value>' | Error parsing the input |
 
 
 ## Use Cases
@@ -1015,57 +1366,58 @@ The template used in the example would be as follows:
     "user": "Context: $context \n===\nTask: Answer the question if the information is in the previous context otherwise answer 'Not found'\n===\nQuestion:\n$query \n===\nAnswer:"
 }
 ```
+<br/>
 
 ### Summarization
 
 - How to set up and use summarization
 
-For use cases in which we want the summary of a certain text you can create a template specifying the task of summarization of the query. You can define how long the summary should be, the language or if it should be written in a formal tone.
+    For use cases in which we want the summary of a certain text you can create a template specifying the task of summarization of the query. You can define how long the summary should be, the language or if it should be written in a formal tone.
 
 - Example configurations
 
-```json
-{
-    "query_metadata": {
-        "query": "NTT Data is a Japanese information technology services and consulting company. It offers a wide range of services, including software development, infrastructure management, cloud services, data analytics, security services, and business consulting. NTT Data is one of the world's largest IT services companies, with a presence in more than 50 countries and a broad customer base in various sectors, including finance, healthcare, government, manufacturing, and telecommunications.",
-        "template_name": "system_query_summarization"
-    },
-    "llm_metadata": {
-        "model": "gpt-3.5-pool-techhub-europe",
-        "temperature": 0
-    },
-    "platform_metadata": {
-        "platform":"azure",
-        "timeout":30
+    ```json
+    {
+        "query_metadata": {
+            "query": "NTT Data is a Japanese information technology services and consulting company. It offers a wide range of services, including software development, infrastructure management, cloud services, data analytics, security services, and business consulting. NTT Data is one of the world's largest IT services companies, with a presence in more than 50 countries and a broad customer base in various sectors, including finance, healthcare, government, manufacturing, and telecommunications.",
+            "template_name": "system_query_summarization"
+        },
+        "llm_metadata": {
+            "model": "gpt-3.5-pool-techhub-europe",
+            "temperature": 0
+        },
+        "platform_metadata": {
+            "platform":"azure",
+            "timeout":30
+        }
     }
-}
-```
+    ```
 
-The template used in the example would be as follows:
+    The template used in the example would be as follows:
 
-```json
-"system_query_summarization": {
-    "system":  "You are a helpful assistant.",
-    "user":  "Write a 10-20 words summary about the following text. Text: '$query'."
-}
-```
+    ```json
+    "system_query_summarization": {
+        "system":  "You are a helpful assistant.",
+        "user":  "Write a 10-20 words summary about the following text. Text: '$query'."
+    }
+    ```
 
-And the answer is:
+    And the answer is:
 
-```json
-{
-    "status": "finished",
-    "result": {
-        "answer": "NTT Data is a global IT services company offering software development, cloud services, data analytics, and more.",
-        "logprobs": [],
-        "n_tokens": 139,
-        "query_tokens": 100,
-        "input_tokens": 117,
-        "output_tokens": 22
-    },
-    "status_code": 200
-}
-```
+    ```json
+    {
+        "status": "finished",
+        "result": {
+            "answer": "NTT Data is a global IT services company offering software development, cloud services, data analytics, and more.",
+            "logprobs": [],
+            "n_tokens": 139,
+            "query_tokens": 100,
+            "input_tokens": 117,
+            "output_tokens": 22
+        },
+        "status_code": 200
+    }
+    ```
 
 ### Custom Use Cases
 
@@ -1142,7 +1494,7 @@ Some instructions to create templates to obtain better results from the LLM:
 4. In parallel, test out different foundation models and model providers using Vellum’s Sandbox. Maybe Claude or PaLM does better than GPT-4 for your use case.
 5. If you would like additional reasoning or explanation, use a more prescriptive approach:
 
-    Add detailed step by step instructions to the end of the prompt and ask the LLM to walk though those steps when creating it’s answer. e.g. (1) … (2) … (3) … … (6) Output a JSON with the following typescript schema. This is convenient because it’s simple to parse out the JSON blob from the LLM output. However this causes more tokens to be generated so is slower and costs more, but it’s not nearly as expensive and slow as chaining multiple calls.
+    Add detailed step by step instructions to the end of the prompt and ask the LLM to walk though those steps when creating it’s answer. e.g. (1) … (2) … (3) … … (6) Output a JSON with the following typescript schema. This is convenient because it’s simple to parse out the JSON blob from the LLM output. However this causes more tokens to be generated so is slower and costs more, but it’s not nearly as expensive and slow as chaining multiple calls.  
 
 ## Configuration
 
@@ -1150,7 +1502,12 @@ Some instructions to create templates to obtain better results from the LLM:
 
 The files-secrets architecture is:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v4-config.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v1.4.0-config.png)
+
+Also in case the model param is not provided, the files-secretes architecture would look like this:
+
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-flow-llmapi-config-without-model-param.png)
+
 #### Secrets
 
 All necessary credentials for genai-inforetrieval are stored in secrets for security reasons. These secrets are JSON files that must be located under a common path defined by the [environment variable](#environment-variables) 'SECRETS_PATH'; the default path is "secrets/". Within this secrets folder, each secret must be placed in a specific subfolder (these folder names are predefined). This component requires 3 different secrets:
@@ -1196,7 +1553,7 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 
 #### Configuration files
 
-LLMAPI needs 2 config files to run.
+LLMAPI needs 3 config files to run.
 
 - **`Prompts templates`**: Stored in "src/LLM/prompts", in this directory we store the files containing the prompt templates like the following. When LLMAPI is initialized, reads all the files in the directory and loads to memory all the templates, removing duplicates. The name refered in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in json format and that contains query on its name.
 
@@ -1251,7 +1608,6 @@ LLMAPI needs 2 config files to run.
                     "model_type": "claude-v2.1",
                     "max_input_tokens": 200000,
                     "zone": "us-east-1",
-                    "message": "chatClaude",
                     "api_version": "bedrock-2023-05-31",
                     "model_pool": [
                         "claude-v2.1-pool-america",
@@ -1264,8 +1620,8 @@ LLMAPI needs 2 config files to run.
                     "model": "genai-gpt4o-EastUs",
                     "model_type": "gpt-4o",
                     "max_input_tokens": 128000,
+                    "max_img_size_mb": 20.0,
                     "zone": "genAI-EastUs",
-                    "message": "chatGPT-v",
                     "api_version": "2024-02-15-preview",
                     "model_pool": [
                         "gpt-4o-pool-techhub-world"
@@ -1275,7 +1631,6 @@ LLMAPI needs 2 config files to run.
                     "model_type": "gpt-3.5-turbo",
                     "max_input_tokens": 4096,
                     "zone": "genAI-WestEurope",
-                    "message": "chatGPT",
                     "api_version": "2024-02-15-preview",
                     "model_pool": [
                         "gpt-3.5-pool-ew-europe",
@@ -1286,7 +1641,6 @@ LLMAPI needs 2 config files to run.
                     "model_type": "dalle3",
                     "max_input_tokens": 4000,
                     "zone": "genAI-Sweden",
-                    "message": "dalle",
                     "api_version": "2023-12-01-preview",
                     "model_pool": ["dalle3-pool-techhub-world"]
                 }
@@ -1295,25 +1649,35 @@ LLMAPI needs 2 config files to run.
     }
     ```
 - Each parameter for a model configuration is:
-    - model: name of the model. In **azure** platform will be the deployment name of the model and in **bedrock** a name decided by the user (used to distinguish between same models in different region).
-    - model_id: as in **bedrock** platform there are no deployment names, each model is defined by the model_id (equal in all models from the same type) and the zone where the model has been deployed
-    - model_type: defined by the user (same models must have the same model_type)
-    - max_input_tokens: maximum number of tokens accepted by the model as input
-    - zone: place where the model has been deployed (used to get the api-keys)
-    - message: type of message that will be used in order to adapt the input to the model requirements. It could be:
-        - chatClaude: Claude models with text capabilities
-        - chatClaude3: Claude models with text and vision capabilities
-        - chatGPT: ChatGPT models with text capabilities
-        - chatGPT-v: ChatGPT with text and vision capabilities
-        - dalle3: Dall-E 3 models (image generation)
-    - api_version: version of the api (model) that is being used
-    - model_pool: pools the model belongs to
+    - <b>model:</b> name of the model. In <b>azure</b> platform will be the deployment name of the model and in <b>bedrock</b> a name decided by the user (used to distinguish between same models in different region).
+    - <b>model_id:</b> as in <b>bedrock</b> platform there are no deployment names, each model is defined by the model_id (equal in all models from the same type) and the zone where the model has been deployed
+    - <b>model_type:</b> defined by the user (same models must have the same model_type)
+    - <b>max_input_tokens:</b> maximum number of tokens accepted by the model as input
+    - <b>max_img_size_mb:</b><i> (only in <b>vision</b> models)</i> maximum size in megabytes that the model accepts per one image
+    - <b>zone:</b> place where the model has been deployed (used to get the api-keys)
+    - <b>api_version:</b> version of the api (model) that is being used
+    - <b>model_pool:</b> pools the model belongs to
+
+- **`default_llm_models.json`**: Stored in src/LLM/conf, this file contains the default models assigned based on the platform when the model parameter is not specified in the process call. The structure is as follows:
+
+  ```json
+  {
+    "azure":"techhub-pool-world-gpt-4o",
+    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0"
+  }
+  ```
     
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v5-config-file-uses.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
+
+Another example, where the model parameter is not provided and the default Azure model gpt-3.5-pool-europe is used, is:
+
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-config-file-uses-without-model-param.png)
+
+In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as the default model for azure. This means that whenever the model parameter is not explicitly provided during the process call, the system will automatically select gpt-3.5-pool-europe as the default option for handling requests on the Azure platform.  This can be changed modifying the **`default_llm_models.json`** file
 
 ### Environment Variables
 - AWS_ACCESS_KEY: AWS Public access key to the project. (if not in secrets)
@@ -1322,8 +1686,14 @@ In the case that there is no template name, each generative model has a default 
 - PROVIDER: Cloud service to use to load the configuration files (aws or azure).
 - STORAGE_BACKEND: Tenant backend name. Example: "dev-backend".
 - SECRETS_PATH: Path to the secrets folder in the pod,
+- Optional:
+    - TENANT: Tenant where the process is running.
+    - REDIS_DB_SESSION: Session database number.
+    - REDIS_HOST: Redis host url.
+    - REDIS_PORT: Redis port, usually 6379.
+    - REDIS_PASSWORD: Redis authentication password.
 
-*When the provider is "azure", the aws variables can be empty and the same when using "aws" with the azure variable*
+*When the provider is **Azure**, the AWS variables can be empty, and the same applies when using **AWS** with the Azure variables.*
 
 ### X-limits header
 This header is for LLM control purposes, but can be use as a good feature for debugging. Like has been explained above, you can limit the tokens usage of a model just by passing this header with the following structure:
@@ -1365,11 +1735,11 @@ This class manages the main flow of the component by parsing the input, calling 
 
 ![alt text](imgs/techhubgenaillmapi/llmdeployment.png)
 
-**loaders.py (`ManagerLoader`, `DocumentLoader`, `LLMStorageLoader`)**
+**storage_manager.py (`ManagerStorage`, `BaseStoragemanager`, `LLMStorageManager`)**
 
-This class is responsible of loading from cloud storage all files associated with the llmapi process; this includes the [configuration files](#configuration-files) like models and templates/prompts.
+This class is responsible of managing the operations with all files associated with the llmapi process in the cloud storage; this includes the [configuration files](#configuration-files) like models and templates/prompts.
 
-![alt text](imgs/techhubgenaillmapi/loaders.png)
+![alt text](imgs/techhubgenaillmapi/storage_manager.png)
 
 **endpoints.py (`ManagerPlatform`, `Platform`, `ImplementedPlatforms`)**
 
@@ -1402,7 +1772,7 @@ When the model has been adapted and with the number of tokens of each message (i
 ![alt text](imgs/techhubgenaillmapi/limiters.png)
 
 ### Flow
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v4-decision-flow.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
@@ -1416,7 +1786,7 @@ In the following diagram flows, each color will represent the following files:
 
 ![alt text](imgs/techhubgenaillmapi/flow2.png)
 
-3. Once the platform has been initialized the model is next, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
+3. When a message is received, the first thing done is to adapt it if is a queue_message (and the 'QUEUE_MODE') environment variable is set to 'True'. Then the message is parsed and once the platform has been initialized the model is the following, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
 
 ![alt text](imgs/techhubgenaillmapi/flow3.png)
 
@@ -1425,9 +1795,9 @@ In the following diagram flows, each color will represent the following files:
 ![alt text](imgs/techhubgenaillmapi/flow4.png)
 
 5. To set the message properly, these are the things to keep in mind:
-    - To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
-    - The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
-    - The message must be adapted to the specific LLM so the adapters class is in charge of it.
+    * To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
+    * The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
+    * The message must be adapted to the specific LLM so the adapters class is in charge of it.
 
 ![alt text](imgs/techhubgenaillmapi/flow5.png)
 
@@ -1442,21 +1812,21 @@ In the following diagram flows, each color will represent the following files:
 
 Generative AI prompts have the following components:
 
-- **System Role**: The "system role" in a prompt refers to the role or function that the system plays in a conversation or interaction. In the context of a prompt, the system can act as a virtual assistant, chatbot, or any other type of AI agent designed to answer questions, provide information, or perform specific tasks.
-- **Context**: Context in a prompt refers to relevant, prior information that is considered when generating a response or performing an action. Context can include details about the previous conversation, the user's previous questions, information provided by the user, the current status of the interaction, and any other elements that are relevant to understanding and properly responding to the user's request.
-- **User query or task**: The user query or task in a prompt refers to the specific request or action that the user performs when interacting with the system. It can be a question, a request for information, a request to perform a task, or any other action that the user wants the system to perform.
-- **Instructions**: Instructions in a prompt refer to the prompts or guidelines that are provided to the system to guide its behavior and generate consistent and relevant responses. These instructions may include examples of dialogues, descriptions of the task to be performed, guidelines on tone or style of response, and any other information that helps the system to properly understand and respond to user queries.
-- **Constraints or rules**: Constraints or rules in a prompt refer to the specific limitations or conditions that are set to guide the behavior of the system during the interaction. These restrictions may include grammar rules, response length restrictions, prohibitions on certain topics, or inappropriate language, among others. Constraints or rules help ensure that the responses generated by the system are consistent, relevant, and meet certain predefined criteria. These constraints are important to maintain the quality and adequacy of the system's responses.
+* **System Role**: The "system role" in a prompt refers to the role or function that the system plays in a conversation or interaction. In the context of a prompt, the system can act as a virtual assistant, chatbot, or any other type of AI agent designed to answer questions, provide information, or perform specific tasks.
+* **Context**: Context in a prompt refers to relevant, prior information that is considered when generating a response or performing an action. Context can include details about the previous conversation, the user's previous questions, information provided by the user, the current status of the interaction, and any other elements that are relevant to understanding and properly responding to the user's request.
+* **User query or task**: The user query or task in a prompt refers to the specific request or action that the user performs when interacting with the system. It can be a question, a request for information, a request to perform a task, or any other action that the user wants the system to perform.
+* **Instructions**: Instructions in a prompt refer to the prompts or guidelines that are provided to the system to guide its behavior and generate consistent and relevant responses. These instructions may include examples of dialogues, descriptions of the task to be performed, guidelines on tone or style of response, and any other information that helps the system to properly understand and respond to user queries.
+* **Constraints or rules**: Constraints or rules in a prompt refer to the specific limitations or conditions that are set to guide the behavior of the system during the interaction. These restrictions may include grammar rules, response length restrictions, prohibitions on certain topics, or inappropriate language, among others. Constraints or rules help ensure that the responses generated by the system are consistent, relevant, and meet certain predefined criteria. These constraints are important to maintain the quality and adequacy of the system's responses.
 
 ### Prompting Tips
 
 Let’s take a look to several important practices to follow when writing prompts, such as:  
 
-- Keeping the prompt concise and clear, using simple and direct language, and avoiding unnecessary or redundant information. . In the same way, the instructions and rules should be neither general nor ambiguous, as this can cause the system to behave erratically or fail to meet all the requirements that are defined for it.
+- Keeping the prompt concise and clear, using simple and direct language, and avoiding unnecessary or redundant information. In the same way, the instructions and rules should be neither general nor ambiguous, as this can cause the system to behave erratically or fail to meet all the requirements that are defined for it.
 - Providing the LLM with sufficient and relevant context, using keywords, questions, instructions, examples, constraints, templates, and other cues that guide the LLM to generate the desired response.
 - Splitting the prompt into smaller sub-prompts, using separators, markers, or headings, and generating the text incrementally, rather than expecting the LLM to produce a long and complex text from a single prompt.
 - It is important that sentences are short and written in different lines. The rules should be clear, using the appropriate verbs for each of them (according to obligation, recommendation, etc.).
-- To "force" the system to rely on the information provided in the context we usually add the following line to the system prompt: "Answer the query if the information is in context, otherwise answer 'Not found'"
+- To "force" the system to rely on the information provided in the context we usually add the following line to the system prompt: "Answer the query if the information is in context, otherwise answer 'Not found'".
 - It's good to highlight with separators (\n #### ====) to differentiate the context from the rest of the prompt elements.
 - Evaluating and refining the prompt iteratively, using metrics, feedback, and samples, and testing the prompt with different LLMs, domains, and scenarios.
 
@@ -1497,6 +1867,7 @@ An example of the user prompt:
 ```json
 custom_user_prompt = "Here is some context that my friend sent me by linkedin the other day. {context} Now answer this question. {question}"
 ```
+<br/>
 
 ### Language and Model Specific Tips
 
@@ -1513,21 +1884,21 @@ The base action template, indicates the action without saying anything about the
 In the rest of the languages, the first approach is the following:
 
 - Add the language in the “system” key associated to the task, for the task of reformulate for example:  
-"system_prompt_reformulate": reformulate the question provided.
-"system_prompt_reformulate_ja": reformulate the question provided in Japanese
+**system_prompt_reformulate**: reformulate the question provided;
+**system_prompt_reformulate_ja**: reformulate the question provided in Japanese
 - In the part of the “user” key, write in the language that you want to get the response.
 
-With the release of Claude3, the API for Claude has been updated and the templates used for GPT’s can be used too for this models (deprecating the old templates in one string)
+With the release of Claude3, the API for Claude has been updated and the templates used for GPT’s can be used too for this models (deprecating the old templates in one string).
 
 A. NON-VISION
 
-Then, there are a few tips that can be used to improve prompts::
+Then, there are a few tips that can be used to improve prompts:
 
-- Force a response in JSON or CSV
+- Force a response in JSON or CSV.
 - Separate tasks and information with separators such as “###”, “$$$”, “\n\n”…
-- Use the context field
-- Include “Task: “in query field and specify the role
-- Set temperature to zero to obtain more deterministic and precise answer
+- Use the context field.
+- Include “Task: “in query field and specify the role.
+- Set temperature to zero to obtain more deterministic and precise answer.
 - Iterate on prompts based on model’s responses.
 
 B. VISION

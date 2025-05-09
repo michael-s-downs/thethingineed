@@ -9,12 +9,17 @@ trigger:
     include:
     - 'services/techhubelasticsearch/'
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
+- group: Variables para CI
 - name: 'projectlocation'
   value: '$(Agent.BuildDirectory)/s'
+- name: 'folderName'
+  value: techhubelasticsearch
+- name: 'targetFolderName'
+  value: 'elasticsearch'
+
+pool:
+  vmImage: '$(vmImageName)'
 
 stages:
   - stage: Elasticsearch
@@ -23,12 +28,12 @@ stages:
         steps:
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(System.DefaultWorkingDirectory)/services/techhubelasticsearch/'
+            SourceFolder: '$(System.DefaultWorkingDirectory)/services/$(folderName)/'
             Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/$(targetFolderName)'
             CleanTargetFolder: true
         - task: PublishBuildArtifacts@1
           inputs:
-            PathtoPublish: '$(Build.ArtifactStagingDirectory)/elasticsearch'
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(targetFolderName)'
             ArtifactName: 'ElasticSearch'
             publishLocation: 'Container'       

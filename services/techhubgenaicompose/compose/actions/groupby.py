@@ -23,7 +23,7 @@ class GroupByMethod(ABC):
 
     """
 
-    TYPE: str = None
+    TYPE: str
 
     def __init__(self, streamlist: list) -> None:
         """Instantiate a GroupByMethod object.
@@ -64,7 +64,7 @@ class GroupByDoc(GroupByMethod):
 
     TYPE = "docscore"
 
-    def process(self, params):
+    def process(self, params = {}):
         """Process the streamlist given the method.
 
         This method processes the streamlist based on the specified parameters.
@@ -133,7 +133,7 @@ class GroupByDate(GroupByMethod):
 
     TYPE = "date"
 
-    def process(self, params):
+    def process(self, params = {}):
         """Process the streamlist given the method"""
 
         if params:
@@ -170,7 +170,7 @@ class GroupByFactory:
         Args:
             groupby_type (str): one of the available merges
         """
-        self.groupbymethod: GroupByMethod = None
+        self.groupbymethod = None
         for groupbymethod in self.GROUPBY:
             if groupbymethod.TYPE == groupby_type:
                 self.groupbymethod = groupbymethod

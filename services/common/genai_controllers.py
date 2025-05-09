@@ -161,6 +161,15 @@ def download_file(origin: Union[str, List[str]], file: Tuple[str, str]):
     sc.download_file(origin, remotefile, localfile)
 
 
+def download_batch_files_async(origin: Union[str, List[str]], files: list, local_directory: str):
+    """ Download files
+
+    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController origin
+    :param files: <List[tuple(str, str)]> remote_filename and local_filename
+    """
+    sc.download_batch_files_async(origin, files, local_directory)
+
+
 def download_directory(origin: Union[str, List[str]], path: str):
     """ Download directory
 
@@ -188,6 +197,16 @@ def upload_files(origin: Union[str, List[str]], files: list):
     """
     for remotefile, localfile in files:
         sc.upload_file(origin, localfile, remotefile)
+
+
+def upload_batch_files_async(origin: Union[str, List[str]], files: list, remote_directory: str):
+    """ Upload a batch of files to remote storage asynchronously.
+
+    :param origin: <tuple(str, str)> uhis_sdk_service.StorageController origin
+    :param files: <list> List of local file paths to upload
+    :param remote_directory: <str> Remote directory to upload the files to
+    """
+    sc.upload_batch_files_async(origin, files, remote_directory)
 
 
 def upload_object(origin: Union[str, List[str]], obj: Union[bytes, str], file: str):
@@ -276,7 +295,7 @@ def get_images_from_file(filename: str, num_pag_ini: int, page_limit: int) -> li
     return fc.extract_images(filename, num_pag_ini=num_pag_ini, page_limit=page_limit)
 
 
-def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: bool, do_lines_ocr: bool, bytes_mode: bool = False) -> Tuple[list, list, list, list, list, list]:
+def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: bool, do_lines_ocr: bool, bytes_mode: bool = False, **kwargs) -> Tuple[list, list, list, list, list, list]:
     """ Extract all files with OCR
 
     :param files: <list> List of files to extract
@@ -288,7 +307,7 @@ def extract_ocr_files(files: list, origin: str, do_cells_ocr: bool, do_tables: b
     :return: <tuple> Files, blocks, paragraphs, words, tables, lines
     """
 
-    texts, cells, paragraphs, words, tables, lines = fc.extract_multiple_text(files, ocr_origin=origin, do_cells=do_cells_ocr, extract_tables=do_tables, do_lines=do_lines_ocr, bytes_mode=bytes_mode)
+    texts, cells, paragraphs, words, tables, lines = fc.extract_multiple_text(files, ocr_origin=origin, do_cells=do_cells_ocr, extract_tables=do_tables, do_lines=do_lines_ocr, bytes_mode=bytes_mode, **kwargs)
     return texts, cells, paragraphs, words, tables, lines
 
 

@@ -16,10 +16,11 @@ from common.utils import load_secrets
 from common.genai_json_parser import get_exc_info, get_specific, get_dataset_status_key
 from common.genai_status_control import update_full_status
 from common.status_codes import PROCESS_FINISHED, ERROR
-from common.indexing.connectors import ManagerConnector
+from common.ir.connectors import ManagerConnector
 from common.storage_manager import ManagerStorage
-from common.indexing.vector_storages import ManagerVectorDB
-from common.indexing.parsers import ManagerParser
+from common.ir.parsers import ManagerParser
+
+from vector_storages import ManagerVectorDB
 
 
 class InfoIndexationDeployment(BaseDeployment):
@@ -85,7 +86,7 @@ class InfoIndexationDeployment(BaseDeployment):
             self.connector.connect()
 
             # check if the models used are the same
-            self.connector.assert_correct_index_conf(input_object.index, self.all_models, input_object.models)
+            self.connector.assert_correct_index_conf(input_object.index, input_object.chunking_method['method'], self.all_models, input_object.models)
             vector_db = ManagerVectorDB.get_vector_database({'type': "LlamaIndex", 'connector': self.connector,
                                                              'workspace': self.workspace, 'origin': self.origin,
                                                              'aws_credentials': self.aws_credentials})

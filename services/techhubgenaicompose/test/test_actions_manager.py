@@ -1,5 +1,8 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from unittest.mock import MagicMock, patch
 from actionsmanager import ActionsManager
@@ -13,17 +16,15 @@ def sample_compose_confs():
             "action": "retrieve",
             "action_params": {
                 "params": {
-                    "generic": {
-                        "index_conf": {
-                            "add_highlights": False,
-                            "index": "$index",
-                            "query": "$query",
-                            "task": "retrieve",
-                            "top_k": 5,
-                            "filters": "$filters",
-                        },
-                        "process_type": "ir_retrieve",
+                    "indexation_conf": {
+                        "add_highlights": False,
+                        "index": "$index",
+                        "query": "$query",
+                        "task": "retrieve",
+                        "top_k": 5,
+                        "filters": "$filters",
                     },
+                    "process_type": "ir_retrieve",
                     "headers_config": {
                         "x-reporting": "",
                         "x-department": "main",
@@ -117,10 +118,8 @@ def test_safe_substitute(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "query": "$query"
-                    }
+                "indexation_conf": {
+                    "query": "$query"
                 }
             }
         }
@@ -130,7 +129,7 @@ def test_safe_substitute(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "What does the sort action do?"
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["query"] == "What does the sort action do?"
 
 
 def test_safe_substitute_params_not_sub(manager):
@@ -139,11 +138,9 @@ def test_safe_substitute_params_not_sub(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
-                        "query": "$query",
-                        "error_param": "'$error_param'"
-                    }
+                "indexation_conf": {
+                    "query": "$query",
+                    "error_param": "'$error_param'"
                 }
             }
         }
@@ -162,11 +159,9 @@ def test_safe_substitute_incorrect_json(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": "$invalid_key"
                     }
-                }
             }
         }
     }
@@ -183,12 +178,10 @@ def test_preprocess_query_success(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": "test query",
                         "top_k": 5  
                     }
-                }
             }
         }
     }
@@ -196,7 +189,7 @@ def test_preprocess_query_success(manager):
 
     processed_template = manager.preprocess_query(template_dict, template_params)
 
-    assert processed_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "updated search topic"
+    assert processed_template["action_params"]["params"]["indexation_conf"]["query"] == "updated search topic"
 
 def test_preprocess_query_success_basedon(manager):
     """Test if preprocess_query correctly modifies the action params"""
@@ -204,12 +197,10 @@ def test_preprocess_query_success_basedon(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": "test query based on topic test",
                         "top_k": 5  
                     }
-                }
             }
         }
     }
@@ -217,7 +208,7 @@ def test_preprocess_query_success_basedon(manager):
 
     processed_template = manager.preprocess_query(template_dict, template_params)
 
-    assert processed_template["action_params"]["params"]["generic"]["index_conf"]["query"] == "topic test"
+    assert processed_template["action_params"]["params"]["indexation_conf"]["query"] == "topic test"
 
 
 def test_check_llm_action_params_with_valid_template(manager):
@@ -322,11 +313,9 @@ def test_parse_input_with_non_retrieve_action_set_default(manager):
             "action": "non_retrieve_action",
             "action_params": {
                 "params": {
-                    "generic": {
-                        "index_conf": {
+                        "indexation_conf": {
                             "query": "$query"
                         }
-                    }
                 }
             }
         }
@@ -346,11 +335,9 @@ def test_parse_input_with_non_retrieve_action(manager):
             "action": "non_retrieve_action",
             "action_params": {
                 "params": {
-                    "generic": {
-                        "index_conf": {
+                        "indexation_conf": {
                             "query": "$query"
                         }
-                    }
                 }
             }
         }
@@ -367,12 +354,10 @@ def test_safe_substitute_value_none(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": "$query"
                     }
                 }
-            }
         }
     }
 
@@ -380,7 +365,7 @@ def test_safe_substitute_value_none(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == ''
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["query"] == ''
 
 
 def test_safe_substitute_value_bool(manager):
@@ -389,11 +374,9 @@ def test_safe_substitute_value_bool(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "flag": "$flag"
                     }
-                }
             }
         }
     }
@@ -402,7 +385,7 @@ def test_safe_substitute_value_bool(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["flag"] == True
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["flag"] == True
 
 
 def test_safe_substitute_value_dict(manager):
@@ -411,11 +394,9 @@ def test_safe_substitute_value_dict(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "filters": "$filters"
                     }
-                }
             }
         }
     }
@@ -424,7 +405,7 @@ def test_safe_substitute_value_dict(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["filters"] == {'key': 'value'}
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["filters"] == {'key': 'value'}
 
 
 def test_safe_substitute_value_empty_dict(manager):
@@ -433,11 +414,9 @@ def test_safe_substitute_value_empty_dict(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "filters": "$filters"
                     }
-                }
             }
         }
     }
@@ -446,7 +425,7 @@ def test_safe_substitute_value_empty_dict(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["filters"] == {}
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["filters"] == {}
 
 
 def test_safe_substitute_value_with_braces(manager):
@@ -455,11 +434,9 @@ def test_safe_substitute_value_with_braces(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "data": "$data"
                     }
-                }
             }
         }
     }
@@ -468,7 +445,7 @@ def test_safe_substitute_value_with_braces(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["data"] == '{key: value}'
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["data"] == '{key: value}'
 
 
 def test_safe_substitute_value_no_braces_or_digits(manager):
@@ -477,11 +454,9 @@ def test_safe_substitute_value_no_braces_or_digits(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "query": "$query"
                     }
-                }
             }
         }
     }
@@ -490,7 +465,7 @@ def test_safe_substitute_value_no_braces_or_digits(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["query"] == 'test_query'
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["query"] == 'test_query'
 
 
 def test_safe_substitute_value_with_square_brackets(manager):
@@ -499,11 +474,9 @@ def test_safe_substitute_value_with_square_brackets(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "list_param": "$list_param"
                     }
-                }
             }
         }
     }
@@ -512,7 +485,7 @@ def test_safe_substitute_value_with_square_brackets(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["list_param"] == [1, 2, 3]
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["list_param"] == [1, 2, 3]
 
 
 def test_safe_substitute_value_numeric_string(manager):
@@ -521,11 +494,9 @@ def test_safe_substitute_value_numeric_string(manager):
         "action": "retrieve",
         "action_params": {
             "params": {
-                "generic": {
-                    "index_conf": {
+                    "indexation_conf": {
                         "numeric_param": "$numeric_param"
                     }
-                }
             }
         }
     }
@@ -534,4 +505,4 @@ def test_safe_substitute_value_numeric_string(manager):
 
     substituted_template = manager.safe_substitute(template, template_params, clear_quotes=False)
 
-    assert substituted_template["action_params"]["params"]["generic"]["index_conf"]["numeric_param"] == 123
+    assert substituted_template["action_params"]["params"]["indexation_conf"]["numeric_param"] == 123

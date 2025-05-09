@@ -71,7 +71,7 @@ namespace techhubapigw.Auth
                 
             }
             
-            var existingApiKey = await _getApiKeyQuery.Execute(providedApiKey);
+            var existingApiKey = await _getApiKeyQuery.Execute(providedApiKey, true);
 
             if (existingApiKey != null && existingApiKey.Enabled)
             {

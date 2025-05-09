@@ -30,7 +30,7 @@ class ActionsManager(AbstractManager):
         self.actions_confs = []
         if len(self.params.get('retrieve', [])) > 0:
             for action in self.compose_confs:
-                if action.get('action') == 'retrieve' and not 'retrieve' in [a.get('action') for a in
+                if action.get('action') == 'retrieve' and 'retrieve' not in [a.get('action') for a in
                                                                              self.actions_confs]:
                     for retrieve_params in self.params.get('retrieve', []):
                         retrieve_params = self.default_template_params(retrieve_params)
@@ -64,6 +64,9 @@ class ActionsManager(AbstractManager):
                             }
                         ],
                         "headers_config": {}
+                    },
+                    "indexation_conf": {
+                        "query": ""
                     }
                 }
             }
@@ -86,20 +89,20 @@ class ActionsManager(AbstractManager):
         if "search_topic" in template_params:
             self.logger.debug("[Process ] Search topic appears in template_params")
 
-            template_dict['action_params']['params']['generic']['index_conf']['query'] = template_params['search_topic']
+            template_dict['action_params']['params']['indexation_conf']['query'] = template_params['search_topic']
 
             self.logger.debug(f"Busqueda para retrieval: {template_params['search_topic']}")
-        query = template_dict['action_params']['params']['generic']['index_conf']['query']
+        query = template_dict['action_params']['params']['indexation_conf']['query']
         if 'based on' in query:
             self.logger.debug("[Process ] \"based on\" appears in the query")
             search_topic = query.split('based on')[1].strip()
             search_topic = search_topic.replace('"', '').replace("'", "").replace('.', '')
-            template_dict['action_params']['params']['generic']['index_conf']['query'] = search_topic
+            template_dict['action_params']['params']['indexation_conf']['query'] = search_topic
 
         self.logger.info("Busqueda para retrieval: %s",
-                         template_dict['action_params']['params']['generic']['index_conf']['query'])
+                         template_dict['action_params']['params']['indexation_conf']['query'])
         self.logger.info("Top_k para retrieval: %s",
-                         template_dict['action_params']['params']['generic']['index_conf']['top_k'])
+                         template_dict['action_params']['params']['indexation_conf']['top_k'])
 
         self.logger.info("[Process ] Template ready for retrieval")
         return template_dict
@@ -110,17 +113,16 @@ class ActionsManager(AbstractManager):
             if action['action'] == "llm_action":
                 action_params = action['action_params']
                 if action_params.get("params") is not None:
-                    query_metadata = action_params['params'].get('query_metadata')
-                    template = query_metadata.get('template')
+                    template = action_params['params'].get('query_metadata').get('template')
                     if template:
                         try:
                             template_dict = eval(template)
                         except SyntaxError:
-                            self.raise_PrintableGenaiError(500,
+                            self.raise_PrintableGenaiError(400,
                                                             "Template is not well formed, must be a dict {} structure")
-
                         if "$query" not in template_dict.get("user"):
-                            self.raise_PrintableGenaiError(500, "Template must contain $query to be replaced")
+                            self.raise_PrintableGenaiError(400, "Template must contain $query to be replaced")
+
 
     def safe_substitute(self, template, template_params, clear_quotes):
         """Replaces the placeholders with its param value
@@ -183,7 +185,7 @@ class ActionsManager(AbstractManager):
                     break
                 error_param.append(template_substituted[i])
             error_param = "".join(error_param)
-            raise self.raise_PrintableGenaiError(500,
+            raise self.raise_PrintableGenaiError(400,
                                                  f"After substitution template is not json serializable please check near param: <{error_param}>. Template: {template_substituted}")
 
         return template_dict
@@ -208,7 +210,7 @@ class ActionsManager(AbstractManager):
                       params.items()}  # Assert final json is json serializable
             params = {k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in params.items()}
         except Exception as _:
-            raise self.raise_PrintableGenaiError(500,
+            raise self.raise_PrintableGenaiError(400,
                                                  f"Params field must be a dictionary with json serializable values. Please check params field. Params: {params}")
 
         return params

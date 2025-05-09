@@ -10,25 +10,27 @@ trigger:
   branches:
     include: 
     - develop
-    - main
-    - feature/python311
-
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python311:
-      python.version: '3.11'
+    - master
+  paths:
+    include:
+    - 'genai_sdk_services/__init__.py'
 
 variables:
+- group: Variables para CI
 - group: Images base params
-
 - name: projectFeed
   value: '$(feed_genai)'
 - name: feedName
   value: '$(artifact_name)'
 - name: python_version
   value: $[replace(variables['python.version'], '.', '')]
+
+pool:
+  vmImage: '$(vmImageName)'
+strategy:
+  matrix:
+    Python311:
+      python.version: '3.11'
 
 steps:
 
@@ -45,7 +47,7 @@ steps:
 
 - script: |
     pip install --upgrade pip
-    python -m pip install -U setuptools wheel twine
+    python -m pip install -U setuptools wheel twine==6.0.1
     python setup.py install
   displayName: Install dependencies
 
@@ -57,9 +59,9 @@ steps:
 - task: TwineAuthenticate@1
   inputs:
     artifactFeed: '${{ variables.projectFeed }}'
-  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Configure twine authentication
 
 - script: twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
-  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish to artifacts feed

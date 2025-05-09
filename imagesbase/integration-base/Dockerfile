@@ -15,7 +15,8 @@ COPY ./pypackages /packages
 
 # INSTALL DEPENDENCIES
 RUN apt-get update && apt-get --no-install-recommends install -y \
-    build-essential git libpq-dev \
+    build-essential git libpq-dev libmagic1 imagemagick \
+    ffmpeg libsm6 libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
 # ADD REQUIREMENTS AND POLICY TO IMAGEMAGICK
@@ -23,7 +24,6 @@ ADD requirements.txt /opt/uhis_docker/
 
 # MOVE WORKER DIR AND INSTALL AND DELETE LIBRARIES
 WORKDIR /opt/uhis_docker
-RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install genai-sdk-services --no-index --find-links=/packages
 RUN rm -rf /packages

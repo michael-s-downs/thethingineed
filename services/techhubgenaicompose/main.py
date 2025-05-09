@@ -5,17 +5,21 @@ import json
 
 # Intalled imports
 from flask import Flask, request
+from datetime import datetime
+from typing import Dict, Tuple
 
 # Custom imports
 from common.deployment_utils import BaseDeployment
 from common.genai_controllers import storage_containers, db_dbs, set_storage, set_db, upload_object, delete_file, list_files, load_file
-from common.genai_json_parser import *
 from common.errors.genaierrors import PrintableGenaiError
 from common.services import GENAI_COMPOSE_SERVICE
 from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.genai_status_control import update_status
 from director import Director
 
+
+TEMPLATES_PATH = "src/compose/templates/"
+FILTER_TEMPLATES_PATH = "src/compose/filter_templates/"
 
 class ComposeDeployment(BaseDeployment):
     def __init__(self):
@@ -49,9 +53,9 @@ class ComposeDeployment(BaseDeployment):
                 'error_message': error_message,
                 'status_code': status_code
             }
-            return json.dumps(response), status_code
+            return response, status_code
 
-        return json.dumps(response)
+        return response
 
 
     def process(self, json_input: dict):
@@ -70,7 +74,8 @@ class ComposeDeployment(BaseDeployment):
                 'x-department': project_conf['x-department'],
                 'x-tenant': project_conf['x-tenant'],
                 'x-limits': project_conf.get('x-limits', json.dumps({})),
-                'user-token': request.headers.get('user-token', "")
+                'user-token': request.headers.get('user-token', ""),
+                'delegate-token': request.headers.get('delegate-token', "")
             }
 
         except KeyError as ex:
@@ -171,9 +176,9 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = "src/compose/templates/"
+            path = TEMPLATES_PATH
             if template_filter:
-                path = "src/compose/filter_templates/"
+                path = FILTER_TEMPLATES_PATH
             upload_object(storage_containers['workspace'], content, path + name + ".json")
 
         except Exception as ex:
@@ -223,9 +228,9 @@ class ComposeDeployment(BaseDeployment):
         status_code = 200
         error_message = ""
         try:
-            path = "src/compose/templates/"
+            path = TEMPLATES_PATH
             if template_filter:
-                path = "src/compose/filter_templates/"
+                path = FILTER_TEMPLATES_PATH
             delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:
@@ -248,9 +253,9 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = "src/compose/filter_templates/"
+            str_path = FILTER_TEMPLATES_PATH
         else:
-            str_path = "src/compose/templates/"
+            str_path = TEMPLATES_PATH
         self.logger.info("List templates request received")
         try:
             flows_templates = list_files(storage_containers['workspace'], str_path)
@@ -273,9 +278,9 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
-            str_path = "src/compose/filter_templates/"
+            str_path = FILTER_TEMPLATES_PATH
         else:
-            str_path = "src/compose/templates/"
+            str_path = TEMPLATES_PATH
         self.logger.info("List templates request received")
         try:
             template_name = json_input['name']
@@ -310,7 +315,8 @@ def sync_deployment() -> Tuple[Dict, int]:
         'x-department': request.headers['x-department'],
         'x-reporting': request.headers['x-reporting'],
         'x-limits': request.headers.get('x-limits', json.dumps({})),
-        'user-token': request.headers.get('user-token', "")
+        'user-token': request.headers.get('user-token', ""),
+        'delegate-token': request.headers.get('delegate-token', "")
     }
     dat['generic'].update({"project_conf": apigw_params})
     return deploy.sync_deployment(dat)
@@ -321,9 +327,8 @@ def healthcheck() -> Dict:
     return {"status": "Service available"}
 
 
-@app.route('/load_session', methods=['POST'])
+@app.route('/load_session', methods=['PUT'])
 def load_session() -> Tuple[Dict, int]:
-    """ Deploy service in a syprocesunc way. """
     dat = request.get_json(force=True)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
@@ -336,7 +341,7 @@ def load_session() -> Tuple[Dict, int]:
     return deploy.load_session_redis(dat)
 
 
-@app.route('/upload_template', methods=['POST'])
+@app.route('/upload_template', methods=['PUT'])
 def upload_template() -> Tuple[Dict, int]:
     """ Uploads and checks a template """
     dat = request.get_json(force=True)
@@ -351,7 +356,7 @@ def upload_template() -> Tuple[Dict, int]:
     return deploy.upload_template(dat)
 
 
-@app.route('/upload_filter_template', methods=['POST'])
+@app.route('/upload_filter_template', methods=['PUT'])
 def upload_filter_template() -> Tuple[Dict, int]:
     """ Uploads and checks a template """
     dat = request.get_json(force=True)
@@ -365,10 +370,11 @@ def upload_filter_template() -> Tuple[Dict, int]:
 
     return deploy.upload_template(dat, template_filter=True)
 
-@app.route('/delete_filter_template', methods=['POST'])
+@app.route('/delete_filter_template', methods=['DELETE'])
 def delete_filter_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.get_json(force=True)
+    dat = {}
+    dat.update(request.args)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],
@@ -379,10 +385,11 @@ def delete_filter_template() -> Tuple[Dict, int]:
 
     return deploy.delete_template(dat, template_filter=True)
 
-@app.route('/delete_template', methods=['POST'])
+@app.route('/delete_template', methods=['DELETE'])
 def delete_template() -> Tuple[Dict, int]:
     """ Deletes a template """
-    dat = request.get_json(force=True)
+    dat = {}
+    dat.update(request.args)
     apigw_params = {
         'x-tenant': request.headers['x-tenant'],
         'x-department': request.headers['x-department'],
@@ -403,19 +410,18 @@ def list_filter_templates() -> Tuple[Dict, int]:
     "List compose filter template flows"
     return deploy.list_flows_compose(filters=True)
 
-@app.route('/get_template', methods=['POST'])
+@app.route('/get_template', methods=['GET'])
 def get_template() -> Tuple[Dict, int]:
     "List compose filter template flows"
-    dat = request.get_json(force=True)
+    dat = request.args
     return deploy.get_compose_template(dat, filters=False)
 
-@app.route('/get_filter_template', methods=['POST'])
+@app.route('/get_filter_template', methods=['GET'])
 def get_filter_template() -> Tuple[Dict, int]:
     "List compose filter template flows"
-    dat = request.get_json(force=True)
+    dat = request.args
     return deploy.get_compose_template(dat, filters=True)
 
 
 if __name__ == "__main__":
-    #Process(target=run_redis_cleaner).start()
     app.run(host="0.0.0.0", debug=False, port=8888, use_reloader=False)

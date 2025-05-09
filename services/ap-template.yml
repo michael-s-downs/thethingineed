@@ -29,7 +29,7 @@ parameters:
   default: '3.8'
   type: string
 - name: baseImage
-  default: 'default-base-38'
+  default: 'default-base'
   type: string
 - name: baseTag
   default: 'latest'
@@ -52,6 +52,9 @@ parameters:
 - name: libraryFeed
   default: ''
   type: string
+- name: passTrivy
+  default: 'true'
+  type: boolean
 
 steps:
 
@@ -65,12 +68,12 @@ steps:
 #  displayName: Install GitTools
 
 # Clean space in agent
-- script: df -h
-  displayName: Disk space before
-- script: docker rmi -f $(docker images -aq)
-  displayName: Clean disk space
-- script: df -h
-  displayName: Disk space after
+#- script: df -h
+#  displayName: Disk space before
+#- script: docker rmi -f $(docker images -aq)
+#  displayName: Clean disk space
+#- script: df -h
+#  displayName: Disk space after
 
 # Create helm project
 - task: CmdLine@2
@@ -112,14 +115,14 @@ steps:
   displayName: Authenticate feed
 
 # Use python to compile
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '${{ parameters.pythonVersion }}'
-  displayName: Use Python ${{ parameters.pythonVersion }}
+# - task: UsePythonVersion@0
+#   inputs:
+#     versionSpec: '${{ parameters.pythonVersion }}'
+#   displayName: Use Python ${{ parameters.pythonVersion }}
 
 # Update pip
-- script: pip install --upgrade pip
-  displayName: Upgrade PIP
+# - script: pip install --upgrade pip
+#   displayName: Upgrade PIP
 
 # Create variable to tag services by branch
 - script: |
@@ -162,6 +165,16 @@ steps:
 # Create image docker
 - bash: docker build -f '${{ parameters.defaultWorkingDirectory }}/uhis_docker/Dockerfile' --build-arg 'BASE_IMAGE=${{ parameters.registryServerName }}/${{ parameters.baseImage }}:$(baseTag)' -t '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}' '${{ parameters.defaultWorkingDirectory }}'
   displayName: Build image
+
+# Scan image with trivy
+- task: trivy@1
+  inputs:
+    image: ${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}
+    severities: CRITICAL,HIGH,UNKNOWN
+    options: --timeout 10m0s
+    exitCode: 0
+  displayName: Trivy image scan
+  condition:  and(succeeded(), ${{ parameters.passTrivy }})
 
 # Push image docker with tag numeric
 - bash: docker push '${{ parameters.registryServerName }}/${{ parameters.serviceName }}:${{ parameters.tag }}'

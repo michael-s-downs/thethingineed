@@ -5,9 +5,15 @@
 import os
 import json
 import re
+import io
+import base64
+import logging
+import requests
+from PIL import Image
 from typing import Tuple
 from abc import ABC, abstractmethod
 from functools import partial
+import time
 
 # Installed import
 import boto3
@@ -17,6 +23,7 @@ import numpy as np
 # from genai_sdk_services.resources.vision.ocr2visionfeatures import runOCR, get_blocks_cells
 from genai_sdk_services.resources.vision.utils_vision import translate
 from genai_sdk_services.storage import StorageController
+from genai_sdk_services.queue_controller import QueueController
 from pytesseract import Output, image_to_data
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.documentintelligence import DocumentIntelligenceClient
@@ -147,6 +154,8 @@ class Textract(BaseOCR):
                         'secret_key': os.getenv(self.env_vars[1]),
                         'region_name': os.getenv(self.env_vars[2])
                     }
+                elif eval(os.getenv("AWS_ROLE", "False")):
+                    credentials = {'region_name': os.getenv(self.env_vars[2])}
                 else:
                     raise Exception("Credentials not found")
 
@@ -164,15 +173,13 @@ class Textract(BaseOCR):
 
         bytes_mode = kwargs.get('bytes_mode', False)
 
-        region_name = self.credentials.get('region_name', "eu-west-1")
-
-        client = boto3.client(
-            "textract",
-            aws_access_key_id=self.credentials['access_key'],
-            aws_secret_access_key=self.credentials['secret_key'],
-            region_name=region_name
-        )
-
+        region_name = self.credentials.get('region_name')
+        
+        if eval(os.getenv("AWS_ROLE", "False")):
+            client = boto3.client("textract", region_name=region_name)
+        else:
+            client = boto3.client("textract", aws_access_key_id=self.credentials['access_key'], aws_secret_access_key=self.credentials['secret_key'], region_name=region_name)
+        
         returning_texts = []
         returning_blocks = []
         returning_paragraphs = []
@@ -633,7 +640,7 @@ class FormRecognizer(BaseOCR):
     ORIGIN_TYPE = "azure-ocr"
     credentials = {}
     secret_path = os.path.join(os.getenv('SECRETS_PATH', '/secrets'), "azure", "azure_ocr.json")
-    env_vars = ["AZ_KEY_CREDENTIAL", "AZ_OCR_ENDPOINT"]
+    env_vars = ["AZ_KEY_CREDENTIAL", "AZ_OCR_ENDPOINT", "AZ_OCR_API_VERSION"]
 
     def __init__(self):
         self.sc = StorageController()
@@ -674,10 +681,13 @@ class FormRecognizer(BaseOCR):
                 if os.path.exists(self.secret_path):
                     with open(self.secret_path, "r") as file:
                         credentials = json.load(file)
+                        if "api_version" not in credentials:
+                            credentials['api_version'] = os.getenv(self.env_vars[2], "2024-11-30")
                 elif os.getenv(self.env_vars[0], ""):
                     credentials = {
                         'key_credential': os.getenv(self.env_vars[0]),
-                        'endpoint': os.getenv(self.env_vars[1])
+                        'endpoint': os.getenv(self.env_vars[1]),
+                        'api_version': os.getenv(self.env_vars[2], "2024-11-30")
                     }
                 else:
                     raise Exception("Credentials not found")
@@ -760,8 +770,7 @@ class FormRecognizer(BaseOCR):
         self._set_credentials(credentials)
 
         bytes_mode = kwargs.get('bytes_mode', True)
-
-        client = DocumentIntelligenceClient(credential=AzureKeyCredential(self.credentials['key_credential']), endpoint=self.credentials['endpoint'])
+        client = DocumentIntelligenceClient(credential=AzureKeyCredential(self.credentials['key_credential']), endpoint=self.credentials['endpoint'], api_version=self.credentials['api_version'])
 
         returning_texts = []
         returning_blocks = []
@@ -808,3 +817,238 @@ class FormRecognizer(BaseOCR):
                 returning_paragraphs.append([paragraphs])
 
         return returning_texts, returning_blocks, returning_paragraphs, words_blocks, returning_tables, lines_blocks
+
+
+class LLMOCR(BaseOCR):
+    ORIGIN_TYPE = "llm-ocr"
+    credentials = {}
+    env_vars = ["PROVIDER", "Q_GENAI_LLMQUEUE_INPUT", "Q_GENAI_LLMQUEUE_OUTPUT", "URL_LLM", "STORAGE_BACKEND", "LLM_NUM_RETRIES"]
+    llm_template_name = "preprocess_ocr"
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+
+    @staticmethod
+    def get_queue_mode() -> bool:
+        """Check if the OCR is in queue mode"""
+        
+        if os.getenv(LLMOCR.env_vars[3]):
+            return False
+        else:
+            if os.getenv(LLMOCR.env_vars[1]) and os.getenv(LLMOCR.env_vars[2]) and os.getenv(LLMOCR.env_vars[4]):
+                return True
+            else:
+                raise Exception("Queue and storage not defined by environment variables")
+
+
+    def _set_credentials(self):
+        self.provider = os.environ[self.env_vars[0]]
+        self.queue_input_url = os.getenv(self.env_vars[1])
+        self.queue_output_url = os.getenv(self.env_vars[2])
+        self.url_llm = os.getenv(self.env_vars[3])
+        self.storage_backend = os.getenv(self.env_vars[4])
+        self.num_retries = os.getenv(self.env_vars[5], 10)
+
+
+        self.queue_mode = self.get_queue_mode()
+        self.sc = StorageController()
+        self.qc = QueueController()
+
+        self.sc.set_credentials((self.provider, self.storage_backend))
+        self.qc.set_credentials((self.provider, self.queue_input_url), url=self.queue_input_url)
+        self.qc.set_credentials((self.provider, self.queue_output_url), url=self.queue_output_url)
+
+                
+
+    def _call_llm(self, template, headers):
+        """Given the template and headers, call the LLM service.
+
+        Args:
+            template (dict): The JSON to call the LLM service.
+            headers (dict): The verification headers to make the call.
+
+        Returns:
+            dict: The LLM response.
+        """
+        try:
+            r = requests.post(self.url_llm, json=template, headers=headers, verify=True)
+        except Exception as ex:
+            raise Exception("Error calling GENAI-LLMAPI: {ex}")
+
+        if r.status_code != 200:
+            raise Exception(f"Error from GENAI-LLMAPI: {r.text}")
+
+        return json.loads(r.text)['result']
+
+
+    def _write_llm_request(self, file, body, headers):
+        filename, extension = os.path.splitext(file) # Get extension and filepath
+        filename = filename.replace(f"/imgs/", f"/llm/")
+        input_llm_file = f"{filename}_input.json"
+        output_llm_file = f"{filename}_output.json"
+
+        # Write in storage
+        try:
+            self.sc.upload_object((self.provider, self.storage_backend), json.dumps(body), input_llm_file)
+        except:
+            raise Exception(f"Error writing to storage ({self.provider}, {self.storage_backend}): {input_llm_file}")
+        
+        # Write in queue
+        message = {
+            "queue_metadata": {
+                "input_file": input_llm_file,
+                "output_file": output_llm_file,
+                "location_type": "cloud"
+            },
+            "headers": headers
+        }
+        response = self.qc.write((self.provider, self.queue_input_url), message)
+        status = response.get('ResponseMetadata', {}).get('HTTPStatusCode', 0) == 200 if self.provider == "aws" else response
+        if not status:
+            raise Exception(f"Error writing to queue {self.queue_input_url}: {response} in {self.provider}")
+
+
+    def _read_llm_responses(self, files, force_continue) -> dict:
+        responses = {}
+        final_responses = {}
+        if files:        
+            base_filename = os.path.basename(files[0]).split("_pag_")[0]
+            timestamp = 0.0 
+            while len(responses) != len(files):
+                try:
+                    messages, messages_metadata = self.qc.read((self.provider, self.queue_output_url), 1, True)
+                    if messages:
+                        filename = os.path.basename(messages[0]['result']).split("_pag_")[0]
+                        if filename == base_filename:
+                            timestamp = time.time()
+                            num_pag = os.path.splitext(messages[0]['result'])[0].split("_pag_")[1].split("_output")[0]
+                            responses[num_pag] = messages[0]
+                        else:
+                            self.qc.write((self.provider, self.queue_output_url), messages[0])
+                            time.sleep(0.5)
+                    if timestamp != 0.0 and time.time() - timestamp > 180.0:
+                        if force_continue:
+                            self.logger.info(f"'force_continue' passed with {len(responses)}/{len(files)} files processed")
+                            break # Not throw exception to not lose the rest and do the merge (for big files purposes)
+                        raise Exception(f"Timeout reading file {base_filename} from llmqueue ({len(responses)}/{len(files)} files processed)")
+                except Exception as ex:
+                    raise Exception(f"Error reading from queue: {ex}")
+
+            # Complete all files to avoid gaps
+            if len(files) != len(responses):
+                for file in files:
+                    num_pag = os.path.splitext(file)[0].split("_pag_")[1]
+                    if num_pag not in responses:
+                        responses[num_pag] = {"status_code": 500, "result": file, "error_message": "File not found in queue"}
+                            
+            for response in responses.values():
+                if response.get('status_code') != 200:
+                    if force_continue:
+                        num_pag = os.path.splitext(response['result'])[0].split("_pag_")[1]
+                        final_responses[num_pag] = {"answer": ""} # To not leave blank pages and avoid gaps 
+                        continue # Skip the file to not lose the rest and do the merge (for big files purposes)
+                    raise Exception(f"Error from GENAI-LLMQUEUE: {response.get('error_message')}")
+                try:
+                    loaded_file = self.sc.load_file((self.provider, self.storage_backend), response['result'])
+                except Exception as ex:
+                    raise Exception(f"Error loading response file {response['result']} from storage: {ex}")
+
+                if len(loaded_file) <= 0:
+                    raise Exception(f"Error loading response file {response['result']} from storage")
+                else:
+                    num_pag = os.path.splitext(response['result'])[0].split("_pag_")[1].split("_output")[0]
+                    final_responses[num_pag] = json.loads(loaded_file)['result']
+
+        return list(final_responses.values())
+
+
+    def run_ocr(self, credentials: dict, files: list, **kwargs: dict) -> Tuple[list, list, list, list, list, list]:
+        """ Run the OCR
+
+        :param credentials: (dict) Credentials to use
+        :param files: (list) List of files to run the OCR
+        :param kwargs: (dict) Extra parameters
+        :return: (tuple) Lists with several files with information of file
+        """
+        self._set_credentials()
+        llm_params = kwargs.get('llm_ocr_conf', {})
+        force_continue = llm_params.get('force_continue', False)
+        query = llm_params.get('query')
+        language = llm_params.get('language', "en")
+        system = llm_params.get('system')
+        model = llm_params.get('model', "techhub-pool-world-gpt-4o")
+        max_tokens = llm_params.get('max_tokens', 1000)
+        platform = llm_params.get('platform', "azure")
+        headers = llm_params.get('headers', {})
+        num_retries = llm_params.get('num_retries', self.num_retries)
+
+        body = {
+            "query_metadata": {
+                "template_name": self.llm_template_name,
+                "lang": language
+            },
+            "llm_metadata":{
+                "model": model,
+                "max_tokens": max_tokens
+            },
+            "platform_metadata": {
+                "platform": platform,
+                "num_retries": num_retries
+            }
+        }
+        if query:
+            body["query_metadata"]["template_name"] = "system_query_v"
+        if system:
+            body["query_metadata"]["system"] = system
+        
+        returning_texts = []
+        returning_blocks = []
+        returning_paragraphs = []
+        words_blocks = []
+        lines_blocks = []
+        returning_tables = []
+        responses = []
+        for file in files:
+            image = Image.open(file)
+            buffer = io.BytesIO()
+            image.save(buffer, format=image.format.lower())
+            buffer.seek(0)
+            query_vision = []
+            if query:
+                query_vision.append({
+                    "type": "text",
+                    "text": query
+                })
+            query_vision.append({
+                "type": "image_b64",
+                "image": {
+                    "base64": base64.b64encode(buffer.read()).decode("utf-8")
+                }
+            })
+            body['query_metadata']['query'] = query_vision
+            if self.queue_mode:
+                try:
+                    self._write_llm_request(file, body, headers)
+                except:
+                    if force_continue:
+                        continue # Skip the file to not lose the rest and do the merge (for big files purposes)
+                    raise Exception(f"Error writing to llmqueue: {file}")
+            else:
+                responses.append(self._call_llm(body, headers))
+        
+        if self.queue_mode:
+            responses = self._read_llm_responses(files, force_continue)
+
+        for response, file in zip(responses, files):
+            returning_texts.append(response['answer'])
+            lines_blocks.append([[]])
+            words_blocks.append([[]])
+            num_pag = int(file.split("_pag_")[1].split(".")[0])
+            returning_paragraphs.append([[]])
+
+        return returning_texts, returning_blocks, returning_paragraphs, words_blocks, returning_tables, lines_blocks
+    
+
+        
+            

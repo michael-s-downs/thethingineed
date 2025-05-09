@@ -1,4 +1,5 @@
 ### This code is property of the GGAO ###
+
 import copy
 # Native imports
 import os, platform, json
@@ -9,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from unittest import mock
 
 # Local imports
-from common.indexing.parsers import ManagerParser, ParserInforetrieval, ParserInfoindexing
+from common.ir.parsers import ManagerParser, ParserInforetrieval, ParserInfoindexing
 from common.errors.genaierrors import PrintableGenaiError
 
 
@@ -31,10 +32,6 @@ models_credentials = {
 class TestManagerParsers:
     conf = {'type': "IRStorage", 'workspace': "test", 'origin': "test"}
 
-    def test_get_possible_managers(self):
-        platforms = ManagerParser.get_possible_platforms()
-        assert platforms == ["infoindexing", "inforetrieval"]
-
     def test_wrong_manager(self):
         self.conf['type'] = "nonexistent"
         with pytest.raises(PrintableGenaiError):
@@ -42,18 +39,17 @@ class TestManagerParsers:
 
 class TestParserInforetrieval:
     json_input = {
-        "generic": {
-            "index_conf": {
-                "index": "test",
-                "rescoring_function": "posnorm",
-                "strategy": "genai_retrieval",
-                "query": "Señores Ponce, Diez, Campos y Alvera?",
-                "top_k": 5,
-                "filters": {
-                },
-                "models": [
-                ]
-            }
+        "indexation_conf": {
+            "index": "test",
+            "rescoring_function": "posnorm",
+            "strategy": "genai_retrieval",
+            "query": "Señores Ponce, Diez, Campos y Alvera?",
+            "top_k": 5,
+            "filters": {
+            },
+            "models": [
+            ],
+            "vector_storage_conf": {}
         },
         "project_conf":  {
             "x-reporting": "test_config"
@@ -99,9 +95,8 @@ class TestParserInforetrieval:
 
         # Models passed and not generic
         conf_input = copy.deepcopy(self.conf)
-        conf_input['json_input']['index_conf'] = conf_input['json_input']['generic'].pop('index_conf')
-        conf_input['json_input'].pop('generic')
-        conf_input['json_input']['index_conf']['models'] = ["bm25", "ada-test-1"]
+        conf_input['json_input']['indexation_conf'] = conf_input['json_input'].pop('indexation_conf')
+        conf_input['json_input']['indexation_conf']['models'] = ["bm25", "ada-test-1"]
         retrieval_object = ManagerParser.get_parsed_object(conf_input)
         assert isinstance(retrieval_object, ParserInforetrieval)
 
@@ -121,11 +116,10 @@ class TestParserInfoindexing:
                     "do_tables": True,
                 }
             },
-            "index_conf": {
+            "indexation_conf": {
                 "index": "test_indexing",
                 "windows_overlap": 10,
                 "windows_length": 300,
-                "modify_index_docs": {},
                 "models": [
                     {
                         "embedding_model": "text-embedding-ada-002",
@@ -133,7 +127,13 @@ class TestParserInfoindexing:
                         "alias": "ada-test-pool"
                     }
                 ],
-                "vector_storage": "elastic-test"
+                "chunking_method": {"method": "simple"},
+                "vector_storage": "elastic-test",
+                "vector_storage_conf": {
+                    "index": "",
+                    "vector_storage": "elastic-test",
+                    "chunking_method": {"method": "test"}
+                }
             }
         },
         "specific": {
@@ -191,5 +191,5 @@ class TestParserInfoindexing:
 
     def test_parse(self):
         conf_input = copy.deepcopy(self.conf)
-        retrieval_object = ManagerParser.get_parsed_object(conf_input)
-        assert isinstance(retrieval_object, ParserInfoindexing)
+        with pytest.raises(PrintableGenaiError):
+            ManagerParser.get_parsed_object(conf_input)

@@ -41,3 +41,8 @@ variable "subnet" {
   type        = string
   description = "Name of subnet"
 }
+
+variable "private_endpoint" {
+  type        = bool
+  description = "Variable to decide if create private endpoint or not"
+}

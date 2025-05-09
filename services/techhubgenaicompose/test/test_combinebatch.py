@@ -1,10 +1,13 @@
 ### This code is property of the GGAO ###
 
+import os
+os.environ['URL_LLM'] = "test_url"
+os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 from compose.streamlist import StreamList, StreamChunk
-from compose.utils.defaults import EMPTY_STREAM
 from common.errors.genaierrors import GenaiError
 from compose.batchactions.combinebatch import JoinCombine2, CombineJoin2, CombineBatchFactory, CombineBatchMethod
+
 
 @pytest.fixture
 def stream_list_1():
@@ -37,7 +40,7 @@ def test_join_combine_two_success(stream_list_1, stream_list_2, empty_stream):
     template = "$s1\n$s2"
     combine_method = JoinCombine2([stream_list_1, stream_list_2])
     
-    result = combine_method.process(template, SEP="\n")
+    result = combine_method.process(template, sep="\n")
     
     # Expected output after combining
     expected_content = "Chunk 1 from SL1\nChunk 2 from SL1\nChunk 1 from SL2\nChunk 2 from SL2"

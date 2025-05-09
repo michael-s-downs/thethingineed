@@ -20,3 +20,5 @@ textdistance==4.6.3
 python-magic==0.4.27
 natsort==8.4.0
 langdetect==1.0.9
+cryptography>=2.1.4 # required by azure-storage-blob==12.23.1
+mergedeep==1.3.4

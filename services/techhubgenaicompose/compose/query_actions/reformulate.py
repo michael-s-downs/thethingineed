@@ -46,7 +46,7 @@ class MixQueries(ReformulateMethod):
     URL = os.environ['URL_LLM']
     TEMPLATE = REFORMULATE_TEMPLATE
 
-    def process(self, params, actions_confs) -> str:
+    def process(self, params = None, actions_confs = None) -> str:
         """Processes the query using a GPT model for substitutions.
 
         Returns:
@@ -83,7 +83,7 @@ class MixQueries(ReformulateMethod):
 
             for action in actions_confs:
                 if action["action"] == "retrieve":
-                    action["action_params"]["params"]["generic"]["index_conf"]["query"] = query
+                    action["action_params"]["params"]["indexation_conf"]["query"] = query
                 if action["action"] == "llm_action":
                     action["action_params"]["params"]["query_metadata"]["query"] = query
                 
@@ -105,7 +105,7 @@ class ReformulateFactory:
         Args:
             reformulate_type (str): Type of the query filter method.
         """
-        self.reformulatemethod: ReformulateMethod = None
+        self.reformulatemethod = None
         for reformulatemethod in self.REFORMULATES:
             if reformulatemethod.TYPE == reformulate_type:
                 self.reformulatemethod = reformulatemethod
