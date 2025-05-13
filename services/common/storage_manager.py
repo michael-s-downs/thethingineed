@@ -284,6 +284,24 @@ class LLMStorageManager(BaseStorageManager):
         return response
 
     def delete_template(self, dat: dict):
+
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            try:
+                template_name = dat['template_name']
+                self.langfuse_m.delete_template(template_name, "llm_template")
+                response = {"status": "finished", "result": "Request finished", "status_code": 200}
+
+            except KeyError as ex:
+                response = {"status": "error",
+                            "error_message": f"Error parsing Input, Key: 'name' or 'content' not found",
+                            "status_code": 404}
+                self.logger.error(response)
+            except Exception as ex:
+                response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}",
+                            "status_code": 500}
+                self.logger.error(f"Error uploading prompt file. {ex}")
+            return response
+
         try:
             template_name = dat['name']
             delete_file(self.workspace, self.prompts_path + template_name + ".json")

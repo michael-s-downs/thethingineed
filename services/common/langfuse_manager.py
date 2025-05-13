@@ -1,6 +1,8 @@
 # Native imports
 from abc import ABC
 import os
+from http.client import HTTPException
+
 import requests
 
 from langfuse import Langfuse
@@ -195,6 +197,9 @@ class LangFuseManager(ABC):
 
     def load_template(self, template_name, label="compose_template"):
         prompt = self.langfuse.get_prompt(template_name, label=label)
+        if 'deleted' in prompt.labels:
+            raise HTTPException(status_code=404, detail=f"Template '{template_name}' not found")
+
         return prompt
 
     def upload_template(self, template_name, template_content, label):
@@ -212,4 +217,18 @@ class LangFuseManager(ABC):
             params={"limit": 50, "label": label}
         )
         if x.status_code == 200:
-            return [item['name'] for item in x.json()["data"]]
+            return [item['name'] for item in x.json()["data"] if 'deleted' not in item.get('labels', [])]
+
+    def delete_template(self, template_name, label="compose_template"):
+
+        prompt = self.langfuse.get_prompt(template_name, label=label)
+
+        host = self.langfuse_config["host"]
+        sk = self.langfuse_config["secret_key"]
+        pk = self.langfuse_config["public_key"]
+        x = requests.patch(
+            f"{host}/api/public/v2/prompts/{template_name}/versions/{prompt.version}",
+            auth=HTTPBasicAuth(pk, sk),
+            json={"newLabels": ["deleted"]}
+        )
+
