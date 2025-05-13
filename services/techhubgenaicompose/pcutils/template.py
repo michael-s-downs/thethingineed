@@ -174,7 +174,11 @@ class TemplateManager(AbstractManager):
         """
         name = self.name
         try:
-            self.template = self.langfuse_m.load_template(self.name)
+            if self.langfuse_m.langfuse:
+                template = self.langfuse_m.load_template(name)
+                self.template = template.prompt
+            else:
+                self.template = load_file(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/{name}.json").decode()
 
             if not self.template:
                 self.raise_PrintableGenaiError(404, "Compose template not found")

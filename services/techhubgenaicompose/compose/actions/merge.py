@@ -139,8 +139,11 @@ class MetaMerge(MergeMethod):
 
         if "$" not in template:
             try:
-                template = langfuse_m.load_template(template)
-                template = template.prompt
+                if langfuse_m.langfuse:
+                    template = langfuse_m.load_template(template)
+                    template = template.prompt
+                else:
+                    template = load_file(storage_containers['workspace'], f"{IRStorage_PATH}/{template}.json").decode()
                 if not template:
                     raise PrintableGenaiError(400, "Template empty")
             except ValueError:

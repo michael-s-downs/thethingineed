@@ -59,7 +59,6 @@ class Director(AbstractManager):
         self.output_manager.get_lang(output, self.conf_manager.lang)
         self.output_manager.get_n_conversation(output, self.PD.get_conversation(self.conf_manager.session_id))
         self.output_manager.get_n_retrieval(output, self.sb)
-        self.conf_manager.langfuse_m.flush()
         return output
 
     def run(self, langfuse_m):
@@ -297,10 +296,7 @@ class Director(AbstractManager):
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
         
-        # template = self.conf_manager.template_m.template.compile(**template_params)
-        template = self.conf_manager.template_m.template.prompt
-        template = re.sub(r'"\$([^"]+)"', r'$\1', template)
-
+        template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
         template = re.sub(r'\$(\w+)', r'"$\1"', template)
         template = self.fix_merge(template)
         try:

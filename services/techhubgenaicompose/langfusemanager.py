@@ -60,6 +60,9 @@ class LangFuseManager(AbstractManager):
         return self
 
     def create_trace(self, session_id):
+        if self.langfuse is None:
+            return
+
         self.trace = self.langfuse.trace(
             session_id=session_id
         )
@@ -192,14 +195,6 @@ class LangFuseManager(AbstractManager):
         )
     
 
-    def flush(self):
-        """
-        Flushes the LangFuse integration.
-        """
-        if self.langfuse is None:
-            return
-
-        # self.langfuse.flush()
     
     def load_template(self, template_name, label="compose_template"):
         prompt = self.langfuse.get_prompt(template_name, label=label)

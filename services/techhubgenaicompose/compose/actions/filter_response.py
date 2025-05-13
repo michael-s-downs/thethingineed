@@ -50,9 +50,11 @@ class FilterLLM(FilterResponseMethod):
             Parsed JSON data of the loaded template.
         """
         try:
-            # template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
-            template = langfuse_m.load_template(templatename)
-            template = template.prompt
+            if langfuse_m.langfuse:
+                template = langfuse_m.load_template(templatename, "filter_response_compose_template")
+                template = template.prompt
+            else:
+                template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
             if not template:
                 raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:

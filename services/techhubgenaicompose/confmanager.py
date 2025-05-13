@@ -83,9 +83,12 @@ class ConfManager(AbstractManager):
         model_template = None
         if not model_request:
             try:
-                template = self.langfuse_m.load_template(name)
-                template = template.prompt
-                #template = load_file(storage_containers['workspace'], f"{IRStorage_TEMPLATEPATH}/{name}.json").decode()
+                if self.langfuse_m.langfuse:
+                    template = self.langfuse_m.load_template(name)
+                    template = template.prompt
+                else:
+                    template = load_file(storage_containers['workspace'], f"{IRStorage_TEMPLATEPATH}/{name}.json").decode()
+
                 if not template:
                     self.raise_PrintableGenaiError(404, "Compose template not found")
                 pattern_llm_action = r'("action":\s*"summarize"|"action":\s*"llm_action")'
