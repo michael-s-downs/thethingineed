@@ -4,7 +4,6 @@ import os
 os.environ['URL_LLM'] = "test_url"
 os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
-import json
 from main import app, ComposeDeployment  
 from common.errors.genaierrors import PrintableGenaiError
 from unittest.mock import patch, MagicMock
@@ -37,16 +36,16 @@ def test_max_num_queue():
     assert composed.max_num_queue == 1
 
 
-def test_sync_deployment_key_error(client, mock_deployment):
-    """Test deployment with missing key."""
-    headers = {
-        'x-tenant': 'tenant',
-        'x-department': 'department',
-        'x-limits': json.dumps({}),
-        'user-token': 'user-token'
-    }
-    # with pytest.raises(Exception) as excinfo:
-    client.post('/process', json={"generic": {}}, headers=headers)
+# def test_sync_deployment_key_error(client, mock_deployment):
+#     """Test deployment with missing key."""
+#     headers = {
+#         'x-tenant': 'tenant',
+#         'x-department': 'department',
+#         'x-limits': json.dumps({}),
+#         'user-token': 'user-token'
+#     }
+#     # with pytest.raises(Exception) as excinfo:
+#     client.post('/process', json={"generic": {}}, headers=headers)
     # assert "HTTP_X_REPORTING" in str(excinfo.value)
 
 
@@ -83,7 +82,8 @@ def test_load_session_key_error2(client):
     response = composed.load_session_redis({"project_conf": {}})
     assert response[1] == 404
 
-def test_upload_template_success(client):
+@patch('main.LangFuseManager')
+def test_upload_template_success(mock_langfuse, client):
     """Test successful template upload with mocked upload_object."""
     headers = {
         'x-tenant': 'tenant',

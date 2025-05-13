@@ -11,16 +11,19 @@ from common.errors.genaierrors import PrintableGenaiError
 import json
 
 # Define sample data and mocks
-sample_query = "modified query sample"
-sample_params = {
-    "headers": {"Authorization": "Bearer mock_token"},
-    "template": "mock_template"
-}
-sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"generic": {"indexation_conf": {}}}}}]
 mock_template_content = json.dumps({
     "substitutions_template": "template",
     "substitutions": [{"from": "modified query", "to": "test query", "extra_words": ["test"]}]
 })
+sample_query = "modified query sample"
+mock_langfuse = MagicMock()
+mock_langfuse.load_template.return_value.prompt = mock_template_content
+sample_params = {
+    "headers": {"Authorization": "Bearer mock_token"},
+    "template": "mock_template",
+    "langfuse": mock_langfuse
+}
+sample_actions_confs = [{"action": "retrieve", "action_params": {"params": {"generic": {"indexation_conf": {}}}}}]
 mock_response = {"answer": "modified query"}
 
 # Mock environment variable
@@ -65,6 +68,7 @@ class TestFilterGPT:
     def test_process_gpt_success(self, mock_load_file, mock_requests_post, mock_llm_parser):
         filter_gpt = FilterGPT(sample_query)
         sample_params['headers'] = {"auth": "test"}
+        sample_params["langfuse"] = mock_langfuse
         filter_gpt.process(sample_params, sample_actions_confs)
 
     def test_process_gpt_empty_query(self):
@@ -77,6 +81,7 @@ class TestFilterGPT:
         mock_requests_post.return_value.status_code = 500
         mock_requests_post.return_value.text = "Internal Server Error"
         sample_params['headers'] = {"auth": "test"}
+        sample_params["langfuse"] = mock_langfuse
         filter_gpt = FilterGPT(sample_query)
         
         with pytest.raises(PrintableGenaiError, match="Internal Server Error"):
@@ -99,6 +104,7 @@ class TestFilterFactory:
         # Mock the factory to ensure it calls the correct method
         factory = FilterFactory(filter_type="llm")
         sample_params['headers'] = {"auth": "test"}
+        sample_params["langfuse"] = mock_langfuse
         factory.process(query=sample_query, params=sample_params, actions_confs=sample_actions_confs)
 
 # Test FilterMethod abstract base class
