@@ -195,9 +195,6 @@ class ComposeDeployment(BaseDeployment):
                 else:
                     upload_object(storage_containers['workspace'], content, path + name + ".json")
 
-            
-            
-
         except Exception as ex:
             error_message = f"Error uploading template file. {ex}"
             status_code = 500
