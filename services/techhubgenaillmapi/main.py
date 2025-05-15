@@ -453,12 +453,11 @@ def get_template() -> Tuple[str, int]:
 def get_available_models() -> Tuple[str, int]:
     deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) != 1 or list(dat.items())[0][0] not in [
-        "platform",
-        "pool",
-        "zone",
-        "model_type",
-    ]:
+
+    allowed_keys = ["platform", "pool", "zone", "model_type"]
+    allowed_platforms = ["azure", "bedrock", "vertex", "openai"]
+
+    if len(dat) != 1 or list(dat.items())[0][0] not in allowed_keys:
         return ResponseObject(
             **{
                 "status": "error",
@@ -467,6 +466,25 @@ def get_available_models() -> Tuple[str, int]:
             }
         ).get_response_base()
     key, value = list(dat.items())[0]
+
+    if not value.strip():
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"The parameter '{key}' cannot be empty",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
+    if key == "platform" and value.lower() not in allowed_platforms:
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"Invalid platform. Allowed values are: {', '.join(allowed_platforms)}",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
     models, pools = get_models(
         deploy.available_models, deploy.available_pools, key, value
     )

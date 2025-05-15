@@ -1,4 +1,6 @@
 import unittest
+from http.client import HTTPException
+
 from unittest.mock import patch, MagicMock
 import os
 import pytest
@@ -291,6 +293,21 @@ class TestLangFuseManager(unittest.TestCase):
         self.assertEqual(result, mock_prompt)
 
     @patch('langfuse_manager.Langfuse')
+    def test_load_template_deleted(self, mock_langfuse):
+        """Test load_template method with a deleted template."""
+
+        os.environ["LANGFUSE"] = "True"
+        manager = LangFuseManager()
+        mock_prompt = MagicMock()
+        mock_prompt.labels = ["some_label", "deleted"]
+        manager.langfuse.get_prompt.return_value = mock_prompt
+
+        with self.assertRaises(HTTPException) as context:
+            manager.load_template("test_template", "custom_label")
+
+        manager.langfuse.get_prompt.assert_called_once_with("test_template", label="custom_label")
+
+    @patch('langfuse_manager.Langfuse')
     def test_upload_template(self, mock_langfuse):
         """Test upload_template method."""
         os.environ["LANGFUSE"] = "True"
@@ -360,6 +377,42 @@ class TestLangFuseManager(unittest.TestCase):
         result = manager.get_list_templates("test_label")
 
         self.assertIsNone(result)
+
+    @patch("langfuse_manager.requests.patch")
+    @patch("langfuse_manager.Langfuse")
+    def test_delete_template(self, mock_langfuse, mock_patch):
+        """Test delete_template sends correct PATCH request."""
+
+        # Set up environment and mock config
+        os.environ["LANGFUSE"] = "True"
+        manager = LangFuseManager()
+
+        # Mock prompt with a version
+        mock_prompt = MagicMock()
+        mock_prompt.version = "v1"
+        manager.langfuse.get_prompt.return_value = mock_prompt
+
+        # Fake config values
+        manager.langfuse_config = {
+            "host": "https://mock.langfuse.dev",
+            "secret_key": "sk_test",
+            "public_key": "pk_test"
+        }
+
+        # Mock requests.patch response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_patch.return_value = mock_response
+
+        # Call the method
+        manager.delete_template("test_template")
+
+        # Assertions
+        mock_patch.assert_called_once_with(
+            "https://mock.langfuse.dev/api/public/v2/prompts/test_template/versions/v1",
+            auth=HTTPBasicAuth("pk_test", "sk_test"),
+            json={"newLabels": ["deleted"]}
+        )
 
 
 if __name__ == '__main__':

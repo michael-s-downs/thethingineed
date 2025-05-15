@@ -198,7 +198,7 @@ class LangFuseManager(ABC):
     def load_template(self, template_name, label="compose_template"):
         prompt = self.langfuse.get_prompt(template_name, label=label)
         if 'deleted' in prompt.labels:
-            raise HTTPException(status_code=404, detail=f"Template '{template_name}' not found")
+            raise HTTPException()
 
         return prompt
 
