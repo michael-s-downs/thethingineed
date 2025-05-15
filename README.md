@@ -55,17 +55,17 @@
       - [Indexing pipeline](#indexing-pipeline-1)
       - [RAG pipeline](#rag-pipeline)
       - [Config files](#config-files)
-        - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
-          - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
-          - [Templates `/prompts/**.json`](#templates-promptsjson)
-        - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
+        - [LLM config files](#llm-config-files)
+          - [LLM models](#llm-models)
+          - [Templates](#templates)
+        - [Integration config files](#integration-config-files)
         - [Models map](#models-map)
-        - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval--infoindexing-config-files-srcir)
-          - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
-          - [Default embedding models `/conf/default_embedding_models.json`](#default-embedding-models-confdefault_embedding_modelsjson)
-          - [Different vector storage for an index `/index/**.json`](#different-vector-storage-for-an-index-indexjson)
-        - [Compose config files `src/compose/`](#compose-config-files-srccompose)
-          - [Compose templates `/templates/**.json`](#compose-templates-templatesjson)
+        - [Inforetrieval + Infoindexing config files](#inforetrieval--infoindexing-config-files)
+          - [IR models](#ir-models)
+          - [Default embedding models](#default-embedding-models)
+          - [Different vector storage for an index](#different-vector-storage-for-an-index)
+        - [Compose config files](#compose-config-files)
+          - [Compose templates](#compose-templates-1)
       - [Secrets](#secrets)
   - [Advanced Examples](#advanced-examples)
     - [Indexing Pipeline](#indexing-pipeline-2)
@@ -2947,8 +2947,10 @@ To call the <i>/process</i> endpoint, you just need to change the <deployment_ur
 
 #### Config files
 This files will be stored in the backend storage instead of the data one (some components needs two storages backend and data)
-##### LLM config files `src/LLM/`
-###### LLM models `/conf/models_config.json`
+##### LLM config files 
+Path in cloud: `src/LLM/`
+###### LLM models 
+Path in cloud: `/conf/models_config.json`
 This file is the most important one because it stores information about the different language models that are used in genai-llmapi to have a natural language interaction with the user (chat, prompt…) 
 ```json
 {
@@ -2984,7 +2986,7 @@ Each parameter for a model configuration is:
 * **api_version**: version of the api (model) that is being used.
 * **model_pool**: pools the model belongs to.
 
-###### Templates `/prompts/**.json`
+###### Templates
 Stored in "src/LLM/prompts", this directory contains the files with the prompt templates. When LLMAPI is initialized, it reads all the files in the directory and loads all the templates into memory, removing duplicates. The name refered to in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in JSON format and that contains 'query' in their name.
 ```json
 {
@@ -3041,7 +3043,8 @@ In this config file, each model (separated by platforms) needs different paramet
   - **model_pool**: pools the model belongs to
 
 
-##### Integration config files `src/integration/`
+##### Integration config files 
+Path: `src/integration/`
 ##### Models map
 Path: `/search/models_map.json`
 
@@ -3066,8 +3069,10 @@ The parameters are:
 - **embedding_model**: Type of embedding that will calculate the vector of embeddings (equivalent to <i>"embedding_model"</i> in <i>models_config.json</i> config file for infoindexing and inforetrieval).
 - **platform**: Provider used to store and get the information (major keys in <i>models_config.json</i> config file for infoindexing and inforetrieval).
 
-##### Inforetrieval + Infoindexing config files `src/ir/`
-###### IR models `/conf/models_config.json`
+##### Inforetrieval + Infoindexing config files 
+Path: `src/ir/`
+###### IR models 
+Path: `/conf/models_config.json`
 This file stores information about the different embedding models that are used in genai-inforetrieval and genai-infoindexing to generate the embeddings that will be stored in the vector storage database.
 ```json
 {
@@ -3096,7 +3101,8 @@ This file stores information about the different embedding models that are used 
 }
 ```
 
-###### Default embedding models `/conf/default_embedding_models.json`
+###### Default embedding models 
+Path: `/conf/default_embedding_models.json`
 This config file is needed to specify which model is going to be used when in the retrieval call, no models are passed and the retrieval is going to be done with all the embedding models used in indexation. The file is stored in "src/ir/conf" and it has to be based on the previous file. The bm25 field is mandatory as it's used always in the indexation process:
 ```json
 {
@@ -3114,7 +3120,7 @@ An example could be:
 }
 ```
 
-###### Different vector storage for an index `/index/**.json`
+###### Different vector storage for an index 
 This file is optional, just if a concrete index is stored in a different vector_storage (reacheable by the application) with its credentials in the vector_storage_config secret explained below. The file is stored in "src/ir/index" and its name will be the same as the used in the indexation/retrieval (index_name.json) process. It looks like:
 ```json
 {
@@ -3122,8 +3128,10 @@ This file is optional, just if a concrete index is stored in a different vector_
 }
 ```
 
-##### Compose config files `src/compose/`
-###### Compose templates `/templates/**.json`
+##### Compose config files 
+Path: `src/compose/`
+###### Compose templates 
+Path: `src/compose/templates/**.json`
 In these files, the actions steps to execute by the compose module are stored in json format. The different actions that can be executed are:
 
 **Retrieve**
