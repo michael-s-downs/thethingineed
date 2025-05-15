@@ -679,7 +679,7 @@ The GENAI INFOINDEXING service provides a comprehensive solution to streamline t
 
 ### Indexing execution
 To index a document, the request must include the document encoded as base64 and the name of the document. The name of the index where you want to index documents must also be specified. If the index does not exist yet, it will create a new one.
-The parameters that can be included are described in [indexing configuration](#integration-config-files-srcintegration).
+The parameters that can be included are described in [indexing configuration](#integration-config-files).
 You can also see more examples in  the [examples section](#indexing-examples).
 
 ```python
@@ -3043,7 +3043,7 @@ In this config file, each model (separated by platforms) needs different paramet
   - **model_pool**: pools the model belongs to
 
 
-##### Integration config files 
+##### Integration config files
 Path: `src/integration/`
 ##### Models map
 Path: `/search/models_map.json`
