@@ -57,7 +57,7 @@
         - [LLM config files `src/LLM/`](#llm-config-files-srcllm)
           - [LLM models `/conf/models_config.json`](#llm-models-confmodels_configjson)
           - [Templates `/prompts/**.json`](#templates-promptsjson)
-        - [Integration config files `src/integration/`](#integration-config-files-srcintegration)
+        - [Integration config files `src/integration/`](#integration-config-files)
         - [Models map `/search/models_map.json`](#models-map-searchmodels_mapjson)
         - [Inforetrieval + Infoindexing config files `src/ir/`](#inforetrieval--infoindexing-config-files-srcir)
           - [IR models `/conf/models_config.json`](#ir-models-confmodels_configjson)
@@ -675,7 +675,7 @@ The GENAI INFOINDEXING service provides a comprehensive solution to streamline t
 
 ### Indexing execution
 To index a document, the request must include the document encoded as base64 and the name of the document. The name of the index where you want to index documents must also be specified. If the index does not exist yet, it will create a new one.
-The parameters that can be included are described in [indexing configuration](#integration-config-files-srcintegration).
+The parameters that can be included are described in [indexing configuration](#integration-config-files).
 You can also see more examples in  the [examples section](#indexing-examples).
 
 ```python
@@ -3015,7 +3015,8 @@ In this config file, each model (separated by platforms) needs different paramet
   - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different).
 
 
-##### Integration config files `src/integration/`
+##### Integration config files
+Path: `src/integration/`
 ##### Models map
 Path: `/search/models_map.json`
 
