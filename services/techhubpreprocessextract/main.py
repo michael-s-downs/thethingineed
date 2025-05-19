@@ -205,7 +205,7 @@ class PreprocessExtractDeployment(BaseDeployment):
                     process_timeout = 5  # Minutes 
                     return_dict = Manager().dict({'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []})
 
-                    if ocr_conf and not query_exists:
+                    if llm_ocr_conf and not query_exists:
                         # Override page_limit to 5 if environment variable is set
                         page_limit = int(os.getenv('LLM_OCR_PAGE_LIMIT', 5)) 
                         generic['preprocess_conf']['page_limit'] = page_limit
