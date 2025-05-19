@@ -218,5 +218,16 @@ class LangFuseManager(AbstractManager):
         
         raise Exception()
     
+    def delete_template(self, template_name, label="compose_template"):
+        prompt = self.langfuse.get_prompt(template_name, label=label)
+
+        host = self.langfuse_config["host"]
+        sk = self.langfuse_config["secret_key"]
+        pk = self.langfuse_config["public_key"]
+        x = requests.patch(
+            f"{host}/api/public/v2/prompts/{template_name}/versions/{prompt.version}",
+            auth=HTTPBasicAuth(pk, sk),
+            json={"newLabels": ["deleted"]}
+        )
         
         

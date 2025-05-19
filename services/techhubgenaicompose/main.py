@@ -244,8 +244,18 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = TEMPLATES_PATH
             if template_filter:
+                label = "compose_filter_template"
                 path = FILTER_TEMPLATES_PATH
-            delete_file(storage_containers['workspace'], path + name + ".json")
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.delete_template(name, label)
+                else:
+                    delete_file(storage_containers['workspace'], path + name + ".json")
+            else:
+                label = "compose_template"
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.delete_template(name, label)
+                else:
+                    delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:
             error_message = f"Error deleteting template file. {ex}"
