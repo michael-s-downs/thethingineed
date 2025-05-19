@@ -243,7 +243,7 @@ Below is a list of all the parameters that can be included in the request body, 
       - **type**(required): Persistence type, for now, only “chat” mode available.
       - **params**:
         - **max_persistence** (optional): Maximum number of iterations of the conversation history to consider for sending to the LLM task. By default is 3.
-    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse.
+    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse. If set, langfuse will search for the templates in langfuse.
       - **host**: Url hosting langfuse server.
       - **public_key**: Langfuse project public key.
       - **secret_key**: Langfuse project secret key.
@@ -953,6 +953,8 @@ The request would like like below
 ### Compose Templates
 
 A compose template is a JSON file detailing all the action steps the orchestrator needs to execute. These actions define the orchestrator flow; the main two actions are 'retrieve' and 'llm_action', but there are other actions that apply to the result of the 'retrieve' action: filter, merge, batchmerge, sort and groupby.
+
+Templates can be stored in cloud storage or as a langfuse prompt. By default compose tries to find templates in the cloud storage but if langfusemanager is initialized compose will try to find templates in the langfuse instance.
 
 These are the following compose templates currently available.
  * **retrieve**: This template does not use an LLM and its target is to only retrieve documents without content generation.
@@ -2760,6 +2762,7 @@ Each component has the following files and folders structure:
 - Azure suscription
 - Cluster Kubernetes
 - Globals Resources
+- Langfuse (optional)
 
 ### Resources Azure Devops
 
@@ -3129,9 +3132,15 @@ This file is optional, just if a concrete index is stored in a different vector_
 ```
 
 ##### Compose config files 
+
+Templates can be stored in cloud storage or as a langfuse prompt. By default compose tries to find templates in the cloud storage but if langfusemanager is initialized compose will try to find templates in the langfuse instance.
+
 Path: `src/compose/`
+
 ###### Compose templates 
-Path: `src/compose/templates/**.json`
+
+Path: `src/compose/templates/**.json` for cloud storage or Prompts section for langfuse.
+
 In these files, the actions steps to execute by the compose module are stored in json format. The different actions that can be executed are:
 
 **Retrieve**
