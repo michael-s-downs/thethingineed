@@ -200,15 +200,16 @@ class PreprocessExtractDeployment(BaseDeployment):
                 files_extracted = {'lang': "default"}
             else:
                 self.logger.info(f"Extracting text from file: {filename}")
-                files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}                
+                files_extracted = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
                 try:
-                    process_timeout = 5  # Minutes 
+                    process_timeout = 5  # Minutes
                     return_dict = Manager().dict({'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []})
 
-                    if ocr_conf and not query_exists:
+                    if llm_ocr_conf and not query_exists:
                         # Override page_limit to 5 if environment variable is set
-                        page_limit = int(os.getenv('LLM_OCR_PAGE_LIMIT', 5)) 
+                        page_limit = int(os.getenv('LLM_OCR_PAGE_LIMIT', 5))
                         generic['preprocess_conf']['page_limit'] = page_limit
+                        num_pags = page_limit
 
                     p = Process(target=extract_text, args=(filename, num_pags, generic, specific, do_cells_text, do_lines_text, return_dict))
                     p.start()
@@ -220,7 +221,7 @@ class PreprocessExtractDeployment(BaseDeployment):
                     files_extracted.update(return_dict)
 
                     text_extracted = files_extracted['text'] != ""
-                    self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: {page_limit}.")
+                    self.logger.info(f"Text extracted: '{text_extracted}'\tLanguage extracted: '{files_extracted['lang']}'\t Numbers of pages: {num_pags}.")
 
                 except Exception:
                     self.logger.warning("Error while extracting text or language. It is possible this is not an error and it just have to be processed with OCR.", exc_info=get_exc_info())
@@ -228,7 +229,7 @@ class PreprocessExtractDeployment(BaseDeployment):
             path_IRStorage_cells = ""
             path_IRStorage_txt = ""
             if not force_ocr and text_extracted: # To not upload files if OCR is forced (only language extraction is needed)
-                # Save text    
+                # Save text
                 self.logger.info("Uploading files of text.")
                 try:
                     folder_file_txt = folder_file + ".txt"
