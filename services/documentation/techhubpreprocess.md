@@ -34,7 +34,7 @@
       - [Environment variables](#environment-variables-3)
       - [Error Handling](#error-handling-3)
   - [Configuration](#configuration-1)
-    - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+    - [Blobs - Buckets storage distribution](#blobs---buckets-storage-distribution)
     - [Secrets](#secrets)
     - [Configuration files](#configuration-files)
     - [Environment variables](#environment-variables-4)
@@ -693,7 +693,7 @@ Some common error messages you may encounter are:
 <i>**For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response</i>
 
 ## Configuration
-### Blobs/Buckets storage distribution
+### Blobs - Buckets storage distribution
 This service, needs different buckets :
 - **Integration**: 
   - STORAGE_BACKEND: To store the raw document data processed by all the previous components.

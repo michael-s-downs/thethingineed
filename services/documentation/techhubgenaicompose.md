@@ -9,7 +9,7 @@
   - [Getting Started](#getting-started)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /process](#request-and-response-formats-for-process)
+    - [Request and Response Formats for process](#request-and-response-formats-for-process)
     - [Parameters explanation](#parameters-explanation)
     - [User query processing](#user-query-processing)
       - [Filter result](#filter-result)
@@ -320,7 +320,7 @@ If the response looks like this, you are good to go.
 
     URL: https://<deploymentdomain>/compose/delete_filter_template?name=mytemplate
 
-### Request and Response Formats for /process
+### Request and Response Formats for process
 
 Requests structure must be as follows:
 

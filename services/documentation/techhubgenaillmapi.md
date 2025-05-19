@@ -25,7 +25,7 @@
       - [Examples](#examples)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /predict](#request-and-response-formats-for-predict)
+    - [Request and Response Formats for predict endpoint](#request-and-response-formats-for-predict-endpoint)
     - [Parameters explanation](#parameters-explanation)
     - [Persistence format](#persistence-format)
     - [Error Handling](#error-handling)
@@ -1145,7 +1145,7 @@ Response:
 }
 ```
 
-### Request and Response Formats for <i>/predict</i>
+### Request and Response Formats for predict endpoint
 
 The requests structure must be as follows:
 

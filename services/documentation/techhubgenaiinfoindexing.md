@@ -19,7 +19,7 @@
     - [Error Handling](#error-handling)
   - [Configuration](#configuration)
     - [Cloud setup](#cloud-setup)
-    - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+    - [Blobs - Buckets storage distribution](#blobs---buckets-storage-distribution)
     - [Secrets](#secrets)
     - [Configuration files](#configuration-files)
     - [Environment variables](#environment-variables)
@@ -493,7 +493,7 @@ The files/secrets architecture is:
 
 ![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v1.4.0-config.png)
 
-### Blobs/Buckets storage distribution
+### Blobs - Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
 - **Integration**: 
   - STORAGE_BACKEND: To store the raw document data processed by all the previous components.

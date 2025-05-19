@@ -17,6 +17,7 @@
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
+    - [New] Added 'response_adaptive' function in 'response_calls.py' to handle both API and queue response methods adaptively
     - [Improvement] Replaced 'API' references with 'CORE' in 'environment_variables.txt'
     - [Improvement] Updated 'main.py' to use 'core_calls' instead of 'api_calls'
     - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
@@ -29,6 +30,7 @@
     - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
     - [Improvement] Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
     - [Improvement] Updated environment variables in 'test_api_calls.py' from 'API' to 'CORE'
+    - [Improvement] Updated 'default.json' to use 'response_calls.response_adaptive' for supporting both queue-based and API-based response methods
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
@@ -104,10 +106,10 @@
 - preprocess-extract:
     - [Improvement] Quit star imports and set only the required
     - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
-    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.18)
     - [Improvement] Normalized path structure for cloud storage
 - preprocess-ocr:
-    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.18)
     - [Improvement] Standardized path structure for cloud storage
 - common:
     - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment
