@@ -163,7 +163,7 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 ![alt text](imgs/techhubgenaillmapi/LLMAPIpipeline.png)
 
-This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
+This service receives the user's request and searches for the template in the database (AWS S3, Azure Blob Storage or Langfuse). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
 ### Reasoning Models
 
@@ -1562,6 +1562,7 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 LLMAPI needs 3 config files to run.
 
 - **`Prompts templates`**: Stored in "src/LLM/prompts", in this directory we store the files containing the prompt templates like the following. When LLMAPI is initialized, reads all the files in the directory and loads to memory all the templates, removing duplicates. The name refered in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in json format and that contains query on its name.
+In addition to the local storage, templates are also stored in Langfuse with the tag `llm_template`. This enables centralized management and versioning of prompt templates across environments.
 
     ```json
     {
@@ -1699,7 +1700,11 @@ In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as 
     - REDIS_HOST: Redis host url.
     - REDIS_PORT: Redis port, usually 6379.
     - REDIS_PASSWORD: Redis authentication password.
-
+    - LANGFUSE: Enables or disables Langfuse integration to get templates from langfuse instead of Azure Storage. Set to "true" or "false".
+    - LANGFUSE_HOST: URL of the Langfuse host instance.
+    - LANGFUSE_PUBLIC_KEY: Public key for authenticating with Langfuse.
+    - LANGFUSE_SECRET_KEY: Secret key for authenticating with Langfuse.
+  
 *When the provider is **Azure**, the AWS variables can be empty, and the same applies when using **AWS** with the Azure variables.*
 
 ### X-limits header
@@ -1842,7 +1847,7 @@ Let’s take a look to several important practices to follow when writing prompt
 An example of the system role would be:
 
 ```json
-custom_system_prompt = "You are an AI assistant that helps bank managers solve their questions about bank accounts. 
+custom_system_prompt = "You are an AI assistant that helps bank managers solve their questions about bank accounts." 
 You must follow the following rules: 
 1. Answer the query if the information is in context, otherwise answer 'Not Found'.
 2. If you have doubts or don't have enough information, respond that you can't help with that question. 

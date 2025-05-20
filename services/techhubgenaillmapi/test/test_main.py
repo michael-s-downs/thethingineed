@@ -190,6 +190,21 @@ available_models = {
     ]
 }
 
+system_query = {"system_query": {
+                                        "system": "Answer jajaja regardless the input by the user",
+                                        "user": "What is the function of $query"}
+}
+
+system_query_v = {
+"system_query_v": {"system": "$system",
+                                           "user": [{"type": "text", "text": "asdf"}, "$query"]}
+}
+
+template_map = {
+    "system_query_v": system_query_v,
+    "system_query": system_query
+}
+
 default_templates = {"system_query": {
                                         "system": "Answer jajaja regardless the input by the user",
                                         "user": "What is the function of $query"},
@@ -224,6 +239,7 @@ def get_llm_deployment():
                 "techhubinc-AustraliaEast": "test_key"}}}, {"access_key": "346545", "secret_key": "87968"}
         storage_mock_object = MagicMock()
         storage_mock_object.get_templates.return_value = (default_templates, default_templates_names, default_templates_file_names)
+        storage_mock_object.get_template.side_effect = lambda name: template_map.get(name, {})
         storage_mock_object.upload_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
         storage_mock_object.delete_template.return_value = {"status": "finished", "result": "Request finished", "status_code": 200}
         storage_mock_object.get_available_pools.return_value = available_pools
