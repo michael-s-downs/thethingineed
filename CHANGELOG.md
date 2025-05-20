@@ -51,6 +51,7 @@
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
     - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
 - genai-llmapi:
+    - [New] Added support for prompt management using langfuse isntead of cloud storage to improve execution time.
     - [New] Added new Vertex platform
     - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
         - Add models configuration in 'src/LLM/conf/models_config.json'
@@ -59,6 +60,8 @@
     - [New] Added 'show_token_details' parameter to optionally include detailed token usage in model responses
     - [Improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
     - [Improvement] Improved token reporting with more granular metrics
+- genai-compose:
+    - [New] Added support for prompt management using langfuse isntead of cloud storage to improve execution time.
 - preprocess-start:
     - [Improvement] Added file path reconstruction logic for reusing previous preprocess results
     - [Improvement] Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
