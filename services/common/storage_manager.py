@@ -15,6 +15,8 @@ import pandas as pd
 from common.genai_controllers import load_file, get_dataset, list_files, upload_object, delete_file
 from common.logging_handler import LoggerHandler
 from common.errors.genaierrors import PrintableGenaiError
+from common.langfuse_manager import LangFuseManager
+from common.utils import  get_error_word_from_exception
 
 
 class BaseStorageManager(ABC):
@@ -22,6 +24,8 @@ class BaseStorageManager(ABC):
 
     def __init__(self, workspace, origin):
         logger_handler = LoggerHandler(self.MODEL_FORMAT, level=os.environ.get('LOG_LEVEL', "INFO"))
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            self.langfuse_m = LangFuseManager()
         self.logger = logger_handler.logger
         self.workspace = workspace
         self.origin = origin
@@ -68,6 +72,10 @@ class BaseStorageManager(ABC):
 
     def get_available_pools(self) -> dict:
         """ Get the pools that can be used """
+        pass
+
+    def get_template(self, name):
+        """ Load templates from LLMStorage """
         pass
 
     def get_templates(self):
@@ -150,8 +158,87 @@ class LLMStorageManager(BaseStorageManager):
                 available_pools[key] = list(value)
             return available_pools
 
+    def get_template(self, name: str):
+        """
+        Loads the template stored in cloud that's going to be used.
+        """
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            try:
+                prompt = self.langfuse_m.load_template(template_name=name, label="llm_template")
+                template_str = prompt.prompt
+
+                if not template_str:
+                    raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
+
+                template = json.loads(template_str)
+
+                if not template:
+                    raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
+
+                return template
+
+            except json.decoder.JSONDecodeError as ex:
+                error_param = get_error_word_from_exception(ex, template_str)
+                raise PrintableGenaiError(
+                    500,
+                    f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
+                )
+
+            except Exception as e:
+                raise PrintableGenaiError(
+                    404, f"Prompt template file doesn't exist for name '{name}'"
+                )
+
+        try:
+            template_str = load_file(
+                self.workspace, f"{self.prompts_path}{name}.json"
+            )
+            if not template_str:
+                raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
+
+            template = json.loads(template_str)
+
+            if not template:
+                raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
+
+            return template
+
+        except json.decoder.JSONDecodeError as ex:
+            error_param = get_error_word_from_exception(ex, template_str)
+            raise PrintableGenaiError(
+                500,
+                f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
+            )
+
+        except ValueError:
+            raise PrintableGenaiError(
+                404, f"Prompt template file doesn't exist for name '{name}'"
+            )
+
     def get_templates(self, return_files=False):
         """ Load templates from LLMStorage """
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            templates = {}
+            templates_with_file = {}
+            template_names = self.langfuse_m.get_list_templates(label="llm_template")
+            for template_name in template_names:
+                try:
+                    prompt = self.langfuse_m.load_template(template_name=template_name, label="llm_template")
+                    aux_dict = json.loads(prompt.prompt)
+                    templates[template_name] = aux_dict
+
+                    if return_files:
+                        templates_with_file[template_name] = list(aux_dict.keys())
+
+                except:
+                    self.logger.warning(f"Malformed json file not loaded: {template_name}")
+
+            if return_files:
+                return templates, list(templates.keys()), templates_with_file
+
+            return templates, list(templates.keys())
+
+        #AzureStorage
         templates = {}
         templates_with_file = {}
         for file in list_files(self.workspace, self.prompts_path):
@@ -165,7 +252,7 @@ class LLMStorageManager(BaseStorageManager):
                         templates_with_file[file.split("/")[-1]] = list(aux_dict.keys())
 
                     templates.update(aux_dict)
-                        
+
                 except:
                     self.logger.warning(f"Malformed json file not loaded: {file}")
 
@@ -179,7 +266,11 @@ class LLMStorageManager(BaseStorageManager):
             template_name = dat['name']
             content = dat['content']
 
-            upload_object(self.workspace, content, self.prompts_path + template_name + ".json")
+            if os.getenv("LANGFUSE", "").lower() == "true":
+                self.langfuse_m.upload_template(template_name=template_name, template_content=content, label="llm_template")
+            else:
+                upload_object(self.workspace, content, self.prompts_path + template_name + ".json")
+
             time.sleep(0.5)
             response = {"status": "finished", "result": "Request finished", "status_code": 200}
 
@@ -193,6 +284,24 @@ class LLMStorageManager(BaseStorageManager):
         return response
 
     def delete_template(self, dat: dict):
+
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            try:
+                template_name = dat['template_name']
+                self.langfuse_m.delete_template(template_name, "llm_template")
+                response = {"status": "finished", "result": "Request finished", "status_code": 200}
+
+            except KeyError as ex:
+                response = {"status": "error",
+                            "error_message": f"Error parsing Input, Key: 'name' or 'content' not found",
+                            "status_code": 404}
+                self.logger.error(response)
+            except Exception as ex:
+                response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}",
+                            "status_code": 500}
+                self.logger.error(f"Error uploading prompt file. {ex}")
+            return response
+
         try:
             template_name = dat['name']
             delete_file(self.workspace, self.prompts_path + template_name + ".json")

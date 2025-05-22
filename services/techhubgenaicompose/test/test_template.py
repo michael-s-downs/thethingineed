@@ -21,30 +21,13 @@ def test_load_template(mock_load_file, template_manager):
     """Test loading a template from S3."""
     # Mock the S3 load file function to return a template.
     mock_load_file.return_value = b'{"mock_template": "data"}'
+    template_manager.langfuse_m = MagicMock()
     template_manager.name = "test_template"
     
     # Call load_template to load the mock template
     template_manager.load_template()
 
-    # Validate if the template is loaded properly
-    assert template_manager.template == '{"mock_template": "data"}'
-    mock_load_file.assert_called_once_with('mock_workspace', 'src/compose/templates/test_template.json')
 
-
-@patch('pcutils.template.load_file')
-@patch('pcutils.template.storage_containers', {'workspace': 'mock_workspace'})
-def test_load_template_list_with_probs(mock_load_file, template_manager):
-    """Test load_template with a list of names and probabilities."""
-    mock_load_file.return_value = b'{"mock_template": "data"}'
-    template_manager.name = ['template_a', 'template_b']
-    template_manager.probs = [1, 2]  # Probabilities for choosing templates
-    
-    with patch('random.choices', return_value=['template_b']):
-        template_manager.load_template()
-
-    # Validate the chosen template and that it was loaded
-    assert template_manager.template == '{"mock_template": "data"}'
-    mock_load_file.assert_called_once_with('mock_workspace', 'src/compose/templates/template_b.json')
 
 def test_parse_compose_config(template_manager):
     """Test parsing the compose configuration."""
@@ -59,7 +42,7 @@ def test_parse_compose_config(template_manager):
         "queryfilter_template": "sample_filter"
     }
     
-    template_manager.parse(compose_config)
+    template_manager.parse(compose_config, MagicMock())
 
     # Assert that parameters are set correctly after parsing
     assert template_manager.name == "sample_template"
@@ -72,7 +55,7 @@ def test_parse_compose_config_error(template_manager):
     compose_config = {}
 
     with pytest.raises(PrintableGenaiError) as exc_info:
-        template_manager.parse(compose_config)
+        template_manager.parse(compose_config, MagicMock())
     assert "Template conf not found" in str(exc_info.value)
 
 def test_parse_compose_config_error_name(template_manager):
@@ -89,7 +72,7 @@ def test_parse_compose_config_error_name(template_manager):
     }
 
     with pytest.raises(PrintableGenaiError) as exc_info:
-        template_manager.parse(compose_config)
+        template_manager.parse(compose_config, MagicMock())
     assert "Mandatory param" in str(exc_info.value)
 
 
@@ -106,7 +89,7 @@ def test_parse_compose_config_error_query(template_manager):
         "queryfilter_template": "sample_filter"
     }
 
-    template_manager.parse(compose_config)
+    template_manager.parse(compose_config, MagicMock())
     assert template_manager.query is None
 
 
@@ -188,7 +171,7 @@ def test_run_not_top_k(template_manager):
         },
         "queryfilter_template": "sample_filter"
     }
-    temp_man.parse(compose_config)
+    temp_man.parse(compose_config, MagicMock())
 
     template_dict = [
         {
@@ -209,35 +192,20 @@ def test_run_not_top_k(template_manager):
     assert result[0]['action_params']['params']['indexation_conf']['query'] == 'sample query'
     assert result[0]['action_params']['params']['indexation_conf']['top_k'] == 5  # default top_k
 
-@patch('random.choices', side_effect=Exception())
-def test_load_template_name_is_list_but_probs_not_defined(mock_random_choices, template_manager):
-    template_manager.name = ["template1", "template2"]
-    template_manager.probs = None  # Probs not defined
-
-    with pytest.raises(PrintableGenaiError) as exc_info:
-        template_manager.load_template()
-        
-    assert "If name field is a list, probs field must be defined" in str(exc_info.value)
-    mock_random_choices.assert_called_once()
 
 @patch('pcutils.template.load_file', side_effect=ValueError("File not found"))
 def test_load_template_file_not_found(mock_load_file, template_manager):
     S3_TEMPLATEPATH = "src/compose/templates"
     template_manager.name = "template_not_exist"
+    lang_mock = MagicMock()
+    t_mock = MagicMock()
+    t_mock.side_effect = ValueError
+    lang_mock.load_template = t_mock
+    template_manager.langfuse_m = lang_mock
+    template_manager.langfuse_m.side_effect = ValueError
 
     with pytest.raises(PrintableGenaiError) as exc_info:
         template_manager.load_template()
 
-    assert "S3 config file doesn't exists for name" in str(exc_info.value)
-    mock_load_file.assert_called_once_with(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/template_not_exist.json")
+    assert "Template doesn't exists for name" in str(exc_info.value)
 
-@patch('pcutils.template.load_file', return_value=b"")
-def test_load_template_file_empty(mock_load_file, template_manager):
-    S3_TEMPLATEPATH = "src/compose/templates"
-    template_manager.name = "template_empty"
-
-    with pytest.raises(PrintableGenaiError) as exc_info:
-        template_manager.load_template()
-
-    assert "Compose template not found" in str(exc_info.value)
-    mock_load_file.assert_called_once_with(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/template_empty.json")

@@ -103,7 +103,7 @@ class LLMDeployment(BaseDeployment):
     def load_default_templates(self, default_templates_names: list):
         templates = {}
         for template_name in default_templates_names:
-            template = self.load_prompt_template(template_name)
+            template = self.storage_manager.get_template(template_name)
             names = list(template.keys())
             names.sort(key=len)
             base_name = names[0]
@@ -138,7 +138,7 @@ class LLMDeployment(BaseDeployment):
             if lang:
                 template_name = f"{template_name_no_lang}_{lang}"
 
-            templates = self.load_prompt_template(template_name_no_lang)
+            templates = self.storage_manager.get_template(template_name_no_lang)
 
             if template_name in templates:
                 return template_name, templates[template_name]
@@ -157,35 +157,7 @@ class LLMDeployment(BaseDeployment):
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]
 
-    def load_prompt_template(self, name: str):
-        """
-        Loads the template stored in cloud that's going to be used.
-        """
-        try:
-            template_str = load_file(
-                storage_containers["workspace"], f"{TEMPLATEPATH}/{name}.json"
-            )
-            if not template_str:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
 
-            template = json.loads(template_str)
-
-            if not template:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
-
-            return template
-
-        except json.decoder.JSONDecodeError as ex:
-            error_param = get_error_word_from_exception(ex, template_str)
-            raise PrintableGenaiError(
-                500,
-                f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
-            )
-
-        except ValueError:
-            raise PrintableGenaiError(
-                404, f"Prompt template file doesn't exist for name '{name}'"
-            )
 
     def parse_platform(self, platform_metadata: dict):
         parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(
@@ -481,12 +453,11 @@ def get_template() -> Tuple[str, int]:
 def get_available_models() -> Tuple[str, int]:
     deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) != 1 or list(dat.items())[0][0] not in [
-        "platform",
-        "pool",
-        "zone",
-        "model_type",
-    ]:
+
+    allowed_keys = ["platform", "pool", "zone", "model_type"]
+    allowed_platforms = ["azure", "bedrock", "vertex", "openai"]
+
+    if len(dat) != 1 or list(dat.items())[0][0] not in allowed_keys:
         return ResponseObject(
             **{
                 "status": "error",
@@ -495,6 +466,25 @@ def get_available_models() -> Tuple[str, int]:
             }
         ).get_response_base()
     key, value = list(dat.items())[0]
+
+    if not value.strip():
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"The parameter '{key}' cannot be empty",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
+    if key == "platform" and value.lower() not in allowed_platforms:
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"Invalid platform. Allowed values are: {', '.join(allowed_platforms)}",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
     models, pools = get_models(
         deploy.available_models, deploy.available_pools, key, value
     )

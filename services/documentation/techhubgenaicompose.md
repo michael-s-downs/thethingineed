@@ -75,7 +75,7 @@ The objective of the AI framework Retrieval-Augmented Generation (RAG) is to enh
 
 ## Getting Started
 
-To use compose component you will need to have Retrieval and LLMAPI services running and a template stored in azure blob storage in the path "src/compose/templates".
+To use compose component you will need to have Retrieval and LLMAPI services running and a template stored in azure blob storage in the path "src/compose/templates". or in langfuse prompts.
 
 The example template we are using is called "retrieval_llm":
 
@@ -428,7 +428,7 @@ Request parameters:
       - **type**(required): Persistence type, for now, only “chat” mode available.
       - **params**:
         - **max_persistence** (optional): Maximum number of iterations of the conversation history to consider for sending to the LLM task. By default is 3.
-    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse.
+    - **langfuse** (optional): Bool or dict with the params to save the sessions in langfuse. If set, langfuse will search for the templates in langfuse.
       - **host**: Url hosting langfuse server.
       - **public_key**: Langfuse project public key.
       - **secret_key**: Langfuse project secret key.
@@ -3077,6 +3077,8 @@ Compose needs multiple files in cloud storage in the path "src/compose/" to run.
 * **queryfilters_templates/**: Stores the templates containing the filter categories for the query and result filters in json files with content like in the [example](#filter-query-action)
 * **LLMAPI configuration files**. You can see <i>Genai LLM API > Configuration </i> section.
 * **Retrieval configuration files**. You can see <i>Genai Inforetrieval > Configuration </i> section.
+
+Templates and filter_templates can be stored in cloud storage or as a langfuse prompt. By default compose tries to find templates in the cloud storage but if langfusemanager is initialized compose will try to find templates in the langfuse instance. Langfuse is faster at execution time than cloud storage downloading the template.
 
 #### Secrets
     

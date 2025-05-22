@@ -1,6 +1,5 @@
 ### This code is property of the GGAO ###
 
-
 # Native imports
 
 # Installed imports

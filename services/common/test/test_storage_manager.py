@@ -3,6 +3,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import pandas as pd
+import os
+import json
 from common.errors.genaierrors import PrintableGenaiError
 from storage_manager import LLMStorageManager, BaseStorageManager, IRStorageManager, ManagerStorage
 
@@ -57,6 +59,154 @@ def test_get_available_pools(mock_load_file, storage_manager):
     with pytest.raises(PrintableGenaiError):
         storage_manager.get_available_pools()
 
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+def test_get_template_langfuse_success(storage_manager):
+    storage_manager.langfuse_m = MagicMock()
+    prompt_mock = MagicMock()
+    prompt_mock.prompt = json.dumps({"key": "value"})
+    storage_manager.langfuse_m.load_template.return_value = prompt_mock
+
+    template = storage_manager.get_template("template1")
+    assert template == {"key": "value"}
+
+
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+def test_get_template_langfuse_empty_string(storage_manager):
+    storage_manager.langfuse_m = MagicMock()
+    prompt_mock = MagicMock()
+    prompt_mock.prompt = ""
+    storage_manager.langfuse_m.load_template.return_value = prompt_mock
+
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "doesn't exist" in str(exc.value)
+
+
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+def test_get_template_langfuse_empty_json(storage_manager):
+    storage_manager.langfuse_m = MagicMock()
+    prompt_mock = MagicMock()
+    prompt_mock.prompt = "{}"
+    storage_manager.langfuse_m.load_template.return_value = prompt_mock
+
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "doesn't exist" in str(exc.value)
+
+
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+@patch("storage_manager.get_error_word_from_exception")
+def test_get_template_langfuse_invalid_json(mock_get_error, storage_manager):
+    storage_manager.langfuse_m = MagicMock()
+    prompt_mock = MagicMock()
+    prompt_mock.prompt = '{"invalid": "json"'  # Missing closing brace
+    storage_manager.langfuse_m.load_template.return_value = prompt_mock
+    mock_get_error.return_value = "invalid"
+
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "not json serializable" in str(exc.value)
+    assert "<invalid>" in str(exc.value)
+
+
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+def test_get_template_langfuse_generic_exception(storage_manager):
+    storage_manager.langfuse_m = MagicMock()
+    storage_manager.langfuse_m.load_template.side_effect = Exception("any error")
+
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "doesn't exist" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_success(mock_load_file, storage_manager):
+    mock_load_file.return_value = json.dumps({"key": "value"})
+    template = storage_manager.get_template("template1")
+    assert template == {"key": "value"}
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_empty_string(mock_load_file, storage_manager):
+    mock_load_file.return_value = ""
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "not found or is empty" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_empty_json(mock_load_file, storage_manager):
+    mock_load_file.return_value = "{}"
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "is empty" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+@patch("storage_manager.get_error_word_from_exception")
+def test_get_template_file_invalid_json(mock_get_error, mock_load_file, storage_manager):
+    mock_load_file.return_value = '{"invalid": "json"'
+    mock_get_error.return_value = "invalid"
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "<invalid>" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file", side_effect=ValueError("not found"))
+def test_get_template_file_value_error(mock_load_file, storage_manager):
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "doesn't exist" in str(exc.value)
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_success(mock_load_file, storage_manager):
+    mock_load_file.return_value = json.dumps({"key": "value"})
+    template = storage_manager.get_template("template1")
+    assert template == {"key": "value"}
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_empty_string(mock_load_file, storage_manager):
+    mock_load_file.return_value = ""
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "not found or is empty" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+def test_get_template_file_empty_json(mock_load_file, storage_manager):
+    mock_load_file.return_value = "{}"
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "is empty" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file")
+@patch("storage_manager.get_error_word_from_exception")
+def test_get_template_file_invalid_json(mock_get_error, mock_load_file, storage_manager):
+    mock_load_file.return_value = '{"invalid": "json"'
+    mock_get_error.return_value = "invalid"
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "<invalid>" in str(exc.value)
+
+
+@patch.dict(os.environ, {}, clear=True)
+@patch("storage_manager.load_file", side_effect=ValueError("not found"))
+def test_get_template_file_value_error(mock_load_file, storage_manager):
+    with pytest.raises(PrintableGenaiError) as exc:
+        storage_manager.get_template("template1")
+    assert "doesn't exist" in str(exc.value)
+
 @patch("storage_manager.list_files")
 @patch("common.genai_controllers.load_file")
 def test_get_templates(mock_load_file, mock_list_files, storage_manager):
@@ -78,6 +228,36 @@ def test_get_templates(mock_load_file, mock_list_files, storage_manager):
         templates, keys = storage_manager.get_templates()
         mock_warning.assert_called_once()
 
+@patch.dict(os.environ, {"LANGFUSE": "true"})
+def test_get_templates_with_langfuse(storage_manager):
+    mock_langfuse = MagicMock()
+    mock_langfuse.get_list_templates.return_value = ["template1", "template2"]
+
+    valid_prompt = MagicMock()
+    valid_prompt.prompt = json.dumps({"key1": "value1"})
+
+    invalid_prompt = MagicMock()
+    invalid_prompt.prompt = "INVALID_JSON"
+
+    mock_langfuse.load_template.side_effect = [valid_prompt, invalid_prompt]
+    storage_manager.langfuse_m = mock_langfuse
+
+    with patch.object(storage_manager.logger, "warning") as mock_warning:
+        templates, keys = storage_manager.get_templates()
+        assert templates == {"template1": {"key1": "value1"}}
+        assert keys == ["template1"]
+        mock_warning.assert_called_once_with("Malformed json file not loaded: template2")
+
+    mock_langfuse.load_template.side_effect = [valid_prompt, invalid_prompt]
+    storage_manager.langfuse_m = mock_langfuse
+
+    with patch.object(storage_manager.logger, "warning"):
+        templates, keys, templates_with_file = storage_manager.get_templates(return_files=True)
+        assert templates == {"template1": {"key1": "value1"}}
+        assert keys == ["template1"]
+        assert templates_with_file == {"template1": ["key1"]}
+
+
 @patch("storage_manager.upload_object")
 def test_upload_template(mock_upload_object, storage_manager):
     data = {"name": "test_template", "content": "{}"}
@@ -97,6 +277,24 @@ def test_upload_template(mock_upload_object, storage_manager):
         response = storage_manager.upload_template(data)
         assert response["status"] == "error"
         mock_error.assert_called_once()
+
+
+@patch("storage_manager.upload_object")
+def test_upload_template_with_langfuse_enabled(mock_upload_object, storage_manager):
+    data = {"name": "test_template", "content": "{}"}
+
+    storage_manager.langfuse_m = MagicMock()
+
+    with patch.dict(os.environ, {"LANGFUSE": "true"}):
+        response = storage_manager.upload_template(data)
+
+    storage_manager.langfuse_m.upload_template.assert_called_once_with(
+        template_name="test_template",
+        template_content="{}",
+        label="llm_template"
+    )
+
+    assert response == {"status": "finished", "result": "Request finished", "status_code": 200}
 
 @patch("storage_manager.delete_file")
 def test_delete_template(mock_delete_file, storage_manager):
