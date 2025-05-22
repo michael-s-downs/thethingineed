@@ -935,7 +935,7 @@ For the index parameter, the associated json file (same name but ended in .json)
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![alt text](imgs/techhubgenaiinforetrieval/inforetrievalDeployment.png)
+![alt text](imgs/techhubgenaiinforetrieval/InforetrievalDeployment.png)
 
 **parsers.py (`ManagerParser`,`Parser`, `InforetrievalParser`)**
 
