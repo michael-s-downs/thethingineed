@@ -201,7 +201,7 @@ class LangFuseManager(AbstractManager):
         return prompt
     
     def upload_template(self, template_name, template_content, label):
-        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text", labels=label)
+        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text", labels=[label, "latest"])
         return result
     
     def get_list_templates(self, label):
