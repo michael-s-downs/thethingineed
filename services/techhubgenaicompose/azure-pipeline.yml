@@ -75,7 +75,7 @@ stages:
 
             echo "---Installing requirements from $(pwd)---"
             cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
-            pip install -r requirements.txt
+            pip install -r requirements_311.txt
 
             pip install --upgrade pip
             python -m pip install -U setuptools wheel twine
