@@ -93,7 +93,7 @@ stages:
             pip install pytest pytest-cov 
 
             echo "---Installing pytest requirements---"
-            pip install -r test/requeriments.txt
+            pip install -r test/requirements.txt
 
             export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
             echo "---Running coverage---"
