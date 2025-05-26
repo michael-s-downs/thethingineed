@@ -6,6 +6,7 @@ tiktoken==0.4.0
 pydantic==2.8
 elasticsearch==8.13.2
 
+openai==1.82
 llama-index==0.12.37
 llama-index-core==0.12.37
 llama-index-retrievers-bm25==0.5.2
