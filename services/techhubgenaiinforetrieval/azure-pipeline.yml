@@ -69,13 +69,14 @@ stages:
             python -m venv .venv
             source .venv/bin/activate
 
+            echo "---Installing requirements from $(pwd)---"
+            cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
+            pip install -r requirements_311.txt
+
             cd $(System.DefaultWorkingDirectory)/imagesbase/$(baseImage)
             echo "---Installing requirements from $(pwd)---"
             pip install -r requirements.txt
 
-            echo "---Installing requirements from $(pwd)---"
-            cd $(System.DefaultWorkingDirectory)/libraries/genai_sdk_services
-            pip install -r requirements_311.txt
 
             pip install --upgrade pip
             python -m pip install -U setuptools wheel twine
