@@ -90,7 +90,7 @@ stages:
 
             echo "---Installing requirements from $(pwd)---"
             pip install pytest pytest-cov 
-            pip install -r requirements.txt
+            pip install -r requirements_info.txt
 
             echo "---Installing pytest requirements---"
             pip install -r test/requirements.txt
