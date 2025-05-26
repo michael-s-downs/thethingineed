@@ -3,6 +3,6 @@
 
 aiohttp==3.8.5
 nltk==3.8.1
-langfuse==2.33
+langfuse==2.60
 lingua-language-detector==2.0.2
 aioresponses==0.7.6

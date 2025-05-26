@@ -288,6 +288,20 @@ class S3Service(BaseStorageService):
                     os.makedirs(local_subdirectory, exist_ok=True)
                 self.download_file(origin, remote_key, local_key)
 
+    async def download_directory_async(self, origin: str, remote_directory: str, local_directory: str = None, suffix: list = None) -> bool:
+        return self.download_directory(origin, remote_directory, local_directory, suffix)
+
+    async def download_batch_files_async(self, origin: str, files_list: list, local_directory: str) -> bool:
+        local_directory = _assert_has_slash(local_directory)
+
+        if len(files_list) < 1:
+            raise Exception("No files received to download")
+
+        for file_name in files_list:
+            local_file_name = f"{local_directory}/{file_name.split('/')[-1]}"
+            self.download_file(origin, file_name, local_file_name)
+
+
     def upload_object(self, origin: str, object_: bytes, remote_file: str) -> bool:
         """ Upload an object into a s3 bucket.
 
@@ -331,6 +345,38 @@ class S3Service(BaseStorageService):
 
         self.logger.debug("Loading %s..." % remote_file)
         return s3_client.get_object(Bucket=bucket, Key=remote_file)['Body'].read()
+
+    async def upload_batch_files_async(self, origin: str, file_paths: list, remote_folder: str):
+        """Upload multiple files asynchronously with controlled concurrency.
+
+        :param origin: (str) Blob container to upload files.
+        :param file_paths: (list) Files to upload.
+        :param remote_folder: (str) Name of the folder in Blob service.
+        :return: (bool) True if file has been uploaded successfully
+        """
+
+        remote_folder = _assert_has_slash(remote_folder)
+
+        for file_path in file_paths:
+            remote_file_name = f"{remote_folder}{file_path.split('/')[-1]}"
+            self.upload_file(origin, file_path, remote_file_name)
+
+
+    async def upload_folder_async(self, origin: str, local_folder: str, remote_folder: str):
+        """Upload multiple files asynchronously with controlled concurrency.
+
+        :param origin: (str) Blob container to upload files.
+        :param local_folder: (str) Name of the local folder.
+        :param remote_folder: (str) Name of the folder in Blob service.
+        :return: (bool) True if file has been uploaded successfully
+        """
+
+        remote_folder = _assert_has_slash(remote_folder)
+        local_folder = _assert_has_slash(local_folder)
+
+        for file_name in os.listdir(local_folder):
+            self.upload_file(origin, f"{local_folder}{file_name}", f"{remote_folder}{file_name}")
+
 
     def delete_files(self, origin: str, files: str) -> bool:
         """ Delete files from s3

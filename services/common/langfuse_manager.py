@@ -1,14 +1,15 @@
-### This code is property of the GGAO ###
-
-
+# Native imports
+from abc import ABC
 import os
+from http.client import HTTPException
+
 import requests
-from requests.auth import HTTPBasicAuth 
 
 from langfuse import Langfuse
-from basemanager import AbstractManager
+from requests.auth import HTTPBasicAuth
 
-class LangFuseManager(AbstractManager):
+
+class LangFuseManager(ABC):
     """
     A class that manages the LangFuse integration and manages the traces.
     """
@@ -21,17 +22,16 @@ class LangFuseManager(AbstractManager):
             langfuse_config (dict): The configuration for LangFuse integration.
         """
         self.langfuse = None
-        if os.getenv("LANGFUSE", False) == "true":
-            langfuse_config = {
+        if os.getenv("LANGFUSE", False):
+            self.langfuse_config = {
                 "secret_key": os.getenv("LANGFUSE_SECRET_KEY", None),
                 "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
                 "host": os.getenv("LANGFUSE_HOST", None)
             }
-            self.langfuse = Langfuse(**langfuse_config)
-            self.langfuse_config = langfuse_config
-            
+            self.langfuse = Langfuse(**self.langfuse_config)
+
         self.trace = None
-    
+
     def parse(self, compose_config):
         """
         Parses the compose configuration and initializes the LangFuse integration.
@@ -54,20 +54,15 @@ class LangFuseManager(AbstractManager):
                     "public_key": langfuse_params['public_key'],
                     "host": langfuse_params['host']
                 }
-                
+
             self.langfuse = Langfuse(**langfuse_config)
 
         return self
 
     def create_trace(self, session_id):
-        if self.langfuse is None:
-            return
-
         self.trace = self.langfuse.trace(
             session_id=session_id
         )
-
-
 
     def update_metadata(self, metadata):
         """
@@ -80,10 +75,9 @@ class LangFuseManager(AbstractManager):
             return
 
         self.trace.update(
-            metadata = metadata
+            metadata=metadata
         )
 
-    
     def update_input(self, input):
         """
         Updates the input of the current trace.
@@ -95,10 +89,9 @@ class LangFuseManager(AbstractManager):
             return
 
         self.trace.update(
-            input = input
+            input=input
         )
 
-    
     def update_output(self, output):
         """
         Updates the output of the current trace.
@@ -110,10 +103,9 @@ class LangFuseManager(AbstractManager):
             return
 
         self.trace.update(
-            output = output
+            output=output
         )
 
-    
     def add_span(self, name, metadata, input):
         """
         Adds a new span to the current trace.
@@ -130,13 +122,13 @@ class LangFuseManager(AbstractManager):
             return
 
         span = self.trace.span(
-            name = name,
+            name=name,
             metadata=metadata,
-            input = input
+            input=input
         )
-    
+
         return span
-    
+
     def add_span_output(self, span, output):
         """
         Adds the output to the specified span.
@@ -151,7 +143,7 @@ class LangFuseManager(AbstractManager):
         span.end(
             output=output
         )
-    
+
     def add_generation(self, name, metadata, input, model, model_params):
         """
         Adds a new generation to the current trace.
@@ -170,15 +162,15 @@ class LangFuseManager(AbstractManager):
             return
 
         generation = self.trace.generation(
-            name = name,
-            metadata = metadata,
-            input = input,
-            model = model,
-            model_parameters = model_params
+            name=name,
+            metadata=metadata,
+            input=input,
+            model=model,
+            model_parameters=model_params
         )
 
         return generation
-    
+
     def add_generation_output(self, generation, output):
         """
         Adds the output to the specified generation.
@@ -193,32 +185,42 @@ class LangFuseManager(AbstractManager):
         generation.end(
             output=output
         )
-    
 
-    
+    def flush(self):
+        """
+        Flushes the LangFuse integration.
+        """
+        if self.langfuse is None:
+            return
+
+        # self.langfuse.flush()
+
     def load_template(self, template_name, label="compose_template"):
         prompt = self.langfuse.get_prompt(template_name, label=label)
+        if 'deleted' in prompt.labels:
+            raise HTTPException()
+
         return prompt
-    
+
     def upload_template(self, template_name, template_content, label):
-        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text", labels=[label, "latest"])
+        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text",
+                                             labels=[label, "latest"])
         return result
-    
+
     def get_list_templates(self, label):
         host = self.langfuse_config["host"]
         sk = self.langfuse_config["secret_key"]
         pk = self.langfuse_config["public_key"]
         x = requests.get(
             f"{host}/api/public/v2/prompts",
-            auth = HTTPBasicAuth(pk, sk),
-            params= {"limit": 50, "label": label}
+            auth=HTTPBasicAuth(pk, sk),
+            params={"limit": 50, "label": label}
         )
         if x.status_code == 200:
-            return [item['name'] for item in  x.json()["data"]] 
-        
-        raise Exception()
-    
+            return [item['name'] for item in x.json()["data"] if 'deleted' not in item.get('labels', [])]
+
     def delete_template(self, template_name, label="compose_template"):
+
         prompt = self.langfuse.get_prompt(template_name, label=label)
 
         host = self.langfuse_config["host"]
@@ -229,5 +231,4 @@ class LangFuseManager(AbstractManager):
             auth=HTTPBasicAuth(pk, sk),
             json={"newLabels": ["deleted"]}
         )
-        
-        
+

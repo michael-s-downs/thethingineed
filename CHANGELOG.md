@@ -51,6 +51,11 @@
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
     - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
 - genai-llmapi:
+    - [New] Added support for prompt management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
+        - When Langfuse activated, replace cloud storage folder: 'src/LLM/prompts/'
+        - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
     - [New] Added new Vertex platform
     - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
         - Add models configuration in 'src/LLM/conf/models_config.json'
@@ -59,6 +64,12 @@
     - [New] Added 'show_token_details' parameter to optionally include detailed token usage in model responses
     - [Improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
     - [Improvement] Improved token reporting with more granular metrics
+- genai-compose:
+    - [New] Added support for template management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
+        - When Langfuse activated, replace cloud storage folders: 'src/compose/templates/' and 'src/compose/filter_templates/'
+        - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
 - preprocess-start:
     - [Improvement] Added file path reconstruction logic for reusing previous preprocess results
     - [Improvement] Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
@@ -106,10 +117,10 @@
 - preprocess-extract:
     - [Improvement] Quit star imports and set only the required
     - [Improvement] Limited pages extracted for language detection in 'llm-ocr' case with optional environment variable 'LLM_OCR_PAGE_LIMIT' (default 5)
-    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload performance (minimum genai-sdk-services version==0.5.18)
     - [Improvement] Normalized path structure for cloud storage
 - preprocess-ocr:
-    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.14)
+    - [Improvement] Implemented asynchronous batch methods to improve the images upload and download performance (minimum genai-sdk-services version==0.5.18)
     - [Improvement] Standardized path structure for cloud storage
 - common:
     - [Improvement] Updated the response format from string to JSON for sync_deployment and cron_deployment

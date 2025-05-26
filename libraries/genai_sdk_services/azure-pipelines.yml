@@ -49,8 +49,8 @@ steps:
 
 - script: |
     cd $(System.DefaultWorkingDirectory)/${{ variables.source_path }}
-    pip install --upgrade pip
-    python -m pip install -U setuptools wheel twine==6.0.1
+    pip install --upgrade pip  
+    python -m pip install -U setuptools wheel twine==6.0.1  
     pip install .
   displayName: Install dependencies
 
@@ -66,7 +66,7 @@ steps:
   displayName: Configure twine authentication
 
 - script: |
-    cd ${{ variables.source_path }}
+    cd $(System.DefaultWorkingDirectory)/${{ variables.source_path }}
     twine upload -r ${{ variables.feedName }} --config-file $(PYPIRC_PATH) dist/*
   condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish to artifacts feed

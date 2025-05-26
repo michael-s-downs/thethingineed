@@ -25,6 +25,7 @@ GENAI_INFO_RETRIEVAL_SERVICE = "genai_inforetrieval"
 GENAI_INFO_DELETION_SERVICE = "genai_infodeletion"
 GENAI_INFO_INDEXING_SERVICE = "genai_infoindexing"
 GENAI_LLM_SERVICE = "genai_llmapi"
+GENAI_LLM_QUEUE_SERVICE = "genai_llmqueue_output"
 GENAI_COMPOSE_SERVICE = "genai_compose"
 # LLMapi
 GENAI_LLM_LIMITERS = "limiters"

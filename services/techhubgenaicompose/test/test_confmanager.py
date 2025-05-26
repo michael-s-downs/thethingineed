@@ -44,7 +44,7 @@ def mock_load_template():
 @pytest.fixture
 def conf_manager(compose_config, apigw_params, mock_load_template):
     """Fixture to create a ConfManager instance with mocked load_file"""
-    conf_manager = ConfManager(compose_config, apigw_params)
+    conf_manager = ConfManager(compose_config, apigw_params, MagicMock())
     conf_manager.logger = MagicMock()  # Mock the logger to avoid output
     return conf_manager
 
@@ -78,6 +78,7 @@ def test_parse_session_template_name_not_found(mock_load_file, conf_manager, com
     """Test handling when the template file is not found"""
     mock_load_file.side_effect = FileNotFoundError
     compose_config["template"]["name"] = "invalid_template"
+    compose_config["template"]["params"]["model"] = None
     
     with pytest.raises(Exception, match="Template file doesn't exists for name invalid_template"):
         conf_manager.parse_session(compose_config)
@@ -126,6 +127,7 @@ def test_template_no_name_param(conf_manager, compose_config):
     """Test case where no name param is found in the template"""
     
     del compose_config['template']['name']  # Remove the 'name' from the config
+    compose_config["template"]["params"]["model"] = None
 
     with patch("confmanager.load_file", side_effect=FileNotFoundError):
         with pytest.raises(Exception, match="Mandatory param <name> not found in template."):

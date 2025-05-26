@@ -52,7 +52,7 @@ class TemplateManager(AbstractManager):
             "llm_action": []
         }
 
-    def parse(self, compose_config):
+    def parse(self, compose_config, langfuse_m):
         """
         Detects elements to use in the template.
 
@@ -65,6 +65,8 @@ class TemplateManager(AbstractManager):
         conf = self.get_param(compose_config, "template", dict)
         if not conf:
             self.raise_PrintableGenaiError(404, "Template conf not found, trying compose_flow")
+        
+        self.langfuse_m = langfuse_m
 
         self.name = conf.get("name")
         if not self.name:
@@ -171,20 +173,17 @@ class TemplateManager(AbstractManager):
         Loads the template stored in cloud that's going to be used.
         """
         name = self.name
-        if isinstance(self.name, list):
-            try:
-                name = random.choices(name, weights=self.probs)[0]
-                self.logger.info(f"[Process ] Chosen template: {name}")
-            except Exception:
-                self.raise_PrintableGenaiError(400,
-                                                 "If name field is a list, probs field must be defined as a list of same length. Ex: name: ['a', 'b'], probs: [1, 2]")
-        self.logger.debug("Template name is not string so, uploading as string...")
         try:
-            self.template = load_file(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/{name}.json").decode()
+            if self.langfuse_m.langfuse:
+                template = self.langfuse_m.load_template(name)
+                self.template = template.prompt
+            else:
+                self.template = load_file(storage_containers['workspace'], f"{S3_TEMPLATEPATH}/{name}.json").decode()
+
             if not self.template:
                 self.raise_PrintableGenaiError(404, "Compose template not found")
         except ValueError:
-            self.raise_PrintableGenaiError(404, f"S3 config file doesn't exists for name {name}")
+            self.raise_PrintableGenaiError(404, f"Template doesn't exists for name {name}")
     
     def index_conf_retrocompatible(self, template):
         for action in template:

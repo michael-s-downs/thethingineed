@@ -15,6 +15,7 @@ from common.logging_handler import LoggerHandler
 from common.genai_controllers import storage_containers, load_file, upload_object
 from common.utils import get_error_word_from_exception
 from common.errors.genaierrors import PrintableGenaiError
+from common.services import GENAI_LLM_QUEUE_SERVICE 
 
 # Create logger
 logger_handler = LoggerHandler("io_parsing", level=os.environ.get('LOG_LEVEL', "INFO"))
@@ -501,7 +502,7 @@ class ResponseObject(BaseModel):
         output, status_code = self.get_response_base()
         if QUEUE_MODE:
             must_continue = True
-            next_service = os.getenv('Q_GENAI_LLMQUEUE_OUTPUT')
+            next_service = GENAI_LLM_QUEUE_SERVICE 
         else:
             must_continue = False
             next_service = ""

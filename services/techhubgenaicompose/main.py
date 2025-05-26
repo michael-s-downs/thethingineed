@@ -19,6 +19,7 @@ from common.services import GENAI_COMPOSE_SERVICE
 from common.genai_json_parser import get_compose_conf, get_dataset_status_key, get_generic, get_project_config
 from common.genai_status_control import update_status
 from director import Director
+from langfusemanager import LangFuseManager
 
 
 TEMPLATES_PATH = "src/compose/templates/"
@@ -30,6 +31,7 @@ class ComposeDeployment(BaseDeployment):
         super().__init__()
         set_storage(storage_containers)
         set_db(db_dbs)
+        self.langfuse_m = LangFuseManager()
 
     @property
     def must_continue(self) -> bool:
@@ -88,7 +90,7 @@ class ComposeDeployment(BaseDeployment):
         except Exception as ex:
             raise PrintableGenaiError(500, ex)
 
-        output = Director(compose_conf, apigw_params).run()
+        output = Director(compose_conf, apigw_params).run(self.langfuse_m)
 
         resource = "compose/process/"
         self.report_api(1, "", apigw_params['x-reporting'], resource, dataset_status_key)
@@ -183,7 +185,15 @@ class ComposeDeployment(BaseDeployment):
             path = TEMPLATES_PATH
             if template_filter:
                 path = FILTER_TEMPLATES_PATH
-            upload_object(storage_containers['workspace'], content, path + name + ".json")
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.upload_template(name, content, "compose_filter_template")
+                else:
+                    upload_object(storage_containers['workspace'], content, path + name + ".json")
+            else:
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.upload_template(name, content, "compose_template")
+                else:
+                    upload_object(storage_containers['workspace'], content, path + name + ".json")
 
         except Exception as ex:
             error_message = f"Error uploading template file. {ex}"
@@ -234,8 +244,18 @@ class ComposeDeployment(BaseDeployment):
         try:
             path = TEMPLATES_PATH
             if template_filter:
+                label = "compose_filter_template"
                 path = FILTER_TEMPLATES_PATH
-            delete_file(storage_containers['workspace'], path + name + ".json")
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.delete_template(name, label)
+                else:
+                    delete_file(storage_containers['workspace'], path + name + ".json")
+            else:
+                label = "compose_template"
+                if self.langfuse_m.langfuse:
+                    self.langfuse_m.delete_template(name, label)
+                else:
+                    delete_file(storage_containers['workspace'], path + name + ".json")
 
         except Exception as ex:
             error_message = f"Error deleteting template file. {ex}"
@@ -257,13 +277,19 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
+            label = "compose_filter_template"
             str_path = FILTER_TEMPLATES_PATH
         else:
+            label = "compose_template"
             str_path = TEMPLATES_PATH
+
         self.logger.info("List templates request received")
         try:
-            flows_templates = list_files(storage_containers['workspace'], str_path)
-            flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
+            if self.langfuse_m.langfuse:
+                flows_templates = self.langfuse_m.get_list_templates(label)
+            else:
+                flows_templates = list_files(storage_containers['workspace'], str_path)
+                flows_templates = [file_name.replace(str_path, "") for file_name in flows_templates]
 
         except Exception as ex:
             self.logger.error(ex)
@@ -282,10 +308,13 @@ class ComposeDeployment(BaseDeployment):
             endpoint_response
         """
         if filters:
+            label = "compose_filter_template"
             str_path = FILTER_TEMPLATES_PATH
         else:
+            label = "compose_template"
             str_path = TEMPLATES_PATH
-        self.logger.info("List templates request received")
+
+        self.logger.info("Get template content received")
         try:
             template_name = json_input['name']
 
@@ -295,13 +324,21 @@ class ComposeDeployment(BaseDeployment):
             return self.endpoint_response(404, "", error_message)
 
         try:
-            template_content = load_file(storage_containers['workspace'], f"{str_path}{template_name}.json").decode()
+            if self.langfuse_m.langfuse:
+                template_content = self.langfuse_m.load_template(template_name, label)
+                template_content = template_content.prompt
+            else:
+                template_content = load_file(storage_containers['workspace'], f"{str_path}{template_name}.json").decode()
             template_content = template_content.replace("\r", "")
             template_content = template_content.replace("\n", "")
-
+        
         except Exception as ex:
             self.logger.error(ex)
-            return self.endpoint_response(500, "", str(ex))
+            if "NotFoundError" in str(ex):
+                return self.endpoint_response(404, "", str(ex))
+            
+            else:
+                return self.endpoint_response(500, "", str(ex))
 
         return self.endpoint_response(200, template_content, "")
 

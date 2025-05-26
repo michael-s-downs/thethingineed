@@ -17,18 +17,18 @@
     - [Vector storages](#vector-storages)
   - [Calling Retrieval](#calling-retrieval)
     - [Examples](#examples)
-      - [Simple retrieval call: `url/process`](#simple-retrieval-call-urlprocess)
-      - [Documents retrieval: `url/retrieve_documents`](#documents-retrieval-urlretrieve_documents)
-      - [Delete documents: `url/delete_documents`](#delete-documents-urldelete_documents)
-      - [Delete index: `url/delete_index`](#delete-index-urldelete_index)
-      - [Filenames retrieval: `url/get_documents_filenames`](#filenames-retrieval-urlget_documents_filenames)
-      - [Get models: `url/get_models`](#get-models-urlget_models)
+      - [Simple retrieval call process endpoint](#simple-retrieval-call-process-endpoint)
+      - [Documents retrieval call retrieve\_documents endpoint](#documents-retrieval-call-retrieve_documents-endpoint)
+      - [Delete documents call delete\_documents endpoint](#delete-documents-call-delete_documents-endpoint)
+      - [Delete index call delete\_index endpoint](#delete-index-call-delete_index-endpoint)
+      - [Filenames retrieval call get\_documents\_filenames endpoint](#filenames-retrieval-call-get_documents_filenames-endpoint)
+      - [Get models call get\_models endpoint](#get-models-call-get_models-endpoint)
       - [Parameters](#parameters)
       - [Examples](#examples-1)
-      - [List indices: `url/list_indices`](#list-indices-urllist_indices)
+      - [List indices call list\_indices endpoint](#list-indices-call-list_indices-endpoint)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /process](#request-and-response-formats-for-process)
+    - [Request and Response Formats for process endpoint](#request-and-response-formats-for-process-endpoint)
     - [Parameters explanation](#parameters-explanation)
     - [Error Handling](#error-handling)
   - [Configuration](#configuration)
@@ -211,7 +211,7 @@ To get more information about how to configure the secret file refer to Secrets 
 ### Examples
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
-#### Simple retrieval call: `url/process`
+#### Simple retrieval call process endpoint
 
 The following is the body request for a retrieval:
 
@@ -287,7 +287,7 @@ Response:
 }
 ```
 
-#### Documents retrieval: `url/retrieve_documents`
+#### Documents retrieval call retrieve_documents endpoint
 
 To retrieve a document from an index the request is:
 
@@ -330,7 +330,7 @@ Response:
 }
 ```
 
-#### Delete documents: `url/delete_documents`
+#### Delete documents call delete_documents endpoint
 
 To delete a document from an index use the DELETE endpoint /delete_documents, the request is:
 
@@ -346,7 +346,7 @@ Response:
 }
 ```
 
-#### Delete index: `url/delete_index`
+#### Delete index call delete_index endpoint
 
 To delete an index with all documents associated use the DELETE endpoint /delete_index:
 
@@ -368,7 +368,7 @@ Response:
 }
 ```
 
-#### Filenames retrieval: `url/get_documents_filenames`
+#### Filenames retrieval call get_documents_filenames endpoint
 To retrieve the name of the documents indexed and their chunks from an index, the request is:
 
 **\<deploymentdomain\>**/get_documents_filenames?index=myindex
@@ -404,7 +404,7 @@ Response:
 }
 ```
 
-#### Get models: `url/get_models`
+#### Get models call get_models endpoint
 
 #### Parameters
 
@@ -484,7 +484,7 @@ https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 }
 ```
 
-#### List indices: `url/list_indices`
+#### List indices call list_indices endpoint
 
 Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this:
 
@@ -625,7 +625,7 @@ The response would be a list of index names along with the models associated wit
     "status_code": 200
     }
     ```
-### Request and Response Formats for /process
+### Request and Response Formats for process endpoint
 
 ### Parameters explanation
 
@@ -935,7 +935,7 @@ For the index parameter, the associated json file (same name but ended in .json)
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![alt text](imgs/techhubgenaiinforetrieval/inforetrievalDeployment.png)
+![alt text](imgs/techhubgenaiinforetrieval/InforetrievalDeployment.png)
 
 **parsers.py (`ManagerParser`,`Parser`, `InforetrievalParser`)**
 

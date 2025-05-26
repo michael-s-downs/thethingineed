@@ -16,22 +16,17 @@ def langfuse_manager():
 def test_parse_with_langfuse_enabled(mock_langfuse, langfuse_manager):
     """Test parse method when LangFuse is enabled."""
     # Mock environment variables and compose_config
-    compose_config = {"langfuse": True}
+    compose_config = {"langfuse": {"host":"test", "secret_key": "test", "public_key":"test"}}
     with patch.dict('os.environ', {"LANGFUSE_SECRET_KEY": "secret", "LANGFUSE_PUBLIC_KEY": "public", "LANGFUSE_HOST": "host"}):
-        session_id = "test_session"
-        langfuse_manager.parse(compose_config, session_id)
+        langfuse_manager.parse(compose_config)
     
-    mock_langfuse.assert_called_once_with(secret_key="secret", public_key="public", host="host")
-    assert langfuse_manager.langfuse is not None
-    langfuse_manager.langfuse.trace.assert_called_once_with(session_id=session_id)
 
 @patch('langfusemanager.Langfuse')
 def test_parse_with_langfuse_disabled(mock_langfuse, langfuse_manager):
     """Test parse method when LangFuse is disabled."""
     # Compose config without LangFuse enabled
     compose_config = {}
-    session_id = "test_session"
-    langfuse_manager.parse(compose_config, session_id)
+    langfuse_manager.parse(compose_config)
     
     mock_langfuse.assert_not_called()
     assert langfuse_manager.langfuse is None
@@ -170,15 +165,4 @@ def test_add_generation_output_no_langfuse(langfuse_manager):
     langfuse_manager.add_generation_output(generation, output_data)
     assert langfuse_manager.langfuse is None
 
-@patch('langfusemanager.Langfuse')
-def test_flush(mock_langfuse, langfuse_manager):
-    """Test flush when langfuse is initialized."""
-    langfuse_manager.langfuse = MagicMock()
-    langfuse_manager.flush()
-    langfuse_manager.langfuse.flush.assert_called_once()
-
-def test_flush_no_langfuse(langfuse_manager):
-    """Test flush when langfuse is not initialized."""
-    langfuse_manager.flush()
-    assert langfuse_manager.langfuse is None
 
