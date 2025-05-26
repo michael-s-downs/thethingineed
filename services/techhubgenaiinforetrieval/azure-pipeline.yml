@@ -89,8 +89,8 @@ stages:
             cd $(System.DefaultWorkingDirectory)/services/$(serviceName)/
 
             echo "---Installing requirements from $(pwd)---"
-            pip install -r requirements.txt
             pip install pytest pytest-cov 
+            pip install -r requirements.txt
 
             echo "---Installing pytest requirements---"
             pip install -r test/requirements.txt
