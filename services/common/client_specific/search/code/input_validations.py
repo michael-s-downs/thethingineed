@@ -136,7 +136,7 @@ def _validate_operation(request_json: dict) -> Tuple[bool, list]:
     valid, messages = _validate_param(request_json['input_json'], 'operation', str)
 
     if valid:
-        operations = ["indexing", "delete", "preprocess"]
+        operations = ["indexing", "delete", "preprocess", "download"]
 
         if request_json['input_json']['operation'] not in operations:
             valid = False
@@ -430,8 +430,12 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :param input_files: Input files attached from client
     :return: True or False if input is valid and error messages
     """
-    if request_json['input_json'].get('operation') == "preprocess":
+    operation = request_json['input_json'].get('operation', '')
+    
+    if operation == "preprocess":
         validate_functions = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata]
+    elif operation == "download":
+        validate_functions = [_validate_operation, _validate_download_operation]
     else:
         validate_functions = [_validate_operation, _validate_response_url, _validate_ocr,
                             _validate_models, _validate_chunking_method, _validate_index,
@@ -480,3 +484,12 @@ def validate_input_queue(request_json: dict, input_files: list) -> Tuple[bool, s
         message = f"Node '{input_node}' not found in JSON"
 
     return valid, message
+
+def _validate_download_operation(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param for download operation
+
+    :param request_json: Request JSON with all information
+    :return: True or False if param is valid and error messages
+    """
+    valid, messages = _validate_param(request_json['input_json'], 'process_id', str)
+    return valid, messages

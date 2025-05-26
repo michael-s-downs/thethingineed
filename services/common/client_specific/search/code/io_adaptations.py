@@ -102,6 +102,9 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
     
     if operation == "preprocess":
         request_json['client_profile']['pipeline'] = ["preprocess"]
+    elif operation == "download":
+        request_json['client_profile']['pipeline'] = ["download"]
+        request_json['client_profile']['custom_functions']['adapt_output'] = "io_adaptations.adapt_output_download" 
     elif operation == "indexing":
         request_json['client_profile']['pipeline'] = ["indexing"]
         
@@ -226,4 +229,20 @@ def adapt_output_queue(request_json: dict) -> Tuple[dict, dict]:
     output_json['GenaiResponse'] = result_parsed
     result_parsed = output_json
 
+    return request_json, result_parsed
+
+def adapt_output_download(request_json: dict) -> Tuple[dict, dict]:
+    """ Adapt output for download operation
+
+    :param request_json: Request JSON with all information
+    :return: Request JSON and output result adapted
+    """
+    if request_json.get('status') == 'finish' and 'download_result' in request_json:
+        result_parsed = request_json['download_result'].copy()
+    else:
+        result_parsed = {
+            'status': 'error',
+            'error': request_json.get('error', 'Unknown error occurred during download')
+        }
+    
     return request_json, result_parsed
