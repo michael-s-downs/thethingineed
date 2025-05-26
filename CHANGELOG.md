@@ -10,10 +10,20 @@
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
     - [New] Added "preprocess" as a valid operation in validate_operation function in input_validations.py
     - [New] Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
+    - [New] Added '_validate_download_operation' function in 'input_validations.py' for download-specific validation
+    - [New] Added 'download_preprocess_data' function in 'custom_operations.py' to handle preprocessed data retrieval
+    - [New] Added 'adapt_output_download' function in 'io_adaptations.py' for download response formatting
+    - [New] Added '/process-sync' endpoint for synchronous processing supporting both POST and GET methods
     - [Improvement] Updated 'validate_input_default' in 'input_validations.py' to include verification for preprocess operation
     - [Improvement] Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
     - [Improvement] Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for preprocess operation
     - [Improvement] Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
+    - [Improvement] Enhanced '/process' endpoint to support both POST and GET methods with '/process-async' alias
+    - [Improvement] Updated '_validate_operation' function in 'input_validations.py' to include "download" as valid operation
+    - [Improvement] Updated 'get_inputs' function in 'integration_base.py' to handle GET request parameters
+    - [Improvement] Updated 'validate_input_default' in 'input_validations.py' to include verification for download operations
+    - [Improvement] Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for download operation
+    - [Improvement] Updated 'default.json' to include download operation mapping
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
