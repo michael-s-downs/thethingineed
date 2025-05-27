@@ -207,6 +207,16 @@ def _validate_extractfields(doc_metadata: dict) -> Tuple[bool, list]:
 
     return valid, messages
 
+def _validate_download_operation(request_json: dict) -> Tuple[bool, list]:
+    """ Validate param for download operation
+
+    :param request_json: Request JSON with all information
+    :return: True or False if param is valid and error messages
+    """
+    valid, messages = _validate_param(request_json['input_json'], 'process_id', str)
+    
+    return valid, messages
+
 def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
     """ Validate param document_metadata
 
@@ -484,12 +494,3 @@ def validate_input_queue(request_json: dict, input_files: list) -> Tuple[bool, s
         message = f"Node '{input_node}' not found in JSON"
 
     return valid, message
-
-def _validate_download_operation(request_json: dict) -> Tuple[bool, list]:
-    """ Validate param for download operation
-
-    :param request_json: Request JSON with all information
-    :return: True or False if param is valid and error messages
-    """
-    valid, messages = _validate_param(request_json['input_json'], 'process_id', str)
-    return valid, messages
