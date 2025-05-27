@@ -94,8 +94,6 @@
     - [New] Added preprocess operation support for standalone document preprocessing
         - Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
 
-
-
 ## v3.1.0 (2025-03-20)
 - genai-compose:
     - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query
