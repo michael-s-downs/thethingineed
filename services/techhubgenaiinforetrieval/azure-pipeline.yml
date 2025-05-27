@@ -97,7 +97,6 @@ stages:
 
             export PYTHONPATH=$(System.DefaultWorkingDirectory)/services/
 
-            pip list
             echo "---Running coverage---"
             coverage run --source=$(System.DefaultWorkingDirectory)/services/$(serviceName)/ -m pytest -s
             coverage report
