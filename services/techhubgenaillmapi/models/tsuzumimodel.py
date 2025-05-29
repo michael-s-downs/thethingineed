@@ -97,8 +97,6 @@ class TsuzumiModel(GenerativeModel):
             else:
                 raise PrintableGenaiError(400, f"Response format {self.response_format} not supported for model {self.model_name} "
                                     f"(only 'json_object' supported)")
-        if self.tools:
-            data['tools'] = self.tools
 
         return json.dumps(data)
 
@@ -108,110 +106,53 @@ class TsuzumiModel(GenerativeModel):
         :param response: Dict returned by LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        if 'status_code' in response and response['status_code'] != 200:
-            try:
-                error_info = json.loads(response.get('msg', '{}')).get('error', {})
-                content_filter_info = error_info.get('innererror', {}).get('content_filter_result', {})
 
-                if error_info.get('code') == 'content_filter':
-                    triggered_filters = {
-                        category: details
-                        for category, details in content_filter_info.items()
-                        if details.get('filtered')
-                    }
+        if 'detail' in response and isinstance(response['detail'], dict):
+            error = response['detail'].get('error', {})
+            if error:
+                error_code = error.get('code', 'unknown_error')
+                error_message = error.get('message', 'An error occurred.')
+                return {
+                    'status': 'error',
+                    'error_message': f"{error_code}: {error_message or 'No additional message provided.'}",
+                    'status_code': 400
+                }
 
-                    triggered_str = ', '.join(
-                        f"{category}({details.get('severity', 'unknown')})"
-                        for category, details in triggered_filters.items()
-                    )
+        try:
+            choice = response.get('choices', [{}])[0]
+            if 'message' not in choice:
+                raise PrintableGenaiError(400, f"Tsuzumi format is not as expected: {choice}.")
 
-                    return {
-                        'status': 'error',
-                        'error_message': f"Content filter triggered due to the following categories: {triggered_str}.",
-                        'status_code': 400
-                    }
-            except (json.JSONDecodeError, KeyError, TypeError):
-                pass
+            message = choice.get('message', {})
+            text = message.get('content', '')
 
+            if re.search(NOT_FOUND_MSG, text, re.I):
+                answer = NOT_FOUND_MSG
+                self.logger.info("Answer not found.")
+            else:
+                answer = text.strip()
+
+            self.logger.info(f"LLM response: {answer}.")
             return {
-                'status': 'error',
-                'error_message': str(response.get('msg', 'Unknown error')),
-                'status_code': response['status_code']
-            }
-
-        choice = response.get('choices', [{}])[0]
-
-        if 'message' not in choice:
-            raise PrintableGenaiError(400, f"Tsuzumi format is not as expected: {choice}.")
-
-        message = choice.get('message', {})
-
-        if 'tool_calls' in message:
-            tool_calls = []
-            for tool_call in message.get('tool_calls', []):
-                tool_calls.append({
-                    "name": tool_call.get('function', {}).get('name', ''),
-                    "id": tool_call.get('id', ''),
-                    "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
-                })
-
-            return {
-                "status": "finished",
-                "result": {
-                    "answer": message.get('content') or "",
-                    "tool_calls": tool_calls,
-                    "input_tokens": response['usage']['prompt_tokens'],
-                    "n_tokens": response['usage']['total_tokens'],
-                    "output_tokens": response['usage']['completion_tokens'],
-                    "query_tokens": self.message.user_query_tokens,
+                'status': "finished",
+                'result': {
+                    'answer': answer,
+                    'logprobs': [],
+                    'n_tokens': response['usage']['total_tokens'],
+                    'query_tokens': self.message.user_query_tokens,
+                    'input_tokens': response['usage']['prompt_tokens'],
+                    'output_tokens': response['usage']['completion_tokens'],
                     "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                 },
-                "status_code": 200
+                'status_code': 200
             }
 
-        text = message.get('content', '')
-
-        if re.search(NOT_FOUND_MSG, text, re.I):
-            answer = NOT_FOUND_MSG
-            self.logger.info("Answer not found.")
-        else:
-            answer = text.strip()
-
-        self.logger.info(f"LLM response: {answer}.")
-        return {
-            'status': "finished",
-            'result': {
-                'answer': answer,
-                'logprobs': [],
-                'n_tokens': response['usage']['total_tokens'],
-                'query_tokens': self.message.user_query_tokens,
-                'input_tokens': response['usage']['prompt_tokens'],
-                'output_tokens': response['usage']['completion_tokens'],
-                "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
-            },
-            'status_code': 200
-        }
-
-    def adapt_tools(self, tools):
-
-        if not tools:
-            return tools
-
-        adapted_tools = []
-
-        for tool in tools:
-            adapted_tool = {
-                "type": "function",
-                "function": {
-                    "name": tool['name'],
-                    "description": tool['description'],
-                    "parameters": tool['input_schema']
-                }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'error_message': f"Unexpected format: {str(e)}",
+                'status_code': 500
             }
-
-            adapted_tools.append(adapted_tool)
-
-        return adapted_tools
 
     def __repr__(self):
         """Return the model representation."""
