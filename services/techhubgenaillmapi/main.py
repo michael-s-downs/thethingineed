@@ -4,6 +4,7 @@
 # Native imports
 import os
 import json
+import glob
 from typing import Dict, Tuple
 
 # Installed imports
@@ -50,6 +51,7 @@ class LLMDeployment(BaseDeployment):
             self.Q_IN = (provider, os.getenv("Q_GENAI_LLMQUEUE_INPUT"))
             set_queue(self.Q_IN)
         set_storage(storage_containers)
+        self.load_secrets_to_env()
         self.workspace = storage_containers.get("workspace")
         self.origin = storage_containers.get("origin")
         self.storage_manager = ManagerStorage.get_file_storage(
@@ -80,6 +82,20 @@ class LLMDeployment(BaseDeployment):
             self.logger.info("llmqueue initialized")
         else:
             self.logger.info("llmapi initialized")
+    
+
+    def load_secrets_to_env(self) -> None:
+        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
+
+        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
+            try:
+                self.logger.debug(f"Loading secret '{secret_path}'")
+                secret = json.loads(open(secret_path, "r").read())
+
+                for envvar in secret:
+                    os.environ[envvar] = secret[envvar]
+            except Exception as _:
+                self.logger.warning(f"Unable to load secret '{secret_path}'")
 
     @property
     def must_continue(self) -> bool:
