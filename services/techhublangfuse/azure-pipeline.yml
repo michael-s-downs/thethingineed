@@ -20,6 +20,13 @@ stages:
     jobs:
       - job: CopyFilesHelmAndPublish
         steps:
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)/helm/langfuse'
+              Contents: '**'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
+              CleanTargetFolder: true
+            displayName: 'Copy Files helm Langfuse'
           - task: PublishPipelineArtifact@1
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
