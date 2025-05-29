@@ -8,6 +8,7 @@ trigger:
   paths:
     include:
     - 'helm/langfuse/*'
+    - 'services/techhublangfuse/*'
 
 variables:
 - group: Variables para CI
