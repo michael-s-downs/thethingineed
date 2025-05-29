@@ -21,8 +21,8 @@ with app.app_context():
     logger.info(f"---- Loading custom files ({os.getenv('INTEGRATION_NAME').upper()})")
     load_custom_files()
 
-
-@app.route('/process', methods=['POST'])
+@app.route('/process-async', methods=['POST', 'GET'])
+@app.route('/process', methods=['POST','GET'])
 def process() -> str:
     """ Endpoint to receive requests from client,
     deserialize, convert and upload documents to storage,
@@ -44,6 +44,21 @@ def process() -> str:
     logger.info(f"---- Response sent ({request_json['status'].upper()}) for request '{request_json['integration_id']}'")
     return json.dumps(result), 200 if result['status'] != "error" else 400
 
+@app.route('/process-sync', methods=['POST', 'GET'])
+def process_sync() -> str:
+    """ Endpoint to receive requests from client,
+    deserialize, convert and upload documents to storage,
+    generate full request and process synchronously
+
+    :return: JSON response in plain text
+    """
+    logger.info("---- Request received")
+    request_json, result = receive_request(request)
+    request_json, result = process_request(request_json)
+    check_shutdown(request)
+    logger.info(f"---- Response sent ({request_json['status'].upper()}) for request '{request_json['integration_id']}'")
+    return json.dumps(result), 200 if result['status'] != "error" else 400
+        
 @app.route('/healthcheck', methods=['GET'])
 def healthcheck() -> str:
     """ Endpoint to check if pod is running

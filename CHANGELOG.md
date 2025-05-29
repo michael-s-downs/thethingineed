@@ -8,29 +8,45 @@
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json.json'
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
-    - [New] Added "preprocess" as a valid operation in validate_operation function in input_validations.py
-    - [New] Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
-    - [Improvement] Updated 'validate_input_default' in 'input_validations.py' to include verification for preprocess operation
-    - [Improvement] Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
-    - [Improvement] Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for preprocess operation
-    - [Improvement] Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
+    - [New] Added preprocess operation support for standalone document preprocessing
+        - Added "preprocess" as valid operation in validate_operation function in input_validations.py
+        - Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
+        - Updated 'validate_input_default' in 'input_validations.py' to include verification for preprocess operation
+        - Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for preprocess operation
+    - [New] Added preprocess reuse functionality for optimized processing workflows
+        - Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
+        - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
+    - [New] Added download operation support for downloading preprocessed data
+        - Added 'download_preprocess_data' function in 'custom_operations.py' to handle data download
+        - Added '_validate_download_operation' function in 'input_validations.py' for validation
+        - Added 'adapt_output_download' function in 'io_adaptations.py' for response formatting
+        - Added '/process-sync' endpoint for synchronous processing with POST and GET methods
+        - Enhanced '/process' endpoint to support GET methods with '/process-async' alias
+        - Updated validation functions in 'input_validations.py' to support download operations
+        - Updated 'adapt_input_default' in 'io_adaptations.py' to define download pipeline
+        - Updated 'get_inputs' in 'integration_base.py' to handle GET request parameters
+        - Updated 'default.json' and 'queue.json' to include download operation mapping
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
     - [New] Added 'response_adaptive' function in 'response_calls.py' to handle both API and queue response methods adaptively
-    - [Improvement] Replaced 'API' references with 'CORE' in 'environment_variables.txt'
+    - [New] Added preprocess operation support for standalone document preprocessing
+        - Modified 'preprocess' function in 'core_calls.py' to support queue and async modes
+        - Updated in 'default.json': Added preprocess configuration
+        - Updated in 'queue.json': Added preprocess configuration
+        - Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
+        - Updated 'default.json' to use 'response_calls.response_adaptive' for supporting both queue-based and API-based response methods
+    - [New] Added preprocess reuse functionality for optimized processing workflows
+        - Enhanced 'indexing' function in 'core_calls.py' to handle process_id for preprocess reuse functionality
+        - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
+    - [Improvement] Replaced 'API' references with 'CORE' in environment_variables.txt
     - [Improvement] Updated 'main.py' to use 'core_calls' instead of 'api_calls'
     - [Improvement] Renamed file from 'api_calls.py' to 'core_calls.py' for consistent naming convention
-    - [Improvement] Modified 'preprocess' function in 'core_calls.py' to support queue and async modes
-    - [Improvement] Enhanced 'indexing' function in 'core_calls.py' to handle process_id for preprocess reuse functionality
     - [Improvement] Updated all references from 'api_calls' to 'core_calls' in 'integration_base.py'
     - [Improvement] Added queue detection via 'CORE_QUEUE_DELETE_URL' environment variable in 'update_request' function in 'requests_manager.py'
-    - [Improvement] Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
-    - [Improvement] Updated in 'default.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
-    - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section and added preprocess configuration
-    - [Improvement] Modified in 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
+    - [Improvement] Updated in 'default.json': Changed 'api_calls' to 'core_calls' in indexing section
+    - [Improvement] Updated in 'queue.json': Changed 'api_calls' to 'core_calls' in indexing section
     - [Improvement] Updated environment variables in 'test_api_calls.py' from 'API' to 'CORE'
-    - [Improvement] Updated 'default.json' to use 'response_calls.response_adaptive' for supporting both queue-based and API-based response methods
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
@@ -71,11 +87,12 @@
         - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
 - preprocess-start:
-    - [Improvement] Added file path reconstruction logic for reusing previous preprocess results
-    - [Improvement] Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
+    - [New] Added preprocess reuse functionality for optimized processing workflows
+        - Added file path reconstruction logic for reusing previous preprocess results
+        - Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
 - preprocess-extract:
-    -  [Improvement] Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
-
+    - [New] Added preprocess operation support for standalone document preprocessing
+        - Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
 
 ## v3.1.0 (2025-03-20)
 - genai-compose:

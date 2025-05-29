@@ -7,6 +7,7 @@
     "adapt_output": "io_adaptations.adapt_output_default",
     "indexing": "core_calls.indexing",
     "preprocess": "core_calls.preprocess", 
+    "download": "custom_operations.download_preprocess_data",
     "response_async": "response_calls.response_adaptive",
     "init_logic": "custom_operations.send_tracking_input",
     "finally_logic": "custom_operations.send_tracking_output"

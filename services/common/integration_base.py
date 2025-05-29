@@ -83,21 +83,27 @@ def get_inputs(request: object) -> Tuple[dict, dict, list]:
         apigw_params["x-reporting"] = request.headers.get("x-reporting", "")
         apigw_params["x-limits"] = request.headers.get("x-limits", "{}")
 
-        # Get JSON input
-        if request.data:
+        # For GET requests, convert URL parameters to dict
+        if hasattr(request, 'method') and request.method == 'GET':
+            input_json = dict(request.args)
+        # For POST requests or direct JSON
+        elif hasattr(request, 'data') and request.data:
             input_json = request.get_json(force=True)
-
             if type(input_json) != dict:
                 input_json = {}
-        elif request.form:
+        elif hasattr(request, 'form') and request.form:
             input_json = request.form.to_dict()
-
             if len(input_json) == 1 and '' in input_json:
                 input_json = json.loads(list(input_json.values())[0])
+        elif type(request) == dict:
+            # Input request directly via queue instead of API
+            apigw_params = {'x-department': os.getenv('TENANT'), 'x-tenant': os.getenv('TENANT')}
+            input_json = request
 
         # Get input files attached
-        for key, file in request.files.items(True):
-            input_files.append({'file_name': file.filename, 'file_bytes': file.stream.read()})
+        if hasattr(request, 'files'):
+            for key, file in request.files.items(True):
+                input_files.append({'file_name': file.filename, 'file_bytes': file.stream.read()})
     except:
         if type(request) == dict:
             # Input request directly via queue instead of API
