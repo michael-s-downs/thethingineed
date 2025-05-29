@@ -7,8 +7,8 @@ trigger:
     - master
   paths:
     include:
-    - 'helm/langfuse/*'
     - 'services/techhublangfuse/*'
+    - 'helm/langfuse/'
 
 variables:
 - group: Variables para CI
@@ -19,21 +19,6 @@ pool:
 stages:
   - stage: LangfuseArtifact
     jobs:
-      # - job: CopyFilesHelmAndPublish
-      #   steps:
-      #     - task: CopyFiles@2
-      #       inputs:
-      #         SourceFolder: '$(System.DefaultWorkingDirectory)/helm/langfuse'
-      #         Contents: '**'
-      #         TargetFolder: '$(System.DefaultWorkingDirectory)/helm/langfuse'
-      #         CleanTargetFolder: true
-      #       displayName: 'Copy Files helm Langfuse'
-      #     - task: PublishPipelineArtifact@1
-      #       inputs:
-      #         PathtoPublish: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
-      #         ArtifactName: 'Helm-Langfuse'
-      #         publishLocation: 'Container'
-      #       displayName: 'Publish artifacts Langfuse'
       - job: CopyFilesHelmAndPublish
         steps:
           - task: PublishPipelineArtifact@1
