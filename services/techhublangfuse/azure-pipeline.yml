@@ -25,12 +25,12 @@ stages:
             inputs:
               SourceFolder: '$(System.DefaultWorkingDirectory)/helm/langfuse'
               Contents: '**'
-              TargetFolder: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
+              TargetFolder: '$(System.DefaultWorkingDirectory)/helm/langfuse'
               CleanTargetFolder: true
             displayName: 'Copy Files helm Langfuse'
           - task: PublishPipelineArtifact@1
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
+              PathtoPublish: '$(System.DefaultWorkingDirectory)/helm/langfuse'
               ArtifactName: 'Helm-Langfuse'
               publishLocation: 'Container'
             displayName: 'Publish artifacts Langfuse'
