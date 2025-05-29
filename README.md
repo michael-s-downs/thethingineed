@@ -15,11 +15,11 @@
     - [Indexing API specification](#indexing-api-specification)
     - [Compose API specification](#compose-api-specification)
     - [Preprocess API specification](#preprocess-api-specification)
-      - [Preprocess Features](#preprocess-features)
+      - [Preprocessing Features](#preprocessing-features)
         - [1. Preprocessing with Indexing](#1-preprocessing-with-indexing)
-        - [2. Standalone Preprocessing](#2-standalone-preprocessing)
-        - [3. Reusing Preprocessed Documents](#3-reusing-preprocessed-documents)
-      - [Download Preprocessed Data](#download-preprocessed-data)
+        - [2. Reusing Preprocessed Documents](#2-reusing-preprocessed-documents)
+        - [3. Standalone Preprocessing](#3-standalone-preprocessing)
+        - [4. Download Preprocessed Data](#4-download-preprocessed-data)
   - [Endpoints](#endpoints)
     - [Compose](#compose)
     - [LLMAPI](#llmapi)
@@ -289,6 +289,137 @@ The output can be changed passing in the requests some attribute values:
 
 ### Preprocess API specification
 
+The Preprocess API provides document processing capabilities through optical character recognition (OCR), text extraction, and optional indexing for vector storage. The API supports both synchronous and asynchronous processing modes to handle different use cases and document volumes.
+
+#### Preprocessing Features
+
+The API supports multiple processing modes controlled by the `operation` parameter:
+
+##### 1. Preprocessing with Indexing
+
+  - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing as it allows for complex configurations and large document payloads.
+  
+    This is the standard mode that combines preprocessing and indexing in a single operation:
+
+    ```json
+    {
+    "operation": "indexing",
+    "response_url": "test--q-integration-callback",
+    "persist_preprocess": true,
+    "indexation_conf": {
+        "vector_storage_conf": {
+        "index": "test_index"
+        },
+        "chunking_method": {
+        "window_overlap": 40,
+        "window_length": 500
+        },
+        "models": ["techhub-pool-world-ada-002"]
+    },
+    "preprocess_conf": {
+        "ocr_conf": {
+        "ocr": "llm-ocr",
+        "force_ocr": true,
+        "llm_ocr_conf": {
+            "model": "techhub-pool-world-gpt-4o",
+            "platform": "azure",
+            "query": "Do the text and entities extraction of this image",
+            "system": "Act as if you were an OCR program",
+            "max_tokens": 2500,
+            "force_continue": true
+        }
+        }
+    },
+    "documents_metadata": {
+        "name_document.pdf": {
+        "content_binary": "base64_encoded_document_content"
+        }
+    }
+    }
+    ```
+
+##### 2. Reusing Preprocessed Documents
+
+  - **POST** `/process` or `/process-async`
+  
+    You can reuse a previously preprocessed document by specifying its `process_id`:
+
+    ```json
+    {
+    "operation": "indexing",
+    "response_url": "test--q-integration-callback",
+    "process_id": "ir_index_20250409_094944_955580_ywps2z",
+    "persist_preprocess": true,
+    "indexation_conf": {
+        "vector_storage_conf": {
+        "index": "test_index"
+        },
+        "chunking_method": {
+        "window_overlap": 40,
+        "window_length": 500
+        },
+        "models": ["techhub-pool-world-ada-002"]
+    },
+    "documents_metadata": {
+        "name_document.pdf": {}
+    }
+    }
+    ```
+    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+    > **NOTE:** Currently, this feature requires you to implement a callback to receive the `process_id` from the initial preprocessing operation. We are actively developing an alternative method that will allow you to retrieve the `process_id` without the need to set up a callback mechanism.
+
+##### 3. Standalone Preprocessing
+
+  - **POST** `/process` or `/process-async`
+  
+    Perform preprocessing without immediate indexing:
+
+    > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
+    > 
+    ```json
+    {
+    "operation": "preprocess",
+    "response_url": "test--q-integration-callback",
+    "persist_preprocess": true,
+    "preprocess_conf": {
+        "ocr_conf": {
+        "ocr": "llm-ocr",
+        "force_ocr": true,
+        "llm_ocr_conf": {
+            "model": "techhub-pool-world-gpt-4o",
+            "platform": "azure",
+            "query": "Do the text and entities extraction of this image",
+            "system": "Act as if you where an OCR program",
+            "max_tokens": 2500,
+            "force_continue": true
+        }
+        }
+    },
+    "documents_metadata": {
+        "name_document.pdf": {
+        "content_binary": "base64_encoded_document_content"
+        }
+    }
+    }
+    ```
+
+##### 4. Download Preprocessed Data
+
+For downloading previously processed document data, use the synchronous endpoint:
+
+  - **GET** `/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS`
+
+    **Parameters:**
+    * **operation** (required): Must be set to "download" for data download
+    * **process_id** (required): The process ID of the preprocessed document
+    * **cells** (optional): Include structural data when set to `true` (default: `false`)
+
+    **Response structure:**
+    * **status**: Operation result status
+    * **text**: Document text content with full_document and pages breakdown
+    * **cells** (when requested): Document structure information including words, paragraphs, and lines with positioning coordinates
+
 Below is a list of all the parameters that can be included in the request body for preprocessing operations:
 
 * **request_id** (optional): A unique ID to relate the asynchronous request with the callback response (if a valid response_url is sent); autogenerated if not specified. In both cases, it is returned in the API response.
@@ -315,43 +446,6 @@ Below is a list of all the parameters that can be included in the request body f
   - **request_id**: The unique ID specified previously (or autogenerated) to relate original request.
   - **process_id**: The unique identifier of the preprocessed document for future reuse.
   - **docs**: Name of the documents sent to this preprocessing operation.
-
-#### Preprocess Features
-
-- `/process` **(POST/GET)**: Asynchronous processing with queue-based workflow
-- `/process-async` **(POST/GET)**: Alias for /process endpoint
-- `/process-sync` **(POST/GET)**: Synchronous processing with immediate response
-
-##### 1. Preprocessing with Indexing
-- `operation`: "indexing"
-- `indexation_conf`: vector storage and chunking configuration
-- `preprocess_conf`: OCR and preprocessing settings
-
-##### 2. Standalone Preprocessing
-- `operation`: "preprocess" 
-- `persist_preprocess`: true (required)
-- `preprocess_conf`: OCR and preprocessing settings
-
-##### 3. Reusing Preprocessed Documents
-- `operation`: "indexing"
-- `process_id`: ID of previously preprocessed document
-- `indexation_conf`: vector storage and chunking configuration
-
-#### Download Preprocessed Data
-
-For downloading previously processed document data, use the synchronous endpoint:
-
-**GET** `/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS`
-
-**Parameters:**
-* **operation** (required): Must be set to "download" for data download
-* **process_id** (required): The process ID of the preprocessed document
-* **cells** (optional): Include structural data when set to `true` (default: `false`)
-
-**Response structure:**
-* **status**: Operation result status
-* **text**: Document text content with full_document and pages breakdown
-* **cells** (when requested): Document structure information including words, paragraphs, and lines with positioning coordinates
 
 For more information and examples for each preprocessing use case (preprocessing with indexing, standalone preprocessing, and reusing preprocessed documents), see the [techhubpreprocess.md] documentation.
 

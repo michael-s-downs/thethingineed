@@ -7,22 +7,15 @@
   - [Overview](#overview)
     - [Key Features](#key-features)
   - [Getting started](#getting-started)
-  - [Available Endpoints](#available-endpoints)
   - [Concepts and definitions](#concepts-and-definitions)
   - [Preprocess component distribution](#preprocess-component-distribution)
   - [Configuration](#configuration)
     - [Input json parameters](#input-json-parameters)
   - [Preprocessing Features](#preprocessing-features)
-    - [Processing Modes](#processing-modes)
       - [1. Preprocessing with Indexing](#1-preprocessing-with-indexing)
       - [2. Reusing Preprocessed Documents](#2-reusing-preprocessed-documents)
       - [3. Standalone Preprocessing](#3-standalone-preprocessing)
-    - [Persist Preprocessing Parameter](#persist-preprocessing-parameter)
-    - [Key Configurations](#key-configurations)
-      - [OCR Configuration Options](#ocr-configuration-options)
-      - [LLM OCR Configuration](#llm-ocr-configuration)
-    - [Downloading Preprocessed Data](#downloading-preprocessed-data)
-      - [Using the Synchronous Endpoint](#using-the-synchronous-endpoint)
+      - [4. Downloading Preprocessed Data](#4-downloading-preprocessed-data)
   - [Preprocess components explanation](#preprocess-components-explanation)
     - [Preprocess start](#preprocess-start)
       - [Environment variables](#environment-variables)
@@ -92,19 +85,6 @@ headers = {
 response = requests.request("POST", url, headers=headers, data=payload)
 ```
 
-## Available Endpoints
-
-The preprocess component provides the following endpoints for different use cases:
-
-- **`/process`** (POST/GET): Asynchronous processing with queue-based workflow
-- **`/process-async`** (POST/GET): Alias for `/process` endpoint  
-- **`/process-sync`** (POST/GET): Synchronous processing with immediate response
-
-**Usage:**
-- Use `/process` or `/process-async` for standard document processing with queue-based workflow
-- Use `/process-sync` for immediate processing and direct response
-- GET requests on `/process-sync` with `operation=download` parameter enable preprocessed data download
-  
 ## Concepts and definitions
 * <b>Preprocess:</b> Set of techniques applied to a text to extract the data in a proper way to index it.
 * <b>OCR:</b> Optical Character Recognition (OCR) is the process by which an image of text is converted into a machine-readable text format
@@ -406,124 +386,131 @@ Then an example with the following key data could be:
 
 The preprocess component supports multiple processing modes and flexible document handling through various configuration options.
 
-### Processing Modes
-
 #### 1. Preprocessing with Indexing
 
-This is the standard mode that combines preprocessing and indexing in a single operation:
+  - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing as it allows for complex configurations and large document payloads.
 
-```json
-{
-  "operation": "indexing",
-  "response_url": "test--q-integration-callback",
-  "persist_preprocess": true,
-  "indexation_conf": {
-    "vector_storage_conf": {
-      "index": "test_index"
-    },
-    "chunking_method": {
-      "window_overlap": 40,
-      "window_length": 500
-    },
-    "models": ["techhub-pool-world-ada-002"]
-  },
-  "preprocess_conf": {
-    "ocr_conf": {
-      "ocr": "llm-ocr",
-      "force_ocr": true,
-      "llm_ocr_conf": {
-        "model": "techhub-pool-world-gpt-4o",
-        "platform": "azure",
-        "query": "Do the text and entities extraction of this image",
-        "system": "Act as if you were an OCR program",
-        "max_tokens": 2500,
-        "force_continue": true
+    This is the standard mode that combines preprocessing and indexing in a single operation:
+
+    ```json
+    {
+      "operation": "indexing",
+      "response_url": "test--q-integration-callback",
+      "persist_preprocess": true,
+      "indexation_conf": {
+        "vector_storage_conf": {
+          "index": "test_index"
+        },
+        "chunking_method": {
+          "window_overlap": 40,
+          "window_length": 500
+        },
+        "models": ["techhub-pool-world-ada-002"]
+      },
+      "preprocess_conf": {
+        "ocr_conf": {
+          "ocr": "llm-ocr",
+          "force_ocr": true,
+          "llm_ocr_conf": {
+            "model": "techhub-pool-world-gpt-4o",
+            "platform": "azure",
+            "query": "Do the text and entities extraction of this image",
+            "system": "Act as if you were an OCR program",
+            "max_tokens": 2500,
+            "force_continue": true
+          }
+        }
+      },
+      "documents_metadata": {
+        "name_document.pdf": {
+          "content_binary": "base64_encoded_document_content"
+        }
       }
     }
-  },
-  "documents_metadata": {
-    "name_document.pdf": {
-      "content_binary": "base64_encoded_document_content"
-    }
-  }
-}
-```
+    ```
 
 #### 2. Reusing Preprocessed Documents
 
-You can reuse a previously preprocessed document by specifying its `process_id`:
+  - **POST** `/process` or `/process-async`
 
-```json
-{
-  "operation": "indexing",
-  "response_url": "test--q-integration-callback",
-  "process_id": "ir_index_20250409_094944_955580_ywps2z",
-  "persist_preprocess": true,
-  "indexation_conf": {
-    "vector_storage_conf": {
-      "index": "test_index"
-    },
-    "chunking_method": {
-      "window_overlap": 40,
-      "window_length": 500
-    },
-    "models": ["techhub-pool-world-ada-002"]
-  },
-  "documents_metadata": {
-    "name_document.pdf": {}
-  }
-}
-```
-> **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+    You can reuse a previously preprocessed document by specifying its `process_id`:
+
+    ```json
+    {
+      "operation": "indexing",
+      "response_url": "test--q-integration-callback",
+      "process_id": "ir_index_20250409_094944_955580_ywps2z",
+      "persist_preprocess": true,
+      "indexation_conf": {
+        "vector_storage_conf": {
+          "index": "test_index"
+        },
+        "chunking_method": {
+          "window_overlap": 40,
+          "window_length": 500
+        },
+        "models": ["techhub-pool-world-ada-002"]
+      },
+      "documents_metadata": {
+        "name_document.pdf": {}
+      }
+    }
+    ```  
+
+    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+    > **NOTE:** Currently, this feature requires you to implement a callback to receive the `process_id` from the initial preprocessing operation. We are actively developing an alternative method that will allow you to retrieve the `process_id` without the need to set up a callback mechanism.
 
 #### 3. Standalone Preprocessing
 
-Perform preprocessing without immediate indexing:
+  - **POST** `/process` or `/process-async`
 
-> **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
-> 
-```json
-{
-  "operation": "preprocess",
-  "response_url": "test--q-integration-callback",
-  "persist_preprocess": true,
-  "preprocess_conf": {
-    "ocr_conf": {
-      "ocr": "llm-ocr",
-      "force_ocr": true,
-      "llm_ocr_conf": {
-        "model": "techhub-pool-world-gpt-4o",
-        "platform": "azure",
-        "query": "Do the text and entities extraction of this image",
-        "system": "Act as if you where an OCR program",
-        "max_tokens": 2500,
-        "force_continue": true
+    Perform preprocessing without immediate indexing:
+
+    > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
+    > 
+    ```json
+    {
+      "operation": "preprocess",
+      "response_url": "test--q-integration-callback",
+      "persist_preprocess": true,
+      "preprocess_conf": {
+        "ocr_conf": {
+          "ocr": "llm-ocr",
+          "force_ocr": true,
+          "llm_ocr_conf": {
+            "model": "techhub-pool-world-gpt-4o",
+            "platform": "azure",
+            "query": "Do the text and entities extraction of this image",
+            "system": "Act as if you where an OCR program",
+            "max_tokens": 2500,
+            "force_continue": true
+          }
+        }
+      },
+      "documents_metadata": {
+        "name_document.pdf": {
+          "content_binary": "base64_encoded_document_content"
+        }
       }
     }
-  },
-  "documents_metadata": {
-    "name_document.pdf": {
-      "content_binary": "base64_encoded_document_content"
-    }
-  }
-}
-```
+    ```
 
-### Persist Preprocessing Parameter
+**Persist Preprocessing Parameter**
 
 The `persist_preprocess` parameter controls the retention of preprocessed files:
 - `true`: Preprocessed files and intermediate results are kept in cloud storage
 - `false`: Temporary files are deleted after processing
 - **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`
 
-### Key Configurations
+**Key Configurations**
 
-#### OCR Configuration Options
+**OCR Configuration Options**
 * `ocr`: Specify the OCR engine (e.g., 'llm-ocr', 'azure-ocr', 'aws-ocr')
 * `force_ocr`: Force OCR processing regardless of initial text extraction
 * `llm_ocr_conf`: Detailed configuration for LLM-based OCR
 
-#### LLM OCR Configuration
+**LLM OCR Configuration**
 * `model`: Specify the LLM model for OCR
 * `platform`: Cloud platform hosting the model
 * `query`: Optional specific query for OCR processing
@@ -531,68 +518,68 @@ The `persist_preprocess` parameter controls the retention of preprocessed files:
 * `max_tokens`: Maximum tokens for processing
 * `force_continue`: Continue processing even if errors occur on specific pages
 
-### Downloading Preprocessed Data
+#### 4. Downloading Preprocessed Data
 
-In addition to the processing modes, the API allows direct download of previously processed document data, providing access to extracted text and structural information.
+  In addition to the processing modes, the API allows direct download of previously processed document data, providing access to extracted text and structural information.
 
-#### Using the Synchronous Endpoint
+  **Using the Synchronous Endpoint**
 
-The synchronous processing endpoint (`/process-sync`) can be used to download preprocessed data by sending a GET request:
+  The synchronous processing endpoint (`/process-sync`) can be used to download preprocessed data by sending a GET request:
 
-**Request Format:**
+  **Request Format:**
 
-GET {{url}}/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS
+    GET {{url}}/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS
 
-**Parameters:**
-- `operation` (required): Must be set to `download` for data download
-- `process_id` (required): The process ID of the preprocessed document
-- `cells` (optional): Include structural data when set to `true` (default: `false`)
+  **Parameters:**
+  - `operation` (required): Must be set to `download` for data download
+  - `process_id` (required): The process ID of the preprocessed document
+  - `cells` (optional): Include structural data when set to `true` (default: `false`)
 
-**Example Request:**
+  **Example Request:**
 
-GET {{url}}/process-sync?operation=download&process_id=preprocess_20250412_143822_951264_d76f3h&cells=true
+    GET {{url}}/process-sync?operation=download&process_id=preprocess_20250412_143822_951264_d76f3h&cells=true
 
-**Example Response:**
-```json
-{
-  "status": "ok",
-  "text": {
-    "full_document": {
-      "financial_report.txt": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\nThis report presents the financial performance for fiscal year 2024..."
+  **Example Response:**
+  ```json
+  {
+    "status": "ok",
+    "text": {
+      "full_document": {
+        "financial_report.txt": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\nThis report presents the financial performance for fiscal year 2024..."
+      },
+      "pages": {
+        "0": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\n",
+        "1": "Revenue Analysis\\n\\nQuarterly breakdown shows consistent growth...",
+        "2": "Expense Report\\n\\nOperating expenses remained within projections..."
+      }
     },
-    "pages": {
-      "0": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\n",
-      "1": "Revenue Analysis\\n\\nQuarterly breakdown shows consistent growth...",
-      "2": "Expense Report\\n\\nOperating expenses remained within projections..."
+    "cells": {
+      "words": [
+        {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 213.76, "text": "Annual"},
+        {"r0": 167.45, "c0": 72.18, "r1": 189.58, "c1": 263.42, "text": "Financial"}
+      ],
+      "paragraphs": [
+        {"r0": 145.32, "c0": 72.18, "r1": 234.87, "c1": 498.23, "text": "Annual Financial Report 2024"}
+      ],
+      "lines": [
+        {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 498.23, "text": "Annual Financial Report 2024"}
+      ]
     }
-  },
-  "cells": {
-    "words": [
-      {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 213.76, "text": "Annual"},
-      {"r0": 167.45, "c0": 72.18, "r1": 189.58, "c1": 263.42, "text": "Financial"}
-    ],
-    "paragraphs": [
-      {"r0": 145.32, "c0": 72.18, "r1": 234.87, "c1": 498.23, "text": "Annual Financial Report 2024"}
-    ],
-    "lines": [
-      {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 498.23, "text": "Annual Financial Report 2024"}
-    ]
   }
-}
-```
+  ```
 
-**Response Structure:**
+  **Response Structure:**
 
-- `status`: Operation result status
-- `text`: Document text content
-  - `full_document`: Complete text for each document
-  - `pages`: Text content by page number
-- `cells` (when requested): Document structure information
-  - `words`: Positioning and content of individual words with coordinates (r0, c0, r1, c1 representing the bounding box)
-  - `paragraphs`: Paragraph structure and content with spatial information, identifying logical text blocks
-  - `lines`: Line-by-line content with positioning, representing physical lines of text as they appear in the document
+  - `status`: Operation result status
+  - `text`: Document text content
+    - `full_document`: Complete text for each document
+    - `pages`: Text content by page number
+  - `cells` (when requested): Document structure information
+    - `words`: Positioning and content of individual words with coordinates (r0, c0, r1, c1 representing the bounding box)
+    - `paragraphs`: Paragraph structure and content with spatial information, identifying logical text blocks
+    - `lines`: Line-by-line content with positioning, representing physical lines of text as they appear in the document
 
-Note that only documents processed with `persist_preprocess=true` will be available for retrieval. Documents processed with `persist_preprocess=false` will have their preprocessed data removed after completion.
+  Note that only documents processed with `persist_preprocess=true` will be available for retrieval. Documents processed with `persist_preprocess=false` will have their preprocessed data removed after completion.
 
 ## Preprocess components explanation
 The flow of a preprocessing pipeline, starting from the user request in 'integration-receiver' would be the following:
