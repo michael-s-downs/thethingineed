@@ -50,8 +50,8 @@ class LLMDeployment(BaseDeployment):
         if QUEUE_MODE:
             self.Q_IN = (provider, os.getenv("Q_GENAI_LLMQUEUE_INPUT"))
             set_queue(self.Q_IN)
-        set_storage(storage_containers)
         self.load_secrets_to_env()
+        set_storage(storage_containers)
         self.workspace = storage_containers.get("workspace")
         self.origin = storage_containers.get("origin")
         self.storage_manager = ManagerStorage.get_file_storage(
