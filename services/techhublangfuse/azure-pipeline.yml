@@ -1,0 +1,28 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - develop
+    - release/v*
+    - master
+  paths:
+    include:
+    - 'helm/langfuse/*'
+
+variables:
+- group: Variables para CI
+
+pool:
+  vmImage: '$(vmImageName)'
+
+stages:
+  - stage: LangfuseArtifact
+    jobs:
+      - job: CopyFilesHelmAndPublish
+        steps:
+          - task: PublishPipelineArtifact@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/helm/langfuse'
+              ArtifactName: 'Helm-Langfuse'
+              publishLocation: 'Container'
+            displayName: 'Publish artifacts Langfuse'
