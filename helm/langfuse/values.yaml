@@ -123,6 +123,8 @@ service:
 
 ingress:
   enabled: false
+  basedomain:
+  port: 80
 
 resources: {}
 
