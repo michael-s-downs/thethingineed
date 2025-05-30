@@ -289,7 +289,7 @@ The output can be changed passing in the requests some attribute values:
 
 ### Preprocess API specification
 
-The Preprocess API provides document processing capabilities through optical character recognition (OCR), text extraction, and optional indexing for vector storage. The API supports both synchronous and asynchronous processing modes to handle different use cases and document volumes.
+The **Preprocess API** provides document processing capabilities through Optical Character Recognition (OCR), text extraction, and optional indexing for vector storage. The API supports both synchronous and asynchronous processing modes to handle different use cases and document volumes.
 
 #### Preprocessing Features
 
@@ -297,128 +297,130 @@ The API supports multiple processing modes controlled by the `operation` paramet
 
 ##### 1. Preprocessing with Indexing
 
-  - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing as it allows for complex configurations and large document payloads.
+  - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing, as it allows for complex configurations and large document payloads.
   
     This is the standard mode that combines preprocessing and indexing in a single operation:
 
     ```json
     {
-    "operation": "indexing",
-    "response_url": "test--q-integration-callback",
-    "persist_preprocess": true,
-    "indexation_conf": {
-        "vector_storage_conf": {
-        "index": "test_index"
+        "operation": "indexing",
+        "response_url": "test--q-integration-callback",
+        "persist_preprocess": true,
+        "indexation_conf": {
+            "vector_storage_conf": {
+                "index": "test_index"
+            },
+            "chunking_method": {
+                "window_overlap": 40,
+                "window_length": 500
+            },
+            "models": [
+                "techhub-pool-world-ada-002"
+            ]
         },
-        "chunking_method": {
-        "window_overlap": 40,
-        "window_length": 500
+        "preprocess_conf": {
+            "ocr_conf": {
+                "ocr": "llm-ocr",
+                "force_ocr": true,
+                "llm_ocr_conf": {
+                    "model": "techhub-pool-world-gpt-4o",
+                    "platform": "azure",
+                    "query": "Do the text and entities extraction of this image",
+                    "system": "Act as if you were an OCR program",
+                    "max_tokens": 2500,
+                    "force_continue": true
+                }
+            }
         },
-        "models": ["techhub-pool-world-ada-002"]
-    },
-    "preprocess_conf": {
-        "ocr_conf": {
-        "ocr": "llm-ocr",
-        "force_ocr": true,
-        "llm_ocr_conf": {
-            "model": "techhub-pool-world-gpt-4o",
-            "platform": "azure",
-            "query": "Do the text and entities extraction of this image",
-            "system": "Act as if you were an OCR program",
-            "max_tokens": 2500,
-            "force_continue": true
+        "documents_metadata": {
+            "name_document.pdf": {
+                "content_binary": "base64_encoded_document_content"
+            }
         }
-        }
-    },
-    "documents_metadata": {
-        "name_document.pdf": {
-        "content_binary": "base64_encoded_document_content"
-        }
-    }
     }
     ```
 
 ##### 2. Reusing Preprocessed Documents
 
-  - **POST** `/process` or `/process-async`
-  
-    You can reuse a previously preprocessed document by specifying its `process_id`:
+  - **POST** `/process` or `/process-async`. You can reuse a previously preprocessed document by specifying its <i>process_id</i>:
 
     ```json
     {
-    "operation": "indexing",
-    "response_url": "test--q-integration-callback",
-    "process_id": "ir_index_20250409_094944_955580_ywps2z",
-    "persist_preprocess": true,
-    "indexation_conf": {
-        "vector_storage_conf": {
-        "index": "test_index"
+        "operation": "indexing",
+        "response_url": "test--q-integration-callback",
+        "process_id": "ir_index_20250409_094944_955580_ywps2z",
+        "persist_preprocess": true,
+        "indexation_conf": {
+            "vector_storage_conf": {
+                "index": "test_index"
+            },
+            "chunking_method": {
+                "window_overlap": 40,
+                "window_length": 500
+            },
+            "models": [
+                "techhub-pool-world-ada-002"
+            ]
         },
-        "chunking_method": {
-        "window_overlap": 40,
-        "window_length": 500
-        },
-        "models": ["techhub-pool-world-ada-002"]
-    },
-    "documents_metadata": {
-        "name_document.pdf": {}
-    }
+        "documents_metadata": {
+            "name_document.pdf": {
+            }
+        }
     }
     ```
     > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
 
-    > **NOTE:** Currently, this feature requires you to implement a callback to receive the `process_id` from the initial preprocessing operation. We are actively developing an alternative method that will allow you to retrieve the `process_id` without the need to set up a callback mechanism.
+    > **NOTE:** Currently, this feature requires implementing a callback to receive the `process_id` from the initial preprocessing operation. <u>We are actively developing an alternative method</u> that will allow retrieving the `process_id` <u>without</u> the need for a <u>callback mechanism</u>.
 
 ##### 3. Standalone Preprocessing
 
-  - **POST** `/process` or `/process-async`
-  
-    Perform preprocessing without immediate indexing:
+  - **POST** `/process` or `/process-async`. Perform preprocessing without immediate indexing:
 
     > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
-    > 
+    >  
+
     ```json
     {
-    "operation": "preprocess",
-    "response_url": "test--q-integration-callback",
-    "persist_preprocess": true,
-    "preprocess_conf": {
-        "ocr_conf": {
-        "ocr": "llm-ocr",
-        "force_ocr": true,
-        "llm_ocr_conf": {
-            "model": "techhub-pool-world-gpt-4o",
-            "platform": "azure",
-            "query": "Do the text and entities extraction of this image",
-            "system": "Act as if you where an OCR program",
-            "max_tokens": 2500,
-            "force_continue": true
+        "operation": "preprocess",
+        "response_url": "test--q-integration-callback",
+        "persist_preprocess": true,
+        "preprocess_conf": {
+            "ocr_conf": {
+                "ocr": "llm-ocr",
+                "force_ocr": true,
+                "llm_ocr_conf": {
+                    "model": "techhub-pool-world-gpt-4o",
+                    "platform": "azure",
+                    "query": "Do the text and entities extraction of this image",
+                    "system": "Act as if you where an OCR program",
+                    "max_tokens": 2500,
+                    "force_continue": true
+                }
+            }
+        },
+        "documents_metadata": {
+            "name_document.pdf": {
+                "content_binary": "base64_encoded_document_content"
+            }
         }
-        }
-    },
-    "documents_metadata": {
-        "name_document.pdf": {
-        "content_binary": "base64_encoded_document_content"
-        }
-    }
     }
     ```
 
 ##### 4. Download Preprocessed Data
 
-For downloading previously processed document data, use the synchronous endpoint:
+To download previously processed document data, use the synchronous endpoint:
 
   - **GET** `/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS`
 
     **Parameters:**
-    * **operation** (required): Must be set to "download" for data download
-    * **process_id** (required): The process ID of the preprocessed document
-    * **cells** (optional): Include structural data when set to `true` (default: `false`)
+    * **operation** (required): Must be set to "download" for data download.
+    * **process_id** (required): The process ID of the preprocessed document.
+    * **cells** (optional): Include structural data when set to `true` (default: `false`).
 
     **Response structure:**
-    * **status**: Operation result status
-    * **text**: Document text content with full_document and pages breakdown
-    * **cells** (when requested): Document structure information including words, paragraphs, and lines with positioning coordinates
+    * **status**: Operation result status.
+    * **text**: Document text content with full_document and pages breakdown.
+    * **cells** (when requested): Document structure information including words, paragraphs, and lines with positioning coordinates.
 
 Below is a list of all the parameters that can be included in the request body for preprocessing operations:
 
@@ -447,7 +449,7 @@ Below is a list of all the parameters that can be included in the request body f
   - **process_id**: The unique identifier of the preprocessed document for future reuse.
   - **docs**: Name of the documents sent to this preprocessing operation.
 
-For more information and examples for each preprocessing use case (preprocessing with indexing, standalone preprocessing, and reusing preprocessed documents), see the [techhubpreprocess.md] documentation.
+For more information and examples for each preprocessing use case (preprocessing with indexing, standalone preprocessing, and reusing preprocessed documents), see the <i>Detailed Compontent/Preprocess</i> documentation.  
 
 ## Endpoints
 
