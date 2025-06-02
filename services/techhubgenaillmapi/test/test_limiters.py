@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 
 # Local imports
 from common.errors.genaierrors import PrintableGenaiError
-from limiters import ManagerQueryLimiter, AzureQueryLimiter, BedrockQueryLimiter, QueryLimiter, NovaQueryLimiter, VertexQueryLimiter, TsuzumiQueryLimiter
+from limiters import ManagerQueryLimiter, AzureQueryLimiter, BedrockQueryLimiter, QueryLimiter, NovaQueryLimiter, VertexQueryLimiter
 from message.claudemessage import Claude3Message
 from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage
 
@@ -75,7 +75,7 @@ class TestManagerLimiters:
             "bag_tokens": 500, "persistence": [], "querylimiter": ""}
     def test_get_possible_querylimiters(self):
         platforms = ManagerQueryLimiter.get_possible_querylimiters()
-        assert platforms == ["azure", "bedrock", "nova", "vertex", "tsuzumi"]
+        assert platforms == ["azure", "bedrock", "nova", "vertex", "QueryLimiter"]
 
     def test_all_adapters(self):
         self.conf['querylimiter'] = "azure"
@@ -86,14 +86,11 @@ class TestManagerLimiters:
         limiter_nova = ManagerQueryLimiter.get_limiter(self.conf)
         self.conf['querylimiter'] = "vertex"
         limiter_vertex = ManagerQueryLimiter.get_limiter(self.conf)
-        self.conf['querylimiter'] = "tsuzumi"
-        limiter_tsuzumi = ManagerQueryLimiter.get_limiter(self.conf)
 
         assert isinstance(limiter_azure, AzureQueryLimiter)
         assert isinstance(limiter_bedrock, BedrockQueryLimiter)
         assert isinstance(limiter_nova, NovaQueryLimiter)
         assert isinstance(limiter_vertex, VertexQueryLimiter)
-        assert isinstance(limiter_tsuzumi, TsuzumiQueryLimiter)
 
     def test_wrong_adapter(self):
         self.conf['querylimiter'] = "nonexistent"

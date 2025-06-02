@@ -654,7 +654,7 @@ class TestTsuzumiPlatform:
             mock_func.side_effect = requests.exceptions.Timeout
             response = self.tsuzumi_platform.call_model()
             result = generative_model.get_result(response)
-        assert result['status_code'] == 500
+        assert result['status_code'] == 408
 
         with patch('requests.post') as mock_func:
             mock_func.side_effect = requests.exceptions.RequestException
