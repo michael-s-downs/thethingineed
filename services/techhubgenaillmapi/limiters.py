@@ -307,7 +307,7 @@ class TsuzumiQueryLimiter(QueryLimiter):
         super().__init__(message, model, max_tokens, bag_tokens, persistence)
 
 class ManagerQueryLimiter(object):
-    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter, TsuzumiQueryLimiter]
+    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter, TsuzumiQueryLimiter, QueryLimiter]
 
     @staticmethod
     def get_limiter(conf: dict) -> QueryLimiter:

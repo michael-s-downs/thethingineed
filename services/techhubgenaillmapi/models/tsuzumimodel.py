@@ -19,7 +19,7 @@ NOT_FOUND_MSG = "Not found"
 class TsuzumiModel(GenerativeModel):
     MODEL_MESSAGE = "chatTsuzumi"
     GENERATIVE_MODELS = ["tsuzumi-7b-v1_2-8k-instruct"]
-    MODEL_QUERY_LIMITER = "tsuzumi"
+    MODEL_QUERY_LIMITER = "QueryLimiter"
 
     def __init__(self, model: str = 'tsuzumi-7b-v1_2-8k-instruct',
                  model_type: str = "",
@@ -117,6 +117,12 @@ class TsuzumiModel(GenerativeModel):
                     'error_message': f"{error_code}: {error_message or 'No additional message provided.'}",
                     'status_code': 400
                 }
+        if 'error' in response and isinstance(response, dict):
+            return {
+                'status': 'error',
+                'error_message': response['msg'],
+                'status_code': response['status_code']
+            }
 
         try:
             choice = response.get('choices', [{}])[0]
