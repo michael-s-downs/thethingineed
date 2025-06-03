@@ -56,11 +56,6 @@ class LangFuseManager(AbstractManager):
         
         for template_name in required_templates:
             template = load_file(storage_containers['workspace'], f"{path}{template_name}.json")
-            # try:
-            #     template = json.loads(template)
-            #     self.upload_template(template_name=template_name, template_content=json.dumps(template, ensure_ascii=False, indent=4), label=label)
-            #     continue
-            # except Exception as _:
             template = template.decode().replace("\r", "")
                 
             self.upload_template(template_name=template_name, template_content=template, label=label)
