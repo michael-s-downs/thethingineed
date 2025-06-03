@@ -15,6 +15,7 @@ from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision, NovaModel
 from models.geminimodel import ChatGeminiVision
+from models.tsuzumimodel import  TsuzumiModel
 
 gpt_model = {
     "model": "techhubinc-EastUS2-gpt-35-turbo-16k-0613",
@@ -148,10 +149,19 @@ gemini_model={
     "models_credentials": {}
 }
 
+tsuzumi_model={
+			"model": "tsuzumi-7b-v1_2-8k-instruct",
+			"model_type": "tsuzumi-7b-v1_2-8k-instruct",
+			"message": "chatTsuzumi",
+			"model_pool": [],
+            "models_credentials":{}
+		    }
+
 available_models = {
     "azure": [copy.deepcopy(gpt_model), copy.deepcopy(dalle_model), copy.deepcopy(gpt_v_model)],
     "bedrock": [copy.deepcopy(claude_model), copy.deepcopy(llama3_model), copy.deepcopy(claude3_model), copy.deepcopy(nova_model), copy.deepcopy(nova_v_model)],
-    "vertex": [copy.deepcopy(gemini_model)]
+    "vertex": [copy.deepcopy(gemini_model)],
+    "tsuzumi": [copy.deepcopy(tsuzumi_model)]
 }
 
 available_pools = {
@@ -166,7 +176,8 @@ available_pools = {
     "techhubinc-pool-world-gpt-4o": [copy.deepcopy(gpt_v_model)],
     "techhubdev-pool-world-nova-micro-1:0": [copy.deepcopy(nova_model)],
     "techhubdev-pool-world-nova-lite-1:0": [copy.deepcopy(nova_v_model)],
-    "techhubdev-pool-world-nova-pro-1:0": [copy.deepcopy(nova_v_model)]
+    "techhubdev-pool-world-nova-pro-1:0": [copy.deepcopy(nova_v_model)],
+    "techhubdev-pool-world-tsuzumi-7b-v1_2-8k-instruct": [copy.deepcopy(tsuzumi_model)]
 }
 
 message_dict = {"query": "Hello, how are you?", "template": {
@@ -224,6 +235,10 @@ class TestManagerGeneratives:
         manager_models_config.get_model.return_value = copy.deepcopy(gemini_model)
         geminiv = ManagerModel.get_model({"model": gemini_model['model']}, "vertex", available_pools, manager_models_config)
         assert isinstance(geminiv, ChatGeminiVision)
+        manager_models_config.get_model.return_value = copy.deepcopy(tsuzumi_model)
+        tsuzumi = ManagerModel.get_model({"model": tsuzumi_model['model']}, "vertex", available_pools,
+                                         manager_models_config)
+        assert isinstance(tsuzumi, TsuzumiModel)
 
 
     def test_pool_model(self):
@@ -1267,3 +1282,66 @@ class TestGeminiModel:
             'inputs': {'location': 'NYC'}
         }]
         assert result_4['status_code'] == 200
+
+class TestTsuzumiModel:
+    def test_parse_data(self):
+        conf = {
+            "model": tsuzumi_model['model'],
+            "seed": 42,
+            "response_format": "json_object",
+            "max_tokens": 100,
+        }
+        manager_models_config = MagicMock()
+        manager_models_config.get_model.return_value = copy.deepcopy(tsuzumi_model)
+        tsuzumi = ManagerModel.get_model(conf, "tsuzumi", available_pools, manager_models_config)
+        message_dict.pop('max_img_size_mb')
+        tsuzumi.set_message(message_dict)
+        tsuzumi.parse_data()
+
+        conf['response_format'] = "dd"
+        conf['model'] = tsuzumi_model['model']
+        manager_models_config.get_model.return_value = copy.deepcopy(tsuzumi_model)
+        with pytest.raises(PrintableGenaiError, match=re.escape(f"Error 400: Response format {conf['response_format']} not "
+                                                                f"supported for model {conf['model']} "
+                                                                f"(only 'json_object' supported)")):
+
+            gpt = ManagerModel.get_model(conf, "tsuzumi", available_pools, manager_models_config)
+            gpt.set_message(message_dict)
+            gpt.parse_data()
+
+
+    def test_get_result(self):
+        mock_response = {'detail': {'error': {'code': 'invalid_api_key', 'message': '', 'param': None, 'type': 'invalid_request_error'}}}
+        conf = copy.deepcopy(tsuzumi_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 0
+        conf['max_tokens'] = 100
+        conf['n'] = 1
+        tsuzumi = TsuzumiModel(**conf)
+        tsuzumi.set_message(message_dict)
+        result = tsuzumi.get_result(mock_response)
+        assert result['status_code'] == 400
+        assert result['status'] == 'error'
+
+    def test_temperature_ok(self):
+        conf = copy.deepcopy(tsuzumi_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf['temperature'] = 2.5
+        with pytest.raises(ValueError, match=re.escape(f"Temperature must be between 0.0 and 2.0 for the model {conf['model']}")):
+            TsuzumiModel(**conf)
+
+    def test_repr(self):
+        conf = copy.deepcopy(gpt_model)
+        conf.pop('model_pool')
+        conf.pop('message')
+        conf.pop('zone')
+        conf.pop('api_version')
+        conf['temperature'] = 0
+        conf['max_tokens'] = 100
+        conf['n'] = 1
+        tsuzumi_model = TsuzumiModel(**conf)
+        expected_output = (f"{{model:{conf['model']}, max_tokens:{conf['max_tokens']}, "
+                           f"temperature:{conf['temperature']}, n:{conf['n']}}}")
+        assert repr(tsuzumi_model) == expected_output

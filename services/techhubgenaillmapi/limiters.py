@@ -292,7 +292,7 @@ class VertexQueryLimiter(QueryLimiter):
         return num_images
 
 class ManagerQueryLimiter(object):
-    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter]
+    MODEL_TYPES = [AzureQueryLimiter, BedrockQueryLimiter, NovaQueryLimiter, VertexQueryLimiter, QueryLimiter]
 
     @staticmethod
     def get_limiter(conf: dict) -> QueryLimiter:

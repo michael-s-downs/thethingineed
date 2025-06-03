@@ -184,7 +184,7 @@ Below is a list of all the parameters that can be included in the request body, 
     * <b>force_ocr</b> (optional): Boolean parameter to force the document to pass through the OCR component 
     * <b>llm_ocr_conf (<i>'llm-ocr' ocr type parameters</i>)</b> (optional): 
       * <b>model</b> (optional): Name of the model (or pool) to be used on each platform. If this parameter is not provided 'gpt-4o-pool-world' will be the default model.
-      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', 'bedrock' or 'vertex'. 'azure' by default.
+      * <b>platform</b> (optional): Name of the desired platform. Possible values: 'azure', 'openai', 'bedrock', 'vertex' or 'tsuzumi'. 'azure' by default.
       * <b>query</b> (optional): Question or task that you want to ask the model. 
       * <b>system</b> (optional): Variable for chat-based models
       * <b>max_tokens</b>(optional): Maximum number of tokens to generate in the response. (1000 by default)
@@ -2184,125 +2184,126 @@ The available models depend on the region where the suscription is deployed. Mak
 
 <br/><strong>DEV region</strong><br/>
 
-| Model Name | Pools                                                                                                                                | Platform |
-|--------|--------------------------------------------------------------------------------------------------------------------------------------|------|
-|techhubdev-AustraliaEast-dall-e-3| techhubdev-pool-world-dalle3, techhub-pool-world-dalle3                                                                              |azure|
-|techhubdev-AustraliaEast-gpt-35-turbo-16k-1106| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                        |azure|
-|techhubdev-AustraliaEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-AustraliaEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-AustraliaEast-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                              |azure|
-|techhubdev-BrazilSouth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-BrazilSouth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-CanadaEast-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                        |azure|
-|techhubdev-CanadaEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-CanadaEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-EastUS-dall-e-3| techhubdev-pool-us-dalle3, techhubdev-pool-world-dalle3, techhub-pool-world-dalle3                                                   |azure|
-|techhubdev-EastUS-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                  |azure|
-|techhubdev-EastUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-EastUS-gpt-4o-2024-05-13| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                   |azure|
-|techhubdev-EastUS-gpt-4o-mini-2024-07-18| techhubdev-pool-us-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini                                    |azure|
-|techhubdev-EastUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-EastUS2-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                  |azure|
-|techhubdev-EastUS2-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-EastUS2-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                    |azure|
-|techhubdev-EastUS2-gpt-o1-2024-12-17| techhubdev-pool-us-gpt-o1, techhubdev-pool-world-gpt-o1, techhub-pool-world-gpt-o1                                                   |azure|
-|techhubdev-EastUS2-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-EastUS2-gpt-o3-mini-2025-01-31| techhubdev-pool-us-gpt-o3-mini, techhubdev-pool-world-gpt-o3-mini, techhub-pool-world-gpt-o3-mini                                    |azure|
-|techhubdev-FranceCentral-gpt-35-turbo-16k-0613| techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                  |azure|
-|techhubdev-FranceCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-FranceCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                   |azure|
-|techhubdev-GermanyWestCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-GermanyWestCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                   |azure|
-|techhubdev-JapanEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-JapanEast-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                        |azure|
-|techhubdev-JapanEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-JapanEast-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                              |azure|
-|techhubdev-KoreaCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-KoreaCentral-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-NorthCentralUS-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                  |azure|
-|techhubdev-NorthCentralUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-NorthCentralUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-NorwayEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-NorwayEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-PolandCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                   |azure|
-|techhubdev-PolandCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-SouthAfricaNorth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-SouthAfricaNorth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-SouthCentralUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-SouthCentralUS-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                    |azure|
-|techhubdev-SouthCentralUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-SouthIndia-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-SouthIndia-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-SwedenCentral-gpt-35-turbo-16k-0613| techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                  |azure|
-|techhubdev-SwedenCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-SwedenCentral-gpt-4-vision-preview| techhubdev-pool-eu-gpt-4v, techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                   |azure|
-|techhubdev-SwedenCentral-gpt-4o-2024-08-06| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                    |azure|
-|techhubdev-SwedenCentral-gpt-4o-mini-2024-07-18| techhubdev-pool-eu-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini                                    |azure|
-|techhubdev-SwedenCentral-gpt-o1-2024-12-17| techhubdev-pool-eu-gpt-o1, techhubdev-pool-world-gpt-o1, techhub-pool-world-gpt-o1                                                   |azure|
-|techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12| techhubdev-pool-eu-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31| techhubdev-pool-eu-gpt-o3-mini, techhubdev-pool-world-gpt-o3-mini, techhub-pool-world-gpt-o3-mini                                    |azure|
-|techhubdev-SwitzerlandNorth-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                        |azure|
-|techhubdev-SwitzerlandNorth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-SwitzerlandNorth-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                              |azure|
-|techhubdev-SwitzerlandNorth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-UKSouth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                              |azure|
-|techhubdev-UKSouth-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                        |azure|
-|techhubdev-UKSouth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                    |azure|
-|techhubdev-WestEurope-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-WestEurope-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                   |azure|
-|techhubdev-WestUS-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                    |azure|
-|techhubdev-WestUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-WestUS-gpt-4-vision-preview| techhubdev-pool-us-gpt-4v, techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                   |azure|
-|techhubdev-WestUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-WestUS3-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                    |azure|
-|techhubdev-WestUS3-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                    |azure|
-|techhubdev-WestUS3-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                    |azure|
-|techhubdev-amazon.nova-micro-v1-NorthVirginia| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                           |bedrock|
-|techhubdev-amazon.nova-micro-v1-Ohio| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                           |bedrock|
-|techhubdev-amazon.nova-micro-v1-Oregon| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                           |bedrock|
-|techhubdev-amazon.nova-lite-v1-NorthVirginia| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                              |bedrock|
-|techhubdev-amazon.nova-lite-v1-Ohio| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                              |bedrock|
-|techhubdev-amazon.nova-lite-v1-Oregon| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                              |bedrock|
-|techhubdev-amazon.nova-pro-v1:0-NorthVirginia| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                                 |bedrock|
-|techhubdev-amazon.nova-pro-v1-Ohio| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                                 |bedrock|
-|techhubdev-amazon.nova-pro-v1-Oregon| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                                 |bedrock|
-|techhubdev-meta-llama-3-70b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                           |bedrock|
-|techhubdev-meta-llama-3-8b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                              |bedrock|
-|techhubdev-meta-llama-3-70b-v1:0-Oregon| techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                           |bedrock|
-|techhubdev-meta-llama-3-8b-v1:0-Oregon| techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                              |bedrock|
-|techhubdev-meta-llama-3-70b-v1:0-London| techhubdev-pool-eu-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                           |bedrock|
-|techhubdev-meta-llama-3-8b-v1:0-London| techhubdev-pool-eu-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                              |bedrock|
-|techhubdev-meta-llama-3-1-405b-v1:0-Oregon| techhubdev-pool-us-llama3-1-405b-1:0, techhubdev-pool-world-llama3-1-405b-1:0, techhub-pool-world-llama3-1-405b-1:0                  |bedrock|
-|techhubdev-meta-llama-3-1-70b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0                     |bedrock|
-|techhubdev-meta-llama-3-1-70b-v1:0-Oregon| techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0                     |bedrock|
-|techhubdev-meta-llama-3-1-8b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0                        |bedrock|
-|techhubdev-meta-llama-3-1-8b-v1:0-Oregon| techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0                        |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-Ohio| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-Oregon| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-Tokyo| techhubdev-pool-ap-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v1:0-Paris|                                                                                                                                      |bedrock|
-|techhubdev-claude-3-5-haiku-v1:0-NorthVirginia| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0         |bedrock|
-|techhubdev-claude-3-5-haiku-v1:0-Ohio| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0         |bedrock|
-|techhubdev-claude-3-5-haiku-v1:0-Oregon| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0         |bedrock|
-|techhubdev-claude-3-5-sonnet-v2:0-NorthVirginia| techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0      |bedrock|
-|techhubdev-claude-3-5-sonnet-v2:0-Oregon| techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0      |bedrock|
+| Model Name | Pools                                                                                                                             | Platform |
+|--------|-----------------------------------------------------------------------------------------------------------------------------------|------|
+|techhubdev-AustraliaEast-dall-e-3| techhubdev-pool-world-dalle3, techhub-pool-world-dalle3                                                                           |azure|
+|techhubdev-AustraliaEast-gpt-35-turbo-16k-1106| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                     |azure|
+|techhubdev-AustraliaEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-AustraliaEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-AustraliaEast-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                           |azure|
+|techhubdev-BrazilSouth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-BrazilSouth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-CanadaEast-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                     |azure|
+|techhubdev-CanadaEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-CanadaEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-EastUS-dall-e-3| techhubdev-pool-us-dalle3, techhubdev-pool-world-dalle3, techhub-pool-world-dalle3                                                |azure|
+|techhubdev-EastUS-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k               |azure|
+|techhubdev-EastUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-EastUS-gpt-4o-2024-05-13| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                |azure|
+|techhubdev-EastUS-gpt-4o-mini-2024-07-18| techhubdev-pool-us-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini                                 |azure|
+|techhubdev-EastUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-EastUS2-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k               |azure|
+|techhubdev-EastUS2-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-EastUS2-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                 |azure|
+|techhubdev-EastUS2-gpt-o1-2024-12-17| techhubdev-pool-us-gpt-o1, techhubdev-pool-world-gpt-o1, techhub-pool-world-gpt-o1                                                |azure|
+|techhubdev-EastUS2-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-EastUS2-gpt-o3-mini-2025-01-31| techhubdev-pool-us-gpt-o3-mini, techhubdev-pool-world-gpt-o3-mini, techhub-pool-world-gpt-o3-mini                                 |azure|
+|techhubdev-FranceCentral-gpt-35-turbo-16k-0613| techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k               |azure|
+|techhubdev-FranceCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-FranceCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                |azure|
+|techhubdev-GermanyWestCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-GermanyWestCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                |azure|
+|techhubdev-JapanEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-JapanEast-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                     |azure|
+|techhubdev-JapanEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-JapanEast-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                           |azure|
+|techhubdev-KoreaCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-KoreaCentral-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-NorthCentralUS-gpt-35-turbo-16k-0613| techhubdev-pool-us-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k               |azure|
+|techhubdev-NorthCentralUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-NorthCentralUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-NorwayEast-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-NorwayEast-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-PolandCentral-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                |azure|
+|techhubdev-PolandCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-SouthAfricaNorth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-SouthAfricaNorth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-SouthCentralUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-SouthCentralUS-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                 |azure|
+|techhubdev-SouthCentralUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-SouthIndia-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-SouthIndia-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-SwedenCentral-gpt-35-turbo-16k-0613| techhubdev-pool-eu-gpt-3.5-turbo-16k, techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k               |azure|
+|techhubdev-SwedenCentral-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-SwedenCentral-gpt-4-vision-preview| techhubdev-pool-eu-gpt-4v, techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                |azure|
+|techhubdev-SwedenCentral-gpt-4o-2024-08-06| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                 |azure|
+|techhubdev-SwedenCentral-gpt-4o-mini-2024-07-18| techhubdev-pool-eu-gpt-4o-mini, techhubdev-pool-world-gpt-4o-mini, techhub-pool-world-gpt-4o-mini                                 |azure|
+|techhubdev-SwedenCentral-gpt-o1-2024-12-17| techhubdev-pool-eu-gpt-o1, techhubdev-pool-world-gpt-o1, techhub-pool-world-gpt-o1                                                |azure|
+|techhubdev-SwedenCentral-gpt-o1-mini-2024-09-12| techhubdev-pool-eu-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-SwedenCentral-gpt-o3-mini-2025-01-31| techhubdev-pool-eu-gpt-o3-mini, techhubdev-pool-world-gpt-o3-mini, techhub-pool-world-gpt-o3-mini                                 |azure|
+|techhubdev-SwitzerlandNorth-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                     |azure|
+|techhubdev-SwitzerlandNorth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-SwitzerlandNorth-gpt-4-vision-preview| techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                                           |azure|
+|techhubdev-SwitzerlandNorth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-UKSouth-gpt-4o-2024-05-13| techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                                           |azure|
+|techhubdev-UKSouth-gpt-35-turbo-16k-0613| techhubdev-pool-world-gpt-3.5-turbo-16k, techhub-pool-world-gpt-3.5-turbo-16k                                                     |azure|
+|techhubdev-UKSouth-gpt-4-turbo-2024-04-09| techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                                                 |azure|
+|techhubdev-WestEurope-gpt-4-turbo-2024-04-09| techhubdev-pool-eu-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-WestEurope-gpt-4o-2024-05-13| techhubdev-pool-eu-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o                                                |azure|
+|techhubdev-WestUS-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                 |azure|
+|techhubdev-WestUS-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-WestUS-gpt-4-vision-preview| techhubdev-pool-us-gpt-4v, techhubdev-pool-world-gpt-4v, techhub-pool-world-gpt-4v                                                |azure|
+|techhubdev-WestUS-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-WestUS3-gpt-4-turbo-2024-04-09| techhubdev-pool-us-gpt-4-turbo, techhubdev-pool-world-gpt-4-turbo, techhub-pool-world-gpt-4-turbo                                 |azure|
+|techhubdev-WestUS3-gpt-4o-2024-08-06| techhubdev-pool-us-gpt-4o, techhubdev-pool-world-gpt-4o, techhub-pool-world-gpt-4o, techhub-pool-world-gpt-4o-16k                 |azure|
+|techhubdev-WestUS3-gpt-o1-mini-2024-09-12| techhubdev-pool-us-gpt-o1-mini, techhubdev-pool-world-gpt-o1-mini, techhub-pool-world-gpt-o1-mini                                 |azure|
+|techhubdev-amazon.nova-micro-v1-NorthVirginia| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                        |bedrock|
+|techhubdev-amazon.nova-micro-v1-Ohio| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                        |bedrock|
+|techhubdev-amazon.nova-micro-v1-Oregon| techhubdev-pool-us-nova-micro-1:0, techhubdev-pool-world-nova-micro-1:0, techhub-pool-world-nova-micro-1:0                        |bedrock|
+|techhubdev-amazon.nova-lite-v1-NorthVirginia| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                           |bedrock|
+|techhubdev-amazon.nova-lite-v1-Ohio| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                           |bedrock|
+|techhubdev-amazon.nova-lite-v1-Oregon| techhubdev-pool-us-nova-lite-1:0, techhubdev-pool-world-nova-lite-1:0, techhub-pool-world-nova-lite-1:0                           |bedrock|
+|techhubdev-amazon.nova-pro-v1:0-NorthVirginia| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                              |bedrock|
+|techhubdev-amazon.nova-pro-v1-Ohio| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                              |bedrock|
+|techhubdev-amazon.nova-pro-v1-Oregon| techhubdev-pool-us-nova-pro-1:0, techhubdev-pool-world-nova-pro-1:0, techhub-pool-world-nova-pro-1:0                              |bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                        |bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                           |bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-Oregon| techhubdev-pool-us-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                        |bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-Oregon| techhubdev-pool-us-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                           |bedrock|
+|techhubdev-meta-llama-3-70b-v1:0-London| techhubdev-pool-eu-llama3-70b-1:0, techhubdev-pool-world-llama3-70b-1:0, techhub-pool-world-llama3-70b-1:0                        |bedrock|
+|techhubdev-meta-llama-3-8b-v1:0-London| techhubdev-pool-eu-llama3-8b-1:0, techhubdev-pool-world-llama3-8b-1:0, techhub-pool-world-llama3-8b-1:0                           |bedrock|
+|techhubdev-meta-llama-3-1-405b-v1:0-Oregon| techhubdev-pool-us-llama3-1-405b-1:0, techhubdev-pool-world-llama3-1-405b-1:0, techhub-pool-world-llama3-1-405b-1:0               |bedrock|
+|techhubdev-meta-llama-3-1-70b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0                  |bedrock|
+|techhubdev-meta-llama-3-1-70b-v1:0-Oregon| techhubdev-pool-us-llama3-1-70b-1:0, techhubdev-pool-world-llama3-1-70b-1:0, techhub-pool-world-llama3-1-70b-1:0                  |bedrock|
+|techhubdev-meta-llama-3-1-8b-v1:0-NorthVirginia| techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0                     |bedrock|
+|techhubdev-meta-llama-3-1-8b-v1:0-Oregon| techhubdev-pool-us-llama3-1-8b-1:0, techhubdev-pool-world-llama3-1-8b-1:0, techhub-pool-world-llama3-1-8b-1:0                     |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-NorthVirginia| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Ohio| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Oregon| techhubdev-pool-us-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Tokyo| techhubdev-pool-ap-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-5-sonnet-1:0, techhubdev-pool-world-claude-3-5-sonnet-1:0, techhub-pool-world-claude-3-5-sonnet-1:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v1:0-Paris|                                                                                                                                   |bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-NorthVirginia| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0      |bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-Ohio| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0      |bedrock|
+|techhubdev-claude-3-5-haiku-v1:0-Oregon| techhubdev-pool-us-claude-3-5-haiku-1:0, techhubdev-pool-world-claude-3-5-haiku-1:0, techhub-pool-world-claude-3-5-haiku-1:0      |bedrock|
+|techhubdev-claude-3-5-sonnet-v2:0-NorthVirginia| techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0   |bedrock|
+|techhubdev-claude-3-5-sonnet-v2:0-Oregon| techhubdev-pool-us-claude-3-5-sonnet-2:0, techhubdev-pool-world-claude-3-5-sonnet-2:0, techhub-pool-world-claude-3-5-sonnet-2:0   |bedrock|
 |techhubdev-claude-3-haiku-v1:0-Ohio| techhubdev-pool-us-claude-3-haiku-1:0, techhubdev-pool-world-claude-claude-3-haiku-1:0, techhub-pool-world-claude-claude-3-haiku-1:0 |bedrock|
 |techhubdev-claude-3-haiku-v1:0-Oregon| techhubdev-pool-us-claude-3-haiku-1:0, techhubdev-pool-world-claude-claude-3-haiku-1:0, techhub-pool-world-claude-claude-3-haiku-1:0 |bedrock|
-|techhubdev-claude-3-haiku-v1:0-Tokyo| techhubdev-pool-ap-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0               |bedrock|
-|techhubdev-claude-3-haiku-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0               |bedrock|
-|techhubdev-claude-3-haiku-v1:0-London| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0               |bedrock|
-|techhubdev-claude-3-haiku-v1:0-Paris| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0               |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-Oregon| techhubdev-pool-us-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-Tokyo|                                                                                                                                      |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-Singapore|                                                                                                                                      |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-London| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-|techhubdev-claude-3-sonnet-v1:0-Paris| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0            |bedrock|
-|gemini-1.5-pro-002|                                                                                                                                      |vertex|
-|gemini-2.0-flash-exp|                                                                                                                                      |vertex|
-|gemini-2.5-pro-exp|                                                                                                                                      |vertex|
+|techhubdev-claude-3-haiku-v1:0-Tokyo| techhubdev-pool-ap-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0            |bedrock|
+|techhubdev-claude-3-haiku-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0            |bedrock|
+|techhubdev-claude-3-haiku-v1:0-London| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0            |bedrock|
+|techhubdev-claude-3-haiku-v1:0-Paris| techhubdev-pool-eu-claude-3-haiku-1:0, techhubdev-pool-world-claude-3-haiku-1:0, techhub-pool-world-claude-3-haiku-1:0            |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Oregon| techhubdev-pool-us-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0         |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Tokyo|                                                                                                                                   |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Singapore|                                                                                                                                   |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Frankfurt| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0         |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-London| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0         |bedrock|
+|techhubdev-claude-3-sonnet-v1:0-Paris| techhubdev-pool-eu-claude-3-sonnet-1:0, techhubdev-pool-world-claude-3-sonnet-1:0, techhub-pool-world-claude-3-sonnet-1:0         |bedrock|
+|gemini-1.5-pro-002|                                                                                                                                   |vertex|
+|gemini-2.0-flash-exp|                                                                                                                                   |vertex|
+|gemini-2.5-pro-exp|                                                                                                                                   |vertex|
+|tsuzumi-7b-v1_2-8k-instruct| techhubdev-pool-world-tsuzumi-7b-v1_2-8k-instruct, techhub-pool-world-tsuzumi-7b-v1_2-8k-instruct                                 |tsuzumi|
 *<i>A pool of models is a group of the same models allocated in different servers from a specific region, such as Europe or the US, that allows a more balanced deployment of models.</i>
 
 ### Vector storages
@@ -3151,13 +3152,36 @@ This file is the most important one because it stores information about the diff
     }
 }
 ```
-Each parameter for a model configuration is:
-* **model**: name of the model. In azure platform will be the deployment name of the model.
-* **model_type**: defined by the user (same models must have the same <i>model_type</i>).
-* **max_input_tokens**: maximum number of tokens accepted by the model as input.
-* **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
-* **api_version**: version of the api (model) that is being used.
-* **model_pool**: pools the model belongs to.
+In this config file, each model (separated by platforms) needs different parameters:
+- **azure**:
+  - **model**: Name of the model. On the Azure platform, this refers to the *deployment name* of the model, not the base model name.
+  - **model_type**: Logical grouping of similar models, defined by the user. All deployments using the same underlying model (e.g., `gpt-4`) should share the same `model_type`.
+  - **max_input_tokens**: Maximum number of input tokens accepted by the model. This depends on the model version and must be configured accordingly.
+  - **zone**: Azure region where the model has been deployed. This is used to retrieve the appropriate API key from the secrets file.
+  - **api_version**: The specific API version to be used when calling the model. Required for Azure OpenAI endpoints.
+  - **model_pool**: List of logical pools or groups this model belongs to, for routing or scheduling purposes.
+
+- **bedrock**:
+  - **model**: Name of the model instance. Unlike Azure, this refers to the model as referenced in AWS Bedrock.
+  - **model_id**: Unique identifier provided by Bedrock for the model (e.g., `anthropic.claude-v2`).
+  - **model_type**: Same usage as Azure – should be consistent across platforms for similar models.
+  - **max_input_tokens**: Same as above – determined by the specific model's token limit.
+  - **zone**: AWS region (e.g., `us-east-1`) where the model is accessed.
+  - **model_pool**: Same usage as above.
+
+- **vertex**:
+  - **model**: Name or alias of the model. For Google Vertex AI, this often refers to the published name of the model on the platform.
+  - **model_id**: Internal ID or full resource path to the model (e.g., `gemini-1.5-pro-002`).
+  - **model_type**: Same usage as above.
+  - **max_input_tokens**: Same as above.
+  - **zone**: GCP region (e.g., `us-central1`) for the deployed model.
+  - **model_pool**: Same usage as above.
+
+- **tsuzumi**:
+  - **model**: Identifier or label of the model provided by the tsuzumi platform.
+  - **model_type**: Same usage as above.
+  - **max_input_tokens**: Same as above.
+  - **model_pool**: Same usage as above.
 
 ###### Templates
 Stored in "src/LLM/prompts", this directory contains the files with the prompt templates. When LLMAPI is initialized, it reads all the files in the directory and loads all the templates into memory, removing duplicates. The name refered to in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in JSON format and that contains 'query' in their name.
@@ -3193,28 +3217,6 @@ Stored in "src/LLM/prompts", this directory contains the files with the prompt t
     }
 }
 ```
-In this config file, each model (separated by platforms) needs different parameters:
-- **azure**:
-  - **embedding_model_name**: name of the model, decided by the user and used to distinguish between models.
-  - **embedding_model**: type of embedding model that uses the model.
-  - **azure_api_version**: version of the api (embedding model) that is being used.
-  - **azure_deployment_name**: deployment name of the embedding model in azure.
-  - **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
-  - **model_pool**: pools the model belongs to.
-- **Bedrock**:
-  - **embedding_model_name**: same as before
-  - **embedding_model**: same as before
-  - **zone**: place where the model has been deployed
-  - **model_pool**: pools the model belongs to
-- **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
-  - **embedding_model_name**: same as before.
-  - **embedding_model**: same as before.
-  - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different).
-- **Vertex**:
-  - **embedding_model_name**: same as before
-  - **embedding_model**: same as before
-  - **model_pool**: pools the model belongs to
-
 
 ##### Integration config files
 Path: `src/integration/`
@@ -3273,6 +3275,28 @@ This file stores information about the different embedding models that are used 
     }      
 }
 ```
+
+Again in this config file, each model (separated by platforms) needs different parameters:
+- **azure**:
+  - **embedding_model_name**: name of the model, decided by the user and used to distinguish between models.
+  - **embedding_model**: type of embedding model that uses the model.
+  - **azure_api_version**: version of the api (embedding model) that is being used.
+  - **azure_deployment_name**: deployment name of the embedding model in azure.
+  - **zone**: place where the model has been deployed (used to get the api-key in the secrets file).
+  - **model_pool**: pools the model belongs to.
+- **bedrock**:
+  - **embedding_model_name**: same as before
+  - **embedding_model**: same as before
+  - **zone**: place where the model has been deployed
+  - **model_pool**: pools the model belongs to
+- **huggingface**. This type of model is not deployed anywhere, so there is no region or pool to specify:
+  - **embedding_model_name**: same as before.
+  - **embedding_model**: same as before.
+  - **retriever_model** (mandatory in huggingface models): model used when retrieving information (in hugging-face models normally are different).
+- **vertex**:
+  - **embedding_model_name**: same as before
+  - **embedding_model**: same as before
+  - **model_pool**: pools the model belongs to
 
 ###### Default embedding models 
 Path: `/conf/default_embedding_models.json`
@@ -3665,14 +3689,18 @@ All necessary credentials for the components are stored in secrets for security 
             "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
             "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions",
             "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
+            "TSUZUMI_CHAT_URL": "https://tsuzumi.app.dev.techhubnttdata.com/v1/chat/completions"
         },
         "api-keys": {
             "azure": {
-                "zone": "[SET_API_KEY_VALUE]"
+              "zone": "[SET_API_KEY_VALUE]"
             },
             "vertex": {
               "vertex":"[SET_API_KEY_VALUE]"
-            }
+            },
+            "tsuzumi": {
+              "tsuzumi": "[SET_API_KEY_VALUE]"
+            }   
         }
     }
     ```
