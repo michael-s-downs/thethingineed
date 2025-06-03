@@ -66,6 +66,7 @@
         - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
+        - At then start, llm checks if all the prompt templates from azure are stored in langfuse and copies the remaining ones.
     - [New] Added new Vertex platform
     - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
         - Add models configuration in 'src/LLM/conf/models_config.json'
@@ -81,6 +82,7 @@
         - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
+        - At then start, compose checks if all the templates and filter from azure are stored in langfuse and copies the remaining ones.
 - preprocess-start:
     - [New] Added preprocess reuse functionality for optimized processing workflows
         - Added file path reconstruction logic for reusing previous preprocess results
