@@ -61,6 +61,10 @@
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
     - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
 - genai-llmapi:
+    - [New] Added model tsuzumi-7b-v1_2-8k-instruct
+        - Add model configuration in 'src/LLM/conf/models_config.json'
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'tsuzumi' platform
+        - Updated secret to include the new 'tsuzumi' chat completion URL
     - [New] Added support for prompt management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
         - When Langfuse activated, replace cloud storage folder: 'src/LLM/prompts/'
         - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'

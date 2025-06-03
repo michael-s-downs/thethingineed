@@ -24,7 +24,7 @@ class TsuzumiModel(GenerativeModel):
     def __init__(self, model: str = 'tsuzumi-7b-v1_2-8k-instruct',
                  model_type: str = "",
                  pool_name: str = None,
-                 max_input_tokens: int = 4096,
+                 max_input_tokens: int = 8000,
                  max_tokens: int = -1,
                  bag_tokens: int = 500,
                  temperature: float = 1.0,
