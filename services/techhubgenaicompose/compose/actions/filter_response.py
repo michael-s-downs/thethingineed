@@ -51,7 +51,7 @@ class FilterLLM(FilterResponseMethod):
         """
         try:
             if langfuse_m.langfuse:
-                template = langfuse_m.load_template(templatename, "filter_response_compose_template")
+                template = langfuse_m.load_template(templatename, "compose_filter_template")
                 template = template.prompt
             else:
                 template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
