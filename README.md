@@ -3693,7 +3693,7 @@ All necessary credentials for the components are stored in secrets for security 
         },
         "api-keys": {
             "azure": {
-                "zone": "[SET_API_KEY_VALUE]"
+              "zone": "[SET_API_KEY_VALUE]"
             },
             "vertex": {
               "vertex":"[SET_API_KEY_VALUE]"
