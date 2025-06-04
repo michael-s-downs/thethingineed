@@ -178,7 +178,7 @@ class TestResponseObject():
             must_continue, output, next_service = response_object.get_response_predict(mock_object)
             assert must_continue
             assert output.get('result') == 'output.json'
-            assert next_service == "techhubragemeal--q-local-output"
+            assert next_service == "genai_llmqueue_output"
 
 class TestLLMMetadata():
     def test_validate_funtions_and_functions_call(self):

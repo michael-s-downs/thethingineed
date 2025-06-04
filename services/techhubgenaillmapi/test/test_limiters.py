@@ -75,7 +75,7 @@ class TestManagerLimiters:
             "bag_tokens": 500, "persistence": [], "querylimiter": ""}
     def test_get_possible_querylimiters(self):
         platforms = ManagerQueryLimiter.get_possible_querylimiters()
-        assert platforms == ["azure", "bedrock", "nova", "vertex"]
+        assert platforms == ["azure", "bedrock", "nova", "vertex", "QueryLimiter"]
 
     def test_all_adapters(self):
         self.conf['querylimiter'] = "azure"
