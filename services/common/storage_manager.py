@@ -334,8 +334,12 @@ class LLMStorageManager(BaseStorageManager):
                 return 
             
             for template_name in required_templates:
-                template = self.get_template(template_name, force_azure=True)
-                self.langfuse_m.upload_template(template_name=template_name, template_content=json.dumps(template, ensure_ascii=False), label=label)
+                try:
+                    template = self.get_template(template_name, force_azure=True)
+                    self.langfuse_m.upload_template(template_name=template_name, template_content=json.dumps(template, ensure_ascii=False), label=label)
+                except Exception as _:
+                    time.sleep(0.1)
+                    continue
             
             #To make sure langfuse is updated
             time.sleep(1)
