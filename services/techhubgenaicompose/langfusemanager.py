@@ -3,6 +3,10 @@
 
 import os
 import requests
+import json
+import time
+from common.genai_controllers import list_files, storage_containers, load_file
+
 from requests.auth import HTTPBasicAuth 
 
 from langfuse import Langfuse
@@ -29,8 +33,35 @@ class LangFuseManager(AbstractManager):
             }
             self.langfuse = Langfuse(**langfuse_config)
             self.langfuse_config = langfuse_config
+            self.move_templates_to_langfuse("src/compose/templates/", "compose_template")
+            self.move_templates_to_langfuse("src/compose/filter_templates/", "compose_filter_template")
             
         self.trace = None
+    
+    
+    def move_templates_to_langfuse(self, path: str, label: str):
+        """ Move templates all templates from azure to Langfuse if they are not already in Langfuse
+
+        Args:
+            templates_names (List[str]): List of templates names
+            label (str): Label to upload the templates
+        """
+        templates_availables = self.get_list_templates(label)
+
+        templates_azure = list_files(storage_containers['workspace'], path)
+        templates_azure = [file.split("/")[-1].split(".")[0].replace(".json", "") for file in templates_azure]
+        required_templates = set(templates_azure) - set(templates_availables)
+        if len(required_templates) == 0:
+            return 
+        
+        for template_name in required_templates:
+            template = load_file(storage_containers['workspace'], f"{path}{template_name}.json")
+            template = template.decode().replace("\r", "")
+                
+            self.upload_template(template_name=template_name, template_content=template, label=label)
+        
+        #To make sure langfuse is updated
+        time.sleep(1)
     
     def parse(self, compose_config):
         """
@@ -211,7 +242,7 @@ class LangFuseManager(AbstractManager):
         x = requests.get(
             f"{host}/api/public/v2/prompts",
             auth = HTTPBasicAuth(pk, sk),
-            params= {"limit": 50, "label": label}
+            params= {"limit": 100, "label": label}
         )
         if x.status_code == 200:
             return [item['name'] for item in  x.json()["data"]] 

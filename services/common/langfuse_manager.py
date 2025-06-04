@@ -214,7 +214,7 @@ class LangFuseManager(ABC):
         x = requests.get(
             f"{host}/api/public/v2/prompts",
             auth=HTTPBasicAuth(pk, sk),
-            params={"limit": 50, "label": label}
+            params={"limit": 100, "label": label}
         )
         if x.status_code == 200:
             return [item['name'] for item in x.json()["data"] if 'deleted' not in item.get('labels', [])]
