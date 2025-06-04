@@ -12,6 +12,14 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s" $name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/*Create labels of services.*/}}
+{{- define "labels" -}}
+app: {{ template "shortname" . }}
+chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+release: {{ .Release.Name }}
+heritage: {{ .Release.Service }}
+{{- end }}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
