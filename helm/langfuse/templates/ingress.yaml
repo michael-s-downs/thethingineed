@@ -29,7 +29,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ template "shortname" . }}
+            name: {{ template "shortname-ingress" . }}
             port:
                number: {{ .Values.ingress.port }}
   tls:
