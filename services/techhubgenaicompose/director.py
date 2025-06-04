@@ -1,7 +1,5 @@
 ### This code is property of the GGAO ###
 
-import os
-import glob
 import json
 import re
 from basemanager import AbstractManager
@@ -29,19 +27,6 @@ class Director(AbstractManager):
         self.PD = PersistDict()
         self.load_secrets()
         self.logger.debug("Director created")
-
-    def load_secrets(self) -> None:
-        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
-
-        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
-            try:
-                self.logger.debug(f"Loading secret '{secret_path}'")
-                secret = json.loads(open(secret_path, "r").read())
-
-                for envvar in secret:
-                    os.environ[envvar] = secret[envvar]
-            except Exception as _:
-                self.logger.warning(f"Unable to load secret '{secret_path}'")
 
 
     def get_output(self):
