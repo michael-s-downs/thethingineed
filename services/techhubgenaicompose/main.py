@@ -58,7 +58,7 @@ class ComposeDeployment(BaseDeployment):
 
                 for envvar in secret:
                     if type(secret[envvar]) in [str, int]:
-                        os.environ[envvar] = secret[envvar]
+                        os.environ[envvar.upper()] = secret[envvar]
             except Exception as _:
                 self.logger.warning(f"Unable to load secret '{secret_path}'")
     
