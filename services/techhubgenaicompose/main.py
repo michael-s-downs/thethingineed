@@ -2,6 +2,7 @@
 
 import sys
 import os
+import glob
 
 # Native imports
 import json
@@ -29,6 +30,7 @@ class ComposeDeployment(BaseDeployment):
     def __init__(self):
         """ Creates the deployment"""
         super().__init__()
+        self.load_secrets()
         set_storage(storage_containers)
         set_db(db_dbs)
         self.langfuse_m = LangFuseManager()
@@ -45,6 +47,19 @@ class ComposeDeployment(BaseDeployment):
     @property
     def max_num_queue(self) -> int:
         return 1
+
+    def load_secrets(self) -> None:
+        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
+
+        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
+            try:
+                self.logger.debug(f"Loading secret '{secret_path}'")
+                secret = json.loads(open(secret_path, "r").read())
+
+                for envvar in secret:
+                    os.environ[envvar] = secret[envvar]
+            except Exception as _:
+                self.logger.warning(f"Unable to load secret '{secret_path}'")
     
     def endpoint_response(self, status_code, result_message, error_message):
         response = {
