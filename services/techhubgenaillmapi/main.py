@@ -94,7 +94,8 @@ class LLMDeployment(BaseDeployment):
                 secret = json.loads(open(secret_path, "r").read())
 
                 for envvar in secret:
-                    os.environ[envvar] = secret[envvar]
+                    if type(secret[envvar]) in [str, int]:
+                        os.environ[envvar] = secret[envvar]
             except Exception as _:
                 self.logger.warning(f"Unable to load secret '{secret_path}'")
 
