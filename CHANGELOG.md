@@ -8,14 +8,16 @@
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
+    - [New] Added support for reuse a previous preprocess in 'indexing' operation
+        - Added parameter 'preprocess_reuse' to avoid generate a new one and reuse a previous preprocess
+        - Added parameter 'process_id' to specify the previous preprocess to reuse
+        - Added parameter 'persist_preprocess' to avoid remove preprocess at the end of the operation
+        - Modified 'input_validations.py' to allow new parameters
+        - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Added 'preprocess' as valid operation in validate_operation function in input_validations.py
-        - Added support for 'persist_preprocess' parameter in 'adapt_input_base' function in 'io_adaptations.py'
         - Updated 'validate_input_default' in 'input_validations.py' to include verification for 'preprocess' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for 'preprocess' operation
-    - [New] Added support for preprocess reuse in 'indexing' operation
-        - Modified validations for 'process_id' parameter in 'input_validations.py' to support preprocess reuse
-        - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
     - [New] Added 'download' operation for downloading an already preprocessed document
         - Added 'download_preprocess_data' function in 'custom_operations.py' to handle data download
         - Added '_validate_download_operation' function in 'input_validations.py' for validation
@@ -25,17 +27,18 @@
         - Updated validation functions in 'input_validations.py' to support 'download' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define download pipeline
         - Updated 'get_inputs' in 'integration_base.py' to handle GET request parameters
-        - Updated all profiles to add 'download' function mapping
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
+    - [New] Added support for reuse a previous preprocess in 'indexing' operation
+        - Added and forward the parameters 'process_id', 'preprocess_reuse' and 'persist_preprocess'
+        - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Updated 'preprocess' function in 'core_calls.py' to support queue also as async mode (currently API)
         - Updated template 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
         - Updated all profiles to add 'preprocess' function mapping
-    - [New] Added support for preprocess reuse in 'indexing' operation
-        - Added and forward the parameters 'process_id', 'preprocess_reuse' and 'persist_preprocess'
-        - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
+    - [New] Added 'download' operation for downloading an already preprocessed document
+        - Updated all profiles to add 'download' function mapping
     - [New] Added 'response_adaptive' function in 'response_calls.py' to handle both API and queue response methods adaptively
         - Updated profile 'default.json' to use 'response_calls.response_adaptive' instead of 'response_calls.response_api_default'
     - [Improvement] Refactor to update all references from 'api' to 'core'
@@ -67,10 +70,10 @@
         - Updated secret to include the new 'tsuzumi' chat completion URL
     - [New] Added support for prompt management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
         - When Langfuse activated, replace cloud storage folder: 'src/LLM/prompts/'
+        - At startup upload existing prompts in cloud storage to Langfuse if not already created
         - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
-        - At then start, llm checks if all the prompt templates from azure are stored in langfuse and copies the remaining ones
     - [New] Added new Vertex platform
     - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
         - Add models configuration in 'src/LLM/conf/models_config.json'
@@ -83,10 +86,10 @@
 - genai-compose:
     - [New] Added support for template management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
         - When Langfuse activated, replace cloud storage folders: 'src/compose/templates/' and 'src/compose/filter_templates/'
+        - At startup upload existing templates in cloud storage to Langfuse if not already created
         - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
         - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
-        - At then start, compose checks if all the templates and filter from azure are stored in langfuse and copies the remaining ones
 - preprocess-start:
     - [New] Added preprocess reuse functionality for optimized processing workflows
         - Added file path reconstruction logic for reusing previous preprocess results
