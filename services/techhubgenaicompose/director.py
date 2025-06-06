@@ -25,7 +25,6 @@ class Director(AbstractManager):
         self.actions_manager: ActionsManager = None
         self.output_manager: OutputManager = None
         self.PD = PersistDict()
-        self.load_secrets()
         self.logger.debug("Director created")
 
 
