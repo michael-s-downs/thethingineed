@@ -398,6 +398,7 @@ The preprocess component supports multiple processing modes and flexible documen
     {
       "operation": "indexing",
       "response_url": "test--q-integration-callback",
+      "process_id": "test_process_id",
       "persist_preprocess": true,
       "indexation_conf": {
         "vector_storage_conf": {
@@ -439,8 +440,9 @@ The preprocess component supports multiple processing modes and flexible documen
     {
       "operation": "indexing",
       "response_url": "test--q-integration-callback",
-      "process_id": "ir_index_20250409_094944_955580_ywps2z",
+      "process_id": "test_process_id",
       "persist_preprocess": true,
+      "preprocess_reuse": true,
       "indexation_conf": {
         "vector_storage_conf": {
           "index": "test_index"
@@ -459,7 +461,7 @@ The preprocess component supports multiple processing modes and flexible documen
 
     > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
 
-    > **NOTE:** Currently, this feature requires you to implement a callback to receive the `process_id` from the initial preprocessing operation. <u>We are actively developing an alternative method</u> that will allow you to retrieve the `process_id` <u>without</u> the need to set up a <u>callback mechanism</u>.
+    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
 
 #### 3. Standalone Preprocessing
 
@@ -472,6 +474,7 @@ The preprocess component supports multiple processing modes and flexible documen
     {
       "operation": "preprocess",
       "response_url": "test--q-integration-callback",
+      "process_id": "test_process_id",
       "persist_preprocess": true,
       "preprocess_conf": {
         "ocr_conf": {
@@ -495,13 +498,27 @@ The preprocess component supports multiple processing modes and flexible documen
     }
     ```  
 
+    <h3>Parameter definition: Process ID Parameter</h3>
+
+    The `process_id` parameter allows you to specify a custom identifier for your preprocessing operation:
+    - **Optional**: If not provided, a random process ID will be automatically generated
+    - **Custom naming**: When provided, the preprocessing operation will use your specified ID
+    - **Recommended for reuse**: If you plan to reuse the preprocessed documents later, it's recommended to provide a meaningful `process_id` for easy identification
+    - **Retrieving auto-generated IDs**: If you don't specify a `process_id` and one is generated automatically, you can retrieve it through the callback response sent to your `response_url`. This allows you to obtain the generated `process_id` for future reuse operations
+  
     <h3>Parameter definition: Persist Preprocessing Parameter</h3>
 
     The `persist_preprocess` parameter controls the retention of preprocessed files:
     - `true`: Preprocessed files and intermediate results are kept in cloud storage
     - `false`: Temporary files are deleted after processing
     - **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`
+    - 
+    <h3>Parameter definition: Preprocess Reuse Parameter</h3>
 
+    The `preprocess_reuse` parameter indicates that you want to reuse previously preprocessed documents:
+    - `true`: Use existing preprocessed data identified by the `process_id`
+    - Only required when reusing preprocessed documents (operation mode 2)
+  
     **<u>Key Configurations</u>**
 
     * OCR Configuration Options:

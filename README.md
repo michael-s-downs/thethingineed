@@ -305,6 +305,7 @@ The API supports multiple processing modes controlled by the `operation` paramet
     {
         "operation": "indexing",
         "response_url": "test--q-integration-callback",
+        "process_id": "test_process_id",
         "persist_preprocess": true,
         "indexation_conf": {
             "vector_storage_conf": {
@@ -348,8 +349,9 @@ The API supports multiple processing modes controlled by the `operation` paramet
     {
         "operation": "indexing",
         "response_url": "test--q-integration-callback",
-        "process_id": "ir_index_20250409_094944_955580_ywps2z",
+        "process_id": "test_process_id",
         "persist_preprocess": true,
+        "preprocess_reuse": true,
         "indexation_conf": {
             "vector_storage_conf": {
                 "index": "test_index"
@@ -370,7 +372,7 @@ The API supports multiple processing modes controlled by the `operation` paramet
     ```
     > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
 
-    > **NOTE:** Currently, this feature requires implementing a callback to receive the `process_id` from the initial preprocessing operation. <u>We are actively developing an alternative method</u> that will allow retrieving the `process_id` <u>without</u> the need for a <u>callback mechanism</u>.
+    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
 
 ##### 3. Standalone Preprocessing
 
@@ -383,6 +385,7 @@ The API supports multiple processing modes controlled by the `operation` paramet
     {
         "operation": "preprocess",
         "response_url": "test--q-integration-callback",
+        "process_id": "test_process_id",
         "persist_preprocess": true,
         "preprocess_conf": {
             "ocr_conf": {
@@ -428,7 +431,8 @@ Below is a list of all the parameters that can be included in the request body f
 * **operation** (required): Operation to perform. It must have `preprocess` value for standalone preprocessing or `indexing` for preprocessing with indexing.
 * **persist_preprocess** (required for standalone): Boolean parameter that controls the retention of preprocessed files. When set to `true`, preprocessed files and intermediate results are kept in cloud storage.  
 **Note:** For standalone preprocessing mode ("operation": "`preprocess`"), this parameter must always be set to `true`.
-* **process_id** (optional): A unique identifier for a previously preprocessed document. This parameter allows the reuse of a document that has already been preprocessed, eliminating the need for reprocessing. When specified, the system will use the existing preprocessed files associated with this ID.
+* **process_id** (optional): A unique identifier for your preprocessing operation. You can provide a custom identifier, or if not specified, one will be automatically generated. When reusing preprocessed documents, this parameter identifies the previously processed files to avoid reprocessing. The generated or specified process_id is returned in the callback response for future reference.
+* **preprocess_reuse** (optional): Boolean parameter that indicates you want to reuse previously preprocessed documents identified by the `process_id`. Set to `true` when reusing existing preprocessed data. Only required when reusing preprocessed documents.
 * **preprocess_conf**:
   * **ocr_conf**:
     * **ocr** (optional): OCR type that will be used if necessary (or 'force_ocr' passed as 'True'). The available types are: `azure-ocr` (FormRecognizer), `aws-ocr` (Amazon Textract), `tesseract-ocr` (TesseractOCR), `llm-ocr` (LLM vision based OCR using LLMAPI component).

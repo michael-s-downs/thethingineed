@@ -144,6 +144,8 @@ def _async_preprocess_request_generate(request_params: dict, request_files: list
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
         template['tracking'] = request_params['tracking']
+    if 'process_id' in request_params:
+        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
 
     template['url_sender'] = provider_resources.queue_url
 
