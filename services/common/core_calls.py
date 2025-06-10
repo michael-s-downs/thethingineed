@@ -351,7 +351,9 @@ def preprocess(request_json: dict) -> dict:
     files = request_json.get('documents', [])
     metadata = request_json.setdefault('documents_metadata', {})
     files_need_preprocess = []
-    process_id = request_json.get('input_json', {}).get('process_id')
+    
+    user_provided_process_id = request_json.get('input_json', {}).get('process_id')
+    preprocess_reuse = request_json.get('input_json', {}).get('preprocess_reuse', False)
 
     if files:
         for file_path in files:
@@ -373,11 +375,20 @@ def preprocess(request_json: dict) -> dict:
                 'tracking': request_json.get('tracking', {})
             }
 
-            if process_id:
-                request_params['process_id'] = process_id
-                request_params['preprocess_conf']['preprocess_reuse'] = True
+            if user_provided_process_id:
+                request_params['process_id'] = user_provided_process_id
+                if 'dataset_conf' not in request_params:
+                    request_params['dataset_conf'] = {}
+                request_params['dataset_conf']['dataset_id'] = user_provided_process_id
+                
+                if preprocess_reuse:
+                    request_params['preprocess_conf']['preprocess_reuse'] = True
+                    logger.info(f"Reusing existing preprocess data for process_id: {user_provided_process_id}")
+                else:
+                    logger.info(f"Creating new preprocess with user-provided process_id: {user_provided_process_id}")
             else:
                 request_params['process_id'] = f"preprocess_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}"
+                logger.info(f"Generated new process_id: {request_params['process_id']}")
 
             # Check if we should use queue or async mode
             if os.getenv('CORE_QUEUE_PROCESS_URL', ""):
@@ -684,7 +695,9 @@ def indexing(request_json: dict) -> dict:
     metadata = request_json.setdefault('documents_metadata', {})
     models_map = json.loads(open(f"{conf_utils.custom_folder}models_map.json", 'r').read())
     files_need_indexing = []
-    process_id = request_json.get('input_json', {}).get('process_id') 
+    
+    user_provided_process_id = request_json.get('input_json', {}).get('process_id')
+    preprocess_reuse = request_json.get('input_json', {}).get('preprocess_reuse', False)
 
     if files:
         for file_path in files:
@@ -705,16 +718,24 @@ def indexing(request_json: dict) -> dict:
                 'tracking': request_json.get('tracking', {})
             }
 
-            if process_id:
-                request_params['process_id'] = process_id
-                request_params['preprocess_conf']['preprocess_reuse'] = True
+            if user_provided_process_id:
+                request_params['process_id'] = user_provided_process_id
+                if 'dataset_conf' not in request_params:
+                    request_params['dataset_conf'] = {}
+                request_params['dataset_conf']['dataset_id'] = user_provided_process_id
+                
+                if preprocess_reuse:
+                    request_params['preprocess_conf']['preprocess_reuse'] = True
+                    logger.info(f"Indexing: Reusing existing preprocess data for process_id: {user_provided_process_id}")
+                else:
+                    logger.info(f"Indexing: Using user-provided process_id for new preprocess: {user_provided_process_id}")
             else:
                 request_params['process_id'] = f"ir_index_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{''.join([random.choice(string.ascii_lowercase + string.digits) for i in range(6)])}"
-                
-            request_params['indexation_conf']['models'] = [models_map[model] for model in models]
+                logger.info(f"Indexing: Generated new process_id: {request_params['process_id']}")
+    
+            request_params['indexation_conf']['models'] = [models_map[model] for model in models] 
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('ocr', request_json['client_profile']['default_ocr'])
             request_params['preprocess_conf'].setdefault('ocr_conf', {}).setdefault('force_ocr', request_json['client_profile'].get('force_ocr', False))
-
 
             if os.getenv('CORE_QUEUE_PROCESS_URL', ""):
                 api_response = core_api.queue_indexing_request(apigw_params, request_params, files_need_indexing)
