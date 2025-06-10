@@ -33,6 +33,9 @@
     - [New] Added support for reuse a previous preprocess in 'indexing' operation
         - Added and forward the parameters 'process_id', 'preprocess_reuse' and 'persist_preprocess'
         - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
+        - Enhanced 'preprocess' and 'indexing' functions in 'core_calls.py' to support user-provided process_id and preprocess reuse functionality
+        - Enhanced '_async_preprocess_request_generate' function in 'core_api.py' to extract dataset_id from process_id
+        - Added '_validate_process_id_unique' function and updated 'validate_input_default' function in 'input_validations.py' to prevent duplicate process_id creation
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Updated 'preprocess' function in 'core_calls.py' to support queue also as async mode (currently API)
         - Updated template 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
