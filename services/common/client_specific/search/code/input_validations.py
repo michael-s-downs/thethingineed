@@ -228,11 +228,10 @@ def _validate_process_id_unique(request_json: dict) -> Tuple[bool, list]:
     
     input_json = request_json['input_json']
     process_id = input_json.get('process_id')
+    is_preprocess_reuse = input_json.get('preprocess_reuse', False)
     
     if not process_id:
         return valid, messages
-    
-    is_preprocess_reuse = input_json.get('preprocess_reuse', False)
     
     if is_preprocess_reuse:
         return valid, messages
@@ -422,7 +421,18 @@ def _validate_docsmetadata(request_json: dict) -> Tuple[bool, list]:
     valid, messages = _validate_param(request_json['input_json'], 'documents_metadata', dict)
 
     if valid:
-        for doc in request_json['input_json']['documents_metadata'].values():
+        docs = request_json['input_json']['documents_metadata'].values()
+
+        if len(docs) < 1:
+            valid = False
+
+        if request_json['input_json'].get('preprocess_reuse', False):
+            if not valid:
+                messages.append("Reusing preprocess 'content_binary' it's not necessary but key with the filename to reuse it's mandatory (set with empty value)")
+
+            return valid, messages # Break to avoid content validation
+
+        for doc in docs:
             if not doc.get('content_binary', ""):
                 valid = False
                 break
@@ -476,18 +486,14 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :return: True or False if input is valid and error messages
     """
     operation = request_json['input_json'].get('operation', '')
+    validate_functions_base = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata, _validate_process_id_unique]
     
-    if operation == "preprocess":
-        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata, _validate_process_id_unique]
+    if operation == "indexing":
+        validate_functions = validate_functions_base + [_validate_models, _validate_chunking_method, _validate_index, _validate_metadata_primary_keys, _validate_index_metadata]
     elif operation == "download":
         validate_functions = [_validate_operation, _validate_download_operation]
     else:
-        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr,
-                            _validate_models, _validate_chunking_method, _validate_index,
-                            _validate_metadata_primary_keys, _validate_index_metadata, _validate_process_id_unique]
-        
-        if not request_json['input_json'].get('process_id', ''):
-            validate_functions.append(_validate_docsmetadata)
+        validate_functions = validate_functions_base
     
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
     

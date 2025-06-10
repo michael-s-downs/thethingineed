@@ -10,12 +10,13 @@
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
     - [New] Added support for reuse a previous preprocess in 'indexing' operation
         - Added parameter 'preprocess_reuse' to avoid generate a new one and reuse a previous preprocess
-        - Added parameter 'process_id' to specify the previous preprocess to reuse
+        - Added parameter 'process_id' to specify the previous preprocess to reuse or generate a new one with this name
         - Added parameter 'persist_preprocess' to avoid remove preprocess at the end of the operation
-        - Modified 'input_validations.py' to allow new parameters
+        - Modified 'input_validations.py' to allow new parameters and avoid to duplicate process_id with the same name
         - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Added 'preprocess' as valid operation in validate_operation function in input_validations.py
+        - Support parameter 'process_id' to generate the preprocess with a name known by user
         - Updated 'validate_input_default' in 'input_validations.py' to include verification for 'preprocess' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for 'preprocess' operation
     - [New] Added 'download' operation for downloading an already preprocessed document
@@ -33,9 +34,6 @@
     - [New] Added support for reuse a previous preprocess in 'indexing' operation
         - Added and forward the parameters 'process_id', 'preprocess_reuse' and 'persist_preprocess'
         - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
-        - Enhanced 'preprocess' and 'indexing' functions in 'core_calls.py' to support user-provided process_id and preprocess reuse functionality
-        - Enhanced '_async_preprocess_request_generate' function in 'core_api.py' to extract dataset_id from process_id
-        - Added '_validate_process_id_unique' function and updated 'validate_input_default' function in 'input_validations.py' to prevent duplicate process_id creation
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Updated 'preprocess' function in 'core_calls.py' to support queue also as async mode (currently API)
         - Updated template 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
