@@ -158,11 +158,11 @@ class LLMStorageManager(BaseStorageManager):
                 available_pools[key] = list(value)
             return available_pools
 
-    def get_template(self, name: str):
+    def get_template(self, name: str, force_azure: bool = False):
         """
         Loads the template stored in cloud that's going to be used.
         """
-        if os.getenv("LANGFUSE", "").lower() == "true":
+        if os.getenv("LANGFUSE", "").lower() == "true" and not force_azure:
             try:
                 prompt = self.langfuse_m.load_template(template_name=name, label="llm_template")
                 template_str = prompt.prompt
@@ -215,9 +215,9 @@ class LLMStorageManager(BaseStorageManager):
                 404, f"Prompt template file doesn't exist for name '{name}'"
             )
 
-    def get_templates(self, return_files=False):
+    def get_templates(self, return_files=False, force_azure=False):
         """ Load templates from LLMStorage """
-        if os.getenv("LANGFUSE", "").lower() == "true":
+        if os.getenv("LANGFUSE", "").lower() == "true" and not force_azure:
             templates = {}
             templates_with_file = {}
             template_names = self.langfuse_m.get_list_templates(label="llm_template")
@@ -316,6 +316,33 @@ class LLMStorageManager(BaseStorageManager):
             response = {"status": "error", "error_message": f"Error uploading prompt file. {ex}","status_code": 500}
             self.logger.error(f"Error uploading prompt file. {ex}")
         return response
+
+    def move_templates_to_langfuse(self, label: str):
+        """ Move templates all templates from azure to Langfuse if they are not already in Langfuse
+
+        Args:
+            templates_names (List[str]): List of templates names
+            label (str): Label to upload the templates
+        """
+        if os.getenv("LANGFUSE", "").lower() == "true":
+            templates_availables = self.get_templates()
+            templates_azure = list_files(self.workspace, self.prompts_path)
+            templates_azure = [file.split("/")[-1].split(".")[0].replace(".json", "") for file in templates_azure]
+            common_templates = list(set(templates_availables[1]).intersection(templates_azure))
+            required_templates = set(templates_azure) - set(common_templates)
+            if len(required_templates) == 0:
+                return 
+            
+            for template_name in required_templates:
+                try:
+                    template = self.get_template(template_name, force_azure=True)
+                    self.langfuse_m.upload_template(template_name=template_name, template_content=json.dumps(template, ensure_ascii=False), label=label)
+                except Exception as _:
+                    time.sleep(0.1)
+                    continue
+            
+            #To make sure langfuse is updated
+            time.sleep(1)
 
 
 class IRStorageManager(BaseStorageManager):
@@ -417,7 +444,6 @@ class IRStorageManager(BaseStorageManager):
     def get_embedding_equivalences(self):
         default_embeddings = self.load_file(self.workspace, "src/ir/conf/default_embedding_models.json")
         return json.loads(default_embeddings)
-
 
 
     ############################################################################################################

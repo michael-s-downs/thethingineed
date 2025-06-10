@@ -75,6 +75,7 @@ class LLMDeployment(BaseDeployment):
         default_templates_names = list(
             set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
         )
+        self.storage_manager.move_templates_to_langfuse("llm_template")
         self.default_templates = self.load_default_templates(default_templates_names)
         if len(default_templates_names) != len(self.default_templates):
             raise PrintableGenaiError(400, f"Default templates not found: {default_templates_names}")
@@ -93,7 +94,8 @@ class LLMDeployment(BaseDeployment):
                 secret = json.loads(open(secret_path, "r").read())
 
                 for envvar in secret:
-                    os.environ[envvar] = secret[envvar]
+                    if type(secret[envvar]) in [str, int]:
+                        os.environ[envvar.upper()] = secret[envvar]
             except Exception as _:
                 self.logger.warning(f"Unable to load secret '{secret_path}'")
 

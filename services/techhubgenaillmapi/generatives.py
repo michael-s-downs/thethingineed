@@ -52,6 +52,8 @@ class GenerativeModel(ABC):
             self.api_key = models_credentials.get('openai')
         elif "vertex" in models_credentials:
             self.api_key = models_credentials.get('vertex')
+        elif "tsuzumi" in models_credentials:
+            self.api_key = models_credentials.get('tsuzumi')
         else:
             self.api_key = models_credentials.get(zone, None)
 
