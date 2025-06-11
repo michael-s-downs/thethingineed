@@ -739,6 +739,7 @@ For more information and examples for each preprocessing use case (preprocessing
     Used to delete document/s from an index. 
    
     URL: https://**\<deploymentdomain\>**/retrieve/delete_documents?index=myindex&filename=myfile
+    Example with custom metadata chunk_label: **\<deploymentdomain\>**/delete_documents?index=myindex&chunk_label=label_test123
 
 - **Delete an index (DELETE)**
 

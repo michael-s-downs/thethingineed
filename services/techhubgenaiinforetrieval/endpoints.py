@@ -98,8 +98,14 @@ def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
     dat = request.args
     deploy.logger.info(f"Request received with data: {dat}")
 
-    index, filters = dat.get('index', ""), dat.getlist('filename')
-    filters = {"filename": filters}
+    filters = {}
+    index = None
+    for key, value in dat.items():
+        if key == "index":
+            index = value
+        else:
+            filters[key] = value
+        
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 

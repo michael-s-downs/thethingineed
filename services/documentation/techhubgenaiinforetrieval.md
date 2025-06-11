@@ -548,13 +548,15 @@ The response would be a list of index names along with the models associated wit
     }
     ```
 
-* **/delete_documents (DELETE)**: Deletes document from index.  
+* **/delete_documents (DELETE)**: Deletes document from index based on the filters received.  
     Params:
 
         index: Index name where the file is stored.
         filename: File name to delete, can be passed more than one.
+        custom_metadata: Metadata used while indexing.
 
     Example: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
+    Example with custom metadata chunk_label: **\<deploymentdomain\>**/delete_documents?index=myindex&chunk_label=label_test123
 
 * **/delete_index (DELETE)**: Deletes an index.  
     Params:
