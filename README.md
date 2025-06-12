@@ -17,8 +17,8 @@
     - [Preprocess API specification](#preprocess-api-specification)
       - [Preprocessing Features](#preprocessing-features)
         - [1. Preprocessing with Indexing](#1-preprocessing-with-indexing)
-        - [2. Reusing Preprocessed Documents](#2-reusing-preprocessed-documents)
-        - [3. Standalone Preprocessing](#3-standalone-preprocessing)
+        - [2. Standalone Preprocessing](#2-standalone-preprocessing)
+        - [3. Reusing Preprocessed Documents](#3-reusing-preprocessed-documents)
         - [4. Download Preprocessed Data](#4-download-preprocessed-data)
   - [Endpoints](#endpoints)
     - [Compose](#compose)
@@ -295,9 +295,23 @@ The **Preprocess API** provides document processing capabilities through Optical
 
 The API supports multiple processing modes controlled by the `operation` parameter:
 
+**Base URL Structure**
+
+All preprocessing endpoints require the `/integrationasync/` prefix before the operation path:
+- **Base pattern**: `/integrationasync/process` or `/integrationasync/process-async`
+- **Examples**: 
+  - `POST /integrationasync/process`
+  - `GET /integrationasync/process-async`
+
 ##### 1. Preprocessing with Indexing
 
   - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing, as it allows for complex configurations and large document payloads.
+   
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
   
     This is the standard mode that combines preprocessing and indexing in a single operation:
 
@@ -341,42 +355,15 @@ The API supports multiple processing modes controlled by the `operation` paramet
     }
     ```
 
-##### 2. Reusing Preprocessed Documents
-
-  - **POST** `/process` or `/process-async`. You can reuse a previously preprocessed document by specifying its <i>process_id</i>:
-
-    ```json
-    {
-        "operation": "indexing",
-        "response_url": "test--q-integration-callback",
-        "process_id": "test_process_id",
-        "persist_preprocess": true,
-        "preprocess_reuse": true,
-        "indexation_conf": {
-            "vector_storage_conf": {
-                "index": "test_index"
-            },
-            "chunking_method": {
-                "window_overlap": 40,
-                "window_length": 500
-            },
-            "models": [
-                "techhub-pool-world-ada-002"
-            ]
-        },
-        "documents_metadata": {
-            "name_document.pdf": {
-            }
-        }
-    }
-    ```
-    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
-
-    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
-
-##### 3. Standalone Preprocessing
+##### 2. Standalone Preprocessing
 
   - **POST** `/process` or `/process-async`. Perform preprocessing without immediate indexing:
+    
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
 
     > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
     >  
@@ -409,11 +396,50 @@ The API supports multiple processing modes controlled by the `operation` paramet
     }
     ```
 
+##### 3. Reusing Preprocessed Documents
+
+  - **POST** `/process` or `/process-async`. You can reuse a previously preprocessed document by specifying its <i>process_id</i>:
+  
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
+
+    ```json
+    {
+        "operation": "indexing",
+        "response_url": "test--q-integration-callback",
+        "process_id": "test_process_id",
+        "persist_preprocess": true,
+        "preprocess_reuse": true,
+        "indexation_conf": {
+            "vector_storage_conf": {
+                "index": "test_index"
+            },
+            "chunking_method": {
+                "window_overlap": 40,
+                "window_length": 500
+            },
+            "models": [
+                "techhub-pool-world-ada-002"
+            ]
+        },
+        "documents_metadata": {
+            "name_document.pdf": {
+            }
+        }
+    }
+    ```
+    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
+
 ##### 4. Download Preprocessed Data
 
 To download previously processed document data, use the synchronous endpoint:
 
-  - **GET** `/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS`
+  - **GET** `integrationasync/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS`
 
     **Parameters:**
     * **operation** (required): Must be set to "download" for data download.
