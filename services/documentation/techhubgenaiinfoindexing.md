@@ -323,6 +323,52 @@ If a <i>response_url</i> is provided, when the process ends, the service will se
 
 For further information, see the <i>README</i> section in left menu.  
 
+**Reusing Preprocessed Documents**
+
+The InfoIndexing service allows you to reuse previously preprocessed documents, which can significantly improve performance when you need to index the same documents with different configurations or models.
+
+* To reuse preprocessed documents, you can use the same **POST** `/process` or `/process-async` endpoints by specifying the `process_id` from a previous preprocessing operation (for more information and examples about preprocessing, see the `techhubpreprocess` documentation):
+
+  ```json
+  {
+    "operation": "indexing",
+    "response_url": "test--q-integration-callback",
+    "process_id": "test_process_id",
+    "persist_preprocess": true,
+    "preprocess_reuse": true,
+    "indexation_conf": {
+      "vector_storage_conf": {
+        "index": "test_index"
+      },
+      "chunking_method": {
+        "window_overlap": 40,
+        "window_length": 500
+      },
+      "models": ["techhub-pool-world-ada-002"]
+    },
+    "documents_metadata": {
+      "name_document.pdf": {}
+    }
+  }
+  ```
+  
+    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
+
+- **Configuration**
+  
+  - **Parameter definition: Persist Preprocessing Parameter**  
+      The `persist_preprocess` parameter controls the retention of preprocessed files:
+      - `true`: Preprocessed files and intermediate results are kept in cloud storage.
+      - `false`: Temporary files are deleted after processing.
+      - **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`.
+      
+  - **Parameter definition: Preprocess Reuse Parameter**  
+    The `preprocess_reuse` parameter indicates that you want to reuse previously preprocessed documents:
+    - `true`: Use existing preprocessed data identified by the `process_id`.
+    - Only required when reusing preprocessed documents.
+
 ### Writing message in queue (Developer functionality)
 If using just infoindexing module for developing purposes as is not needed to pass through the other components to know how infoindexing works (just an already preprocessed document can be used or a simpler one), a txt file located in a route of the *STORAGE_BACKEND* environment variable and separated by *\t* will be necessary.
 
@@ -346,6 +392,8 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **process_type**: Type of process.
     - **department**: Department assigned to apikey.
     - **report_url**: Url to report metrics to apigw.
+    - **persist_preprocess**: Retains preprocessed files in cloud storage. Required for preprocessing and reuse operations.
+    - **preprocess_reuse**: (**Required when reusing preprocessed documents**) Set to `true` to reuse existing preprocessed data.
 - **indexation_conf**: Configuration of index process.
   - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
