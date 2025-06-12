@@ -28,6 +28,7 @@
         - Updated validation functions in 'input_validations.py' to support 'download' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define download pipeline
         - Updated 'get_inputs' in 'integration_base.py' to handle GET request parameters
+    - [Improvement] Enhanced JSON response formatting across all endpoints with proper content type headers and encoding parameters
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'
