@@ -329,6 +329,12 @@ The InfoIndexing service allows you to reuse previously preprocessed documents, 
 
 * To reuse preprocessed documents, you can use the same **POST** `/process` or `/process-async` endpoints by specifying the `process_id` from a previous preprocessing operation (for more information and examples about preprocessing, see the `techhubpreprocess` documentation):
 
+    **Examples Request**
+
+    - **POST** {{url}}//integrationasync/process
+
+    - **POST** {{url}}//integrationasync/process-async
+
   ```json
   {
     "operation": "indexing",

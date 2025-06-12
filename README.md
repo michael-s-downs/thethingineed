@@ -306,6 +306,12 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
 ##### 1. Preprocessing with Indexing
 
   - **POST** `/process` or `/process-async`: Submit documents for asynchronous processing. The request body contains the full preprocessing configuration and document data in JSON format. This is the most common method for document processing, as it allows for complex configurations and large document payloads.
+   
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
   
     This is the standard mode that combines preprocessing and indexing in a single operation:
 
@@ -352,6 +358,12 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
 ##### 2. Standalone Preprocessing
 
   - **POST** `/process` or `/process-async`. Perform preprocessing without immediate indexing:
+    
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
 
     > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
     >  
@@ -387,6 +399,12 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
 ##### 3. Reusing Preprocessed Documents
 
   - **POST** `/process` or `/process-async`. You can reuse a previously preprocessed document by specifying its <i>process_id</i>:
+  
+    **Examples Request**
+
+      - **POST** {{url}}//integrationasync/process
+
+      - **POST** {{url}}//integrationasync/process-async
 
     ```json
     {
