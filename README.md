@@ -2553,7 +2553,7 @@ payload = {
     "response_url": "http://",
     "indexation_conf": {
         "vector_storage_conf": {
-            "index": "tech_hub_test_recursive"
+            "index": "tech_hub_test_recursive",
             "metadata_primary_keys": ["filename", "document_id"]
         },
         "chunking_method":{
