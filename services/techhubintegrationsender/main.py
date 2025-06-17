@@ -50,7 +50,7 @@ def process():
             provider_resources.queue_delete_message(messages_metadata)
 
         # Update status before process
-        requests_manager.check_timeout(api_calls.request_internal_timeout)
+        requests_manager.check_timeout(core_calls.request_internal_timeout)
 
         # Process new and pending requests (use a copy to conserve size)
         for integration_id, request_json in deepcopy(requests_manager.current_requests).items():

@@ -4,6 +4,7 @@
 # Native imports
 import os
 import json
+import glob
 from typing import Dict, Tuple
 
 # Installed imports
@@ -49,6 +50,7 @@ class LLMDeployment(BaseDeployment):
         if QUEUE_MODE:
             self.Q_IN = (provider, os.getenv("Q_GENAI_LLMQUEUE_INPUT"))
             set_queue(self.Q_IN)
+        self.load_secrets_to_env()
         set_storage(storage_containers)
         self.workspace = storage_containers.get("workspace")
         self.origin = storage_containers.get("origin")
@@ -73,6 +75,7 @@ class LLMDeployment(BaseDeployment):
         default_templates_names = list(
             set(model.DEFAULT_TEMPLATE_NAME for model in ManagerModel.MODEL_TYPES)
         )
+        self.storage_manager.move_templates_to_langfuse("llm_template")
         self.default_templates = self.load_default_templates(default_templates_names)
         if len(default_templates_names) != len(self.default_templates):
             raise PrintableGenaiError(400, f"Default templates not found: {default_templates_names}")
@@ -80,6 +83,21 @@ class LLMDeployment(BaseDeployment):
             self.logger.info("llmqueue initialized")
         else:
             self.logger.info("llmapi initialized")
+    
+
+    def load_secrets_to_env(self) -> None:
+        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
+
+        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
+            try:
+                self.logger.debug(f"Loading secret '{secret_path}'")
+                secret = json.loads(open(secret_path, "r").read())
+
+                for envvar in secret:
+                    if type(secret[envvar]) in [str, int]:
+                        os.environ[envvar.upper()] = secret[envvar]
+            except Exception as _:
+                self.logger.warning(f"Unable to load secret '{secret_path}'")
 
     @property
     def must_continue(self) -> bool:
@@ -103,7 +121,7 @@ class LLMDeployment(BaseDeployment):
     def load_default_templates(self, default_templates_names: list):
         templates = {}
         for template_name in default_templates_names:
-            template = self.load_prompt_template(template_name)
+            template = self.storage_manager.get_template(template_name)
             names = list(template.keys())
             names.sort(key=len)
             base_name = names[0]
@@ -138,7 +156,7 @@ class LLMDeployment(BaseDeployment):
             if lang:
                 template_name = f"{template_name_no_lang}_{lang}"
 
-            templates = self.load_prompt_template(template_name_no_lang)
+            templates = self.storage_manager.get_template(template_name_no_lang)
 
             if template_name in templates:
                 return template_name, templates[template_name]
@@ -152,40 +170,12 @@ class LLMDeployment(BaseDeployment):
             raise ValueError(f"Invalid template name '{template_name}'")
 
         else:
-            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGPT-o"] and isinstance(query, str):
+            if model.MODEL_MESSAGE in ["chatClaude-v", "chatGPT-v", "chatNova-v", "chatGemini-v"] and isinstance(query, str):
                 model.DEFAULT_TEMPLATE_NAME = "system_query"
             template_name = model.DEFAULT_TEMPLATE_NAME
             return template_name, self.default_templates[template_name]
 
-    def load_prompt_template(self, name: str):
-        """
-        Loads the template stored in cloud that's going to be used.
-        """
-        try:
-            template_str = load_file(
-                storage_containers["workspace"], f"{TEMPLATEPATH}/{name}.json"
-            )
-            if not template_str:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' not found or is empty.")
 
-            template = json.loads(template_str)
-
-            if not template:
-                raise PrintableGenaiError(404, f"Prompt template '{name}' is empty.")
-
-            return template
-
-        except json.decoder.JSONDecodeError as ex:
-            error_param = get_error_word_from_exception(ex, template_str)
-            raise PrintableGenaiError(
-                500,
-                f"Template is not json serializable please check near param: <{error_param}>. Template: {template_str}",
-            )
-
-        except ValueError:
-            raise PrintableGenaiError(
-                404, f"Prompt template file doesn't exist for name '{name}'"
-            )
 
     def parse_platform(self, platform_metadata: dict):
         parsed_platform_metadata = PlatformMetadata(**platform_metadata).model_dump(
@@ -199,8 +189,11 @@ class LLMDeployment(BaseDeployment):
     def parse_model(self, llm_metadata: dict, platform: Platform):
         llm_metadata["default_model"] = self.default_models.get(platform.MODEL_FORMAT)
         parsed_llm_metadata = LLMMetadata(**llm_metadata).model_dump(
-            exclude_unset=True, exclude_none=True
+            exclude_none=True
         )
+        show_token_details =parsed_llm_metadata.get('show_token_details', False)
+        parsed_llm_metadata.pop('show_token_details')
+
         parsed_llm_metadata["models_credentials"] = self.models_credentials.get(
             "api-keys"
         ).get(platform.MODEL_FORMAT, {})
@@ -222,7 +215,7 @@ class LLMDeployment(BaseDeployment):
                 400,
                 "Error, in dalle3 the maximum number of characters in the prompt is 4000",
             )
-        return model, tools
+        return model, tools, show_token_details
 
     def parse_query(self, query_metadata: dict, model: GenerativeModel):
         query_metadata["is_vision_model"] = model.is_vision
@@ -281,12 +274,12 @@ class LLMDeployment(BaseDeployment):
             )
 
         platform = self.parse_platform(json_input.get("platform_metadata", {}))
-        model, tools = self.parse_model(json_input.get("llm_metadata", {}), platform)
+        model, tools, show_token_details = self.parse_model(json_input.get("llm_metadata", {}), platform)
         query_metadata = self.parse_query(json_input.get("query_metadata", {}), model)
         project_conf = self.parse_project_conf(
             json_input.get("project_conf", {}), model, platform
         )
-        return query_metadata, model, platform, project_conf["x_reporting"], tools
+        return query_metadata, model, platform, project_conf["x_reporting"], tools, show_token_details
 
     def get_validation_error_response(self, error):
         """Get validation error response
@@ -328,7 +321,7 @@ class LLMDeployment(BaseDeployment):
             json_input, queue_metadata = adapt_input_queue(json_input)
 
             # Parse and check input
-            query_metadata, model, platform, report_url, tools = self.parse_input(json_input)
+            query_metadata, model, platform, report_url, tools, show_token_details = self.parse_input(json_input)
 
             # Set model
             platform.set_model(model)
@@ -342,22 +335,41 @@ class LLMDeployment(BaseDeployment):
             # Format result
             result = model.get_result(response)
             self.logger.info(f"Result: {result}")
+            result['show_token_details'] = show_token_details
             if result["status_code"] == 200 and not eval(os.getenv("TESTING", "False")):
                 if model.MODEL_MESSAGE == "dalle":
                     reporting_type = "images"
                     n_tokens = 1
+                    resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                    self.report_api(
+                        n_tokens,
+                        "",
+                        report_url,
+                        resource,
+                        GENAI_LLM_SERVICE,
+                        reporting_type.upper(),
+                    )
                 else:
-                    reporting_type = "tokens"
-                    n_tokens = result["result"]["n_tokens"]
-                resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
-                self.report_api(
-                    n_tokens,
-                    "",
-                    report_url,
-                    resource,
-                    GENAI_LLM_SERVICE,
-                    reporting_type.upper(),
-                )
+                    token_fields = {
+                        "input_tokens": result["result"].get("input_tokens", 0),
+                        "output_tokens": result["result"].get("output_tokens", 0),
+                    }
+                    optional_fields = ["cache_read_tokens", "cache_write_tokens", "cached_tokens"]
+                    for key in optional_fields:
+                        value = result["result"].get(key, 0)
+                        if value > 0:
+                            token_fields[key] = value
+
+                    for reporting_type, tokens in token_fields.items():
+                        resource = f"llmapi/{platform.MODEL_FORMAT}/{model.model_type}/{reporting_type}"
+                        self.report_api(
+                            tokens,
+                            "",
+                            report_url,
+                            resource,
+                            GENAI_LLM_SERVICE,
+                            reporting_type.upper(),
+                        )
 
         except ValidationError as ex:
             result = self.get_validation_error_response(ex.errors()[0])
@@ -459,12 +471,11 @@ def get_template() -> Tuple[str, int]:
 def get_available_models() -> Tuple[str, int]:
     deploy.logger.info("Get models request received")
     dat = request.args
-    if len(dat) != 1 or list(dat.items())[0][0] not in [
-        "platform",
-        "pool",
-        "zone",
-        "model_type",
-    ]:
+
+    allowed_keys = ["platform", "pool", "zone", "model_type"]
+    allowed_platforms = ["azure", "bedrock", "vertex", "openai"]
+
+    if len(dat) != 1 or list(dat.items())[0][0] not in allowed_keys:
         return ResponseObject(
             **{
                 "status": "error",
@@ -473,6 +484,25 @@ def get_available_models() -> Tuple[str, int]:
             }
         ).get_response_base()
     key, value = list(dat.items())[0]
+
+    if not value.strip():
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"The parameter '{key}' cannot be empty",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
+    if key == "platform" and value.lower() not in allowed_platforms:
+        return ResponseObject(
+            **{
+                "status": "error",
+                "error_message": f"Invalid platform. Allowed values are: {', '.join(allowed_platforms)}",
+                "status_code": 400,
+            }
+        ).get_response_base()
+
     models, pools = get_models(
         deploy.available_models, deploy.available_pools, key, value
     )

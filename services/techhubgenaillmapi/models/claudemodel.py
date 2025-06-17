@@ -115,7 +115,9 @@ class ClaudeModel(GenerativeModel):
                     "input_tokens": response_body.get('usage', {}).get('input_tokens', 0),
                     "n_tokens": response_body.get('usage', {}).get('input_tokens', 0) + response_body.get('usage', {}).get('output_tokens', 0),
                     "output_tokens": response_body.get('usage', {}).get('output_tokens', 0),
-                    "query_tokens": self.message.user_query_tokens
+                    "query_tokens": self.message.user_query_tokens,
+                    "cache_read_tokens": response_body.get('usage', {}).get('cache_read_input_tokens', 0),
+                    "cache_write_tokens": response_body.get('usage', {}).get('cache_creation_input_tokens', 0)
                 },
                 "status_code": 200
             }
@@ -127,7 +129,9 @@ class ClaudeModel(GenerativeModel):
                 'output_tokens'),
             'query_tokens': self.message.user_query_tokens,
             'output_tokens': response_body.get('usage').get('output_tokens'),
-            'input_tokens': response_body.get('usage').get('input_tokens')
+            'input_tokens': response_body.get('usage').get('input_tokens'),
+            "cache_read_tokens": response_body.get('usage', {}).get('cache_read_input_tokens', 0),
+            "cache_write_tokens": response_body.get('usage', {}).get('cache_creation_input_tokens', 0)
         }
 
         result = {

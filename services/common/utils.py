@@ -5,23 +5,20 @@
 Utils and common functions of Genai services
 """
 # Native imports
-import os, re
-import io
+import os
+import re
 import json
-import cv2
 import math
 from PIL import Image
 from shutil import rmtree
-from typing import Union
 
 # Custom imports
 from common.logging_handler import LoggerHandler
 from common.services import UTILS
-from common.genai_controllers import upload_files
 
 
 SECRETS_ROOT_PATH = '/secrets'
-ELASTICSEARCH_INDEX = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
+INDEX_NAME = lambda index, embedding_model: re.sub(r'[\\/,:|>?*<\" \\]', "_", f"{index}_{embedding_model}").lower()
 
 # Create logger
 logger_handler = LoggerHandler(UTILS, level=os.environ.get('LOG_LEVEL', "INFO"))

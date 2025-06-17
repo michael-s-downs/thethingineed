@@ -1,0 +1,181 @@
+replicaCount: 1
+
+image:
+  repository: langfuse/langfuse
+  pullPolicy: Always
+  # Overwrite to use a specific docker tag. Falls back to chart.appVersion if not set.
+  # tag: 3
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+langfuse:
+  port: 3000
+  nodeEnv: production
+  upload_enabled: true
+  singup: true
+  force_path: true
+  next:
+    healthcheckBasePath: ""
+  nextauth:
+    url: http://localhost:3000
+    secret: r5ULVM1greWWqR/0cWS5LhuoOEZdaQ9LEGpbr5I4G6s=
+  salt: r5ULVM1greWWqR/0cWS5LhuoOEZdaQ9LEGpbr5I4G6s=
+  licenseKey: ""
+  telemetryEnabled: True
+  nextPublicSignUpDisabled: False
+  enableExperimentalFeatures: False
+  extraContainers: []
+  extraVolumes: []
+  extraInitContainers: []
+  extraVolumeMounts: []
+
+  web:
+    resources: {}
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 50
+    vpa:
+      enabled: false
+      controlledResources: []
+      maxAllowed: {}
+      minAllowed: {}
+      updatePolicy:
+        updateMode: Auto
+  worker:
+    resources: {}
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 2
+      targetCPUUtilizationPercentage: 50
+    vpa:
+      enabled: false
+      controlledResources: []
+      maxAllowed: {}
+      minAllowed: {}
+      updatePolicy:
+        updateMode: Auto
+
+  additionalEnv:
+    - name: "REDIS_CONNECTION_STRING"
+      value: "redis://default:changeme@langfuse-valkey-primary:6379/0"
+    - name: AUTH_DISABLE_SIGNUP
+      value: "true"
+    - name: "CLICKHOUSE_MIGRATION_URL"
+      value: "clickhouse://langfuse-clickhouse:9000"
+    - name: "CLICKHOUSE_URL"
+      value: "http://langfuse-clickhouse:8123"
+    - name: "CLICKHOUSE_USER"
+      value: "default"
+    - name: "CLICKHOUSE_PASSWORD"
+      value: "changeme"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_ENABLED"
+      value: "true"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_BUCKET"
+      value: "langfuse"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_REGION"
+      value: "auto"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID"
+      value: "minio"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY"
+      value: "miniosecret"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT"
+      value: "http://langfuse-minio:9000"
+    - name: "LANGFUSE_INIT_ORG_ID"
+      value: "techhub"
+    - name: "LANGFUSE_INIT_ORG_NAME"
+      value: "Tech Hub"
+    - name: "LANGFUSE_INIT_PROJECT_ID"
+      value: "default"
+    - name: "LANGFUSE_INIT_PROJECT_NAME"
+      value: "Default"
+    - name: "LANGFUSE_INIT_USER_EMAIL"
+      value: "admin@techhub.com"
+    - name: "LANGFUSE_INIT_USER_NAME"
+      value: "admin"
+    - name: "LANGFUSE_INIT_USER_PASSWORD"
+      value: "techhublangfuse"
+    - name: "LANGFUSE_INIT_PROJECT_PUBLIC_KEY"
+      value: "pk-lf-293b0a38-17c9-474b-b421-60174b25966e"
+    - name: "LANGFUSE_INIT_PROJECT_SECRET_KEY"
+      value: "sk-lf-be5f1e98-211d-45bb-8511-a033f39fed14"
+    - name: "LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE"
+      value: "true"
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 3000
+  nodePort: ""
+
+ingress:
+  enabled: false
+  basedomain:
+  port: 80
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+postgresql:
+  host: langfuse-postgresql
+  auth:
+    username: postgres
+    password: postgres
+    database: postgres_langfuse
+  deploy: true
+  architecture: standalone
+  primary:
+    service:
+      ports:
+        postgresql: 5432
+
+clickhouse:
+  deploy: true
+  shards: 1
+  replicaCount: 3
+  resourcesPreset: 2xlarge
+  auth:
+    username: default
+    password: changeme
+  nodeSelector: {}
+  zookeeper:
+    nodeSelector: {}
+
+valkey:
+  deploy: true
+  architecture: standalone
+  primary:
+    extraFlags:
+      - "--maxmemory-policy noeviction"
+  auth:
+    password: changeme
+  primary:
+    nodeSelector: {}
+
+minio:
+  deploy: true
+  defaultBuckets: 'langfuse'
+  auth:
+    rootUser: 'minio'
+    rootPassword: 'miniosecret'
+  nodeSelector: {}
+
+extraManifests: []

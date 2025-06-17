@@ -93,84 +93,94 @@ class GPTModel(GenerativeModel):
         return json.dumps(data)
 
     def get_result(self, response: dict) -> dict:
-        """ Method to format the model response.
+        """Method to format the model response.
 
-        :param response: Dict returned by  LLM endpoint.
+        :param response: Dict returned by LLM endpoint.
         :return: Dict with the answer, tokens used and logprobs.
         """
-        # Check status code
         if 'status_code' in response and response['status_code'] != 200:
+            try:
+                error_info = json.loads(response.get('msg', '{}')).get('error', {})
+                content_filter_info = error_info.get('innererror', {}).get('content_filter_result', {})
+
+                if error_info.get('code') == 'content_filter':
+                    triggered_filters = {
+                        category: details
+                        for category, details in content_filter_info.items()
+                        if details.get('filtered')
+                    }
+
+                    triggered_str = ', '.join(
+                        f"{category}({details.get('severity', 'unknown')})"
+                        for category, details in triggered_filters.items()
+                    )
+
+                    return {
+                        'status': 'error',
+                        'error_message': f"Content filter triggered due to the following categories: {triggered_str}.",
+                        'status_code': 400
+                    }
+            except (json.JSONDecodeError, KeyError, TypeError):
+                pass
+
             return {
                 'status': 'error',
-                'error_message': str(response['msg']),
+                'error_message': str(response.get('msg', 'Unknown error')),
                 'status_code': response['status_code']
             }
-        # get answer
+
         choice = response.get('choices', [{}])[0]
 
-        # if finish_reason is content_filter, return error
-        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
+        if 'message' not in choice:
+            raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
+
+        message = choice.get('message', {})
+
+        if 'tool_calls' in message:
+            tool_calls = []
+            for tool_call in message.get('tool_calls', []):
+                tool_calls.append({
+                    "name": tool_call.get('function', {}).get('name', ''),
+                    "id": tool_call.get('id', ''),
+                    "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
+                })
+
             return {
-                'status': 'error',
-                'error_message': 'content_filter',
-                'status_code': 400
+                "status": "finished",
+                "result": {
+                    "answer": message.get('content') or "",
+                    "tool_calls": tool_calls,
+                    "input_tokens": response['usage']['prompt_tokens'],
+                    "n_tokens": response['usage']['total_tokens'],
+                    "output_tokens": response['usage']['completion_tokens'],
+                    "query_tokens": self.message.user_query_tokens,
+                    "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
+                },
+                "status_code": 200
             }
 
+        text = message.get('content', '')
+
+        if re.search(NOT_FOUND_MSG, text, re.I):
+            answer = NOT_FOUND_MSG
+            self.logger.info("Answer not found.")
         else:
-            # check if message is in the response
-            if 'message' not in choice:
-                raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
-
-            message = choice.get('message', {})
-
-            if 'tool_calls' in message:
-                tool_calls = []
-                for tool_call in choice.get('message', {}).get('tool_calls', []):
-                    tool_calls.append({
-                        "name": tool_call.get('function', {}).get('name', ''),
-                        "id": tool_call.get('id', ''),
-                        "inputs": json.loads(tool_call.get('function', {}).get('arguments', '{}'))
-                    })
-
-                result = {
-                    "status": "finished",
-                    "result": {
-                        "answer": message.get('content') or "",
-                        "tool_calls": tool_calls,
-                        "input_tokens": response['usage']['prompt_tokens'],
-                        "n_tokens": response['usage']['total_tokens'],
-                        "output_tokens": response['usage']['completion_tokens'],
-                        "query_tokens": self.message.user_query_tokens
-                    },
-                    "status_code": 200
-                }
-                return result
-            else:
-                # check if content is in the message
-                text = choice.get('message', {}).get('content', '')
-
-                # get text
-                if re.search(NOT_FOUND_MSG, text, re.I):
-                    answer = NOT_FOUND_MSG
-                    self.logger.info("Answer not found.")
-                else:
-                    answer = text.strip()
+            answer = text.strip()
 
         self.logger.info(f"LLM response: {answer}.")
-        text_generated = {
-            'answer': answer,
-            'logprobs': [],
-            'n_tokens': response['usage']['total_tokens'],
-            'query_tokens': self.message.user_query_tokens,
-            'input_tokens': response['usage']['prompt_tokens'],
-            'output_tokens': response['usage']['completion_tokens']
-        }
-        result = {
+        return {
             'status': "finished",
-            'result': text_generated,
+            'result': {
+                'answer': answer,
+                'logprobs': [],
+                'n_tokens': response['usage']['total_tokens'],
+                'query_tokens': self.message.user_query_tokens,
+                'input_tokens': response['usage']['prompt_tokens'],
+                'output_tokens': response['usage']['completion_tokens'],
+                "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
+            },
             'status_code': 200
         }
-        return result
 
     def adapt_tools(self, tools):
 
@@ -279,22 +289,24 @@ class DalleModel(GPTModel):
 
         # Check status code
         if 'status_code' in response and response['status_code'] != 200:
+            try:
+                error_info = json.loads(response.get('msg', '{}')).get('error', {})
+                if error_info.get('code') in ('content_policy_violation', 'contentFilter'):
+                    return {
+                        'status': 'error',
+                        'error_message': "Content filter triggered, review your prompt.",
+                        'status_code': 400
+                    }
+            except (json.JSONDecodeError, KeyError, TypeError):
+                pass
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
                 'status_code': response['status_code']
             }
-        # get answer
-        choice = response.get('data', [{}])[0]
 
-        # if finish_reason is content_filter, return error
-        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
-            return {
-                'status': 'error',
-                'error_message': 'content_filter',
-                'status_code': 400
-            }
         else:
+            choice = response.get('data', [{}])[0]
             # check if message is in the response
             if self.response_format == 'b64_json':
                 if 'b64_json' not in choice:
@@ -514,23 +526,40 @@ class ChatGPTOModel(GPTModel):
         """
         # Check status code
         if 'status_code' in response and response['status_code'] != 200:
+
+            try:
+                error_info = json.loads(response.get('msg', '{}')).get('error', {})
+                content_filter_info = error_info.get('innererror', {}).get('content_filter_result', {})
+
+                if error_info.get('code') == 'content_filter':
+                    triggered_filters = {
+                        category: details
+                        for category, details in content_filter_info.items()
+                        if details.get('filtered')
+                    }
+
+                    triggered_str = ', '.join(
+                        f"{category}({details.get('severity', 'unknown')})"
+                        for category, details in triggered_filters.items()
+                    )
+
+                    return {
+                        'status': 'error',
+                        'error_message': f"Content filter triggered due to the following categories: {triggered_str}.",
+                        'status_code': 400
+                    }
+            except (json.JSONDecodeError, KeyError, TypeError):
+                pass
+
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
                 'status_code': response['status_code']
             }
-        # get answer
-        choice = response.get('choices', [{}])[0]
-
-        # if finish_reason is content_filter, return error
-        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
-            return {
-                'status': 'error',
-                'error_message': 'content_filter',
-                'status_code': 400
-            }
 
         else:
+            choice = response.get('choices', [{}])[0]
+
             # check if message is in the response
             if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
@@ -554,7 +583,8 @@ class ChatGPTOModel(GPTModel):
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
                         "output_tokens": response['usage']['completion_tokens'],
-                        "query_tokens": self.message.user_query_tokens
+                        "query_tokens": self.message.user_query_tokens,
+                        "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                     },
                     "status_code": 200
                 }
@@ -578,7 +608,8 @@ class ChatGPTOModel(GPTModel):
             'query_tokens': self.message.user_query_tokens,
             'input_tokens': response['usage']['prompt_tokens'],
             'output_tokens': response['usage']['completion_tokens'],
-            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens'],
+            "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
         }
         result = {
             'status': "finished",
@@ -665,22 +696,39 @@ class ChatGPTOVisionModel(GPTModel):
         """
         # Check status code
         if 'status_code' in response and response['status_code'] != 200:
+
+            try:
+                error_info = json.loads(response.get('msg', '{}')).get('error', {})
+                content_filter_info = error_info.get('innererror', {}).get('content_filter_result', {})
+
+                if error_info.get('code') == 'content_filter':
+                    triggered_filters = {
+                        category: details
+                        for category, details in content_filter_info.items()
+                        if details.get('filtered')
+                    }
+
+                    triggered_str = ', '.join(
+                        f"{category}({details.get('severity', 'unknown')})"
+                        for category, details in triggered_filters.items()
+                    )
+
+                    return {
+                        'status': 'error',
+                        'error_message': f"Content filter triggered due to the following categories: {triggered_str}.",
+                        'status_code': 400
+                    }
+            except (json.JSONDecodeError, KeyError, TypeError):
+                pass
+
             return {
                 'status': 'error',
                 'error_message': str(response['msg']),
                 'status_code': response['status_code']
             }
-        # get answer
-        choice = response.get('choices', [{}])[0]
 
-        # if finish_reason is content_filter, return error
-        if 'finish_reason' in choice and choice['finish_reason'] == 'content_filter':
-            return {
-                'status': 'error',
-                'error_message': 'content_filter',
-                'status_code': 400
-            }
         else:
+            choice = response.get('choices', [{}])[0]
             # check if message is in the response
             if 'message' not in choice:
                 raise PrintableGenaiError(400, f"Azure format is not as expected: {choice}.")
@@ -704,7 +752,8 @@ class ChatGPTOVisionModel(GPTModel):
                         "input_tokens": response['usage']['prompt_tokens'],
                         "n_tokens": response['usage']['total_tokens'],
                         "output_tokens": response['usage']['completion_tokens'],
-                        "query_tokens": self.message.user_query_tokens
+                        "query_tokens": self.message.user_query_tokens,
+                        "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
                     },
                     "status_code": 200
                 }
@@ -728,7 +777,8 @@ class ChatGPTOVisionModel(GPTModel):
             'query_tokens': self.message.user_query_tokens,
             'input_tokens': response['usage']['prompt_tokens'],
             'output_tokens': response['usage']['completion_tokens'],
-            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens']
+            'reasoning_tokens': response['usage']['completion_tokens_details']['reasoning_tokens'],
+            "cached_tokens": response.get('usage', {}).get('prompt_tokens_details', {}).get('cached_tokens', 0)
         }
         result = {
             'status': "finished",

@@ -15,7 +15,9 @@ from message.llamamessage import Llama3Message
 from message.novamessage import NovaVMessage, NovaMessage
 from message.claudemessage import ClaudeMessage, Claude3Message
 from message.gptmessage import ChatGPTvMessage, ChatGPTMessage, DalleMessage, ChatGPTOMiniMessage
+from message.geminimessage import GeminiVMessage
 from message.messagemanager import ManagerMessages
+from message.tsuzumimessage import TsuzumiMessage
 
 no_vision_persistence = [
         [
@@ -75,9 +77,11 @@ class TestManagerMessages:
     def test_get_possible_messages(self):
         messages = ManagerMessages.get_possible_messages()
         print(messages)
-        assert messages == ['chatGPT', 'chatClaude', 'dalle', 'chatClaude-v', 'chatGPT-v', 'chatGPT-o1-mini', 'chatLlama3', 'chatNova', 'chatNova-v']
+        assert messages == ['chatGPT', 'chatClaude', 'dalle', 'chatClaude-v', 'chatGPT-v', 'chatGPT-o1-mini', 'chatLlama3', 'chatNova', 'chatNova-v', 'chatGemini-v', "chatTsuzumi"]
 
     def test_all_messages(self):
+        self.conf['message'] = "chatTsuzumi"
+        message_tsuzumi = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "chatGPT-v"
         message_gptv = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "chatClaude"
@@ -92,6 +96,10 @@ class TestManagerMessages:
         message_dalle = ManagerMessages.get_message(self.conf)
         self.conf['message'] = "chatGPT-o1-mini"
         message_o1_mini = ManagerMessages.get_message(self.conf)
+        self.conf['message'] = "chatGemini-v"
+        message_geminiv = ManagerMessages.get_message(self.conf)
+
+        assert isinstance(message_tsuzumi, TsuzumiMessage)
         assert isinstance(message_gptv, ChatGPTvMessage)
         assert isinstance(message_claude, ClaudeMessage)
         assert isinstance(message_claude3, Claude3Message)
@@ -99,6 +107,8 @@ class TestManagerMessages:
         assert isinstance(message_chatgpt, ChatGPTMessage)
         assert isinstance(message_dalle, DalleMessage)
         assert isinstance(message_o1_mini, ChatGPTOMiniMessage)
+        assert isinstance(message_geminiv, GeminiVMessage)
+
 
 
     def test_wrong_message(self):
@@ -220,3 +230,36 @@ class TestNovaVMessage:
         message['context'] = "context"
         with pytest.raises(PrintableGenaiError, match="Error 400: Context param not allowed in vision models"):
             NovaVMessage(**message)
+
+class TestGeminiMessage:
+    def test_system(self):
+        message = copy.deepcopy(message_dict_v)
+        message['system'] = "You are a helpful assistant."
+        message['template'].pop('system')
+        message_obj = GeminiVMessage(**message)
+        assert isinstance(message_obj, GeminiVMessage)
+
+    def test_no_context_allowed(self):
+        message = copy.deepcopy(message_dict_v)
+        message['context'] = "context"
+        with pytest.raises(PrintableGenaiError, match="Error 400: Context param not allowed in vision models"):
+            GeminiVMessage(**message)
+
+class TestTsuzumiMessage:
+    def test_system(self):
+        message = copy.deepcopy(message_dict)
+        message['system'] = "You are a helpful assistant."
+        message['template'].pop('system')
+        message_obj = ChatGPTMessage(**message)
+        assert isinstance(message_obj, ChatGPTMessage)
+
+    def test_repr_method(self):
+        message = copy.deepcopy(message_dict)
+        message['template_name'] = "system_query"
+        message['context'] = "jasdlkfjañ"
+        message.pop('persistence')
+        message_obj = ChatGPTMessage(**message)
+
+        expected_output = (f"{{query:{message['query']}, context:{message['context']}, "
+                           f"template_name:{message['template_name']}, template:{message['template']}}}")
+        assert repr(message_obj) == expected_output

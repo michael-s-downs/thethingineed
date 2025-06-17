@@ -25,7 +25,7 @@
       - [Examples](#examples)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /predict](#request-and-response-formats-for-predict)
+    - [Request and Response Formats for predict endpoint](#request-and-response-formats-for-predict-endpoint)
     - [Parameters explanation](#parameters-explanation)
     - [Persistence format](#persistence-format)
     - [Error Handling](#error-handling)
@@ -163,7 +163,7 @@ To understand the LLM module, there are a few concepts that we need to define be
 
 ![alt text](imgs/techhubgenaillmapi/LLMAPIpipeline.png)
 
-This service receives the user's request and searches for the template in the database (AWS S3 or Azure Blob Storage). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
+This service receives the user's request and searches for the template in the database (AWS S3, Azure Blob Storage or Langfuse). Once the template is correctly loaded it configures the prompt to call the LLM model (OpenAI, Claude, Llama, etc) to perform the task asked by the user in the query.
 
 ### Reasoning Models
 
@@ -1145,7 +1145,7 @@ Response:
 }
 ```
 
-### Request and Response Formats for <i>/predict</i>
+### Request and Response Formats for predict endpoint
 
 The requests structure must be as follows:
 
@@ -1166,7 +1166,8 @@ The requests structure must be as follows:
         "model": "gpt-3.5-pool-techhub-europe",
         "max_input_tokens": 600,
         "max_tokens": 1000,
-        "temperature": 0
+        "temperature": 0,
+        "show_token_details":true
     
     },
     "platform_metadata": {
@@ -1184,6 +1185,8 @@ The response structure must be as follows:
     "status": "finished",
     "result": {
         "answer": "NTT Data",
+        "cache_read_tokens": 0,
+        "cache_write_tokens": 0,
         "logprobs": [],
         "n_tokens": 134,
         "query_tokens": 80,
@@ -1217,9 +1220,10 @@ The response structure must be as follows:
     + size (optional): Output size format [“1024x1024”, “1792x1024”, “1024x1792”] default as “1024x1024”
     + style (optional): Output style of the image [vivid, natural], default as vivid
   - tools(optional): List of tools defined by the user that could be used by the model (models such as DALLE ar not able to use tools)
+  - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
 
 * platform_metadata (required):
-  - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, or “bedrock”.
+  - platform (required): Name of the desired platform. Possible values: “azure”, “openai”, “bedrock” "vertex" or "tsuzumi".
   - timeout (optional): Maximum time to response. By default is 30s if this value is not passed.
   - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
 
@@ -1230,7 +1234,8 @@ When using reasoning models, it is important to consider the different `llm_meta
   - max_completion_tokens (optional): In reasoning models, the `max_tokens` parameter is no longer supported. Instead, `max_completion_tokens` defines the maximum number of tokens the model can generate, including both the tokens visible to the user and the tokens used for reasoning.
   - reasoning_effort (optional): This parameter guides the model on how many reasoning tokens it should generate before producing a response to the prompt. It can be set to `[low, medium, or high]`. The higher the effort setting, the longer the model will take to process the request, generally resulting in a larger number of reasoning tokens. By default, it is set to `medium`. (Some models, such as `o1-mini`, do not yet support this parameter.)
   - tools(optional): List of tools defined by the user that could be used by the model
-
+  - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
+  
 Specifically for DALLE the request parameters are:
 
 * query_metadata: Data related to the query:
@@ -1248,9 +1253,10 @@ Specifically for DALLE the request parameters are:
   - size: Output size format [\1024x1024\, \1792x1024\, \1024x1792\] default as \1024x1024\
   - style: Output style of the image [vivid, natural], default as vivid,
   - user: Helps Openai tracking the user
+  - - show_token_details(optional): If set to true, the model response will include detailed token usage information such as cache_write_tokens, cache_read_tokens, etc. Default is false.
 
 * platform_metadata: Data related to the platform where the language model stays
-  - platform: Name of the platform that will be used [azure, bedrock, openai]
+  - platform: Name of the platform that will be used [azure, bedrock, openai, vertex, tsuzumi]
   - timeout: Maximum waiting time of the request default as 60
   - num_retries (optional): Maximum number of retries to do when a call fails for model purposes (if pool, the model is changed between other from the pool). 3 by default
 
@@ -1293,44 +1299,44 @@ Furthermore, an example of persistence incluiding images in url format (the imag
 
 ### Error Handling
 
-|Error message|Possible reason|
-| :- | :- |
-|Too many images in request. Max is {max\_images}|Exceeded maximum number of images allowed to send. This is 10 images for GPT-v and 20 images for Claude3.|
-|<p>Platform type doesn’t exit {platform} . Possible</p><p>values: ['openai', 'azure', 'bedrock']</p>|Incorrect value for ‘platform’ in ‘platform\_metadata’ dict.|
-|Image must be a valid url format|Malformed url string. It doesn’t correspond to a valid image.|
-|Image must be a valid base64 format|Malformed url string. It doesn’t correspond to a valid image.|
-|Image must be one in [image\_url, image\_b64] and match the content with the type|Incorrect value for ‘type’ in ‘query’. Images type are [image\_url, image\_b64].|
-|Image must be in format [jpeg, png, gif, webp]|Incorrect format of image. Accepted extensions are  [jpeg, png, gif, webp]|
-|The request timed out.|Request exceeded ‘timeout’ value in ‘platform\_metadata’ dict.|
-|Template is not a dict {} structure|<p>Template must be a dict. e.g. </p><p>"system\_query": {</p></t>"system": "\$system",</p><p>"user": "$query"</p><p>``}</p>|
-|Template must contain the user key|Template keys [‘user’, ‘system’] are mandatory and unique.|
-|Template can only have user and system key|The template contains a key different from [‘user’, ‘system’]|
-|Template must contain $query to be replaced|The key ‘user’ value in the template must be a string containing “$query”.|
-|Template is empty|The template doesn´t have any param.|
-|For type ‘text’ there must be a key ‘text’ containing a string|When the key ‘type’ value is ‘text’ it is mandatory a key ‘text’ containing a string.|
-|“url” param in type ‘image\_url’ is mandatory|When the key ‘type’ value is ‘image\_url’ or ‘image\_b64’ it is mandatory a key ‘url’ containing a string coding an image.|
-|Query must be a list|In vision models the key ‘query’ value must be a list.|
-|Query and persistence user content must be a string for non-vision models|The key ‘query’ value or the user content value in the persistence must be a string for non-vision models.|
-|Incorrect keys: {keys}|There are additional incorrect keys in the request.|
-|Type must be one in [‘text’, ‘image\_url’, ‘image\_b64’]|Incorrect key ‘type’ value, it must be one in [‘text’, ‘image\_url’, ‘image\_b64’]|
-|‘image’ param must be a dict|The key ‘image’ must contain a dict with the mandatory key ‘url’ or ‘base64’ depending on the type containing a string.|
-|Type ‘image’ must contain a ‘url’ key with a string or a ‘base64’ key with a string|The dict inside the key ‘image’ doesn´t contain an ‘url’ or ‘base64’ key.|
-|Detail parameter must be one in [‘high’, ’low’, ’auto’ ]|Incorrect value for key ‘detail’, it must be one in [‘high’, ’low’, ’auto’ ].|
-|Key must be ‘type’ and its value must be one in [‘text’, ‘image\_url’, ‘image\_b64’]|Key ‘type’ is mandatory in vision queries and its value must be one in [‘text’, ‘image\_url’, ‘image\_b64’].|
-|Elements of the content must be dict {}|Persistence user content for vision models must be a list containing dictionaries in vision-query format.|
-|Persistence must be a list containing lists|<p>Persistence structure corresponds to a list containing lists with pairs of [‘user’, ‘assistant’] e.g. <br>[[{"role": "user", "content": “Where is Paris?”},</p><p>{"role": "assistant", "content": “In France”}],</p><p>[…]]</p>|
-|Content must contain pairs of [‘user’, ‘assistant’]|Persistence internal lists must contain two dictionaries, one for ‘user’ role and another for ‘assistant’ role. There shouldn’t be more than this two elements in the list.|
-|<p>Incorrect keys: {additional\_keys}. Accepted keys: {'role', 'content', 'n\_tokens'}</p><p></p>|Dictionaries inside persistence can only have the keys  ['role' (mandatory), 'content' (mandatory), 'n\_tokens' (optional)]|
-|In persistence, first role must be ‘user’ and second role must be ‘assistant’|The correct order for roles in persistence pairs is first role ‘user’ and second ‘assistant’.|
-|‘User’ role must have a content key.|<p>Lack of ‘content’ key in persistence user role. Correct example of persistence:</p><p>[[{"role": "user", "content": “Where is Paris?”},</p><p>{"role": "assistant", "content": “In France”}</p><p>]]</p>|
-|‘User’ role content must be a string for non-vision models or a list for vision models|Incorrect type of key ‘content’ value. It must be a string for non-vision models or a list for vision models.|
-|‘assistant’ role must have a content key containing a string|Lack of ‘content’ key in persistence assistant role or incorrect type value.|
-|Query must be a string for non vision models|Incorrect type for query value. It must be a string for non-vision models.|
-|Context param nor allowed in vision models|In ‘query\_metadata’ dictionary the key ‘context’ is not allowed for vision models.|
-|Detail parameter not allowed in Claude vision models|In the ‘image’ diccionary the key ‘detail’ is only accepted for GPT-v models.|
-|Internal error, query is mandatory|Key ‘query’ is mandatory in the request.|
-|<p>Model: {wrong\_model} model</p><p>is not supported in platform azure.</p>|Incorrect or not supported model for chosen platform.|
-| Error parsing JSON: '<error>' in parameter '<parameter>' for value '<value>' | Error parsing the input |
+| Error message                                                                                                             |Possible reason|
+|:--------------------------------------------------------------------------------------------------------------------------| :- |
+| Too many images in request. Max is {max\_images}                                                                          |Exceeded maximum number of images allowed to send. This is 10 images for GPT-v and 20 images for Claude3.|
+| <p>Platform type doesn’t exit {platform} . Possible</p><p>values: ['openai', 'azure', 'bedrock', 'vertex', 'tsuzumi']</p> |Incorrect value for ‘platform’ in ‘platform\_metadata’ dict.|
+| Image must be a valid url format                                                                                          |Malformed url string. It doesn’t correspond to a valid image.|
+| Image must be a valid base64 format                                                                                       |Malformed url string. It doesn’t correspond to a valid image.|
+| Image must be one in [image\_url, image\_b64] and match the content with the type                                         |Incorrect value for ‘type’ in ‘query’. Images type are [image\_url, image\_b64].|
+| Image must be in format [jpeg, png, gif, webp]                                                                            |Incorrect format of image. Accepted extensions are  [jpeg, png, gif, webp]|
+| The request timed out.                                                                                                    |Request exceeded ‘timeout’ value in ‘platform\_metadata’ dict.|
+| Template is not a dict {} structure                                                                                       |<p>Template must be a dict. e.g. </p><p>"system\_query": {</p></t>"system": "\$system",</p><p>"user": "$query"</p><p>``}</p>|
+| Template must contain the user key                                                                                        |Template keys [‘user’, ‘system’] are mandatory and unique.|
+| Template can only have user and system key                                                                                |The template contains a key different from [‘user’, ‘system’]|
+| Template must contain $query to be replaced                                                                               |The key ‘user’ value in the template must be a string containing “$query”.|
+| Template is empty                                                                                                         |The template doesn´t have any param.|
+| For type ‘text’ there must be a key ‘text’ containing a string                                                            |When the key ‘type’ value is ‘text’ it is mandatory a key ‘text’ containing a string.|
+| “url” param in type ‘image\_url’ is mandatory                                                                             |When the key ‘type’ value is ‘image\_url’ or ‘image\_b64’ it is mandatory a key ‘url’ containing a string coding an image.|
+| Query must be a list                                                                                                      |In vision models the key ‘query’ value must be a list.|
+| Query and persistence user content must be a string for non-vision models                                                 |The key ‘query’ value or the user content value in the persistence must be a string for non-vision models.|
+| Incorrect keys: {keys}                                                                                                    |There are additional incorrect keys in the request.|
+| Type must be one in [‘text’, ‘image\_url’, ‘image\_b64’]                                                                  |Incorrect key ‘type’ value, it must be one in [‘text’, ‘image\_url’, ‘image\_b64’]|
+| ‘image’ param must be a dict                                                                                              |The key ‘image’ must contain a dict with the mandatory key ‘url’ or ‘base64’ depending on the type containing a string.|
+| Type ‘image’ must contain a ‘url’ key with a string or a ‘base64’ key with a string                                       |The dict inside the key ‘image’ doesn´t contain an ‘url’ or ‘base64’ key.|
+| Detail parameter must be one in [‘high’, ’low’, ’auto’ ]                                                                  |Incorrect value for key ‘detail’, it must be one in [‘high’, ’low’, ’auto’ ].|
+| Key must be ‘type’ and its value must be one in [‘text’, ‘image\_url’, ‘image\_b64’]                                      |Key ‘type’ is mandatory in vision queries and its value must be one in [‘text’, ‘image\_url’, ‘image\_b64’].|
+| Elements of the content must be dict {}                                                                                   |Persistence user content for vision models must be a list containing dictionaries in vision-query format.|
+| Persistence must be a list containing lists                                                                               |<p>Persistence structure corresponds to a list containing lists with pairs of [‘user’, ‘assistant’] e.g. <br>[[{"role": "user", "content": “Where is Paris?”},</p><p>{"role": "assistant", "content": “In France”}],</p><p>[…]]</p>|
+| Content must contain pairs of [‘user’, ‘assistant’]                                                                       |Persistence internal lists must contain two dictionaries, one for ‘user’ role and another for ‘assistant’ role. There shouldn’t be more than this two elements in the list.|
+| <p>Incorrect keys: {additional\_keys}. Accepted keys: {'role', 'content', 'n\_tokens'}</p><p></p>                         |Dictionaries inside persistence can only have the keys  ['role' (mandatory), 'content' (mandatory), 'n\_tokens' (optional)]|
+| In persistence, first role must be ‘user’ and second role must be ‘assistant’                                             |The correct order for roles in persistence pairs is first role ‘user’ and second ‘assistant’.|
+| ‘User’ role must have a content key.                                                                                      |<p>Lack of ‘content’ key in persistence user role. Correct example of persistence:</p><p>[[{"role": "user", "content": “Where is Paris?”},</p><p>{"role": "assistant", "content": “In France”}</p><p>]]</p>|
+| ‘User’ role content must be a string for non-vision models or a list for vision models                                    |Incorrect type of key ‘content’ value. It must be a string for non-vision models or a list for vision models.|
+| ‘assistant’ role must have a content key containing a string                                                              |Lack of ‘content’ key in persistence assistant role or incorrect type value.|
+| Query must be a string for non vision models                                                                              |Incorrect type for query value. It must be a string for non-vision models.|
+| Context param nor allowed in vision models                                                                                |In ‘query\_metadata’ dictionary the key ‘context’ is not allowed for vision models.|
+| Detail parameter not allowed in Claude vision models                                                                      |In the ‘image’ diccionary the key ‘detail’ is only accepted for GPT-v models.|
+| Internal error, query is mandatory                                                                                        |Key ‘query’ is mandatory in the request.|
+| <p>Model: {wrong\_model} model</p><p>is not supported in platform azure.</p>                                              |Incorrect or not supported model for chosen platform.|
+| Error parsing JSON: '<error>' in parameter '<parameter>' for value '<value>'                                              | Error parsing the input |
 
 
 ## Use Cases
@@ -1502,11 +1508,11 @@ Some instructions to create templates to obtain better results from the LLM:
 
 The files-secrets architecture is:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v1.4.0-config.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-config.png)
 
 Also in case the model param is not provided, the files-secretes architecture would look like this:
 
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-flow-llmapi-config-without-model-param.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-flow-llmapi-config-without-model-param.png)
 
 #### Secrets
 
@@ -1556,6 +1562,7 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 LLMAPI needs 3 config files to run.
 
 - **`Prompts templates`**: Stored in "src/LLM/prompts", in this directory we store the files containing the prompt templates like the following. When LLMAPI is initialized, reads all the files in the directory and loads to memory all the templates, removing duplicates. The name refered in the call will be the name of the dict key (system_query, system_context...). Finally, the only available files are the ones in json format and that contains query on its name.
+In addition to the local storage, templates are also stored in Langfuse with the tag `llm_template`. This enables centralized management and versioning of prompt templates across environments.
 
     ```json
     {
@@ -1663,19 +1670,21 @@ LLMAPI needs 3 config files to run.
   ```json
   {
     "azure":"techhub-pool-world-gpt-4o",
-    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0"
+    "bedrock":"techhub-pool-world-claude-3-5-sonnet-1:0",
+    "vertex":"gemini-2.0-flash-exp",
+    "tsuzmi": "tsuzumi-7b-v1_2-8k-instruct"
   }
   ```
     
 An example of where the data is extracted from the call is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-config-file-uses.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-config-file-uses.png)
 
 In the case that there is no template name, each generative model has a default template name to use when is not passed. It will be system_query_v for vision models and system_query for non-vision models, so these two templates must be in the config file when llmapi initializes.
 
 Another example, where the model parameter is not provided and the default Azure model gpt-3.5-pool-europe is used, is:
 
-![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-v2.2.0-config-file-uses-without-model-param.png)
+![Configuration files diagram](imgs/techhubgenaillmapi/genai-llmapi-config-file-uses-without-model-param.png)
 
 In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as the default model for azure. This means that whenever the model parameter is not explicitly provided during the process call, the system will automatically select gpt-3.5-pool-europe as the default option for handling requests on the Azure platform.  This can be changed modifying the **`default_llm_models.json`** file
 
@@ -1692,7 +1701,11 @@ In this case on the **`default_llm_models.json`** gpt-3.5-pool-europe is set as 
     - REDIS_HOST: Redis host url.
     - REDIS_PORT: Redis port, usually 6379.
     - REDIS_PASSWORD: Redis authentication password.
-
+    - LANGFUSE: Enables or disables Langfuse integration to get templates from langfuse instead of Azure Storage. Set to "true" or "false".
+    - LANGFUSE_HOST: URL of the Langfuse host instance.
+    - LANGFUSE_PUBLIC_KEY: Public key for authenticating with Langfuse.
+    - LANGFUSE_SECRET_KEY: Secret key for authenticating with Langfuse.
+  
 *When the provider is **Azure**, the AWS variables can be empty, and the same applies when using **AWS** with the Azure variables.*
 
 ### X-limits header
@@ -1772,7 +1785,7 @@ When the model has been adapted and with the number of tokens of each message (i
 ![alt text](imgs/techhubgenaillmapi/limiters.png)
 
 ### Flow
-![alt text](imgs/techhubgenaillmapi/genai-llmapi-v2.0.0-llmapi-decision-flow.png)
+![alt text](imgs/techhubgenaillmapi/genai-llmapi-llmapi-decision-flow.png)
 
 In the following diagram flows, each color will represent the following files:
 
@@ -1835,7 +1848,7 @@ Let’s take a look to several important practices to follow when writing prompt
 An example of the system role would be:
 
 ```json
-custom_system_prompt = "You are an AI assistant that helps bank managers solve their questions about bank accounts. 
+custom_system_prompt = "You are an AI assistant that helps bank managers solve their questions about bank accounts." 
 You must follow the following rules: 
 1. Answer the query if the information is in context, otherwise answer 'Not Found'.
 2. If you have doubts or don't have enough information, respond that you can't help with that question. 

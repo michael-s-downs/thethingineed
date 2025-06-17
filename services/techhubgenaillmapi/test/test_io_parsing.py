@@ -170,7 +170,7 @@ class TestResponseObject():
         with pytest.raises(ValueError, match="Internal error, response object must have a result or an error_message"):
             ResponseObject(**{"status_code": 200, "status": "finished"}).get_response_base()
 
-        response_object = ResponseObject(**{"status_code": 200, "status": "finished", "result": "result"})
+        response_object = ResponseObject(**{"status_code": 200, "status": "finished", "result": {"test": "test"}})
         os.environ['Q_GENAI_LLMQUEUE_OUTPUT'] = "techhubragemeal--q-local-output" 
         with mock.patch("io_parsing.QUEUE_MODE", True):
             mock_object = MagicMock(output_file="output.json")
@@ -178,7 +178,7 @@ class TestResponseObject():
             must_continue, output, next_service = response_object.get_response_predict(mock_object)
             assert must_continue
             assert output.get('result') == 'output.json'
-            assert next_service == "techhubragemeal--q-local-output"
+            assert next_service == "genai_llmqueue_output"
 
 class TestLLMMetadata():
     def test_validate_funtions_and_functions_call(self):

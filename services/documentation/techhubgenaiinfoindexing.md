@@ -8,6 +8,7 @@
     - [Key Features](#key-features)
   - [Getting started](#getting-started)
   - [Concepts and Definitions](#concepts-and-definitions)
+  - [Vector storages](#vector-storages)
   - [Chunking Methods](#chunking-methods)
   - [Embeddings Generation](#embeddings-generation)
   - [Vector Storage. Chunk id generation](#vector-storage-chunk-id-generation)
@@ -18,7 +19,7 @@
     - [Error Handling](#error-handling)
   - [Configuration](#configuration)
     - [Cloud setup](#cloud-setup)
-    - [Blobs/Buckets storage distribution](#blobsbuckets-storage-distribution)
+    - [Blobs - Buckets storage distribution](#blobs---buckets-storage-distribution)
     - [Secrets](#secrets)
     - [Configuration files](#configuration-files)
     - [Environment variables](#environment-variables)
@@ -101,6 +102,15 @@ To understand the indexing module, there are a few concepts that we need to defi
 * **Indexer**: Service that divides the documents into units of information according to the defined/implemented strategy (mobile window, page, slide, section, paragraph) and generates embeddings for each unit of information generated.
 * **Embedding Generation Model**: Language model used to generate the embeddings from a natural language text.
 * **Vector database**: A service that stores text embeddings and other metadata, such as document filename, enabling search across snippets based on a specified query.
+
+## Vector storages
+
+Global RAG can use diferent vector databases to store document chunks and its embeddings. The supported ones are:
+
+- [ElasticSearch](https://www.elastic.co/es/elasticsearch)
+- [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/)
+
+To get more information about how to configure the secret file refer to Secrets section.
 
 ## Chunking Methods
 
@@ -313,6 +323,58 @@ If a <i>response_url</i> is provided, when the process ends, the service will se
 
 For further information, see the <i>README</i> section in left menu.  
 
+**Reusing Preprocessed Documents**
+
+The InfoIndexing service allows you to reuse previously preprocessed documents, which can significantly improve performance when you need to index the same documents with different configurations or models.
+
+* To reuse preprocessed documents, you can use the same **POST** `/process` or `/process-async` endpoints by specifying the `process_id` from a previous preprocessing operation (for more information and examples about preprocessing, see the `techhubpreprocess` documentation):
+
+    **Examples Request**
+
+    - **POST** {{url}}//integrationasync/process
+
+    - **POST** {{url}}//integrationasync/process-async
+
+  ```json
+  {
+    "operation": "indexing",
+    "response_url": "test--q-integration-callback",
+    "process_id": "test_process_id",
+    "persist_preprocess": true,
+    "preprocess_reuse": true,
+    "indexation_conf": {
+      "vector_storage_conf": {
+        "index": "test_index"
+      },
+      "chunking_method": {
+        "window_overlap": 40,
+        "window_length": 500
+      },
+      "models": ["techhub-pool-world-ada-002"]
+    },
+    "documents_metadata": {
+      "name_document.pdf": {}
+    }
+  }
+  ```
+  
+    > **IMPORTANT:** When reusing preprocessed documents, the filenames in `documents_metadata` **must match exactly** the filenames used in the original preprocessing request.
+
+    > **IMPORTANT:** The `preprocess_reuse` parameter **must** be set to `true` when reusing preprocessed documents.
+
+- **Configuration**
+  
+  - **Parameter definition: Persist Preprocessing Parameter**  
+      The `persist_preprocess` parameter controls the retention of preprocessed files:
+      - `true`: Preprocessed files and intermediate results are kept in cloud storage.
+      - `false`: Temporary files are deleted after processing.
+      - **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`.
+      
+  - **Parameter definition: Preprocess Reuse Parameter**  
+    The `preprocess_reuse` parameter indicates that you want to reuse previously preprocessed documents:
+    - `true`: Use existing preprocessed data identified by the `process_id`.
+    - Only required when reusing preprocessed documents.
+
 ### Writing message in queue (Developer functionality)
 If using just infoindexing module for developing purposes as is not needed to pass through the other components to know how infoindexing works (just an already preprocessed document can be used or a simpler one), a txt file located in a route of the *STORAGE_BACKEND* environment variable and separated by *\t* will be necessary.
 
@@ -336,6 +398,8 @@ For a calling with just the infoindexing module, this are the mandatory paramete
     - **process_type**: Type of process.
     - **department**: Department assigned to apikey.
     - **report_url**: Url to report metrics to apigw.
+    - **persist_preprocess**: Retains preprocessed files in cloud storage. Required for preprocessing and reuse operations.
+    - **preprocess_reuse**: (**Required when reusing preprocessed documents**) Set to `true` to reuse existing preprocessed data.
 - **indexation_conf**: Configuration of index process.
   - **vector_storage_conf**: Configuration of the vector storage.
     - **index**: Name of index. If it is the first time it is used an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]).
@@ -483,7 +547,7 @@ The files/secrets architecture is:
 
 ![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v1.4.0-config.png)
 
-### Blobs/Buckets storage distribution
+### Blobs - Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
 - **Integration**: 
   - STORAGE_BACKEND: To store the raw document data processed by all the previous components.
@@ -530,8 +594,12 @@ All necessary credentials for the indexing flow are stored in secrets for securi
             "openai": {
                 "openai": "*sk-...*"
             },
-            "bedrock": 
-                {. . .}
+            "bedrock":{
+              . . .
+            },
+            "vertex": {
+              "vertex": "*api-key*"
+            }
         }
     }
     ```
@@ -541,33 +609,56 @@ All necessary credentials for the indexing flow are stored in secrets for securi
 
 
 - **`vector_storage_config.json`**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/". The format of the secret is as follows:
-  ```json
-  {
-    "vector_storage_supported": [
-      {
-        "vector_storage_name": "vector-storage-name",
-        "vector_storage_type": "elastic",
-        "vector_storage_host": "host",
-        "vector_storage_schema": "https",
-        "vector_storage_port": 9200,
-        "vector_storage_username": "username",
-        "vector_storage_password": "password"
-      },
-      {
-        ...
-      },
-      ...
-    ]
-  }
-  ```
-  Below is an explanation of the different parameters (for ElasticSearch vector database):
-  - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
-  - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
-  - **vector_storage_host**: Host of the vector storage.
-  - **vector_storage_schema**: Schema of the vector storage.
-  - **vector_storage_port**: Port where the vector storage is located.
-  - **vector_storage_username**: Username to access to the vector storage.
-  - **vector_storage_password**: Password to access to the vector storage.
+
+  - **ElasticSearch**: 
+    ```json
+    {
+        "vector_storage_supported": [{
+                "vector_storage_name": "elastic-develop",
+                "vector_storage_type": "elastic",
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_schema": "https",
+                "vector_storage_port": 9200,
+                "vector_storage_username": "elastic",
+                "vector_storage_password": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_port:** Port where the vector storage is located.
+    - **vector_storage_username:** Username to access to the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage.
+
+  - **Azure AI Search**:
+
+    ```json
+    {
+        "vector_storage_supported": [
+            {
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_type": "ai_search",
+                "vector_storage_schema": "https",
+                "vector_storage_name": "ai_search_techhubragemeal",
+                "vector_storage_key": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage (Azure key).
 
 ### Configuration files
 Apart from the five secrets explained above, the system needs another configuration file, that must be stored in the backend storage defined, under the path "src/ir/conf":
@@ -604,6 +695,14 @@ Apart from the five secrets explained above, the system needs another configurat
           "retriever_model": ""
         },
         ...
+      ],
+      "vertex": [
+        {
+          "embedding_model_name": "",
+          "embedding_model": "",
+          "model_pool": []
+        },
+        ...    
       ]
     }
   }
@@ -625,6 +724,10 @@ Apart from the five secrets explained above, the system needs another configurat
         - **embedding_model_name**: same as before
         - **embedding_model**: same as before
         - **retriever_model**: model used when retrieving information (in hugging-face models normally are different)
+    * <u>Vertex models</u>:
+        - **embedding_model_name**: same as before
+        - **embedding_model**: same as before
+        - **model_pool**: pools the model belongs to
 
 An example where the rest of the data is extracted from the message:
 ![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)

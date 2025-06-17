@@ -14,21 +14,21 @@
   - [Concepts and Definitions](#concepts-and-definitions)
     - [Components](#components)
     - [Core Concepts](#core-concepts)
-    - [Architecture](#architecture)
+    - [Vector storages](#vector-storages)
   - [Calling Retrieval](#calling-retrieval)
     - [Examples](#examples)
-      - [Simple retrieval call: `url/process`](#simple-retrieval-call-urlprocess)
-      - [Documents retrieval: `url/retrieve_documents`](#documents-retrieval-urlretrieve_documents)
-      - [Delete documents: `url/delete_documents`](#delete-documents-urldelete_documents)
-      - [Delete index: `url/delete_index`](#delete-index-urldelete_index)
-      - [Filenames retrieval: `url/get_documents_filenames`](#filenames-retrieval-urlget_documents_filenames)
-      - [Get models: `url/get_models`](#get-models-urlget_models)
+      - [Simple retrieval call process endpoint](#simple-retrieval-call-process-endpoint)
+      - [Documents retrieval call retrieve\_documents endpoint](#documents-retrieval-call-retrieve_documents-endpoint)
+      - [Delete documents call delete\_documents endpoint](#delete-documents-call-delete_documents-endpoint)
+      - [Delete index call delete\_index endpoint](#delete-index-call-delete_index-endpoint)
+      - [Filenames retrieval call get\_documents\_filenames endpoint](#filenames-retrieval-call-get_documents_filenames-endpoint)
+      - [Get models call get\_models endpoint](#get-models-call-get_models-endpoint)
       - [Parameters](#parameters)
       - [Examples](#examples-1)
-      - [List indices: `url/list_indices`](#list-indices-urllist_indices)
+      - [List indices call list\_indices endpoint](#list-indices-call-list_indices-endpoint)
   - [API Reference](#api-reference)
     - [Endpoints](#endpoints)
-    - [Request and Response Formats for /process](#request-and-response-formats-for-process)
+    - [Request and Response Formats for process endpoint](#request-and-response-formats-for-process-endpoint)
     - [Parameters explanation](#parameters-explanation)
     - [Error Handling](#error-handling)
   - [Configuration](#configuration)
@@ -197,14 +197,21 @@ This service uses the user's query to retrieve information from the vector datab
 - **Embedding model**: Model that converts high-dimensional data (such as words, images, or items) into low-dimensional vectors. These vectors, called embeddings, capture the semantic relationships between the data points.
 - **Index**: Data structure used to improve the speed and efficiency of data retrieval operations that organizes and optimizes the storage of the embeddings.
 
-### Architecture
+### Vector storages
+
+Global RAG can use diferent vector databases to store document chunks and its embeddings. The supported ones are:
+
+- [ElasticSearch](https://www.elastic.co/es/elasticsearch)
+- [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/)
+
+To get more information about how to configure the secret file refer to Secrets section.
 
 ## Calling Retrieval
 
 ### Examples
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
-#### Simple retrieval call: `url/process`
+#### Simple retrieval call process endpoint
 
 The following is the body request for a retrieval:
 
@@ -280,7 +287,7 @@ Response:
 }
 ```
 
-#### Documents retrieval: `url/retrieve_documents`
+#### Documents retrieval call retrieve_documents endpoint
 
 To retrieve a document from an index the request is:
 
@@ -323,7 +330,7 @@ Response:
 }
 ```
 
-#### Delete documents: `url/delete_documents`
+#### Delete documents call delete_documents endpoint
 
 To delete a document from an index use the DELETE endpoint /delete_documents, the request is:
 
@@ -339,7 +346,7 @@ Response:
 }
 ```
 
-#### Delete index: `url/delete_index`
+#### Delete index call delete_index endpoint
 
 To delete an index with all documents associated use the DELETE endpoint /delete_index:
 
@@ -361,7 +368,7 @@ Response:
 }
 ```
 
-#### Filenames retrieval: `url/get_documents_filenames`
+#### Filenames retrieval call get_documents_filenames endpoint
 To retrieve the name of the documents indexed and their chunks from an index, the request is:
 
 **\<deploymentdomain\>**/get_documents_filenames?index=myindex
@@ -397,7 +404,7 @@ Response:
 }
 ```
 
-#### Get models: `url/get_models`
+#### Get models call get_models endpoint
 
 #### Parameters
 
@@ -477,7 +484,7 @@ https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 }
 ```
 
-#### List indices: `url/list_indices`
+#### List indices call list_indices endpoint
 
 Handles the request to list all indices in the Elasticsearch database, returning a list of indices with their names and the models associated with each one. A call to obtain the indices with the associated models would look like this:
 
@@ -618,7 +625,7 @@ The response would be a list of index names along with the models associated wit
     "status_code": 200
     }
     ```
-### Request and Response Formats for /process
+### Request and Response Formats for process endpoint
 
 ### Parameters explanation
 
@@ -734,8 +741,12 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
             "openai": {
                 "openai": "*sk-...*"
             },
-            "bedrock": 
-                {. . .}
+            "bedrock":{
+              . . .
+            },
+            "vertex": {
+              "vertex": "*api-key*"
+            }
         }
     }
     ```
@@ -746,32 +757,56 @@ All necessary credentials for genai-inforetrieval are stored in secrets for secu
 
 
 - **`vector_storage_config.json`**: file where data like credentials, url... from the different vector_storages supported are stored (currently, only ElasticSearch is supported). The custom partial path for this file is "vector-storage/". The format of the secret is as follows:
+
+  - **ElasticSearch**: 
     ```json
     {
         "vector_storage_supported": [{
                 "vector_storage_name": "elastic-develop",
                 "vector_storage_type": "elastic",
-                "vector_storage_host": "*host*",
+                "vector_storage_host": "[SET_HOST_VALUE]",
                 "vector_storage_schema": "https",
                 "vector_storage_port": 9200,
                 "vector_storage_username": "elastic",
-                "vector_storage_password": "*password*"
+                "vector_storage_password": "[SET_PASSWORD_VALUE]"
             },
             . . .
         ]
     }
     ```
 
-    The different parameters (only for elastic as is the available one) are:
-    - **vector_storage_name**: Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE).
-    - **vector_storage_type**: Type of the vector storage selected (currently, only "elastic" is allowed).
-    - **vector_storage_host**: Host of the vector storage.
-    - **vector_storage_schema**: Schema of the vector storage.
-    - **vector_storage_port**: Port where the vector storage is located.
-    - **vector_storage_username**: Username to access to the vector storage.
-    - **vector_storage_password**: Password to access to the vector storage.
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_port:** Port where the vector storage is located.
+    - **vector_storage_username:** Username to access to the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage.
 
-<br/>
+  - **Azure AI Search**:
+
+    ```json
+    {
+        "vector_storage_supported": [
+            {
+                "vector_storage_host": "[SET_HOST_VALUE]",
+                "vector_storage_type": "ai_search",
+                "vector_storage_schema": "https",
+                "vector_storage_name": "ai_search_techhubragemeal",
+                "vector_storage_key": "[SET_PASSWORD_VALUE]"
+            },
+            . . .
+        ]
+    }
+    ```
+
+    Parameters:
+    - **vector_storage_name:** Alias of the vector storage to be identified. (must match with the environment variable VECTOR_STORAGE)
+    - **vector_storage_type:** Type of the vector storage selected.
+    - **vector_storage_host:** Host of the vector storage.
+    - **vector_storage_schema:** Schema of the vector storage.
+    - **vector_storage_password:** Password to access to the vector storage (Azure key).
 
 #### Configuration files
 
@@ -810,6 +845,15 @@ Inforetrieval requires two configuration files and one optional file:
                     "embedding_model": "sentence-transformers/facebook-dpr-ctx_encoder-single-nq-base",
                     "retriever_model": "sentence-transformers/facebook-dpr-question_encoder-single-nq-base"
                 }
+            ],
+            "vertex": [
+              {
+                "embedding_model_name": "text-embedding-004",
+                "embedding_model": "text-embedding-004",
+                "model_pool": [
+                  "techhub-pool-world-text-embedding-004"
+                ]
+              }
             ]
         }
     }
@@ -834,6 +878,11 @@ Inforetrieval requires two configuration files and one optional file:
         - embedding_model_name: same as before.
         - embedding_model: same as before.
         - retriever_model: model used when retrieving information (in hugging-face models normally are different).
+    
+    * **vertex**:
+        - embedding_model_name: same as before.
+        - embedding_model: same as before.
+        - model_pool: pools the model belongs to.
 
 - **`default_embedding_models.json`**: This config file is needed to specify which model is going to be used when in the retrieval call, no models are passed and the retrieval is going to be done with all the embedding models used in indexation. The file is stored in "src/ir/conf" and it has to be based on the previous file. The bm25 field is mandatory as it's used always in the indexation process:
     ```json
@@ -848,7 +897,8 @@ Inforetrieval requires two configuration files and one optional file:
     {
         "bm25":"bm25",
         "text-embedding-ada-002": "ada-002-pool-europe",
-        "cohere.embed-english-v3": "cohere-english-v3-america"
+        "cohere.embed-english-v3": "cohere-english-v3-america",
+        "text-embedding-004": "techhub-pool-world-text-embedding-004"
     }
     ```
 
@@ -885,7 +935,7 @@ For the index parameter, the associated json file (same name but ended in .json)
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![alt text](imgs/techhubgenaiinforetrieval/inforetrievalDeployment.png)
+![alt text](imgs/techhubgenaiinforetrieval/InforetrievalDeployment.png)
 
 **parsers.py (`ManagerParser`,`Parser`, `InforetrievalParser`)**
 

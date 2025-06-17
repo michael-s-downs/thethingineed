@@ -50,6 +50,10 @@ class GenerativeModel(ABC):
         self.logger = logger_handler.logger
         if "openai" in models_credentials and not zone:
             self.api_key = models_credentials.get('openai')
+        elif "vertex" in models_credentials:
+            self.api_key = models_credentials.get('vertex')
+        elif "tsuzumi" in models_credentials:
+            self.api_key = models_credentials.get('tsuzumi')
         else:
             self.api_key = models_credentials.get(zone, None)
 

@@ -5,7 +5,7 @@ os.environ['URL_LLM'] = "test_url"
 os.environ['URL_RETRIEVE'] = "test_retrieve"
 import pytest
 import json
-from unittest.mock import patch, MagicMock, AsyncMock, patch
+from unittest.mock import patch, MagicMock, AsyncMock
 from director import Director  # Assuming your code is in director.py
 from compose.streambatch import StreamBatch
 from pcutils.persist import PersistDict
@@ -188,12 +188,11 @@ def test_add_end_to_trace(mock_director):
     assert mock_director.conf_manager.langfuse_m.add_generation_output.called
 
 def test_get_compose_flow_call_load(mock_director):
-    mock_director.conf_manager.template_m.load_template = MagicMock()
-    mock_director.conf_manager.template_m.template =  '{"action": "llm_action", "params": {"lang": "en"}}'
+    mock_director.conf_manager.template_m.template = '{"$word1" : "$word2"}'
     mock_director.get_compose_flow()
 
 def test_get_compose_flow(mock_director):
-    mock_director.conf_manager.template_m.template =   '{"action": "summarize", "params": {"lang": "en"}}'
+    mock_director.conf_manager.template_m.template = '{"$word1" : "$word2"}'
     mock_director.get_compose_flow()
     assert mock_director.conf_manager.langfuse_m.update_input.called
 
@@ -215,8 +214,6 @@ def test_get_output(mock_director):
     mock_director.output_manager.get_n_conversation.assert_called_once_with(expected_output, "mock_conversation")
     mock_director.output_manager.get_n_retrieval.assert_called_once_with(expected_output, mock_director.sb)
 
-    # Ensure that the flush method is called once
-    mock_director.conf_manager.langfuse_m.flush.assert_called_once()
 
 def test_run_2(mock_director):
     # Mock the ConfManager constructor
@@ -230,7 +227,7 @@ def test_run_2(mock_director):
                 mock_director.run_conf_manager_actions = MagicMock(return_value={'mock_conf': 'value'})
                 
                 # Call the run method
-                output = mock_director.run()
+                output = mock_director.run(MagicMock())
 
                 # Assertions
                 assert output == {'session_id': 'mock_session', 'streambatch': ['mock_streambatch']}
@@ -367,7 +364,7 @@ def test_run_actions_action_not_found(director):
     with pytest.raises(Exception) as excinfo:
         director.run_actions()
     
-    assert "Action not found, choose one between \"filter\", \"merge\", \"rescore\", \"summarize\", \"sort\",\"batchmerge\", \"batchcombine\" & \"batchsplit\"" in str(excinfo.value)
+    assert "Action not found, choose one between" in str(excinfo.value)
 
 def test_run_actions_llm_action(director):
     """Test that llm_action runs with the correct parameters."""

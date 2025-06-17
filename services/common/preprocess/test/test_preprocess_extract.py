@@ -269,3 +269,91 @@ def test_extract_images_conditional():
             result = extract_images_conditional(generic, specific, workspace, filename, folder_file)
             assert result == [{'filename': 'path/to/images/pags/image1.png'}]
             mock_upload.assert_called_once()
+
+def test_extract_text_unsupported_process_type():
+    """Test for unsupported process_type (lines 156-162)"""
+    file = "test.pdf"
+    num_pags = 5
+    # Set process_type to something other than 'ir_index' or 'preprocess'
+    generic = {
+        'project_conf': {
+            'laparams': {'detect_vertical': True},
+            'process_type': 'unsupported_type'  # Unsupported process type
+        },
+        'preprocess_conf': {
+            'num_pag_ini': 1,
+            'page_limit': 10,
+            'corrupt_th_chars': 0.5,
+            'corrupt_th_words': 0.6
+        }
+    }
+    specific = {}  # No metadata needed for this test
+    
+    return_dict = {}
+    mock_extraction = {"text": "This is a test document"}
+    mock_boxes = ["box1"]
+    mock_cells = ["cell1"]
+    mock_lines = ["line1"]
+    
+    with patch('common.preprocess.preprocess_extract.get_mimetype', return_value='pdf'):
+        with patch('common.preprocess.preprocess_extract.get_texts_from_file', 
+                  return_value=(mock_extraction, mock_boxes, mock_cells, mock_lines)):
+            with patch('common.preprocess.preprocess_extract.clean_text', return_value="This is a test document"):
+                with patch('common.preprocess.preprocess_extract.get_language', return_value="en"):
+                    with patch('common.preprocess.preprocess_extract.check_corrupted', return_value=False):
+                        with patch('common.preprocess.preprocess_extract.logger.warning') as mock_logger:
+                            extract_text(file, num_pags, generic, specific, return_dict=return_dict)
+                            
+                            # Verify the warning was logged
+                            mock_logger.assert_called_once_with(
+                                "Process type 'unsupported_type' is not directly supported. Treating as standard text extraction."
+                            )
+                            
+                            # Verify the return dictionary has the expected values
+                            assert return_dict['lang'] == "en"
+                            assert return_dict['text'] == "This is a test document"
+                            assert return_dict['extraction'] == mock_extraction
+                            assert return_dict['boxes'] == mock_boxes
+                            assert return_dict['cells'] == mock_cells
+                            assert return_dict['lines'] == mock_lines
+
+def test_extract_text_corrupted_text():
+    """Test for corrupted text case (line 163-164)"""
+    file = "test.pdf"
+    num_pags = 5
+    generic = {
+        'project_conf': {
+            'laparams': {'detect_vertical': True},
+            'process_type': 'ir_index'
+        },
+        'preprocess_conf': {
+            'num_pag_ini': 1,
+            'page_limit': 10,
+            'corrupt_th_chars': 0.5,
+            'corrupt_th_words': 0.6
+        }
+    }
+    specific = {
+        'document': {
+            'metadata': {'title': 'Test Document'}
+        }
+    }
+    
+    return_dict = {}
+    empty_result = {'lang': "", 'text': "", 'extraction': {}, 'boxes': [], 'cells': [], 'lines': []}
+    mock_extraction = {"text": "This is a corrupted document"}
+    mock_boxes = ["box1"]
+    mock_cells = ["cell1"]
+    mock_lines = ["line1"]
+    
+    with patch('common.preprocess.preprocess_extract.get_mimetype', return_value='pdf'):
+        with patch('common.preprocess.preprocess_extract.get_texts_from_file', 
+                  return_value=(mock_extraction, mock_boxes, mock_cells, mock_lines)):
+            with patch('common.preprocess.preprocess_extract.clean_text', return_value="This is a corrupted document"):
+                with patch('common.preprocess.preprocess_extract.get_language', return_value="en"):
+                    # The key difference: check_corrupted returns True
+                    with patch('common.preprocess.preprocess_extract.check_corrupted', return_value=True):
+                        extract_text(file, num_pags, generic, specific, return_dict=return_dict)
+                        
+                        # Verify that empty_result was used to update return_dict
+                        assert return_dict == empty_result

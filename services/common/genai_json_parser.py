@@ -376,17 +376,21 @@ def get_index_conf(json_input: Optional[GenaiInput] = None, generic: Optional[Ge
 
     return generic['indexation_conf']
 
-
 def get_metadata_conf(json_input: Optional[GenaiInput] = None) -> dict:
     """ Get metadata indexing
-
+    
     :param json_input: Json input of genai processes
     :return: Metadata values
     """
     assert json_input
-
-    return get_document(json_input).get('metadata', {f"metadata_{i}": "" for i in range(get_index_conf(json_input).get('n_metadata', 0))})
-
+    
+    generic = get_generic(json_input)
+    document = get_document(json_input)
+    
+    if generic.get('project_conf', {}).get('process_type') == "preprocess":
+        return document.get('metadata', {})
+    else:
+        return document.get('metadata', {f"metadata_{i}": "" for i in range(get_index_conf(json_input).get('n_metadata', 0))})
 
 def get_compose_conf(json_input: Optional[GenaiInput] = None, generic: Optional[GenericConfig] = None) -> dict:
     """ Get compose config
