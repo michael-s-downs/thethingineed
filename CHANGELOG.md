@@ -10,12 +10,13 @@
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
     - [New] Added support for reuse a previous preprocess in 'indexing' operation
         - Added parameter 'preprocess_reuse' to avoid generate a new one and reuse a previous preprocess
-        - Added parameter 'process_id' to specify the previous preprocess to reuse
+        - Added parameter 'process_id' to specify the previous preprocess to reuse or generate a new one with this name
         - Added parameter 'persist_preprocess' to avoid remove preprocess at the end of the operation
-        - Modified 'input_validations.py' to allow new parameters
+        - Modified 'input_validations.py' to allow new parameters and avoid to duplicate process_id with the same name
         - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
     - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
         - Added 'preprocess' as valid operation in validate_operation function in input_validations.py
+        - Support parameter 'process_id' to generate the preprocess with a name known by user
         - Updated 'validate_input_default' in 'input_validations.py' to include verification for 'preprocess' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for 'preprocess' operation
     - [New] Added 'download' operation for downloading an already preprocessed document
@@ -27,6 +28,7 @@
         - Updated validation functions in 'input_validations.py' to support 'download' operation
         - Updated 'adapt_input_default' in 'io_adaptations.py' to define download pipeline
         - Updated 'get_inputs' in 'integration_base.py' to handle GET request parameters
+    - [Improvement] Enhanced JSON response formatting across all endpoints with proper content type headers and encoding parameters
 - integration-sender:
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
         - Add models configuration in 'src/integration/search/models_map.json'

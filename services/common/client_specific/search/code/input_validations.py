@@ -11,7 +11,7 @@ from typing import Tuple
 import conf_utils
 import docs_utils
 from common.storage_manager import ManagerStorage
-from common.genai_controllers import storage_containers
+from common.genai_controllers import storage_containers, list_files
 from common.ir.validations import is_available_metadata
 
 def _validate_param(input_json: dict, param: str, param_type: object) -> Tuple[bool, list]:
@@ -217,6 +217,40 @@ def _validate_download_operation(request_json: dict) -> Tuple[bool, list]:
     
     return valid, messages
 
+def _validate_process_id_unique(request_json: dict) -> Tuple[bool, list]:
+    """ Validate if process_id already exists when creating new preprocess
+    
+    :param request_json: Request JSON with all information
+    :return: True or False if process_id is valid and error messages
+    """
+    valid = True
+    messages = []
+    
+    input_json = request_json['input_json']
+    process_id = input_json.get('process_id')
+    is_preprocess_reuse = input_json.get('preprocess_reuse', False)
+    
+    if not process_id:
+        return valid, messages
+    
+    if is_preprocess_reuse:
+        return valid, messages
+    
+    department = request_json.get('apigw_params', {}).get('x-department', 'main')
+    
+    try:
+        search_prefix = f"{department}/{process_id}/"
+        existing_files = list_files(storage_containers['workspace'], prefix=search_prefix)
+        
+        if existing_files:
+            valid = False
+            messages.append(f"Process ID '{process_id}' already exists. Please choose a different process_id or use preprocess_reuse=true to reuse existing data.")
+            
+    except Exception:
+        pass
+    
+    return valid, messages
+
 def _validate_docmetadata(doc_matadata: str) -> Tuple[bool, list]:
     """ Validate param document_metadata
 
@@ -387,7 +421,18 @@ def _validate_docsmetadata(request_json: dict) -> Tuple[bool, list]:
     valid, messages = _validate_param(request_json['input_json'], 'documents_metadata', dict)
 
     if valid:
-        for doc in request_json['input_json']['documents_metadata'].values():
+        docs = request_json['input_json']['documents_metadata'].values()
+
+        if len(docs) < 1:
+            valid = False
+
+        if request_json['input_json'].get('preprocess_reuse', False):
+            if not valid:
+                messages.append("Reusing preprocess 'content_binary' it's not necessary but key with the filename to reuse it's mandatory (set with empty value)")
+
+            return valid, messages # Break to avoid content validation
+
+        for doc in docs:
             if not doc.get('content_binary', ""):
                 valid = False
                 break
@@ -441,18 +486,14 @@ def validate_input_default(request_json: dict, input_files: list) -> Tuple[bool,
     :return: True or False if input is valid and error messages
     """
     operation = request_json['input_json'].get('operation', '')
+    validate_functions_base = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata, _validate_process_id_unique]
     
-    if operation == "preprocess":
-        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr, _validate_docsmetadata]
+    if operation == "indexing":
+        validate_functions = validate_functions_base + [_validate_models, _validate_chunking_method, _validate_index, _validate_metadata_primary_keys, _validate_index_metadata]
     elif operation == "download":
         validate_functions = [_validate_operation, _validate_download_operation]
     else:
-        validate_functions = [_validate_operation, _validate_response_url, _validate_ocr,
-                            _validate_models, _validate_chunking_method, _validate_index,
-                            _validate_metadata_primary_keys, _validate_index_metadata]
-        
-        if not request_json['input_json'].get('process_id', ''):
-            validate_functions.append(_validate_docsmetadata)
+        validate_functions = validate_functions_base
     
     valid, messages_list = _validate_input_base(request_json, input_files, validate_functions)
     
