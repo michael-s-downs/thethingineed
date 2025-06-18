@@ -46,6 +46,8 @@
     - [Improvement] Refactor to update all references from 'api' to 'core'
         - Renamed module from 'api_calls.py' to 'core_calls.py'
         - Renamed environment variables from 'API_...' to 'CORE_...'
+    - [Fix] Updated internal call of operation 'delete' to new inforetrieval interface
+        - Method DELETE instead of POST and pass filters as parameters instead of JSON body
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
@@ -56,6 +58,7 @@
     - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
     - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
+    - [Fix] Recovered support (lost in last version) to filter by custom metadata in endpoint '/delete_documents', now passed as parameters instead of JSON body
 - genai-infoindexing:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
