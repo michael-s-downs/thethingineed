@@ -95,17 +95,12 @@ def get_models_handler(deploy) -> Tuple[Dict, int]:
 
 def delete_documents_handler(deploy, request) -> Tuple[Dict, int]:
     '''Handles the request to delete documents from Elasticsearch indexes based on specified filters.'''
-    dat = request.args
+    dat = dict(request.args)
     deploy.logger.info(f"Request received with data: {dat}")
 
-    filters = {}
-    index = None
-    for key, value in dat.items():
-        if key == "index":
-            index = value
-        else:
-            filters[key] = value
-        
+    index = dat.pop('index', "")
+    filters = dat  # All additional parameters are considered as filters
+
     connector = get_connector(index, deploy.workspace, deploy.vector_storages)
     deleted_count = 0
 

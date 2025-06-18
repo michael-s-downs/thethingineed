@@ -766,10 +766,11 @@ For more information and examples for each preprocessing use case (preprocessing
 
 - **Deletes document from index (DELETE)**
 
-    Used to delete document/s from an index. 
+    Used to delete document/s from an index.
+    Required parameter 'index', all additional parameters are considered as filters
    
-    URL: https://**\<deploymentdomain\>**/retrieve/delete_documents?index=myindex&filename=myfile
-    Example with custom metadata chunk_label: **\<deploymentdomain\>**/delete_documents?index=myindex&chunk_label=label_test123
+    URL: https://**\<deploymentdomain\>**/retrieve/delete_documents?index=myindex&filename=mydoc1.pdf
+    Example with multiple filters from custom metadata: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf&unique_id=123abc
 
 - **Delete an index (DELETE)**
 

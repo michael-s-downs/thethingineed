@@ -138,7 +138,7 @@ def sync_infodelete_request(apigw_params: dict, request_params: dict) -> bool:
 
     try:
         logger.debug("Calling API sync infodelete service")
-        response = requests.post(url, headers=apigw_params, data=json.dumps(request_params))
+        response = requests.delete(url, headers=apigw_params, params=request_params)
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "finished":
