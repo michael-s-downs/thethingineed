@@ -287,7 +287,7 @@ class LLMStorageManager(BaseStorageManager):
 
         if os.getenv("LANGFUSE", "").lower() == "true":
             try:
-                template_name = dat['template_name']
+                template_name = dat['name']
                 self.langfuse_m.delete_template(template_name, "llm_template")
                 response = {"status": "finished", "result": "Request finished", "status_code": 200}
 
