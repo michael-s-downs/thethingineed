@@ -434,7 +434,7 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("CORE_ASYNC_STATUS_URL", "async-status.example.com")
     monkeypatch.setenv("CORE_ASYNC_RESULT_URL", "async-result.example.com")
     monkeypatch.setenv("CORE_ASYNC_DELETE_URL", "async-delete.example.com")
-    monkeypatch.setenv("API_SYNC_DELETE_URL", "sync-delete.example.com")
+    monkeypatch.setenv("CORE_SYNC_DELETE_URL", "sync-delete.example.com")
     monkeypatch.setenv("CORE_QUEUE_DELETE_URL", "queue-delete.example.com")
 
 
