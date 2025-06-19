@@ -716,7 +716,7 @@ def sync_delete_request(apigw_params: dict, process_id: str, tracking_message: d
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    url = os.getenv('API_SYNC_DELETE_URL')
+    url = os.getenv('CORE_SYNC_DELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
