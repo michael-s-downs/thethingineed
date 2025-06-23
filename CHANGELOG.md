@@ -66,6 +66,9 @@
         - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
         - Updated secret to include the new 'vertex' URL for using Gemini models
     - [New] Added support to Azure AI Search as a new vector storage
+    - [New] Added document override functionality for automatic document replacement during indexing
+        - Added 'override' parameter in vector_storage_conf to delete existing documents with matching metadata_primary_keys before indexing
+        - Modified 'parsers.py' for override validation and 'vector_storages.py' for deletion logic implementation
     - [Fix] Added param trust_remote_code=True for HuggingFace models instance
     - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
 - genai-llmapi:
