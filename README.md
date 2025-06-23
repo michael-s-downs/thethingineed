@@ -163,6 +163,7 @@ Below is a list of all the parameters that can be included in the request body, 
   * <b>vector_storage_conf</b>:
     * <b>index</b> (required): Name of the index where documents will be stored. If it is the first time it is used, an index with this name is created in the corresponding database; otherwise, it is used to expand the existing index with more documents. No capital letters or symbols are allowed except underscore ([a-z0-9_]). 
     * <b>metadata_primary_keys</b> (optional): This parameter is to specify whether the metadata provided in the list will be used in the vector storage id generation or not. In brief to allow different metadata for same chunks.
+    * <b>override</b> (optional): Boolean parameter to automatically replace existing documents with same metadata_primary_keys during indexing. When set to true, documents with matching metadata_primary_keys values are deleted before indexing new ones. Default is false. Requires metadata_primary_keys to be defined when override=true.
     * <b>vector_storage</b> (optional): Name of the vector_storage data base to use. This name must be the same as one of the names set in the secret vector_storage_config.json file.
   * <b>chunking_method</b>
     * <b>window_length</b> (optional): Integer value to specify the window length for text chunking purposes, 300 by default.

@@ -191,6 +191,10 @@ class LlamaIndexElastic(VectorDB):
 
         nodes_per_doc = chunking_method.get_chunks(docs, self.encoding, io)
 
+         # Handle override functionality before indexing
+        if getattr(io, 'override', False) and getattr(io, 'metadata_primary_keys', None):
+            self._handle_document_override(docs, io)
+
         # Indexation with the embeddings generation
         for model in io.models:
             index_name = INDEX_NAME(io.index, model.get('embedding_model'))
@@ -250,6 +254,57 @@ class LlamaIndexElastic(VectorDB):
 
             self.logger.warning(f"Nodes deleted due to: {type(e).__name__}; {e.args}")
             raise ConnectionError(f"Max num of retries reached while indexing {docs_filenames}")
+        
+    def _handle_document_override(self, docs: List, io: Parser):
+        """Handle document override functionality by deleting existing documents with matching metadata"""
+        try:
+            # Create filters based on metadata_primary_keys and document metadata
+            filters_to_delete = self._build_override_filters(docs, io.metadata_primary_keys)
+            
+            if not filters_to_delete:
+                self.logger.info("Override: No documents to override - no matching metadata found")
+                return
+            
+            # Delete existing documents for each model
+            for model in io.models:
+                index_name = INDEX_NAME(io.index, model.get('embedding_model'))
+                
+                if not self.connector.exist_index(index_name):
+                    self.logger.info(f"Override: Index {index_name} does not exist, skipping override deletion")
+                    continue
+                
+                for filters in filters_to_delete:
+                    try:
+                        result = self.connector.delete_documents(index_name, filters)
+                        
+                        self.logger.info(f"Override: Deletion attempted in {index_name} with filters {filters}")
+                        
+                    except Exception as e:
+                        self.logger.warning(f"Override: Error during deletion in {index_name} with filters {filters}: {str(e)}")
+                        
+        except Exception as e:
+            self.logger.error(f"Override: Error in document override process: {str(e)}", exc_info=get_exc_info())
+
+    def _build_override_filters(self, docs: List, metadata_primary_keys: List) -> List[dict]:
+        """Build filters for document deletion based on metadata_primary_keys"""
+        filters_list = []
+        
+        for doc in docs:
+            doc_filters = {}
+            
+            # Extract values for each metadata_primary_key from document metadata
+            for key in metadata_primary_keys:
+                if key in doc.metadata:
+                    doc_filters[key] = doc.metadata[key]
+                else:
+                    self.logger.warning(f"Override: Metadata key '{key}' not found in document metadata. Available keys: {list(doc.metadata.keys())}")
+            
+            # Only add filters if we found at least one matching metadata key
+            if doc_filters:
+                filters_list.append(doc_filters)
+                self.logger.debug(f"Override: Built filters for document: {doc_filters}")
+        
+        return filters_list
 
 
 class LlamaIndexAzureAI(VectorDB):
