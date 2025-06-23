@@ -133,12 +133,12 @@ def sync_infodelete_request(apigw_params: dict, request_params: dict) -> bool:
     :param request_params: Params to fill JSON request
     :return: True or False if delete is successfully
     """
-    url = os.getenv('API_SYNC_INFODELETE_URL')
+    url = os.getenv('CORE_SYNC_INFODELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
         logger.debug("Calling API sync infodelete service")
-        response = requests.post(url, headers=apigw_params, data=json.dumps(request_params))
+        response = requests.delete(url, headers=apigw_params, params=request_params)
         response_json = response.json()
 
         if type(response_json) != dict or 'status' not in response_json or response_json['status'] != "finished":

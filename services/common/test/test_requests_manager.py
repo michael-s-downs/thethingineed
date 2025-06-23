@@ -27,7 +27,7 @@ def setup_env_vars():
     os.environ['STORAGE_BACKEND'] = "mock_storage"
     os.environ['STORAGE_PERSIST_FOLDER'] = "mock_pointers/{integration_name}/"
     os.environ['INTEGRATION_NAME'] = "test_integration"
-    os.environ['API_QUEUE_DELETE_URL'] = "mock_queue_url"
+    os.environ['CORE_QUEUE_DELETE_URL'] = "mock_queue_url"
 
 @pytest.fixture
 def mock_provider_resources():
