@@ -202,7 +202,7 @@ def download_preprocess_data(request_json: dict) -> dict:
         first_level_files = list_files(workspace, f"{department}/{process_id}/")
         
         if not first_level_files:
-            raise Exception(f"Process ID '{process_id}' not found")
+             raise FileNotFoundError(f"Process ID '{process_id}' not found")
         
         request_id = None
         for file_path in first_level_files:
@@ -266,6 +266,15 @@ def download_preprocess_data(request_json: dict) -> dict:
                     elif "_lines.txt" in file_path:
                         lines_files.append(file_path)
         
+        if not full_document_files:
+            raise FileNotFoundError(f"Full document files not found for process_id '{process_id}'")
+        
+        expected_pages_path = "/text/txt/pags/" if has_text_txt else "/text/ocr/pags/"
+        has_pages_folder = any(expected_pages_path in f for f in all_files)
+        
+        if not has_pages_folder or (has_pages_folder and not pages_files):
+            raise FileNotFoundError(f"Pages files not found for process_id '{process_id}'")
+
         # Process full document files
         for file_path in full_document_files:
             try:

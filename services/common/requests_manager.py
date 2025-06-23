@@ -204,8 +204,8 @@ def update_request(response_json: dict):
                 if doc.get('process_id', "") == process_id:
                     doc['status'] = status
 
-                    if response_json.get('error', ""):
-                        doc['error'] = response_json['error']
+                    if response_json.get('message', ""):
+                        doc['error'] = response_json['message']
 
             # Update info with new status
             persist_request(request_json)

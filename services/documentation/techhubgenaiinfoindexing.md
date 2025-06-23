@@ -11,9 +11,6 @@
   - [Vector storages](#vector-storages)
   - [Chunking Methods](#chunking-methods)
   - [Embeddings Generation](#embeddings-generation)
-  - [Vector Storage. Chunk id generation](#vector-storage-chunk-id-generation)
-  - [Component Reference](#component-reference)
-    - [Using with integration](#using-with-integration)
     - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
     - [Redis status](#redis-status)
     - [Error Handling](#error-handling)
@@ -239,6 +236,80 @@ For the upper case would be:
 ````
 ['year: 2024\nfilename: nowadays_zaragoza_simple.txt\nsnippet_number: 0\n\nLiving in Zaragoza today is a blend of rich history and modern vibrancy. As one of Spain\'s largest cities, it offers a high quality of life with a relatively low cost compared to bigger cities like Madrid or Barcelona. The city boasts a mix of historic landmarks, such as the Basilica del Pilar and the Aljaferia Palace, alongside contemporary architecture and urban development. Zaragoza\'s streets are alive with cultural events, festivals, and a thriving culinary scene, where tapas and local specialties like "ternasco" are celebrated. Its strategic location between Madrid, Barcelona, Valencia, and Bilbao makes it an important transport hub, yet it retains the charm of a city that\'s easy to navigate and welcoming to both locals and visitors.\nIn recent years, Zaragoza has embraced sustainability and innovation, becoming a smart city focused on renewable energy and efficient urban planning. The riverbanks of the Ebro have been revitalized into green spaces, perfect for walking, cycling, or enjoying outdoor activities. The city\'s public transport, including trams and buses, is modern and reliable, making it easy to commute. Zaragoza is also home to a vibrant student population, thanks to its renowned university, adding youthful energy to its streets. Despite its modernization, the city retains a strong sense of community and tradition, with warm and friendly people who value their heritage while looking forward to the future.']
 ````
+
+**Document Override Functionality**
+
+The override functionality allows automatic replacement of existing documents during indexing, preventing document duplication and enabling seamless document updates.
+
+- **How Override Works**
+
+  When `override=true` is specified in the vector_storage_conf, the system will:
+
+  1. **Before indexing new documents**: Search for existing documents that match the specified metadata_primary_keys
+  2. **Delete matching documents**: Remove all chunks that have the same values in the metadata_primary_keys fields
+  3. **Index new documents**: Proceed with normal indexing of the new documents
+   
+- **Configuration**
+  
+  The override functionality is controlled by two parameters in vector_storage_conf:
+
+  - **override**: Boolean parameter (default: false)
+    - `true`: Enable automatic document replacement
+    - `false`: Standard indexing behavior (documents can be duplicated)
+  
+  - **metadata_primary_keys**: List of metadata field names used for matching
+    - Required when override=true
+    - Uses AND logic: ALL specified keys must match for document deletion
+    - Example: `["document_id", "department"]`
+  
+- **Matching Logic**
+  
+  The override uses **AND logic** for multiple metadata_primary_keys:
+
+  **Single key example:**
+
+  ```json
+  "metadata_primary_keys": ["test_id"]
+  "metadata": {"test_id": "DOC_123", "author": "John"}
+  ````
+  Deletes: All documents with `test_id = "DOC_123"`
+
+  **Multiple keys example:**
+
+  ```json
+  "metadata_primary_keys": ["test_id", "department"]  
+  "metadata": {"test_id": "DOC_123", "department": "IT", "author": "John"}
+  ```
+
+  Deletes: Only documents with `document_id = "DOC_123"` **AND** `department = "IT"`
+
+- **Usage Example:** (Multi-key override configuration)
+  
+  ```json
+  {
+    "operation": "indexing",
+    "response_url": "https://...",
+    "indexation_conf": {
+        "vector_storage_conf": {
+            "index": "test_index",
+            "metadata_primary_keys": ["test_id", "department"],
+            "override": true
+        },
+        "chunking_method":{
+            "window_overlap": 40,
+            "window_length": 500
+        },
+        "models": ["techhub-pool-world-ada-002"],
+        "metadata": {  
+            "test_id": "DOC_123",
+            "department": "IT",
+            "version": "3.0", 
+            "author": "Elena"
+        },
+        "index_metadata": true
+    },
+    "documents_metadata": {"document_v3_override.txt": {"content_binary":"RXN0..."}}}
+    ```
 
 ## Vector Storage. Chunk id generation
 In order to index the chunks, an id must be generated to identify each one. The default mode is with the text of the chunk hashed (to update if passed the same doc). But there is a parameter ('metadata_primary_keys') that allows to add them to the chunk id generation having this format:
@@ -737,6 +808,7 @@ An example where the rest of the data is extracted from the message:
 * **AWS_ACCESS_KEY**: AWS Public access key to the project. (if not in secrets)
 * **AWS_SECRET_KEY**: AWS Secret access key to the project.(if not in secrets)
 * **AZ_CONN_STR_STORAGE**: Azure connection string. (if not in secrets)
+* **AZ_CONN_STR_QUEUE**: Azure connection string for queue service.
 * **PROVIDER**: Cloud service to use to load the configuration files (aws or azure).
 * **STORAGE_DATA**: Name of bucket/blob to store datasets.
 * **STORAGE_BACKEND**: Name of bucket/blob to store configuration files and all the process related files.
@@ -767,6 +839,7 @@ There are several parameters that the indexing service receives in the queue req
         - **index:** Name of index.
         - **vector_storage:** Key to get the configuration of the database from config file.
         - **metadata_primary_keys**: Specifies if the metadata provided in the list will be used in the vector storage id generation.
+        - **override**: Boolean parameter to automatically replace existing documents with same metadata_primary_keys during indexing. 
     - **chunking_method:**
         - **method:** Type of chunking method.
         - **window_overlap:** Overlap to apply to chunks.

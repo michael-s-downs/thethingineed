@@ -180,6 +180,22 @@ class ParserInfoindexing(Parser):
         self.index = vector_storage_conf['index']
         self.metadata_primary_keys = self.get_metadata_primary_keys(vector_storage_conf)
         self.vector_storage = self.get_vector_storage(vector_storages, vector_storage_conf)
+        self.override = self.get_override(vector_storage_conf)
+
+    def get_override(self, vector_storage_conf):
+        """Get and validate the override parameter"""
+        override = vector_storage_conf.get('override', False)
+        
+        # Validate that override is boolean
+        if not isinstance(override, bool):
+            raise PrintableGenaiError(400, "Parameter 'override' must be a boolean value")
+        
+        # Validate that if override is True, metadata_primary_keys must be provided
+        if override and not self.metadata_primary_keys:
+            raise PrintableGenaiError(400, 
+                "Parameter 'metadata_primary_keys' is required when 'override' is True")
+        
+        return override
 
     def get_metadata_primary_keys(self, vector_storage_conf):
         metadata_primary_keys = vector_storage_conf.get('metadata_primary_keys')

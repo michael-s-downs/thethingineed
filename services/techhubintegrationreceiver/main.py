@@ -57,7 +57,11 @@ def process_sync() -> str:
     request_json, result = process_request(request_json)
     check_shutdown(request)
     logger.info(f"---- Response sent ({request_json['status'].upper()}) for request '{request_json['integration_id']}'")
-    return json.dumps(result, sort_keys=False, ensure_ascii=False), 200 if result['status'] != "error" else 400, {'Content-Type': 'application/json'}
+    status_code = 200
+    if result['status'] == "error":
+        status_code = 404 if "not found" in result.get('error', '').lower() else 400
+
+    return json.dumps(result, sort_keys=False, ensure_ascii=False), status_code, {'Content-Type': 'application/json'}
         
 @app.route('/healthcheck', methods=['GET'])
 def healthcheck() -> str:

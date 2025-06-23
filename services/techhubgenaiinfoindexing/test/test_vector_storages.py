@@ -1,3 +1,5 @@
+### This code is property of the GGAO ###
+
 
 import unittest
 from unittest.mock import patch, MagicMock
@@ -121,9 +123,10 @@ class TestLlamaIndex(unittest.TestCase):
         mock_connector.assert_correct_index_metadata.assert_called_once()
         assert result == ['mock_document']
 
+    @patch("vector_storages.get_exc_info", return_value=True)  
     @patch("vector_storages.logging.getLogger")
     @patch("vector_storages.LoggerHandler")
-    def test_get_processed_data_exception(self, mock_logger_handler, mock_get_logger):
+    def test_get_processed_data_exception(self, mock_logger_handler, mock_get_logger, mock_get_exc_info):
         """Test the exception handling in get_processed_data when ElasticConnectionError is raised."""
 
         mock_connector = MagicMock(spec=Connector)
@@ -139,6 +142,7 @@ class TestLlamaIndex(unittest.TestCase):
         mock_parser.csv = False
         mock_parser.do_titles = False
         mock_parser.do_tables = False
+        mock_parser.vector_storage = {"vector_storage_host": "test_host"}
 
         df = pd.DataFrame({'text': ['Test content'], 'Url': ['test_url']})
         markdown_files = [None]
@@ -152,7 +156,7 @@ class TestLlamaIndex(unittest.TestCase):
 
         mock_logger.error.assert_called_with(
             "Connection to elastic failed. Check if the elastic service is running.",
-            exc_info=False
+            exc_info=True  
         )
 
         self.assertEqual(cm.exception.status_code, 400)
@@ -163,21 +167,19 @@ class TestLlamaIndex(unittest.TestCase):
     @patch("vector_storages.ManagerChunkingMethods.get_chunking_method")
     @patch("vector_storages.VectorStoreIndex")
     @patch("vector_storages.StorageContext.from_defaults")
-    def test_index_documents(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_es_store, mock_embed_model):
-        """Test the index_documents method."""
+    def test_index_documents_with_override(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_es_store, mock_embed_model):
+        """Test the index_documents method with override functionality."""
 
-        # Mock del Parser
         io = MagicMock(spec=Parser)
         io.models = [{"embedding_model": "test_model"}]
         io.index = "test_index"
         io.process_type = "process_type"
         io.specific = {"document": {"n_pags": 1}}
         io.chunking_method = {}
-        io.scheme = {}
-        io.index_metadata = ["filename"]
+        io.override = True  
+        io.metadata_primary_keys = ["filename", "doc_id"]  
         docs = [MagicMock()]
 
-        # Mock para `self.connector`
         self.vector_db.connector.scheme = "http"
         self.vector_db.connector.host = "localhost"
         self.vector_db.connector.port = "9200"
@@ -198,7 +200,282 @@ class TestLlamaIndex(unittest.TestCase):
 
         mock_es_store.return_value = MagicMock()
 
-        # test execution
+        self.vector_db._handle_document_override = MagicMock()
+
+        result = self.vector_db.index_documents(docs, io)
+
+        self.vector_db._handle_document_override.assert_called_once_with(docs, io)
+
+        mock_get_chunking.assert_called_once_with({**io.chunking_method, "origin": self.vector_db.origin, "workspace": self.vector_db.workspace})
+        self.assertEqual(len(result), 1)
+        expected_keys = [
+            f"{io.process_type}/{io.models[0]['embedding_model']}/pages",
+            f"{io.process_type}/{io.models[0]['embedding_model']}/tokens",
+        ]
+        for key in expected_keys:
+            self.assertIn(key, result[0].keys())
+
+    @patch("vector_storages.get_embed_model")
+    @patch("vector_storages.ElasticsearchStore")
+    @patch("vector_storages.ManagerChunkingMethods.get_chunking_method")
+    @patch("vector_storages.VectorStoreIndex")
+    @patch("vector_storages.StorageContext.from_defaults")
+    def test_index_documents_without_override_false(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_es_store, mock_embed_model):
+        """Test that override is not called when override=False."""
+        io = MagicMock(spec=Parser)
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+        io.process_type = "process_type"
+        io.specific = {"document": {"n_pags": 1}}
+        io.chunking_method = {}
+        io.override = False
+        io.metadata_primary_keys = ["filename"]
+        docs = [MagicMock()]
+
+        self.vector_db.connector.scheme = "http"
+        self.vector_db.connector.host = "localhost"
+        self.vector_db.connector.port = "9200"
+        self.vector_db.connector.username = "test_user"
+        self.vector_db.connector.password = "test_pass"
+
+        self.vector_db.encoding.encode = MagicMock(return_value=["token1", "token2"])
+        mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
+        mock_embed_model.return_value = None
+        mock_storage_context.return_value = MagicMock()
+        mock_vector_index.return_value.insert_nodes = MagicMock()
+        mock_es_store.return_value = MagicMock()
+
+        with patch.object(self.vector_db, '_handle_document_override') as mock_override:
+            result = self.vector_db.index_documents(docs, io)
+
+            mock_override.assert_not_called()
+
+    @patch("vector_storages.get_embed_model")
+    @patch("vector_storages.ElasticsearchStore")
+    @patch("vector_storages.ManagerChunkingMethods.get_chunking_method")
+    @patch("vector_storages.VectorStoreIndex")
+    @patch("vector_storages.StorageContext.from_defaults")
+    def test_index_documents_without_override_no_metadata_keys(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_es_store, mock_embed_model):
+        """Test that override is not called when metadata_primary_keys is None."""
+        io = MagicMock(spec=Parser)
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+        io.process_type = "process_type"
+        io.specific = {"document": {"n_pags": 1}}
+        io.chunking_method = {}
+        io.override = True  
+        io.metadata_primary_keys = None  
+        docs = [MagicMock()]
+
+        self.vector_db.connector.scheme = "http"
+        self.vector_db.connector.host = "localhost"
+        self.vector_db.connector.port = "9200"
+        self.vector_db.connector.username = "test_user"
+        self.vector_db.connector.password = "test_pass"
+
+        self.vector_db.encoding.encode = MagicMock(return_value=["token1", "token2"])
+        mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
+        mock_embed_model.return_value = None
+        mock_storage_context.return_value = MagicMock()
+        mock_vector_index.return_value.insert_nodes = MagicMock()
+        mock_es_store.return_value = MagicMock()
+
+        with patch.object(self.vector_db, '_handle_document_override') as mock_override:
+            result = self.vector_db.index_documents(docs, io)
+
+            mock_override.assert_not_called()
+
+    @patch("vector_storages.get_exc_info", return_value=True)
+    @patch("vector_storages.INDEX_NAME", return_value="test_index_model")
+    def test_handle_document_override_success(self, mock_index_name, mock_get_exc_info):
+        """Test successful document override functionality."""
+        doc1 = MagicMock()
+        doc1.metadata = {"filename": "doc1.txt", "doc_id": "123", "other": "value"}
+        doc2 = MagicMock()
+        doc2.metadata = {"filename": "doc2.txt", "doc_id": "456"}
+        docs = [doc1, doc2]
+
+        io = MagicMock()
+        io.metadata_primary_keys = ["filename", "doc_id"]
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+
+        self.vector_db.connector.exist_index = MagicMock(return_value=True)
+        self.vector_db.connector.delete_documents = MagicMock()
+
+        expected_filters = [
+            {"filename": "doc1.txt", "doc_id": "123"},
+            {"filename": "doc2.txt", "doc_id": "456"}
+        ]
+        self.vector_db._build_override_filters = MagicMock(return_value=expected_filters)
+
+        self.vector_db._handle_document_override(docs, io)
+
+        self.vector_db._build_override_filters.assert_called_once_with(docs, io.metadata_primary_keys)
+        self.vector_db.connector.exist_index.assert_called_once_with("test_index_model")
+        
+        expected_calls = [
+            unittest.mock.call("test_index_model", {"filename": "doc1.txt", "doc_id": "123"}),
+            unittest.mock.call("test_index_model", {"filename": "doc2.txt", "doc_id": "456"})
+        ]
+        self.vector_db.connector.delete_documents.assert_has_calls(expected_calls)
+
+        self.vector_db.logger.info.assert_called()
+
+    def test_handle_document_override_no_filters(self):
+        """Test override when no filters are built."""
+        docs = [MagicMock()]
+        io = MagicMock()
+        io.metadata_primary_keys = ["filename"]
+
+        self.vector_db._build_override_filters = MagicMock(return_value=[])
+
+        self.vector_db._handle_document_override(docs, io)
+
+        self.vector_db.logger.info.assert_called_with("Override: No documents to override - no matching metadata found")
+        self.vector_db.connector.exist_index.assert_not_called()
+
+    @patch("vector_storages.INDEX_NAME", return_value="test_index_model")
+    def test_handle_document_override_index_not_exists(self, mock_index_name):
+        """Test override when index doesn't exist."""
+        docs = [MagicMock()]
+        io = MagicMock()
+        io.metadata_primary_keys = ["filename"]
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+
+        self.vector_db._build_override_filters = MagicMock(return_value=[{"filename": "test.txt"}])
+
+        self.vector_db.connector.exist_index = MagicMock(return_value=False)
+
+        self.vector_db._handle_document_override(docs, io)
+
+        self.vector_db.logger.info.assert_called_with("Override: Index test_index_model does not exist, skipping override deletion")
+        self.vector_db.connector.delete_documents.assert_not_called()
+
+    @patch("vector_storages.get_exc_info", return_value=True)
+    @patch("vector_storages.INDEX_NAME", return_value="test_index_model")
+    def test_handle_document_override_deletion_error(self, mock_index_name, mock_get_exc_info):
+        """Test override when deletion fails."""
+        docs = [MagicMock()]
+        io = MagicMock()
+        io.metadata_primary_keys = ["filename"]
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+
+        self.vector_db._build_override_filters = MagicMock(return_value=[{"filename": "test.txt"}])
+
+        self.vector_db.connector.exist_index = MagicMock(return_value=True)
+        self.vector_db.connector.delete_documents = MagicMock(side_effect=Exception("Delete failed"))
+
+        self.vector_db._handle_document_override(docs, io)
+
+        self.vector_db.logger.warning.assert_called_with("Override: Error during deletion in test_index_model with filters {'filename': 'test.txt'}: Delete failed")
+
+    @patch("vector_storages.get_exc_info", return_value=True)
+    def test_handle_document_override_general_exception(self, mock_get_exc_info):
+        """Test override when general exception occurs."""
+        docs = [MagicMock()]
+        io = MagicMock()
+        io.metadata_primary_keys = ["filename"]
+
+        self.vector_db._build_override_filters = MagicMock(side_effect=Exception("General error"))
+
+        self.vector_db._handle_document_override(docs, io)
+
+        self.vector_db.logger.error.assert_called_with("Override: Error in document override process: General error", exc_info=True)
+
+    def test_build_override_filters_success(self):
+        """Test successful building of override filters."""
+        doc1 = MagicMock()
+        doc1.metadata = {"filename": "doc1.txt", "doc_id": "123", "other": "value"}
+        doc2 = MagicMock()
+        doc2.metadata = {"filename": "doc2.txt", "doc_id": "456"}
+        docs = [doc1, doc2]
+
+        metadata_primary_keys = ["filename", "doc_id"]
+
+        result = self.vector_db._build_override_filters(docs, metadata_primary_keys)
+
+        expected = [
+            {"filename": "doc1.txt", "doc_id": "123"},
+            {"filename": "doc2.txt", "doc_id": "456"}
+        ]
+        self.assertEqual(result, expected)
+
+        self.vector_db.logger.debug.assert_called()
+
+    def test_build_override_filters_missing_key(self):
+        """Test building filters when some metadata keys are missing."""
+        doc1 = MagicMock()
+        doc1.metadata = {"filename": "doc1.txt"}
+        docs = [doc1]
+
+        metadata_primary_keys = ["filename", "doc_id"]
+
+        result = self.vector_db._build_override_filters(docs, metadata_primary_keys)
+
+        expected = [{"filename": "doc1.txt"}]
+        self.assertEqual(result, expected)
+
+        self.vector_db.logger.warning.assert_called_with("Override: Metadata key 'doc_id' not found in document metadata. Available keys: ['filename']")
+
+    def test_build_override_filters_no_matching_keys(self):
+        """Test building filters when no metadata keys match."""
+        doc1 = MagicMock()
+        doc1.metadata = {"other": "value"}
+        docs = [doc1]
+
+        metadata_primary_keys = ["filename", "doc_id"]
+
+        result = self.vector_db._build_override_filters(docs, metadata_primary_keys)
+
+        self.assertEqual(result, [])
+
+        expected_calls = [
+            unittest.mock.call("Override: Metadata key 'filename' not found in document metadata. Available keys: ['other']"),
+            unittest.mock.call("Override: Metadata key 'doc_id' not found in document metadata. Available keys: ['other']")
+        ]
+        self.vector_db.logger.warning.assert_has_calls(expected_calls)
+
+    @patch("vector_storages.get_embed_model")
+    @patch("vector_storages.ElasticsearchStore")
+    @patch("vector_storages.ManagerChunkingMethods.get_chunking_method")
+    @patch("vector_storages.VectorStoreIndex")
+    @patch("vector_storages.StorageContext.from_defaults")
+    def test_index_documents(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_es_store, mock_embed_model):
+        """Test the index_documents method."""
+
+        io = MagicMock(spec=Parser)
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+        io.process_type = "process_type"
+        io.specific = {"document": {"n_pags": 1}}
+        io.chunking_method = {}
+        io.scheme = {}
+        io.index_metadata = ["filename"]
+        docs = [MagicMock()]
+
+        self.vector_db.connector.scheme = "http"
+        self.vector_db.connector.host = "localhost"
+        self.vector_db.connector.port = "9200"
+        self.vector_db.connector.username = "test_user"
+        self.vector_db.connector.password = "test_pass"
+
+        self.vector_db.connector.exist_index = MagicMock(return_value=False)
+        self.vector_db.connector.create_empty_index = MagicMock()
+
+        self.vector_db.encoding.encode = MagicMock(return_value=["token1", "token2"])
+
+        mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
+
+        mock_embed_model.return_value = None
+
+        mock_storage_context.return_value = MagicMock()
+        mock_vector_index.return_value.insert_nodes = MagicMock()
+
+        mock_es_store.return_value = MagicMock()
+
         result = self.vector_db.index_documents(docs, io)
 
         mock_get_chunking.assert_called_once_with({**io.chunking_method, "origin": self.vector_db.origin, "workspace": self.vector_db.workspace})
@@ -384,8 +661,129 @@ class TestManagerVectorDB(unittest.TestCase):
         self.assertIn("ai_search", possible_databases)
 
 
+class TestLlamaIndexAzureAI(unittest.TestCase):
+    def setUp(self):
+        self.connector = MagicMock()
+        self.workspace = "test_workspace"
+        self.origin = "test_origin"
+        self.aws_credentials = {"key": "test_key", "secret": "test_secret"}
+        self.vector_db = LlamaIndexAzureAI(self.connector, self.workspace, self.origin, self.aws_credentials)
+        self.vector_db.logger = MagicMock()
 
+    @patch("vector_storages.get_embed_model")
+    @patch("vector_storages.AzureAISearchVectorStore")
+    @patch("vector_storages.ManagerChunkingMethods.get_chunking_method")
+    @patch("vector_storages.VectorStoreIndex")
+    @patch("vector_storages.StorageContext.from_defaults")
+    def test_index_documents_azure_basic(self, mock_storage_context, mock_vector_index, mock_get_chunking, mock_azure_store, mock_embed_model):
+        """Test the basic index_documents method for Azure AI (without override functionality)."""
+        
+        io = MagicMock(spec=Parser)
+        io.models = [{"embedding_model": "test_model"}]
+        io.index = "test_index"
+        io.process_type = "process_type"
+        io.specific = {"document": {"n_pags": 1}}
+        io.chunking_method = {}
+        docs = [MagicMock()]
 
+        self.vector_db.encoding.encode = MagicMock(return_value=["token1", "token2"])
+        mock_get_chunking.return_value.get_chunks.return_value = [["chunk1"], ["chunk2"]]
+        mock_embed_model.return_value = None
+        mock_storage_context.return_value = MagicMock()
+        mock_vector_index.return_value.insert_nodes = MagicMock()
+        mock_azure_store.return_value = MagicMock()
+
+        result = self.vector_db.index_documents(docs, io)
+
+        self.assertEqual(len(result), 1)
+        expected_keys = [
+            f"{io.process_type}/{io.models[0]['embedding_model']}/pages",
+            f"{io.process_type}/{io.models[0]['embedding_model']}/tokens",
+        ]
+        for key in expected_keys:
+            self.assertIn(key, result[0].keys())
+
+    @patch("vector_storages.get_exc_info", return_value=True)
+    def test_get_processed_data_azure_connection_error(self, mock_get_exc_info):
+        """Test the exception handling in get_processed_data when ServiceRequestError is raised."""
+        from azure.core.exceptions import ServiceRequestError
+        
+        mock_connector = MagicMock()
+        mock_logger = MagicMock()
+
+        azure_ai = LlamaIndexAzureAI(mock_connector, workspace="test_workspace", origin="test_origin", aws_credentials={})
+        azure_ai.logger = mock_logger
+
+        mock_parser = MagicMock()
+        mock_parser.models = [{'embedding_model': 'test_model'}]
+        mock_parser.index = 'test_index'
+        mock_parser.txt_path = 'test_path'
+        mock_parser.csv = False
+        mock_parser.do_titles = False
+        mock_parser.do_tables = False
+        mock_parser.vector_storage = {"vector_storage_host": "test_azure_host"}
+
+        df = pd.DataFrame({'text': ['Test content'], 'Url': ['test_url']})
+        markdown_files = [None]
+
+        azure_ai._get_documents_from_dataframe = MagicMock(return_value=['mock_document'])
+
+        mock_connector.assert_correct_index_metadata = MagicMock(side_effect=ServiceRequestError("Azure AI Search connection failed."))
+
+        with self.assertRaises(PrintableGenaiError) as cm:
+            azure_ai.get_processed_data(mock_parser, df, markdown_files)
+
+        mock_logger.error.assert_called_with(
+            "Connection to Azure AI Search failed. Check if the service is running.",
+            exc_info=True
+        )
+
+        self.assertEqual(cm.exception.status_code, 400)
+        self.assertIn("Index test_index connection to Azure AI Search: test_azure_host is not available.", str(cm.exception))
+
+    @patch("time.sleep", return_value=None)
+    @patch("vector_storages.StorageContext.from_defaults")
+    @patch("vector_storages.VectorStoreIndex")
+    def test_write_nodes_azure_service_request_error(self, mock_vector_index, mock_storage_context, mock_sleep):
+        """Test _write_nodes when ServiceRequestError is raised."""
+        from azure.core.exceptions import ServiceRequestError
+        
+        mock_node1 = MagicMock()
+        mock_node1.metadata = {'filename': 'file1.txt'}
+        mock_node2 = MagicMock()
+        mock_node2.metadata = {'filename': 'file2.txt'}
+        nodes_per_doc = [[mock_node1, mock_node2]]
+        
+        embed_model = MagicMock()
+        vector_store = MagicMock()
+        models = MagicMock()
+        index_name = "test_index"
+
+        mock_vector_index.side_effect = [ServiceRequestError("Service error"), MagicMock()]
+        mock_storage_context.return_value = MagicMock()
+
+        with patch.object(self.vector_db, '_write_nodes', wraps=self.vector_db._write_nodes) as mock_write_nodes:
+            mock_write_nodes.side_effect = [
+                mock_write_nodes.return_value,  
+                2  
+            ]
+            
+            with patch("vector_storages.VectorStoreIndex", side_effect=[ServiceRequestError("Service error"), MagicMock()]):
+                try:
+                    result = self.vector_db._write_nodes(nodes_per_doc, embed_model, vector_store, models, index_name)
+                except:
+                    pass
+
+        expected_filenames = ["file1.txt", "file2.txt"]
+        self.vector_db.logger.warning.assert_called()
+        
+        warning_call = self.vector_db.logger.warning.call_args[0][0]
+        self.assertIn("ServiceRequestError detected while indexing", warning_call)
+        for filename in expected_filenames:
+            self.assertIn(filename, warning_call)
+        self.assertIn("retrying, try 1/3", warning_call)
+
+        mock_sleep.assert_called_with(4)
 
 @pytest.fixture
 def mock_connector():
@@ -491,7 +889,7 @@ def test_write_nodes_success(mock_index, mock_storage, mock_connector):
 @patch("vector_storages.LlamaIndexAzureAI._manage_indexing_exception")
 @patch("vector_storages.StorageContext.from_defaults")
 @patch("vector_storages.VectorStoreIndex")
-def test_write_nodes_exception(mock_sleep, mock_index, mock_storage, mock_manage, mock_connector):
+def test_write_nodes_exception(mock_index, mock_storage, mock_manage, mock_sleep, mock_connector):
     mock_node = Document(text="test", metadata={"filename": "test.txt"})
     vector_store = MagicMock()
     embed_model = MagicMock()
@@ -503,11 +901,9 @@ def test_write_nodes_exception(mock_sleep, mock_index, mock_storage, mock_manage
         instance._write_nodes([[mock_node]], embed_model, vector_store, [{"embedding_model": "m1"}], "test_index")
 
 
-
 @patch("time.sleep", return_value=None)
 def test_manage_indexing_exception(mock_sleep, mock_connector):
     instance = LlamaIndexAzureAI(mock_connector, "workspace", "azure", {})
     mock_connector.delete_documents.return_value.body = {"deleted": 1, "failures": []}
 
     instance._manage_indexing_exception("test_index", [{"embedding_model": "test_model"}], ["doc.txt"])
-
