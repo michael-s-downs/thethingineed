@@ -48,6 +48,8 @@
         - Renamed environment variables from 'API_...' to 'CORE_...'
     - [Fix] Updated internal call of operation 'delete' to new inforetrieval interface
         - Method DELETE instead of POST and pass filters as parameters instead of JSON body
+    - [Fix] Fixed error propagation in requests_manager to correctly capture error messages from pipeline responses
+        -  Updated JSON key reference from 'error' to 'message' to properly handle response errors
 - genai-inforetrieval:
     - [New] Added new Vertex platform
     - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
