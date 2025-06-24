@@ -26,7 +26,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -947,7 +946,3 @@ In the following flows diagram, each color will represent the following files:
 ### FAQ
 
 - Answers to common questions
-
-## Version History
-
-- v1: Release version

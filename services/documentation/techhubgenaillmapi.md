@@ -49,7 +49,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -1156,7 +1155,7 @@ The requests structure must be as follows:
         "system": "You are a helpful assistant",
         "context": "NTT Data is a Japanese information technology services and consulting company. It offers a wide range of services, including software development, infrastructure management, cloud services, data analytics, security services, and business consulting. ",
         "persistence": [
-            [{"role": "user", "content": "¿What is NTT Data?"}, 
+            [{"role": "user", "content": "What is NTT Data?"}, 
             {"role": "assistant", "content": "NTT Data is a Japanese information technology services and consulting company."}]
         ],
         "template_name": "system_query_and_context",
@@ -1927,7 +1926,3 @@ TODO. We don´t know the tips for vision models as they have been recently imple
 ### FAQ
 
 - Answers to common questions
-
-## Version History
-
-- v1: Release version
