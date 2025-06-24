@@ -3774,7 +3774,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
         - **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
-        - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
+            - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
 
         Example action:
 
