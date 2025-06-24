@@ -57,7 +57,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -3831,6 +3830,3 @@ Every sorting action has a boolean action param called “desc” to set if the 
 
 ### FAQ
 
-## Version History
-
-- v1: Release version

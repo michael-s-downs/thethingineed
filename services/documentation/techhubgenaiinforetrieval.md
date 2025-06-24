@@ -42,7 +42,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -1042,7 +1041,3 @@ To conclude, here is an example about how the managing of the scores completion 
 ### Common Issues
 
 ### FAQ
-
-## Version History
-
-- v1: Release version

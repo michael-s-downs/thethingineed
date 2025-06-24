@@ -36,7 +36,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -827,7 +826,3 @@ The environment variables, has been detailed in each component section.
 ### Common Issues
 
 ### FAQ
-
-## Version History
-
-- v1: Release version
