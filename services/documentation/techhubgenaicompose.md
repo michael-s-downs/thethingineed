@@ -3772,58 +3772,58 @@ Every sorting action has a boolean action param called “desc” to set if the 
 11.  **Filter response**
     This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired. The parameters of this action are:
 
-    * **Type** (string): Method to use for the reformulate. Within this action, there is one type:
+        - **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
         - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
 
-    Example action:
+        Example action:
 
-    ```json
-    {
-        "action": "filter_response",
-        "action_params":{
-            "params": {
-                "template" : "response_filter"
-            },
-            "type": "llm"
-        }
-    }
-    ```
-
-    Example filter template:
-
-    ```json
-    {
-        "filter_types": [
-            "GPT"
-        ],
-        "substitutions_template": "Classify the 'Response' into one of the following categories: n1) Cars: When the query mentions cars or a phrase related with automotion. n2) Others: If the query does not mention the above topics. nRespond only with the category and topic (do not provide any explanation or reasoning). nQuery: ",
-        "substitutions": [
-            {
-                "from": "Others",
-                "to": "Answer that you are a bot that talks only abaout cars and automotion.",
-                "extra_words": [],
-                "randpick": 3
-            },
-            {
-                "from": "Cars",
-                "to": null,
-                "extra_words": [],
-                "randpick": 3
+        ```json
+        {
+            "action": "filter_response",
+            "action_params":{
+                "params": {
+                    "template" : "response_filter"
+                },
+                "type": "llm"
             }
-        ]
-    }
-    ```
+        }
+        ```
 
-    Parameters:
+        Example filter template:
 
-    * **filter_types**: Currently There is only one type of filter, GPT.
+        ```json
+        {
+            "filter_types": [
+                "GPT"
+            ],
+            "substitutions_template": "Classify the 'Response' into one of the following categories: n1) Cars: When the query mentions cars or a phrase related with automotion. n2) Others: If the query does not mention the above topics. nRespond only with the category and topic (do not provide any explanation or reasoning). nQuery: ",
+            "substitutions": [
+                {
+                    "from": "Others",
+                    "to": "Answer that you are a bot that talks only abaout cars and automotion.",
+                    "extra_words": [],
+                    "randpick": 3
+                },
+                {
+                    "from": "Cars",
+                    "to": null,
+                    "extra_words": [],
+                    "randpick": 3
+                }
+            ]
+        }
+        ```
 
-    * **substitutions_template**: It will be the prompt used for classification.
+        Parameters:
 
-    * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+        * **filter_types**: Currently There is only one type of filter, GPT.
 
-    * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
+        * **substitutions_template**: It will be the prompt used for classification.
+
+        * **substitutions**: It will be defined in the format "from to" and will specify the type of substitution. Each type is defined differently.
+
+        * **GPT**: The "from" should define the type, the "to" should specify the GPT substitution prompt, and optionally, a list of elements can be added through "extra_words" (which defines the vocabulary) and "randpick" (which randomly selects the number of words to include to make the GPT response unique).
 
 ## Troubleshooting
 
