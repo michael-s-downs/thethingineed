@@ -36,7 +36,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -533,21 +532,24 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
       The `persist_preprocess` parameter controls the retention of preprocessed files:
       - `true`: Preprocessed files and intermediate results are kept in cloud storage.
       - `false`: Temporary files are deleted after processing.
-      - **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`.
+  
+      > **Note:** For standalone preprocessing mode (`"operation": "preprocess"`), this parameter must always be set to `true`.
     
     - **Parameter definition: Preprocess Reuse Parameter**  
       The `preprocess_reuse` parameter indicates that you want to reuse previously preprocessed documents:
       - `true`: Use existing preprocessed data identified by the `process_id`.
-      - Only required when reusing preprocessed documents (operation mode 3).
+      - Only required when reusing preprocessed documents.
   
     **<u>Key Configurations</u>**
 
     * OCR Configuration Options:
-      - `ocr`: Specify the OCR engine (e.g., <i>llm-ocr, azure-ocr</i>, or <i>aws-ocr</i>).
+      - `ocr`: Specify the OCR engine (e.g., <i>llm-ocr, azure-ocr</i>, <i>aws-ocr</i> or <i>tesserac-ocr</i>).
       - `force_ocr`: Force OCR processing regardless of initial text extraction.
       - `llm_ocr_conf`: Detailed configuration for LLM-based OCR.
+  
+        > **IMPORTANT:** aws-ocr does not work with the ap-northeast-1 subscription.
 
-    * LLM OCR Configuration:
+    * LLM OCR Configuration (only for llm-ocr engine):
       - `model`: Specify the LLM model for OCR.
       - `platform`: Cloud platform hosting the model.
       - `query`: Optional specific query for OCR processing.
@@ -824,7 +826,3 @@ The environment variables, has been detailed in each component section.
 ### Common Issues
 
 ### FAQ
-
-## Version History
-
-- v1: Release version

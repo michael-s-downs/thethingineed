@@ -42,7 +42,6 @@
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [FAQ](#faq)
-  - [Version History](#version-history)
 
 ## Overview
 
@@ -548,13 +547,15 @@ The response would be a list of index names along with the models associated wit
     }
     ```
 
-* **/delete_documents (DELETE)**: Deletes document from index.  
+* **/delete_documents (DELETE)**: Deletes document from index based on the filters received.  
     Params:
 
-        index: Index name where the file is stored.
-        filename: File name to delete, can be passed more than one.
+        index (required): Index name where the file is stored.
+        filename (optional): File name to delete, can be passed more than one.
+        *custom_metadata* (optional): Any metadata used while indexing, can be passed more than one.
 
-    Example: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
+    Example: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf
+    Example with multiple filters from custom metadata: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf&unique_id=123abc
 
 * **/delete_index (DELETE)**: Deletes an index.  
     Params:
@@ -1040,7 +1041,3 @@ To conclude, here is an example about how the managing of the scores completion 
 ### Common Issues
 
 ### FAQ
-
-## Version History
-
-- v1: Release version
