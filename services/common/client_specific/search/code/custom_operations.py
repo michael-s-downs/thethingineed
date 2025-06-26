@@ -159,7 +159,8 @@ def infodelete_sync(request_json: dict) -> dict:
     :return: Request JSON with all information
     """
     apigw_params = request_json['apigw_params']
-    request_params = {'index': request_json['input_json']['index'], 'delete': request_json['input_json']['delete']}
+    filters = request_json['input_json'].get('delete', {})
+    request_params = {**{'index': request_json['input_json']['index']}, **filters}
 
     logger.info(f"- Calling SYNC INFODELETE for index '{request_params['index']}'")
     api_response = sync_infodelete_request(apigw_params, request_params)

@@ -16,11 +16,11 @@
     - [Architecture](#architecture)
     - [Reasoning Models](#reasoning-models)
   - [Calling LLM API](#calling-llm-api)
-    - [Simple prediction call:](#simple-prediction-call)
+    - [Simple prediction call](#simple-prediction-call)
       - [Query types](#query-types)
       - [Tools](#tools)
-    - [Queue format:](#queue-format)
-    - [Get models:](#get-models)
+    - [Queue format](#queue-format)
+    - [Get models](#get-models)
       - [Parameters](#parameters)
       - [Examples](#examples)
   - [API Reference](#api-reference)
@@ -183,7 +183,7 @@ The previous image shows the difference between the `"max_completion_tokens"` an
 ## Calling LLM API
 This examples will be done by calling in localhost or deployed, so 'url' will be the base url.
 
-### Simple prediction call:
+### Simple prediction call
 
 Now, we are going to use the <i>/predict (POST)</i> method from the LLM API.
 
@@ -863,7 +863,7 @@ However, just like Claude models, if the required information is not provided, t
 }
 ````
 
-### Queue format:
+### Queue format
 The LLMAPI component has another way to do the calling (by queue) which requires different parameters and added environment variables in order to do the call.
 
 When llmapi is working with queue format, the ordinary call (with 'query_metadata', 'model_metadata'...) must be written in a json file located in the cloud or in a local path, as the content of the call will be read from there.
@@ -927,7 +927,7 @@ Finally there are some mandatory environment variables when llmqueue is running:
 - Q_GENAI_LLMQUEUE_INPUT: Name of the input queue
 - Q_GENAI_LLMQUEUE_OUTPUT: Name of the output queue
 
-### Get models:
+### Get models
 
 Now, we are going to use the <i>/get_models (GET)</i> method from the LLM API. 
 
@@ -1792,30 +1792,30 @@ In the following diagram flows, each color will represent the following files:
 
 1. Load the configuration files (available models and templates) to know which ones are available when the service is initialized.
 
-![alt text](imgs/techhubgenaillmapi/flow1.png)
+    ![alt text](imgs/techhubgenaillmapi/flow1.png)
 
 2. The next step is to check if all parameters are ok. Then, the platform is initialized.
 
-![alt text](imgs/techhubgenaillmapi/flow2.png)
+    ![alt text](imgs/techhubgenaillmapi/flow2.png)
 
 3. When a message is received, the first thing done is to adapt it if is a queue_message (and the 'QUEUE_MODE') environment variable is set to 'True'. Then the message is parsed and once the platform has been initialized the model is the following, searching first by the alias and finally if it is a pool name. If the name of the model provided does not match with any of the two things mentioned, the module will return an error.
 
-![alt text](imgs/techhubgenaillmapi/flow3.png)
+    ![alt text](imgs/techhubgenaillmapi/flow3.png)
 
 4. For checking if the model has reached the maximum of tokens available for the api key, it is necessary to set the model, so this checking comes right after setting the model in the platform (if it reached the model, it returns an error to the user). If the limit has not been surpassed, the message is set.
 
-![alt text](imgs/techhubgenaillmapi/flow4.png)
+    ![alt text](imgs/techhubgenaillmapi/flow4.png)
 
 5. To set the message properly, these are the things to keep in mind:
     * To receive a response from the LLM, 500 tokens are left for the model to respond. This means that if the maximum number of tokens that a model allows is 4.000 and the request sends a message of 4000 tokens, the original message will be cut to leave those 500 tokens to respond. Thus, it will send 3500 tokens to the LLM.
     * The first thing to truncate is the context, leaving it to the max number of tokens available (having count of the bag tokens, the input tokens and the max_tokens). The next step is to delete the messages from persistence. For each message (ordered in reverse), if it does not fit in the remaining tokens, it gets omitted. It is done in reverse order, because the last messages might have more relevance with the actual question than the others.
     * The message must be adapted to the specific LLM so the adapters class is in charge of it.
 
-![alt text](imgs/techhubgenaillmapi/flow5.png)
+    ![alt text](imgs/techhubgenaillmapi/flow5.png)
 
 6. The final step is to call the model with all the previous steps set, parse the response, and send it to the user and report the usage (tokens used) to our internal API to have a track of the tokens used for each pair model-api_key.
 
-![alt text](imgs/techhubgenaillmapi/flow6.png)
+    ![alt text](imgs/techhubgenaillmapi/flow6.png)
 
 
 ## Prompt Engineering
@@ -1902,7 +1902,7 @@ In the rest of the languages, the first approach is the following:
 
 With the release of Claude3, the API for Claude has been updated and the templates used for GPT’s can be used too for this models (deprecating the old templates in one string).
 
-A. NON-VISION
+**A) NON-VISION**
 
 Then, there are a few tips that can be used to improve prompts:
 
@@ -1913,7 +1913,7 @@ Then, there are a few tips that can be used to improve prompts:
 - Set temperature to zero to obtain more deterministic and precise answer.
 - Iterate on prompts based on model’s responses.
 
-B. VISION
+**B) VISION**
 
 TODO. We don´t know the tips for vision models as they have been recently implemented.  
 
