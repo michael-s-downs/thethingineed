@@ -3771,7 +3771,7 @@ Every sorting action has a boolean action param called “desc” to set if the 
 11.  **Filter response**
     This action allows the user to filter the response to double check if the awnswer is correct or if the topic from the answer is not desired. The parameters of this action are:
 
-        * **Type** (string): Method to use for the reformulate. Within this action, there is one type:
+        - **Type** (string): Method to use for the reformulate. Within this action, there is one type:
 
             - **LLM**: This type filters the response using the LLMAPI and a template with the different categories. The template must be stored in the folder <i>src/compose/filter_templates</i>.
 
