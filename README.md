@@ -301,8 +301,8 @@ The API supports multiple processing modes controlled by the `operation` paramet
 All preprocessing endpoints require the `/integrationasync/` prefix before the operation path:
 - **Base pattern**: `/integrationasync/process` or `/integrationasync/process-async`
 - **Examples**: 
-  - `POST /integrationasync/process`
-  - `GET /integrationasync/process-async`
+  - **POST** `/integrationasync/process`
+  - **GET** `/integrationasync/process-async`
 
 ##### 1. Preprocessing with Indexing
 
@@ -310,9 +310,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
    
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
   
     This is the standard mode that combines preprocessing and indexing in a single operation:
 
@@ -362,9 +362,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
     
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
     > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
     >  
@@ -403,9 +403,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
   
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
     ```json
     {

@@ -333,7 +333,7 @@ Response:
 
 To delete a document from an index use the DELETE endpoint /delete_documents, the request is:
 
-**\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
+https://**\<deploymentdomain\>**/delete_documents?index=myindex&filename=myfile
 
 Response:
 
@@ -349,7 +349,7 @@ Response:
 
 To delete an index with all documents associated use the DELETE endpoint /delete_index:
 
-**\<deploymentdomain\>**/delete_index?index=myindex
+https://**\<deploymentdomain\>**/delete_index?index=myindex
 
 ```json
 {
@@ -370,7 +370,7 @@ Response:
 #### Filenames retrieval call get_documents_filenames endpoint
 To retrieve the name of the documents indexed and their chunks from an index, the request is:
 
-**\<deploymentdomain\>**/get_documents_filenames?index=myindex
+https://**\<deploymentdomain\>**/get_documents_filenames?index=myindex
 
 Response:
 
@@ -554,15 +554,15 @@ The response would be a list of index names along with the models associated wit
         filename (optional): File name to delete, can be passed more than one.
         *custom_metadata* (optional): Any metadata used while indexing, can be passed more than one.
 
-    Example: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf
-    Example with multiple filters from custom metadata: **\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf&unique_id=123abc
+    Example: https://**\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf
+    Example with multiple filters from custom metadata: https://**\<deploymentdomain\>**/delete_documents?index=myindex&filename=mydoc1.pdf&unique_id=123abc
 
 * **/delete_index (DELETE)**: Deletes an index.  
     Params:
 
         index: Index name where the file is stored.
 
-    Example: **\<deploymentdomain\>**/delete_index?index=myindex
+    Example: https://**\<deploymentdomain\>**/delete_index?index=myindex
 
 * **/healthcheck (GET)**: Used to check if the component is available.  
     Returns:
@@ -589,19 +589,15 @@ The response would be a list of index names along with the models associated wit
 
         index: Index name where the file is stored.
 
-    Request: **\<deploymentdomain\>**/get_documents_filenames?index=myindex
+    Request: https://**\<deploymentdomain\>**/get_documents_filenames?index=myindex
 
 * **/get_models (GET)**: Gets the models filtered by some parameter (zone, pool, platform or embedding_model). 
 
-    Request:
-
-        https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
+    Request: https://**\<deploymentdomain\>**/retrieve/get_models?zone=techhub
 
 * **/list_indices (GET)**: Gets lists all indexes in the Elasticsearch database, their names and the models associated with each one. 
 
-    Request:
-
-        https://**\<deploymentdomain\>**/retrieve/list_indices  
+    Request: https://**\<deploymentdomain\>**/retrieve/list_indices  
 
     Returns:
     ```json
