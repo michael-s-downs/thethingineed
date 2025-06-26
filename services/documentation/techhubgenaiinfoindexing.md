@@ -11,6 +11,9 @@
   - [Vector storages](#vector-storages)
   - [Chunking Methods](#chunking-methods)
   - [Embeddings Generation](#embeddings-generation)
+  - [Vector Storage. Chunk id generation](#vector-storage-chunk-id-generation)
+  - [Component Reference](#component-reference)
+    - [Using with integration](#using-with-integration)
     - [Writing message in queue (Developer functionality)](#writing-message-in-queue-developer-functionality)
     - [Redis status](#redis-status)
     - [Error Handling](#error-handling)
@@ -401,9 +404,9 @@ The InfoIndexing service allows you to reuse previously preprocessed documents, 
 
     **Examples Request**
 
-    - **POST** {{url}}//integrationasync/process
+    - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-    - **POST** {{url}}//integrationasync/process-async
+    - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
   ```json
   {

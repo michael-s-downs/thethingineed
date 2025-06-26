@@ -156,7 +156,7 @@ Example using python requests:
 import requests
 import json
 
-url = "https://<deploymentdomain>/compose/process"
+url = "https://**\<deploymentdomain\>**/compose/process"
 
 payload =  {
     "generic": {
@@ -271,19 +271,19 @@ If the response looks like this, you are good to go.
 
 * **/list_templates (GET)**: Used to list all templates stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/list_templates
+    URL: https://**\<deploymentdomain\>**/compose/list_templates
 
 * **/list_filter_templates (GET)**: Used to list all filter templates stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/list_filter_templates
+    URL: https://**\<deploymentdomain\>**/compose/list_filter_templates
 
 * **/get_template (GET)**: Used to get the content of a template JSON file stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/get_template?name=mytemplate
+    URL: https://**\<deploymentdomain\>**/compose/get_template?name=mytemplate
 
 * **/get_filter_template (POST)**: Used to get the content of a filter template JSON file stored in cloud.
 
-    URL: https://<deploymentdomain>/compose/get_filter_template?name=mytemplate
+    URL: https://**\<deploymentdomain\>**/compose/get_filter_template?name=mytemplate
 
 * **/upload_template (PUT)**: Used to upload a template JSON file to the cloud storage the content value must be a JSON converted to string.
 
@@ -296,7 +296,7 @@ If the response looks like this, you are good to go.
     }
     ```
 
-    URL: https://<deploymentdomain>/compose/upload_filter_template
+    URL: https://**\<deploymentdomain\>**/compose/upload_filter_template
 
 * **/upload_filter_template (PUT)**: Used to upload a filter template JSON file to the cloud storage the content value must be a JSON converted to string.
 
@@ -309,15 +309,15 @@ If the response looks like this, you are good to go.
     }
     ```
 
-    URL: https://<deploymentdomain>/compose/upload_filter_template
+    URL: https://**\<deploymentdomain\>**/compose/upload_filter_template
 
 * **/delete_template (DELETE)**: Used to delete a template JSON file from cloud storage.
 
-    URL: https://<deploymentdomain>/compose/delete_template?name=mytemplate
+    URL: https://**\<deploymentdomain\>**/compose/delete_template?name=mytemplate
 
 * **/delete_filter_template (DELETE)**: Used to delete a filter template JSON file from cloud storage.
 
-    URL: https://<deploymentdomain>/compose/delete_filter_template?name=mytemplate
+    URL: https://**\<deploymentdomain\>**/compose/delete_filter_template?name=mytemplate
 
 ### Request and Response Formats for process
 
@@ -584,7 +584,7 @@ The user has the option to enable conversation storage by adding a new parameter
 An example of the request is as follows:
 
 ```json
-URL: https://<deploymentdomain>/compose/process
+URL: https://**\<deploymentdomain\>**/compose/process
 Method: POST
 Headers: x-api-key=*******(secret value given)*******
 ```
@@ -1707,7 +1707,7 @@ Response
                 {...},
                 {...},
                 {
-                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://<deploymentdomain>/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
+                    "content": "{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"score\",\n      \"params\":  {\n       \"desc\":  true\n       }\n   }\n}\n{\n  \"action\": \"sort\",     \n  \"action_params\": {\n    \"type\":  \"meta\",\n      \"params\":  {\n       \"desc\":  true,\n       “value”: metadata_name\n       }\n   }\n}\n\n\nCompose – Load session to REDIS\nWith this endpoint, the user can store sessions to REDIS to use them with the compose. The endpoint is called “https://**\<deploymentdomain\>**/compose/load_session” and it needs a json request like this:\n{\n    \"session_id\": \"session_example123\",\n    \"conv\": [\n        {\n            \"user\": \"Quien es Fernando Alonso?\",            \n            \"assistant\": \"Fernando Alonso es un reconocido piloto de automovilismo español.\"\n        }\n   ]\n}\n\nThe response would be:\n{\"status\": \"finished\", \"result\": \"Session <session_example123> saved in redis\", \"status_code\": 200}\n\nIt requires a “session_id” as the key and the param “conv” with the conversation to store in REDIS. The conversation is a list containing dictionaries formed with {“user”: “query from the user”, “assistant”: “Response from the LLM assistant”}.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-dataivandegregoriougarte/request_20240916_101923_083524_x2pm4n/manual.docx",
                         "sections_headers": "",
@@ -2234,7 +2234,7 @@ Response:
         "streambatch": [
             [
                 {
-                    "content": "Compose pipeline for base template.\nA example request for base_template is as follows:\nURL: https://<deploymentdomain>/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"my_template\",\n                \"params\": {\n                    \"query\": \"What is NTT Data?",
+                    "content": "Compose pipeline for base template.\nA example request for base_template is as follows:\nURL: https://**\<deploymentdomain\>**/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"template\": {\n                \"name\": \"my_template\",\n                \"params\": {\n                    \"query\": \"What is NTT Data?",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
@@ -2252,7 +2252,7 @@ Response:
                     "tokens": null
                 },
                 {
-                    "content": "This time of expiration, can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.\n\nURL: https://<deploymentdomain>/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"session_id\": \"test_session\",\n            \"template\": {\n                \"name\": \"knowler_llm\",\n                \"params\": {\n                    \"query\": \"what is ntt\"\n                }\n            },\n            \"persist\": {\n                    \"type\": \"chat\",\n                    \"params\": {\n                        \"max_persistence\": 20\n                    }\n                },\n            \"reformulate\":{\n                    \"type\": \"mixqueries\",\n                    \"params\": {\n                            \"max_persistence\": 20,\n                            \"template_name\": \"reformulate\",\n                            \"add_answer\": false,\n                            \"save_mod_query\": true\n                        }\n                \n            }\n        }\n    }\n}\n\nAn example in the Employee Workplace is as follows:\n\nFigure 4.",
+                    "content": "This time of expiration, can be modified as a variable (REDIS_SESSION_EXPIRATION_TIME) when the compose module is deployed.\n\nURL: https://**\<deploymentdomain\>**/compose/process\nMethod: POST\nHeaders: x-api-key=*******(secret value given)*******\n\nBody example:\n\n{\n    \"generic\": {\n        \"compose_conf\": {\n            \"session_id\": \"test_session\",\n            \"template\": {\n                \"name\": \"knowler_llm\",\n                \"params\": {\n                    \"query\": \"what is ntt\"\n                }\n            },\n            \"persist\": {\n                    \"type\": \"chat\",\n                    \"params\": {\n                        \"max_persistence\": 20\n                    }\n                },\n            \"reformulate\":{\n                    \"type\": \"mixqueries\",\n                    \"params\": {\n                            \"max_persistence\": 20,\n                            \"template_name\": \"reformulate\",\n                            \"add_answer\": false,\n                            \"save_mod_query\": true\n                        }\n                \n            }\n        }\n    }\n}\n\nAn example in the Employee Workplace is as follows:\n\nFigure 4.",
                     "meta": {
                         "uri": "https://d2astorage.blob.core.windows.net/uhis-cdac-develop-.../manual.docx",
                         "sections_headers": "",
