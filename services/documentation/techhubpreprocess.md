@@ -400,9 +400,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
   
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
     This is the standard mode that combines preprocessing and indexing in a single operation:
 
@@ -450,9 +450,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
   
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
     > **IMPORTANT:** The `persist_preprocess` parameter **must** be set to `true` when using standalone preprocessing mode. This is required to ensure the preprocessed files are retained in cloud storage for future use.
 
@@ -490,9 +490,9 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
   
     **Examples Request**
 
-      - **POST** {{url}}//integrationasync/process
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process
 
-      - **POST** {{url}}//integrationasync/process-async
+      - **POST** https://**\<deploymentdomain\>**/integrationasync/process-async
 
     ```json
     {
@@ -561,50 +561,48 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
   - In addition to the processing modes, the API allows direct download of previously processed document data, providing access to extracted text and structural information.  
 
     **Using the Synchronous Endpoint**
-
-    The synchronous processing endpoint (`/process-sync`) can be used to download preprocessed data by sending a GET request:
+      The synchronous processing endpoint (`/process-sync`) can be used to download preprocessed data by sending a GET request:
 
     **Request Format**  
-      **GET** {{url}}/integrationasync/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS
+      **GET** https://**\<deploymentdomain\>**/integrationasync/process-sync?operation=download&process_id=PROCESS_ID&cells=INCLUDE_CELLS
     
 
     **Parameters**
-    - `operation` (required): Must be set to `download` for data download.
-    - `process_id` (required): The process ID of the preprocessed document.
-    - `cells` (optional): Include structural data when set to `true` (default: `false`).
+      - `operation` (required): Must be set to `download` for data download.
+      - `process_id` (required): The process ID of the preprocessed document.
+      - `cells` (optional): Include structural data when set to `true` (default: `false`).
 
     **Example Request**
-
-      **GET** {{url}}/integrationasync/process-sync?operation=download&process_id=preprocess_20250412_143822_951264_d76f3h&cells=true
+      **GET** https://**\<deploymentdomain\>**/integrationasync/process-sync?operation=download&process_id=preprocess_20250412_143822_951264_d76f3h&cells=true
 
     **Example Response**
-    ```json
-    {
-      "status": "ok",
-      "text": {
-        "full_document": {
-          "financial_report.txt": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\nThis report presents the financial performance for fiscal year 2024..."
+      ```json
+      {
+        "status": "ok",
+        "text": {
+          "full_document": {
+            "financial_report.txt": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\nThis report presents the financial performance for fiscal year 2024..."
+          },
+          "pages": {
+            "0": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\n",
+            "1": "Revenue Analysis\\n\\nQuarterly breakdown shows consistent growth...",
+            "2": "Expense Report\\n\\nOperating expenses remained within projections..."
+          }
         },
-        "pages": {
-          "0": "Annual Financial Report 2024\\n\\nExecutive Summary\\n\\n",
-          "1": "Revenue Analysis\\n\\nQuarterly breakdown shows consistent growth...",
-          "2": "Expense Report\\n\\nOperating expenses remained within projections..."
+        "cells": {
+          "words": [
+            {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 213.76, "text": "Annual"},
+            {"r0": 167.45, "c0": 72.18, "r1": 189.58, "c1": 263.42, "text": "Financial"}
+          ],
+          "paragraphs": [
+            {"r0": 145.32, "c0": 72.18, "r1": 234.87, "c1": 498.23, "text": "Annual Financial Report 2024"}
+          ],
+          "lines": [
+            {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 498.23, "text": "Annual Financial Report 2024"}
+          ]
         }
-      },
-      "cells": {
-        "words": [
-          {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 213.76, "text": "Annual"},
-          {"r0": 167.45, "c0": 72.18, "r1": 189.58, "c1": 263.42, "text": "Financial"}
-        ],
-        "paragraphs": [
-          {"r0": 145.32, "c0": 72.18, "r1": 234.87, "c1": 498.23, "text": "Annual Financial Report 2024"}
-        ],
-        "lines": [
-          {"r0": 145.32, "c0": 72.18, "r1": 167.45, "c1": 498.23, "text": "Annual Financial Report 2024"}
-        ]
       }
-    }
-    ```  
+      ```  
 
     **Response Structure**
 

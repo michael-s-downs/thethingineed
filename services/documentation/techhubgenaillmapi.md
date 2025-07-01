@@ -1105,44 +1105,44 @@ https://**\<deploymentdomain\>**/llm/get_models?zone=techhub-australiaeast
 
 - **/delete_prompt_template (DELETE)**: Used to delete a prompt template JSON file from cloud storage.
 
-https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
+    https://**\<deploymentdomain\>**/llm/delete_prompt_template?name=mytemplate
 
 - **/list_templates (GET)**: Used to get all the available templates.
 
-Response:
+    Response:
 
-```json
-{
-    "status": "finished",
-    "status_code": 200,
-    "result": {
-        "genai_create_query_v.json": [
-            "system_query_v"
-        ],
-        "genai_lan_create_query.json": [
-            "emptysystem_query",
-            "emptysystem_query_es",
-            "emptysystem_query_en",
-            "system_query"
-        ]
+    ```json
+    {
+        "status": "finished",
+        "status_code": 200,
+        "result": {
+            "genai_create_query_v.json": [
+                "system_query_v"
+            ],
+            "genai_lan_create_query.json": [
+                "emptysystem_query",
+                "emptysystem_query_es",
+                "emptysystem_query_en",
+                "system_query"
+            ]
+        }
     }
-}
-```
+    ```
 
 - **/get_template (GET)**: Used to get the content of a prompt template:
   
-https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
+    https://**\<deploymentdomain\>**/llm/get_template?template_name=system_query.
 
-Response:
+    Response:
 
-```json
-{
-    "template": {
-        "system": "$system",
-        "user": "$query"
-    },
-}
-```
+    ```json
+    {
+        "template": {
+            "system": "$system",
+            "user": "$query"
+        },
+    }
+    ```
 
 ### Request and Response Formats for predict endpoint
 
