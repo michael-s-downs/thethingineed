@@ -115,7 +115,7 @@ To get more information about how to configure the secret file refer to Secrets 
 
 To do the chunking an important concept that will be done indistinctly in all chunking methods is the chunking overlap, which consists in unifying the top and the bottom of consecutive chunks by being the same. The size is specified by the user. A visual representation of the chunking overlap is as follows:
 
-![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-overlapping-operation.png)
+![alt text](media/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-overlapping-operation.png)
 
 Once explained the overlapping, there are 3 chunking methods to split the text in smaller parts:
 
@@ -131,7 +131,7 @@ Once explained the overlapping, there are 3 chunking methods to split the text i
 
   A visual example of surrounding context window with the window field equal to 1 is:
 
-  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-surrounding.png)
+  ![alt text](media/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-surrounding.png)
 
   Finally a short and simple example with text would be:
 
@@ -144,7 +144,7 @@ Once explained the overlapping, there are 3 chunking methods to split the text i
 
 * **Recursive:** The recursive chunking method will do a first simple split and then a second split of the obtained chunks using the 'sub_window_length' and 'sub_window_overlap' parameters. In the following image there are divided in two sub-chunks as the sub window overlap and length are the half of the window overlap and length parameters.
 
-  ![alt text](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
+  ![alt text](media/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-chunking-method-recursive.png)
 
 ## Embeddings Generation
 Embeddings are vector representations of the input text, created from the content of individual chunks. They can optionally be enriched with metadata, ensuring that the embeddings capture both the textual content and relevant contextual information.
@@ -618,7 +618,7 @@ Some common error messages you may encounter:
 
 The files/secrets architecture is:
 
-![secrets and config files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v1.4.0-config.png)
+![secrets and config files diagram](media/techhubgenaiinfoindexing/genai-infoindexing-v1.4.0-config.png)
 
 ### Blobs - Buckets storage distribution
 This service, needs different buckets if it is going to work along with integration and the rest of the services or not:
@@ -803,7 +803,7 @@ Apart from the five secrets explained above, the system needs another configurat
         - **model_pool**: pools the model belongs to
 
 An example where the rest of the data is extracted from the message:
-![Configuration files diagram](imgs/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)
+![Configuration files diagram](media/techhubgenaiinfoindexing/genai-infoindexing-v2.2.0-config-files-uses.png)
 
 ### Environment variables
 
@@ -828,7 +828,7 @@ An example where the rest of the data is extracted from the message:
 
 This class manages the main flow of the component by parsing the input, calling the different objects that run the module and finally returning the response to the user.
 
-![infoindexing deployment](imgs/techhubgenaiinfoindexing/infoindexationDeployment.png)
+![infoindexing deployment](media/techhubgenaiinfoindexing/infoindexationDeployment.png)
 
 **parsers.py (`ManagerParsers`,`Parser`,`InfoindexingParser`)**
 
@@ -860,13 +860,13 @@ There are several parameters that the indexing service receives in the queue req
 
 However, the necessary ones are detailed in the readme file.
 
-![parsers](imgs/techhubgenaiinfoindexing/parsers.png)
+![parsers](media/techhubgenaiinfoindexing/parsers.png)
 
 **storage_manager.py (`ManagerStorage`, `BaseStorageManager`, `IRStorageManager`)**
 
 This class is responsible of managing the operations with the cloud storage of all files associated with the indexing process; this includes files generated in the preprocess (documents text and geospatial information) and [configuration files](#configuration-files).
 
-![storage manager](imgs/techhubgenaiinfoindexing/storage_manager.png)
+![storage manager](media/techhubgenaiinfoindexing/storage_manager.png)
 
 **connectors.py (`ManagerConnector`, `Connector`,`ElasticSearchConnector`)**
 
@@ -894,49 +894,49 @@ If the database is ElasticSearch, the mandatory columns in the index tables are:
   - **index_id *(recursive):*** Reference to its parent index (if the node is the parent itself, the id will be the same as _id) 
 * **embedding:** Column where the snippet embeddings will be stored.
 
-![connectors](imgs/techhubgenaiinfoindexing/connectors.png)
+![connectors](media/techhubgenaiinfoindexing/connectors.png)
 
 **vector_storages.py (`ManagerVectorDB`, `VectorDB`,`LlamaIndex`)**
 
 This class saves the documents and their associated metadata in the database.
 
-![vector_storages](imgs/techhubgenaiinfoindexing/vector_storages.png)
+![vector_storages](media/techhubgenaiinfoindexing/vector_storages.png)
 
 
 ### Flow
-![flowchart](imgs/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png)
+![flowchart](media/techhubgenaiinfoindexing/genai-infoindexing-v3.0.0-decision-flow.png)
 
 In the following flows diagram, each color will represent the following files:
     
-  <img src="imgs/techhubgenaiinfoindexing/flow1.png" width="175">
+  <img src="media/techhubgenaiinfoindexing/flow1.png" width="175">
 
 1.	When the service is initialized, it loads all the [secrets](#secrets) and [configuration files](#configuration-files) containing pools, models, and vector_storage details, to know the ones that are available.
-    ![alt text](imgs/techhubgenaiinfoindexing/flow2.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow2.png)
 2. Using the parser class (see <i>Files and Classes > parsers.py</i>). The input message from the queue is parsed to get all the necessary parameters, including the model that’s going to be used and the vector database where the documents are going to be stored.
-    ![alt text](imgs/techhubgenaiinfoindexing/flow3.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow3.png)
 3. A connection with the selected vector storage is created and the system verifies the selected configuration for the indexing process. If the chosen index already exists, the selected models and the chunking method in this call must match those used during the first indexation.
-    ![alt text](imgs/techhubgenaiinfoindexing/flow4.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow4.png)
 4. The class corresponding to the selected vector database is initialized and then, all files associated to the documents to be indexed (preprocess files) are loaded.
-    ![alt text](imgs/techhubgenaiinfoindexing/flow5.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow5.png)
 5. The files are converted to the vector store format and the mandatory metadata initialized. Then, the system verifies its consistency with the existing index metadata as it must be the same (in case the index already exists).
-    ![alt text](imgs/techhubgenaiinfoindexing/flow6.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow6.png)
 6. First, calculates the number of tokens of the document using `tiktoken`. This number is used to report and control the usage of the different models. Then the manager of the chunking method selected en the 'method' parameter will be chosen and the document splitted in chunks based on the method using the parameters in 'chunking_method'.
-    <img src="imgs/techhubgenaiinfoindexing/flow7.png" width="300">
+    <img src="media/techhubgenaiinfoindexing/flow7.png" width="300">
 7. The chunking method selected, does the first splitting as is always de same, by using the <i>'window_length'</i> and <i>'window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)). After that, the corresponding metadata for the chunking method, is added to every chunk extracted (explained in the connectors.py class). At last, the chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added.
 
-    <img src="imgs/techhubgenaiinfoindexing/flow8.png" width="300">
+    <img src="media/techhubgenaiinfoindexing/flow8.png" width="300">
 8. If the chunking method is the recursive one, a second splitting will be done by using the <i>'sub_window_length'</i> and <i>'sub_window_overlap'</i> [parameters](#Writing-message-in-queue-(Developer-functionality)) to get the sub-chunks. After that, the corresponding metadata is added to every sub-chunk and finally the sub-chunk id (<i>'id_'</i>) and the <i>'snippet_id'</i> are added too (same process as previous one but with the sub-chunks). The main metadata here is the <i>'index_id'</i> as it refers to its base chunk.
-    <img src="imgs/techhubgenaiinfoindexing/flow9.png" width="900">
+    <img src="media/techhubgenaiinfoindexing/flow9.png" width="900">
 9.  Write the documents in the vector storage for each model, following all this steps:
     1. The first step is to internally generate the index name for each requested model.
     2. Then the object used to generate the embeddings is created
     3. Write all the chunks and metadata in the corresponding index, with a controlled retries system to handle timeout errors or vector database/models overloads.
     4. Save the number of pages and tokens for every model to report it after.
     5. Close the connection with the vector database to avoid errors (one created before necessary for LlamaIndex).
-    ![alt text](imgs/techhubgenaiinfoindexing/flow10.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow10.png)
 10.	Report the tokens usage to the api, close the connection with the vector storage (connector used to check index configuration, create empty indexes...) and finally update Redis database with the result of the indexation process, saving an error code if something goes wrong.
 
-    ![alt text](imgs/techhubgenaiinfoindexing/flow11.png)
+    ![alt text](media/techhubgenaiinfoindexing/flow11.png)
 
 
 

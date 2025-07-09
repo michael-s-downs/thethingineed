@@ -620,11 +620,11 @@ All preprocessing endpoints require the `/integrationasync/` prefix before the o
 ## Preprocess components explanation
 The flow of a preprocessing pipeline, starting from the user request in `integration-receiver` would be the following:
 
-![alt text](imgs/Architecture_preprocess.png)
+![alt text](media/Architecture_preprocess.png)
 
 
 ### Preprocess start
-![alt text](imgs/techhubpreprocess/preprocess-start.png)
+![alt text](media/techhubpreprocess/preprocess-start.png)
 
 This component starts parsing the input sent by `integration-sender` and parsing it. After parsing, the JSON that will be used from this point until the end is created. In this moment, a file located on the 'STORAGE_BACKEND' in `src/layout.json` is mixed with the formatted output JSON, so the format of this file, must be the same explained in [Input JSON parameters](#input-json-parameters). The <i>layout.json</i> file is loaded when the component starts, so the content of the file will be the same for all the files passing through this flow. If a change is required, you must change the file and re-deploy the component to ensure that the change has been applied.
 
@@ -659,7 +659,7 @@ Some common error messages you may encounter are:
 
 ### Preprocess extract
 
-![alt text](imgs/techhubpreprocess/preprocess-extract.png)
+![alt text](media/techhubpreprocess/preprocess-extract.png)
 
 In the `preprocess-extract` component, the text extracting from the document is managed. There are several cases in which this component will need the `preprocess-ocr` component:
 * When **llm-ocr** ocr selected and the query has been passed (we already know the language of the text) and the `force_ocr` parameter has been set to <i>true</i> (the OCR text extraction has preference). 
@@ -702,7 +702,7 @@ Some common error messages you may encounter are:
 <i>*For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response.</i>
 
 ### Preprocess OCR
-![alt text](imgs/techhubpreprocess/preprocess-ocr.png)
+![alt text](media/techhubpreprocess/preprocess-ocr.png)
 
 In this component, we allow different OCR types:
 * **FormRecognizer**: Microsof Azure text extraction service. (<b>'azure-ocr'</b>)
@@ -759,7 +759,7 @@ Some common error messages you may encounter are:
 <i>*For more detailed errors, see the logs of the component. These are only the errors visible in the Redis key / user response.</i>
 
 ### Preprocess end
-![alt text](imgs/techhubpreprocess/preprocess-end.png)
+![alt text](media/techhubpreprocess/preprocess-end.png)
 
 This component's function is simple, but crucial as is the manager of all ending preprocessing flows. Even if the documents do not need it. The function is to check the process status code on Redis and depending on that, writing in the `genai-infoindexing` flow to continue with the indexation process or ending the preprocess by writing in the `flowmgmt-checkend` component.
 
