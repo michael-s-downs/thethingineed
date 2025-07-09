@@ -81,6 +81,7 @@ def adapt_input_base(request_json: dict, input_files: list) -> Tuple[dict, list]
 
     request_json['apigw_params'].update(input_json.get('headers', {}))
     request_json['documents_folder'] = input_json.get('documents_folder', request_json['documents_folder'])
+    request_json['persist_preprocess'] = input_json.get('persist_preprocess', False) 
 
     return request_json, input_files
 
@@ -97,41 +98,46 @@ def adapt_input_default(request_json: dict, input_files: list) -> Tuple[dict, li
     request_json['documents'] = [f"{request_json['documents_folder']}/{doc}".replace("//", "/") for doc in request_json['documents_metadata']]
 
     # Define pipeline based in operation requested
-    if request_json['input_json']['operation'] == "indexing":
-        request_json['client_profile']['pipeline'] = ["indexing"]
-
-    if request_json['input_json'].get('indexation_conf', {}):
-        request_json['indexation_conf'] = request_json['input_json']['indexation_conf']
-
-        request_json['indexation_conf'].setdefault('models', ["techhub-pool-world-ada-002"])
-        request_json['indexation_conf'].setdefault('metadata', {})
-    else:
-        # Retrocompatibility mode
-        request_json['indexation_conf'] = {}
-        request_json['indexation_conf']['vector_storage_conf'] = {
-            'index': request_json['input_json'].get('index')
-        }
-
-        # Retrocompatibility mode
-        request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
-        # Overwrite if exists, but default values if not
-        request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
-        request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
-        request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
-        request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
-        request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
-        request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
+    operation = request_json['input_json']['operation']
     
-        # Delete none items from dicts and add chunking method to indexation_conf
-        request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
-        request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+    if operation == "preprocess":
+        request_json['client_profile']['pipeline'] = ["preprocess"]
+    elif operation == "download":
+        request_json['client_profile']['pipeline'] = ["download"]
+        request_json['client_profile']['custom_functions']['adapt_output'] = "io_adaptations.adapt_output_download" 
+    elif operation == "indexing":
+        request_json['client_profile']['pipeline'] = ["indexing"]
+        
+        if request_json['input_json'].get('indexation_conf', {}):
+            request_json['indexation_conf'] = request_json['input_json']['indexation_conf']
+            request_json['indexation_conf'].setdefault('models', ["techhub-pool-world-ada-002"])
+            request_json['indexation_conf'].setdefault('metadata', {})
+        else:
+            # Retrocompatibility mode
+            request_json['indexation_conf'] = {}
+            request_json['indexation_conf']['vector_storage_conf'] = {
+                'index': request_json['input_json'].get('index')
+            }
 
-        # Retrocompatibility mode
-        request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
-        request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
+            # Retrocompatibility mode
+            request_json['input_json']['chunking_method'] = request_json['input_json'].get('chunking_method', {})
+            # Overwrite if exists, but default values if not
+            request_json['input_json']['chunking_method']['window_overlap'] = request_json['input_json'].get('window_overlap', 10)
+            request_json['input_json']['chunking_method']['window_length'] = request_json['input_json'].get('window_length', 300)
+            request_json['input_json']['chunking_method']['method'] = request_json['input_json'].get('chunking_method', {}).get('method', "simple")
+            request_json['input_json']['chunking_method']['sub_window_overlap'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_overlap')
+            request_json['input_json']['chunking_method']['sub_window_length'] = request_json['input_json'].get('chunking_method', {}).get('sub_window_length')
+            request_json['input_json']['chunking_method']['windows'] = request_json['input_json'].get('chunking_method', {}).get('windows')
+        
+            # Delete none items from dicts and add chunking method to indexation_conf
+            request_json['indexation_conf']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
+            request_json['input_json']['chunking_method'] = {k: v for k, v in request_json['input_json']['chunking_method'].items() if v}
 
+            # Retrocompatibility mode
+            request_json['indexation_conf']['metadata'] = request_json['input_json'].get('metadata', {})
+            request_json['indexation_conf']['models'] = request_json['input_json'].get('models', ["techhub-pool-world-ada-002"])
 
-    request_json['indexation_conf']['vector_storage_conf']['vector_storage'] = request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE"))
+        request_json['indexation_conf']['vector_storage_conf'].setdefault('vector_storage', request_json['client_profile'].get('vector_storage', os.getenv("VECTOR_STORAGE")))
 
     return request_json, input_files
 
@@ -223,4 +229,20 @@ def adapt_output_queue(request_json: dict) -> Tuple[dict, dict]:
     output_json['GenaiResponse'] = result_parsed
     result_parsed = output_json
 
+    return request_json, result_parsed
+
+def adapt_output_download(request_json: dict) -> Tuple[dict, dict]:
+    """ Adapt output for download operation
+
+    :param request_json: Request JSON with all information
+    :return: Request JSON and output result adapted
+    """
+    if request_json.get('status') == 'finish' and 'download_result' in request_json:
+        result_parsed = request_json['download_result'].copy()
+    else:
+        result_parsed = {
+            'status': 'error',
+            'error': request_json.get('error', 'Unknown error occurred during download')
+        }
+    
     return request_json, result_parsed

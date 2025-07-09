@@ -12,20 +12,27 @@ from unittest.mock import MagicMock, patch, mock_open
 import requests
 
 # Local imports
-from endpoints import ManagerPlatform, Platform, GPTPlatform, OpenAIPlatform, AzurePlatform, BedrockPlatform
+from endpoints import ManagerPlatform, Platform, GPTPlatform, OpenAIPlatform, AzurePlatform, BedrockPlatform, VertexPlatform, TsuzumiPlatform
 from common.errors.genaierrors import PrintableGenaiError
 from common.utils import load_secrets
 from models.gptmodel import ChatGPTModel, DalleModel, ChatGPTVision, ChatGPTOModel, ChatGPTOVisionModel
 from models.claudemodel import ChatClaudeModel, ChatClaudeVision
 from models.llamamodel import LlamaModel
 from models.novamodel import ChatNova, ChatNovaVision
+from models.geminimodel import ChatGeminiVision
+from models.tsuzumimodel import TsuzumiModel
 
 aws_credentials = {"access_key": "346545", "secret_key": "87968"}
 models_urls = {
         "AZURE_DALLE_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/images/generations?api-version=$API",
         "AZURE_GPT_CHAT_URL": "https://$ZONE.openai.azure.com/openai/deployments/$MODEL/chat/completions?api-version=$API",
 		"AZURE_EMBEDDINGS_URL": "https://$ZONE.openai.azure.com/",
-        "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions"
+        "OPENAI_GPT_CHAT_URL": "https://api.openai.com/v1/chat/completions",
+        "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
+        "VERTEX_ANTRHOPIC_URL": "https://$ZONE-aiplatform.googleapis.com/v1/projects/$PROJECT_ID/locations/$ZONE/publishers/anthropic/models/$MODEL:streamRawPredict",
+        "VERTEX_GEMINI_URL": "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$API_KEY",
+        "TSUZUMI_CHAT_URL":"https://tsuzumi.app.dev.techhubnttdata.com/v1/chat/completions"
+
 }
 
 model = {
@@ -65,6 +72,21 @@ nova_model = {
     "models_credentials": {},
     "top_k":100
 }
+
+gemini_model = {
+    "model": "techhubdev-gemini-1.5-pro-002",
+	"model_id": "gemini-1.5-pro-002",
+    "model_type": "gemini-1.5-pro",
+    "max_input_tokens": 2097152,
+    "zone": "us-central1",
+    "models_credentials": {},
+}
+
+tsuzumi_model = {
+			"model": "tsuzumi-7b-v1_2-8k-instruct",
+			"model_type": "tsuzumi-7b-v1_2-8k-instruct",
+			"models_credentials": {"tsuzumi": "mock_api"},
+		    }
 
 # Message that uses BaseAdapter:
 message_dict = {"query": "Hello, how are you?", "template": {
@@ -111,7 +133,7 @@ class TestManagerPlatform:
 
     def test_get_possible_platforms(self):
         platforms = ManagerPlatform.get_possible_platforms()
-        assert platforms == ["openai", "azure", "bedrock"]
+        assert platforms == ["openai", "azure", "bedrock", "vertex", "tsuzumi"]
 
     def test_all_platforms(self):
         self.conf['platform'] = "openai"
@@ -120,10 +142,16 @@ class TestManagerPlatform:
         platform_azure = ManagerPlatform.get_platform(self.conf)
         self.conf['platform'] = "bedrock"
         platform_bedrock = ManagerPlatform.get_platform(self.conf)
+        self.conf['platform'] = "vertex"
+        platform_vertex = ManagerPlatform.get_platform(self.conf)
+        self.conf['platform'] = "tsuzumi"
+        platform_tsuzumi = ManagerPlatform.get_platform(self.conf)
 
         assert isinstance(platform_openai, OpenAIPlatform)
         assert isinstance(platform_azure, AzurePlatform)
         assert isinstance(platform_bedrock, BedrockPlatform)
+        assert isinstance(platform_vertex, VertexPlatform)
+        assert isinstance(platform_tsuzumi, TsuzumiPlatform)
 
     def test_wrong_platform(self):
         self.conf['platform'] = "nonexistent"
@@ -416,3 +444,297 @@ class TestOpenAIPlatform:
         # Assert the expected output
         assert self.openai_platform.generative_model == generative_model
         assert self.openai_platform.headers == {'Authorization': "Bearer mock_api_key", 'Content-Type': "application/json"}
+
+class TestVertexPlatform:
+    def setup_method(self):
+        models_config_manager = MagicMock()
+        models_config_manager.get_different_model_from_pool.return_value = gemini_model
+        models_config_manager.get_model_api_key_by_zone.return_value = "mock_api"
+        self.vertex_platform = VertexPlatform(aws_credentials, models_urls, timeout=60,num_retries=1,models_config_manager=models_config_manager)
+
+    def test_init(self):
+        assert self.vertex_platform.aws_credentials == aws_credentials
+        assert self.vertex_platform.models_urls == models_urls
+        assert self.vertex_platform.timeout == 60
+
+    def test_parse_response(self):
+
+        mock_response = {"error": {"code": 400, "message": "Not Found"}}
+        result = self.vertex_platform.parse_response(mock_response)
+        expected_result = {"error": mock_response, "msg": "Not Found", "status_code": 400}
+        assert result == expected_result
+
+        mock_response = {"error": {"code": 403, "reason": "API_KEY_INVALID", "message": "Invalid API Key"}}
+        result = self.vertex_platform.parse_response(mock_response)
+        expected_result = {"error": mock_response, "msg": "Invalid API Key", "status_code": 401}
+        assert result == expected_result
+
+        mock_response = {"error": {"message": "Unknown Error"}}
+        result = self.vertex_platform.parse_response(mock_response)
+        expected_result = {"error": mock_response, "msg": "Unknown Error", "status_code": 500}
+        assert result == expected_result
+
+        mock_response = {"result": {"status_code": 200, "message": "OK"}}
+        result = self.vertex_platform.parse_response(mock_response)
+        assert result == mock_response
+
+    def test_build_url(self):
+        generative_model = ChatGeminiVision(**gemini_model)
+        generative_model.api_key = "mock_api_key"
+        result_gemini = self.vertex_platform.build_url(generative_model)
+        assert result_gemini == "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent?key=mock_api_key"
+
+        generative_model = ChatClaudeModel(**claude_model)
+        with pytest.raises(PrintableGenaiError, match=f"Model message {generative_model.MODEL_MESSAGE} not supported."):
+            self.vertex_platform.build_url(generative_model)
+    def test_set_model(self):
+        generative_model = ChatGeminiVision(**gemini_model)
+        generative_model.api_key = "mock_api_key"
+        self.vertex_platform.set_model(generative_model)
+
+        # Assert the expected output
+        assert self.vertex_platform.generative_model == generative_model
+        assert self.vertex_platform.headers == {'Content-Type': "application/json"}
+
+    def test_call_model(self):
+        with patch('requests.post') as mock_post:
+            mock_object = MagicMock()
+            mock_object.json.return_value = {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [
+                                {
+                                    "text": "asdf"
+                                }
+                            ],
+                            "role": "model"
+                        },
+                        "finishReason": "STOP",
+                        "index": 0
+                    }
+                ],
+                "usageMetadata": {
+                    "promptTokenCount": 154,
+                    "candidatesTokenCount": 501,
+                    "totalTokenCount": 1000,
+                    "promptTokensDetails": [
+                        {
+                            "modality": "TEXT",
+                            "tokenCount": 129
+                        }
+                    ]
+                },
+                "modelVersion": "gemini-2.5-pro-exp-03-25"
+            }
+            mock_post.return_value = mock_object
+            generative_model = ChatGeminiVision(**gemini_model)
+            generative_model.set_message(message_dict)
+            self.vertex_platform.set_model(generative_model)
+            result = generative_model.get_result(self.vertex_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+            assert result['result']['n_tokens'] == 1000
+            assert result['result']['output_tokens'] == 501
+            assert result['result']['input_tokens'] == 154
+
+
+    def test_call_model_errors(self):
+        generative_model = ChatGeminiVision(**gemini_model)
+        generative_model.set_message(message_dict)
+        self.vertex_platform.set_model(generative_model)
+
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = requests.exceptions.Timeout
+            response = self.vertex_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = requests.exceptions.RequestException
+            response = self.vertex_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = ConnectionError
+            response = self.vertex_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = urllib3.exceptions.ReadTimeoutError(None, None, "Read timed out")
+            response = self.vertex_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 408
+
+        with patch('requests.post') as mock_func:
+            mock_func.return_value.status_code = 500
+            mock_func.return_value.json.return_value = {"error": {"message": "Internal server error"}}
+            response = self.vertex_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+
+class TestTsuzumiPlatform:
+    def setup_method(self):
+        models_config_manager = MagicMock()
+        models_config_manager.get_different_model_from_pool.return_value = model
+        models_config_manager.get_model_api_key_by_zone.return_value = "mock_api"
+        self.tsuzumi_platform = TsuzumiPlatform(aws_credentials, models_urls, timeout=60, num_retries=1,
+                                            models_config_manager=models_config_manager)  # Initialize your class here
+
+    def test_init(self):
+        assert self.tsuzumi_platform.aws_credentials == aws_credentials
+        assert self.tsuzumi_platform.models_urls == models_urls
+        assert self.tsuzumi_platform.timeout == 60
+
+    def test_parse_response(self):
+        # Call the method with a mock response
+        mock_response = {"error": {"code": "401", "message": "Unauthorized"}}
+        result = self.tsuzumi_platform.parse_response(mock_response)
+
+        expected_result = {"error": mock_response, "msg": "Unauthorized", "status_code": 401}
+        assert result == expected_result
+
+        mock_response = {"error": {"status": 400, "message": "Not Found"}}
+        result = self.tsuzumi_platform.parse_response(mock_response)
+        expected_result = {"error": mock_response, "msg": "Not Found", "status_code": 400}
+        assert result == expected_result
+
+        mock_response = {"error": {"status": "500", "message": "Bad Request"}}
+        result = self.tsuzumi_platform.parse_response(mock_response)
+        expected_result = {"error": mock_response, "msg": "Bad Request", "status_code": 500}
+        assert result == expected_result
+
+        mock_response = {"result": {"status_code": 200, "message": "asdf"}}
+        result = self.tsuzumi_platform.parse_response(mock_response)
+        assert result == mock_response
+
+    def test_build_url(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        result_tsuzumi = self.tsuzumi_platform.build_url(generative_model)
+        assert result_tsuzumi == "https://tsuzumi.app.dev.techhubnttdata.com/v1/chat/completions"
+        generative_model = ChatClaudeModel(**claude_model)
+        with pytest.raises(PrintableGenaiError, match=f"Model message {generative_model.MODEL_MESSAGE} not supported."):
+            self.tsuzumi_platform.build_url(generative_model)
+
+    def test_set_model(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        generative_model.api_key = "mock_api_key"
+        self.tsuzumi_platform.set_model(generative_model)
+
+        # Assert the expected output
+        assert self.tsuzumi_platform.generative_model == generative_model
+        assert self.tsuzumi_platform.headers == {'Authorization': "Bearer mock_api_key", 'Content-Type': "application/json"}
+
+    def test_call_model(self):
+        with patch('requests.post') as mock_post:
+            mock_object = MagicMock()
+            mock_object.json.return_value = {"choices": [{"message": {"content": "asdf"}}],
+                                             "status_code": 200,
+                                             "usage": {"total_tokens": 1000, "completion_tokens": 501,
+                                                       "prompt_tokens": 154}}
+            mock_post.return_value = mock_object
+            generative_model = TsuzumiModel(**tsuzumi_model)
+            message_dict.pop("max_img_size_mb")
+            generative_model.set_message(message_dict)
+            self.tsuzumi_platform.set_model(generative_model)
+            result = generative_model.get_result(self.tsuzumi_platform.call_model())
+            assert result['status_code'] == 200
+            assert result['result']['answer'] == "asdf"
+            assert result['result']['n_tokens'] == 1000
+            assert result['result']['output_tokens'] == 501
+            assert result['result']['input_tokens'] == 154
+
+    def test_call_model_errors(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        generative_model.set_message(message_dict)
+        self.tsuzumi_platform.set_model(generative_model)
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = requests.exceptions.Timeout
+            response = self.tsuzumi_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 408
+
+        with patch('requests.post') as mock_func:
+            mock_func.side_effect = requests.exceptions.RequestException
+            response = self.tsuzumi_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+
+        with patch('requests.post') as mock_func:
+            mock_func.return_value.status_code = 500
+            mock_func.return_value.text = "Unexpected format: Error 400: Tsuzumi format is not as expected: {}."
+            response = self.tsuzumi_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+        assert result['error_message'] == "Unexpected format: Error 400: Tsuzumi format is not as expected: {}."
+
+        with patch('requests.post') as mock_func:
+            mock_func.return_value.status_code = 500
+            mock_func.return_value.text = "Unexpected format: Error 400: Tsuzumi format is not as expected: {}."
+            response = self.tsuzumi_platform.call_model()
+            result = generative_model.get_result(response)
+        assert result['status_code'] == 500
+        assert result['error_message'] == "Unexpected format: Error 400: Tsuzumi format is not as expected: {}."
+
+    def test_set_model_retry_success(self):
+        model_alt = {"model": "alternative_model"}
+        self.tsuzumi_platform.generative_model = MagicMock(pool_name="pool1", model_name="model1")
+        self.tsuzumi_platform.models_config_manager.get_different_model_from_pool.return_value = model_alt
+
+        with patch.object(self.tsuzumi_platform, 'set_model') as mock_set_model:
+            self.tsuzumi_platform.set_model_retry()
+            mock_set_model.assert_called_once()
+
+
+    def test_call_model_retry_on_429(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        generative_model.set_message(message_dict)
+        self.tsuzumi_platform.set_model(generative_model)
+
+        response_mock = MagicMock()
+        response_mock.status_code = 429
+        response_mock.text = "Rate limit exceeded"
+
+        with patch('requests.post', return_value=response_mock):
+            result = self.tsuzumi_platform.call_model()
+            assert result['status_code'] == 429
+            assert "Rate limit exceeded" in result['msg']
+
+    def test_call_model_400_error(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        generative_model.set_message(message_dict)
+        self.tsuzumi_platform.set_model(generative_model)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.text = "Bad Request"
+
+        with patch('requests.post', return_value=mock_response):
+            result = self.tsuzumi_platform.call_model()
+            assert result['status_code'] == 400
+            assert result['error'] == "Bad Request"
+
+    def test_parse_response_unexpected(self):
+        mock_response = {"unexpected_key": "value"}
+        result = self.tsuzumi_platform.parse_response(mock_response)
+        assert result == mock_response
+
+    def test_logging_on_retry(self):
+        generative_model = TsuzumiModel(**tsuzumi_model)
+        generative_model.set_message(message_dict)
+        self.tsuzumi_platform.set_model(generative_model)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 429
+        mock_response.text = "Rate limit exceeded"
+
+        with patch('requests.post', return_value=mock_response), \
+                patch.object(self.tsuzumi_platform.logger, 'warning') as mock_warning:
+            self.tsuzumi_platform.call_model()
+            mock_warning.assert_any_call("Tsuzumi rate limit exceeded, retrying, try 1/1")
+
+
+
+

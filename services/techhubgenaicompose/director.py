@@ -1,7 +1,5 @@
 ### This code is property of the GGAO ###
 
-import os
-import glob
 import json
 import re
 from basemanager import AbstractManager
@@ -27,21 +25,7 @@ class Director(AbstractManager):
         self.actions_manager: ActionsManager = None
         self.output_manager: OutputManager = None
         self.PD = PersistDict()
-        self.load_secrets()
         self.logger.debug("Director created")
-
-    def load_secrets(self) -> None:
-        secrets_path = os.getenv('SECRETS_PATH', "/secrets")
-
-        for secret_path in glob.glob(secrets_path + "/**/*.json", recursive=True):
-            try:
-                self.logger.debug(f"Loading secret '{secret_path}'")
-                secret = json.loads(open(secret_path, "r").read())
-
-                for envvar in secret:
-                    os.environ[envvar] = secret[envvar]
-            except Exception as _:
-                self.logger.warning(f"Unable to load secret '{secret_path}'")
 
 
     def get_output(self):
@@ -59,15 +43,14 @@ class Director(AbstractManager):
         self.output_manager.get_lang(output, self.conf_manager.lang)
         self.output_manager.get_n_conversation(output, self.PD.get_conversation(self.conf_manager.session_id))
         self.output_manager.get_n_retrieval(output, self.sb)
-        self.conf_manager.langfuse_m.flush()
         return output
 
-    def run(self):
+    def run(self, langfuse_m):
         """Runs the director process, with all classes 
         Returns:
             dict: output
         """
-        self.conf_manager = ConfManager(self.compose_conf, self.apigw_params)
+        self.conf_manager = ConfManager(self.compose_conf, self.apigw_params, langfuse_m)
         self.logger.info(f"Persist dict before{self.PD.PD.keys()}")
         if self.conf_manager.persist_m:
             self.PD.get_from_redis(self.conf_manager.session_id, self.conf_manager.headers['x-tenant'])
@@ -110,6 +93,9 @@ class Director(AbstractManager):
                 ap["PD"] = self.PD
                 ap["lang"] = self.conf_manager.lang
                 ap["session_id"] = self.conf_manager.session_id
+            
+            if action_function == filter_query:
+                ap["langfuse"] = self.conf_manager.langfuse_m
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             ap["headers"]= self.conf_manager.headers
@@ -158,6 +144,10 @@ class Director(AbstractManager):
             if action_function == self.sb.filter_response:
                 ap["headers"] = self.conf_manager.headers
                 ap["query"] = self.conf_manager.template_m.query
+                ap["langfuse"] = self.conf_manager.langfuse_m
+            
+            if action_function == self.sb.merge:
+                ap["langfuse"] = self.conf_manager.langfuse_m
 
             langfuse_sg = self.add_start_to_trace(action, ap)
             action_function(action_params['type'], ap if ap else {})
@@ -261,7 +251,6 @@ class Director(AbstractManager):
         return template
 
     def fix_merge(self, s):
-        # Replace $ with "$" but avoid affecting the template parameter
         result = ""
         in_template = False
         in_merge = False
@@ -286,9 +275,11 @@ class Director(AbstractManager):
                dict: template 
         """
         template_params = self.conf_manager.template_m.params
+        template_params = self.conf_manager.template_m.set_params(template_params)
 
         if self.conf_manager.template_m.template is None:
             self.conf_manager.template_m.load_template()
+        
         template = re.sub(r'"\$([^"]+)"', r'$\1', self.conf_manager.template_m.template)
         template = re.sub(r'\$(\w+)', r'"$\1"', template)
         template = self.fix_merge(template)
@@ -303,7 +294,6 @@ class Director(AbstractManager):
         template = self.conf_manager.template_m.index_conf_retrocompatible(template)
         self.conf_manager.langfuse_m.update_input(self.conf_manager.template_m.query)
 
-        template_params = self.conf_manager.template_m.set_params(template_params)
 
         try:
             if self.conf_manager.persist_m:

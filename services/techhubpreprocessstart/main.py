@@ -5,6 +5,7 @@
 import json
 import string
 import os
+import re
 from random import choice
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -21,7 +22,7 @@ from common.genai_controllers import list_files, provider, load_file, write_to_q
 from common.genai_status_control import create_status, update_status
 from common.genai_json_parser import get_exc_info, get_dataset_status_key, get_project_config, get_dataset_config, generate_dataset_status_key
 from common.services import PREPROCESS_START_SERVICE, PREPROCESS_EXTRACT_SERVICE, PREPROCESS_END_SERVICE
-from common.status_codes import ERROR, BEGIN_LIST, END_LIST, BEGIN_DOCUMENT
+from common.status_codes import ERROR, BEGIN_LIST, END_LIST, BEGIN_DOCUMENT, EXTRACTED_DOCUMENT
 from common.error_messages import (
     CREATING_STATUS_REDIS_ERROR,
     PARSING_PARAMETERS_ERROR,
@@ -308,7 +309,7 @@ class PreprocessStartDeployment(BaseDeployment):
                         raise Exception()
         except Exception:
             raise Exception()
-
+    
     def process(self, json_input: dict) -> Tuple[bool, dict, str]:
         """ Main function. Return if the output must be written to next step, the output to write and the next step.
         :return: Tuple[bool, dict, str]
@@ -319,8 +320,8 @@ class PreprocessStartDeployment(BaseDeployment):
         msg = json.dumps({'status': ERROR, 'msg': "Error in preprocess start"})
         redis_status = db_dbs['status']
         dataset_status_key = generate_dataset_status_key(message)
-        must_continue = self.must_continue
-
+        must_continue = self.must_continue 
+        
         try:
             try:
                 project_conf = get_project_config(message)
@@ -334,39 +335,130 @@ class PreprocessStartDeployment(BaseDeployment):
             except KeyError:
                 self.logger.error(f"[Process {dataset_status_key}] Error getting dataset keys", exc_info=get_exc_info())
                 raise Exception(GETTING_DATASET_STATUS_KEY_ERROR)
+            
+            if json_input.get('preprocess_conf', {}).get('preprocess_reuse', False):
+                # Use the process_id directly to search for files
+                process_id = json_input.get('dataset_conf', {}).get('dataset_id')
+                process_id = process_id if process_id else project_conf.get('process_id')
+                self.logger.info(f"Reusing existing process_id: {process_id}")
+                department = project_conf.get('department')
+                
+                try:
+                    # Build a search pattern based on the process_id
+                    search_pattern = f"{department}/{process_id}"
+                    
+                    # Search for files in workspace
+                    all_files = list_files(storage_containers['workspace'], prefix=search_pattern)
+                    
+                    # Find the original request_id by analyzing the paths
+                    request_id_pattern = re.compile(f"{department}/{process_id}/([^/]+)")
+                    original_request_id = None
+                    
+                    for file_path in all_files:
+                        match = request_id_pattern.search(file_path)
+                        if match:
+                            original_request_id = match.group(1)
+                            break
+                    
+                    if original_request_id:
+                        # Rebuild all paths with the original request_id
+                        base_path = f"{department}/{process_id}/{original_request_id}"
+                        
+                        # Update paths in specific to use the original request_id
+                        message['specific']['path_txt'] = f"{base_path}/txt"
+                        message['specific']['path_text'] = f"{base_path}/text"
+                        message['specific']['path_img'] = f"{base_path}/imgs"
+                        message['specific']['path_cells'] = f"{base_path}/cells"
+                        message['specific']['path_tables'] = f"{base_path}/tables"
+                        
+                        # Search with regex patterns for both /txt/ and /text/ocr/ files
+                        txt_pattern = re.compile(f"{base_path}/txt/{department}/{original_request_id}/[^/]+\.txt$")
+                        ocr_pattern = re.compile(f"{base_path}/text/ocr/[^/]+\.txt$")
+                        ocr_pags_pattern = re.compile(f"{base_path}/text/ocr/pags/")
+                        
+                        # First try to find files in /txt/
+                        txt_files = [f for f in all_files if txt_pattern.search(f)]
+                        
+                        if txt_files:
+                            file_path = txt_files[0]
+                            file_name = os.path.basename(file_path)
+                            base_name = os.path.splitext(file_name)[0]
+                            
+                            message['specific']['document'] = {
+                                'filename': f"{department}/{original_request_id}/{base_name}.pdf",
+                                'label': 0,
+                                'metadata': {}
+                            }
+                            
+                            message['specific']['paths'] = {
+                                'images': [],
+                                'text': file_path,
+                                'cells': f"{base_path}/cells/txt"
+                            }
+                        else:
+                            # If not found in /txt/, look in /text/ocr/ 
+                            ocr_files = [f for f in all_files if ocr_pattern.search(f) and not ocr_pags_pattern.search(f)]
+                            
+                            if ocr_files:
+                                file_path = ocr_files[0]
+                                file_name = os.path.basename(file_path)
+                                base_name = os.path.splitext(file_name)[0]
+                                
+                                message['specific']['document'] = {
+                                    'filename': f"{department}/{original_request_id}/{base_name}.pdf",
+                                    'label': 0,
+                                    'metadata': {}
+                                }
+                                
+                                message['specific']['paths'] = {
+                                    'images': [],
+                                    'text': file_path,
+                                    'cells': ""
+                                }
+                            else:
+                                self.logger.warning(f"No text files found for original request_id: {original_request_id}")
+                    else:
+                        self.logger.warning(f"Could not determine original request_id for process_id: {process_id}")
+                except Exception as e:
+                    self.logger.warning(f"Error looking for files: {str(e)}")
+                
+                msg = json.dumps({'status': EXTRACTED_DOCUMENT, 'msg': "Reusing existing process"})
+                must_continue = True  
+                next_service = PREPROCESS_END_SERVICE
+            else:
+                try:
+                    self.logger.info(f"Getting dataset files for dataset: '{dataset_conf['dataset_csv_path']}'")
+                    df = self.get_dataset_files(dataset_conf=dataset_conf, dataset_status_key=dataset_status_key)
+                except Exception:
+                    self.logger.error(f"[Process {dataset_status_key}] Error check files in storage", exc_info=get_exc_info())
+                    raise Exception(CHECKING_FILES_STORAGE_ERROR)
 
-            try:
-                self.logger.info(f"Getting dataset files for dataset: '{dataset_conf['dataset_csv_path']}'")
-                df = self.get_dataset_files(dataset_conf=dataset_conf, dataset_status_key=dataset_status_key)
-            except Exception:
-                self.logger.error(f"[Process {dataset_status_key}] Error check files in storage", exc_info=get_exc_info())
-                raise Exception(CHECKING_FILES_STORAGE_ERROR)
+                try:
+                    self.logger.info(f"Adding status to dataset: {dataset_status_key}")
+                    self.add_status(db_provider=db_dbs, dataset_status_key=dataset_status_key, project_conf=project_conf, dataset_conf=dataset_conf, df=df, message=message)
+                except Exception:
+                    self.logger.error(f"[Process {dataset_status_key}] Error creating status of process in Redis", exc_info=get_exc_info())
+                    raise Exception(CREATING_STATUS_REDIS_ERROR)
 
-            try:
-                self.logger.info(f"Adding status to dataset: {dataset_status_key}")
-                self.add_status(db_provider=db_dbs, dataset_status_key=dataset_status_key, project_conf=project_conf, dataset_conf=dataset_conf, df=df, message=message)
-            except Exception:
-                self.logger.error(f"[Process {dataset_status_key}] Error creating status of process in Redis", exc_info=get_exc_info())
-                raise Exception(CREATING_STATUS_REDIS_ERROR)
+                try:
+                    self.logger.info("Prepare and sending messages to preprocess extract")
+                    self.list_documents(db_provider=db_dbs, df=df, dataset_status_key=dataset_status_key, dataset_conf=dataset_conf, message=message, csv_method=project_conf.get('csv_method', False))
+                    must_continue = False  
+                except Exception:
+                    self.logger.error(f"[Process {dataset_status_key}] Error checking files in storage or sending next steep", exc_info=get_exc_info())
+                    raise Exception(CHECKING_FILES_STORAGE_ERROR)
 
-            try:
-                self.logger.info("Prepare and sending messages to preprocess extract")
-                self.list_documents(db_provider=db_dbs, df=df, dataset_status_key=dataset_status_key, dataset_conf=dataset_conf, message=message, csv_method=project_conf.get('csv_method', False))
-            except Exception:
-                self.logger.error(f"[Process {dataset_status_key}] Error checking files in storage or sending next steep", exc_info=get_exc_info())
-                raise Exception(CHECKING_FILES_STORAGE_ERROR)
+                msg = json.dumps({'status': END_LIST, 'msg': "All documents were sent to be preprocessed"})
 
-            msg = json.dumps({'status': END_LIST, 'msg': "All documents were sent to be preprocessed"})
         except Exception as ex:
             dataset_status_key = generate_dataset_status_key(message)
             next_service = PREPROCESS_END_SERVICE
             self.logger.error(f"[Process {dataset_status_key}] Error in preprocess start.", exc_info=get_exc_info())
-            must_continue = True
+            must_continue = True 
             msg = json.dumps({'status': ERROR, 'msg': str(ex)})
 
         update_status(redis_status, dataset_status_key, msg)
         return must_continue, message, next_service
-
 
 if __name__ == "__main__":
     deploy = PreprocessStartDeployment()

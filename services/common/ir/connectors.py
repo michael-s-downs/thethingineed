@@ -4,23 +4,24 @@
 # Native imports
 from abc import ABC
 from typing import List
+import json
+from collections import Counter
 
 # Installed imports
 from elasticsearch import Elasticsearch, RequestError
+from azure.search.documents import SearchClient
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import SearchIndex, SimpleField, SearchFieldDataType
 
 # Custom imports+
-from common.utils import ELASTICSEARCH_INDEX
+from common.utils import INDEX_NAME
 from common.errors.genaierrors import PrintableGenaiError
 
 class Connector(ABC):
     MODEL_FORMAT = "Connector"
 
-    def __init__(self, vector_storage: dict):
-        self.host = vector_storage.get('vector_storage_host', '')
-        self.username = vector_storage.get('vector_storage_username', '')
-        self.password = vector_storage.get('vector_storage_password', '')
-        self.scheme = vector_storage.get('vector_storage_scheme', 'https')
-        self.port = vector_storage.get('vector_storage_port', 9200)
+    def __init__(self):
         self.connection = None
 
     def connect(self):
@@ -138,7 +139,12 @@ class ElasticSearchConnector(Connector):
     MODEL_FORMAT = "elastic"
 
     def __init__(self, vector_storage: dict):
-        super().__init__(vector_storage)
+        super().__init__()
+        self.host = vector_storage.get('vector_storage_host', '')
+        self.username = vector_storage.get('vector_storage_username', '')
+        self.password = vector_storage.get('vector_storage_password', '')
+        self.scheme = vector_storage.get('vector_storage_scheme', 'https')
+        self.port = vector_storage.get('vector_storage_port', 9200)
 
     def connect(self):
         """ Method to connect to the vector storage database
@@ -150,7 +156,7 @@ class ElasticSearchConnector(Connector):
             self.connection = Elasticsearch(hosts=host, http_auth=auth, verify_certs=False, timeout=30)
 
             result = self.connection.ping()
-        except:
+        except Exception:
             raise PrintableGenaiError(400, f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
         if not result:
             raise PrintableGenaiError(400, f"Error connecting with '{self.scheme}://{self.host}:{self.port}'")
@@ -177,7 +183,7 @@ class ElasticSearchConnector(Connector):
             metadata = doc.metadata.keys() - extra_metadata
             if not all([key in collection_meta for key in metadata]):
                 raise PrintableGenaiError(400,
-                    f"Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
+                    "Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
             if new_index:
                 continue
             new_meta = [key for key in metadata if key not in index_meta and key not in vector_storage_keys]
@@ -197,7 +203,7 @@ class ElasticSearchConnector(Connector):
         # Assert correct models config
         models_used = []
         for model in available_models:
-            if self.exist_index(ELASTICSEARCH_INDEX(index, model)):
+            if self.exist_index(INDEX_NAME(index, model)):
                 models_used.append(model)
         if len(models_used) == 0:
             return
@@ -216,7 +222,7 @@ class ElasticSearchConnector(Connector):
         """
         for model in models:
             # All models sent does exist
-            index_name = ELASTICSEARCH_INDEX(index, model)
+            index_name = INDEX_NAME(index, model)
             # Get the node_type used in first indexation
             try:
                 result = self.connection.search(index=index_name,
@@ -244,11 +250,20 @@ class ElasticSearchConnector(Connector):
                                                    f"with the chunking method '{chunking_method}' at first time.")
 
     def exist_index(self, index: str):
-        """ Method to check if an index exists"""
-        if self.connection is None:
-            raise PrintableGenaiError(400, f"Error the connection has not been established")
-        return self.connection.indices.exists(index=index)
+        """Check if a specified index exists in the connection.
 
+        Args:
+            index (str): The name of the index to check for existence.
+
+        Raises:
+            PrintableGenaiError: If the connection has not been established.
+
+        Returns:
+            bool: True if the index exists, False otherwise.
+        """
+        if self.connection is None:
+            raise PrintableGenaiError(400, "Error the connection has not been established")
+        return self.connection.indices.exists(index=index)
     def create_empty_index(self, index: str):
         """ Async method to create an empty index
 
@@ -288,6 +303,61 @@ class ElasticSearchConnector(Connector):
         if len(chunks) == 0:
             raise PrintableGenaiError(400, f"Error the index '{index}' is empty so retrieval cannot be done.")
         return chunks
+    
+    def get_metadata_node_content(self, node):
+        """Gets _node_content from metadata and loads it into a dict
+
+        Args:
+            node (_type_): _description_
+
+        Returns:
+            dict: _node_content dictionary parsed
+        """
+        return json.loads(node['_source']['metadata']['_node_content'])
+
+    def get_content(self, node):
+        """Retrieve the content from a node.
+
+        Args:
+            node (dict): The node containing the content.
+
+        Returns:
+            str: The content of the node.
+        """
+        return node["_source"]["content"]
+
+    def get_embeddings(self, node):
+        """Retrieve the embeddings from a node.
+
+        Args:
+            node (dict): The node containing the embeddings.
+
+        Returns:
+            list: The embeddings of the node.
+        """
+        return node["_source"]["embedding"]
+
+    def get_metadata_index_id(self, node):
+        """Extract the index ID from the node's metadata.
+
+        Args:
+            node (dict): The node containing the metadata.
+
+        Returns:
+            str: The index ID extracted from the metadata.
+        """
+        return node['_source']['metadata']['index_id']
+    
+    def get_id(self, node):
+        """Retrieve the ID from a node.
+
+        Args:
+            node (dict): The node containing the ID.
+
+        Returns:
+            str: The ID of the node.
+        """
+        return node['_id']
 
     def get_index_mapping(self, index: str):
         """ Async method to get the index mapping
@@ -307,7 +377,7 @@ class ElasticSearchConnector(Connector):
         :param size: Size of documents
         """
         if self.connection is None:
-            raise PrintableGenaiError(400, f"Error the connection has not been established")
+            raise PrintableGenaiError(400, "Error the connection has not been established")
 
         chunks = []
         while True:
@@ -371,7 +441,10 @@ class ElasticSearchConnector(Connector):
             raise PrintableGenaiError(400, f"Error the connection has not been established")
 
         body = {"query": self._generate_filters(filters)}
-        return self.connection.delete_by_query(index=index_name, body=body)
+        result = self.connection.delete_by_query(index=index_name, body=body)
+        failures, deleted = result.body.get('failures', []), result.body.get('deleted', 0)
+
+        return result, failures, deleted
 
     def close(self):
         """ Method to close the connection to the vector storage database
@@ -380,9 +453,17 @@ class ElasticSearchConnector(Connector):
             self.connection.close()
 
     def get_documents_filenames(self, index_name: str, size: int = 10000):
+        """
+        Retrieve filenames and their corresponding document counts from a specified index.
+
+        :param index_name: The name of the index from which to retrieve filenames.
+        :param size: The maximum number of unique filenames to retrieve. Default is 10,000.
+
+        :return: A tuple containing a status message, a list of dictionaries with filenames and their document counts, 
+                 and an HTTP status code. If an error occurs, returns an error message and a 400 status code.
+        """
         filenames = []
         try:
-
             aggregation_body = {
                 "size": 0,
                 "aggs": {
@@ -394,8 +475,7 @@ class ElasticSearchConnector(Connector):
                     }
                 }
             }
-            result = self.connection.search(index=index_name,
-                                            body=aggregation_body)
+            result = self.connection.search(index=index_name, body=aggregation_body)
         except RequestError as e:
             error_message = f"Error: {e.info['error']['reason']}"
             if 'caused_by' in e.info['error']:
@@ -405,11 +485,12 @@ class ElasticSearchConnector(Connector):
         buckets = result['aggregations']['unique_documents']['buckets']
         for bucket in buckets:
             filename = bucket['key']
-            doc_count=bucket['doc_count']
+            doc_count = bucket['doc_count']
             filenames.append({"filename": filename, "chunks": doc_count})
 
         return "finished", filenames, 200
     
+
     def list_indices(self):
         """Method to list all indices in the Elasticsearch database."""
         if self.connection is None:
@@ -461,9 +542,364 @@ class ElasticSearchConnector(Connector):
             result.append(new_dict)
         return "finished", result, 200
 
+class AiSearchConnector(Connector):
+    MODEL_FORMAT = "ai_search"
+
+    def __init__(self, vector_storage: dict):
+        super().__init__()
+        self.host = vector_storage.get('vector_storage_host', '')
+        self.key = vector_storage.get('vector_storage_key', '')
+        self.scheme = vector_storage.get('vector_storage_scheme', 'https')
+
+    def connect(self):
+        """Method to connect to Azure AI Search"""
+        try:
+
+            endpoint = f"{self.scheme}://{self.host}"
+            self.credential = AzureKeyCredential(self.key)
+            self.index_client = SearchIndexClient(endpoint=endpoint, credential=self.credential)
+            # The connection will be established per index when needed
+            self.connection = True
+        except Exception as e:
+            raise PrintableGenaiError(400, f"Error connecting to Azure AI Search at '{endpoint}': {str(e)}")
+
+    def assert_correct_index_metadata(self, index: str, docs: list, vector_storage_keys: list):
+        """
+        Validates the metadata of documents against an existing index. Raises an error if there are discrepancies
+        in metadata keys between the documents and the index, or if there is an attempt to change metadata for an
+        already created index.
+
+        :param index: The name of the index to validate against.
+        :param docs: A list of documents whose metadata needs to be validated.
+        :param vector_storage_keys: A list of keys that are considered redundant in the vector storage.
+        :raises PrintableGenaiError: If there are metadata discrepancies or if new metadata keys are introduced
+                                      that do not match the existing index.
+        """
+        extra_metadata = ["snippet_number", "snippet_id", "_header_mapping", "_csv_path"]
+        new_index = not self.exist_index(index)
+        
+        try:
+            index_properties = self.get_index_mapping(index).fields if not new_index else {}
+            index_meta = [field.name for field in index_properties 
+                         if field.name.startswith('metadata_') and field.name not in extra_metadata]
+        except Exception:
+            index_meta = []
+            new_index = True
+
+        collection_meta = docs[0].metadata.keys() - extra_metadata
+        for doc in docs:
+            metadata = doc.metadata.keys() - extra_metadata
+            if not all([key in collection_meta for key in metadata]):
+                raise PrintableGenaiError(400,
+                    "Detected metadata discrepancies. Verify that all documents have consistent metadata keys.")
+            if new_index:
+                continue
+            new_meta = [key for key in metadata if key not in index_meta and key not in vector_storage_keys]
+            if new_meta:
+                raise PrintableGenaiError(400,
+                    f"Metadata keys {new_meta} do not match those in the existing index {index}. "
+                    f"Check and align metadata keys. Index metadata: {list(index_meta)}")
+
+    def get_full_index(self, index: str, filters: dict, offset: int = 0, size: int = 25) -> list:
+        """ Method to get an index with all chunks using Azure AI Search
+
+        :param index: Index to get
+        :param offset: Documents starting point
+        :param size: Size of documents
+
+        return: List of documents from the index
+        """
+        chunks = []
+        search_client = SearchClient(
+            endpoint=f"{self.scheme}://{self.host}",
+            index_name=index,
+            credential=self.credential
+        )
+        
+        while True:
+            try:
+                results = search_client.search(
+                    search_text="*",
+                    filter=self._generate_filters(filters),
+                    top=size,
+                    skip=offset
+                )
+                hits = list(results)
+                if not hits:
+                    break
+                chunks.extend(hits)
+                offset += size
+            except Exception as e:
+                raise PrintableGenaiError(400, f"Error retrieving documents from index '{index}': {str(e)}")
+        
+        if not chunks:
+            raise PrintableGenaiError(400, f"Error the index '{index}' is empty so retrieval cannot be done.")
+        
+        return chunks
+
+    def get_metadata_node_content(self, node):
+        """Gets _node_content from metadata and loads it into a dict
+
+        Args:
+            node (_type_): _description_
+
+        Returns:
+            dict: _node_content dictionary parsed
+        """
+        return json.loads(json.loads(node["metadata"])["_node_content"])
+
+    def get_content(self, node):
+        """Retrieve the content from a node.
+
+        Args:
+            node (dict): The node containing the content.
+
+        Returns:
+            str: The content of the node.
+        """
+        return node["content"]
+
+    def get_embeddings(self, node):
+        """Retrieve the embeddings from a node.
+
+        Args:
+            node (dict): The node containing the embeddings.
+
+        Returns:
+            list: The embeddings of the node.
+        """
+        return node["embeddings"]
+    
+    def get_metadata_index_id(self, node):
+        """Extract the index ID from the node's metadata.
+
+        Args:
+            node (dict): The node containing the metadata.
+
+        Returns:
+            str: The index ID extracted from the metadata.
+        """
+        return json.loads(node["metadata"])["index_id"]
+
+    def get_id(self, node):
+        """Retrieve the ID from a node.
+
+        Args:
+            node (dict): The node containing the ID.
+
+        Returns:
+            str: The ID of the node.
+        """
+        return node["id"]
+
+
+    def exist_index(self, index: str):
+        """Check if a specified index exists.
+
+        Args:
+            index (str): The name of the index to check.
+
+        Returns:
+            bool: True if the index exists, False otherwise.
+
+        Raises:
+            PrintableGenaiError: If the connection has not been established or if an error occurs while checking the index existence.
+        """
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+        try:
+            return index in [idx.name for idx in self.index_client.list_indexes()]
+        except Exception as e:
+            raise PrintableGenaiError(400, f"Error checking index existence: {str(e)}")
+
+    def create_empty_index(self, index_name: str):
+        """
+        Create an empty index with predefined fields.
+
+        This method establishes an empty index with specified fields for storing
+        documents. It requires an active connection to the index client.
+
+        Args:
+            index_name (str): The name of the index to be created.
+
+        Returns:
+            The result of the index creation operation.
+
+        Raises:
+            PrintableGenaiError: If the connection is not established or if an error occurs during index creation.
+        """
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+        
+        fields = [
+            SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+            SimpleField(name="content", type=SearchFieldDataType.String),
+            SimpleField(name="metadata", type=SearchFieldDataType.String)
+        ]
+        
+        index = SearchIndex(name=index_name, fields=fields)
+        try:
+            return self.index_client.create_index(index)
+        except Exception as e:
+            raise PrintableGenaiError(400, f"Error creating index: {str(e)}")
+
+
+    def delete_index(self, index: str):
+        """
+        Delete an index from the search service.
+
+        This method removes the specified index from the search service. It requires
+        an active connection to the index client.
+
+        Args:
+            index (str): The name of the index to be deleted.
+
+        Raises:
+            PrintableGenaiError: If the connection is not established or if an error occurs during index deletion.
+        """
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+        try:
+            self.index_client.delete_index(index)
+        except Exception as e:
+            raise PrintableGenaiError(400, f"Error deleting index: {str(e)}")
+
+    def delete_documents(self, index_name: str, filters: dict):
+        """ Method to delete a document from an index
+
+        :param index_name: Index to delete the document from
+        :param filters: Dictionary of desired metadata to delete documents
+        """
+        if self.connection is None:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+
+        try:
+            search_client = SearchClient(
+                endpoint=f"{self.scheme}://{self.host}",
+                index_name=index_name,
+                credential=self.credential
+            )
+
+            search_text = "*"  
+            fields_to_retrieve = ["metadata", "id"]
+            results = search_client.search(search_text, select=fields_to_retrieve)
+            ids_to_delete = []
+            for doc in results:
+                metadata = json.loads(doc['metadata'])
+                if metadata['filename'] in filters['filename']:
+                    ids_to_delete.append(doc['id'])
+            
+
+            if not ids_to_delete:
+                raise PrintableGenaiError(400, f"No documents found with metadata filename(s): {filters}")
+
+            deleted = 0
+            failures = []
+            results = []
+            for doc_id in ids_to_delete:
+                r = search_client.delete_documents(documents={"id": doc_id})
+                if r[0].status_code==200:
+                    deleted+=1
+                else:
+                    failures.append(doc_id)
+
+            return "finished", failures, deleted 
+
+        except Exception as e:
+            raise PrintableGenaiError(400, f"Error deleting documents: {str(e)}")
+
+    
+    def get_documents_filenames(self, index_name: str, size: int = 10000):
+        """
+        Retrieves filenames from a specified index in the vector storage.
+
+        This method connects to the Azure AI Search service and retrieves filenames
+        from the specified index. It returns a list of filenames along with the count
+        of chunks associated with each filename.
+
+        :param index_name: The name of the index from which to retrieve filenames.
+        :param size: The maximum number of documents to retrieve. Default is 10000.
+        :return: A tuple containing the status ("finished" or "error"), the result (list of filenames and their chunk counts),
+                 and the HTTP status code (200 for success, 400 for error).
+        :raises PrintableGenaiError: If the connection to the vector storage has not been established.
+        """
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+
+        try:
+            search_client = SearchClient(
+                endpoint=f"{self.scheme}://{self.host}",
+                index_name=index_name,
+                credential=self.credential
+            )
+
+            search_text = "*"  
+            fields_to_retrieve = ["metadata"]
+            results = search_client.search(search_text, select=fields_to_retrieve)
+            filenames = [json.loads(doc['metadata'])['filename'] for doc in results]
+
+            filenames = dict(Counter(filenames))
+            result = []
+            for key, value in filenames.items():
+                result.append({"chunks": value, "filename":key})
+
+            return "finished", result, 200
+
+        except Exception as e:
+            return "error", f"Error retrieving filenames: {str(e)}", 400
+
+    def list_indices(self):
+        """Method to list all indices"""
+        if not self.connection:
+            raise PrintableGenaiError(400, "Error: the connection has not been established")
+        try:
+            return [index.name for index in self.index_client.list_indexes()]
+        except Exception as e:
+            raise PrintableGenaiError(500, f"Error retrieving indices: {str(e)}")
+    
+
+    ############################################################################################################
+    #                                           PRIVATE METHODS                                                  #
+    ############################################################################################################
+
+    @staticmethod
+    def _generate_filters(filters: dict):
+        """Convert dictionary filters to OData filter string"""
+        filter_parts = []
+        for key, value in filters.items():
+            if isinstance(value, str):
+                filter_parts.append(f"metadata_{key} eq '{value}'")
+            elif isinstance(value, list) and all([isinstance(val, str) for val in value]):
+                or_parts = [f"metadata_{key} eq '{val}'" for val in value]
+                filter_parts.append(f"({' or '.join(or_parts)})")
+            else:
+                raise PrintableGenaiError(400, f"Error: the value '{value}' for key '{key}' must be a string or list of strings")
+        
+        return " and ".join(filter_parts) if filter_parts else None
+
+    @staticmethod
+    def _parse_response(chunks: list):
+        """Parse Azure AI Search response into common format"""
+        result = []
+        for chunk in chunks:
+            meta = {}
+            # Assuming metadata is stored in fields prefixed with 'metadata_'
+            for key, value in chunk.items():
+                if key.startswith('metadata_'):
+                    meta[key[9:]] = value  # Remove 'metadata_' prefix
+            
+            new_dict = {
+                'id_': chunk.get('id'),
+                'meta': meta,
+                'content': chunk.get('content'),
+                'score': chunk.get('@search.score')
+            }
+            result.append(new_dict)
+        
+        return "finished", result, 200
 
 class ManagerConnector(object):
-    MODEL_TYPES = [ElasticSearchConnector]
+    MODEL_TYPES = [ElasticSearchConnector, AiSearchConnector]
 
     @staticmethod
     def get_connector(conf: dict) -> Connector:

@@ -40,8 +40,8 @@ class BaseAdapter(ABC):
         self.max_img_size_mb = max_img_size_mb
         self.available_img_formats = ["JPEG", "PNG", "GIF", "WEBP"]
 
-        preprocessed_message = self.message.preprocess()
-        self.message.substituted_query = [preprocessed_message[0], preprocessed_message[-1]]
+        self.preprocessed_message = self.message.preprocess()
+        self.message.substituted_query = [self.preprocessed_message[0], self.preprocessed_message[-1]]
 
     def adapt_query_and_persistence(self):
         """ Method to add the number of tokens to the message"""
@@ -359,7 +359,6 @@ class Claude3Adapter(BaseAdapter):
         os.remove(resized_image_route)
 
 
-
 class NovaAdapter(BaseAdapter):
     ADAPTER_FORMAT = "nova"
 
@@ -412,7 +411,6 @@ class NovaAdapter(BaseAdapter):
                 height = height_resize
         #TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
         return int((height * width) / 750)  # Not accurate
-    
 
     def _adapt_image(self, image_dict):
         """ Method to get tokens from an image and adapt it to nova-v format
@@ -446,10 +444,113 @@ class NovaAdapter(BaseAdapter):
         resized_image.close()
         os.remove(resized_image_route)
 
+class GeminiAdapter(BaseAdapter):
+    ADAPTER_FORMAT = "gemini"
 
+    def __init__(self, message, max_img_size_mb=20.00):
+        """ Constructor for the NovaAdapter class
+
+        :param message: Message like class
+        """
+        super().__init__(message, max_img_size_mb)
+        self.message.substituted_query = self.preprocessed_message[-2:]
+        self.available_img_formats = ["JPEG", "PNG", "GIF", "WEBP"] #TODO change available img formats
+
+    def adapt_query_and_persistence(self):
+        """ Method to add the number of tokens to the message"""
+        self._adapt_messages(self.message.substituted_query)
+        if isinstance(self.message.query, list):
+            for message in self.message.substituted_query:
+                if message.get('role', '') == "user":
+                    self.message.query = [message]
+        for pair in self.message.persistence:
+            self._adapt_messages(pair)
+
+    @staticmethod
+    def _get_image_tokens(width, height, width_resize=None, height_resize=None) -> int:
+        """ Resize an image to have the correct format and get the tokens
+
+        :param width: Width of the image
+        :param height: Height of the image
+        :param width_resize: Width to resize to
+        :param height_resize: Height to resize to
+        :return: int - Number of tokens
+        """
+        if width <= 384 and height <= 384:
+            return 258
+        else:
+            tile_width = 768
+            tile_height = 768
+
+            num_tiles_x = ceil(width / tile_width)
+            num_tiles_y = ceil(height / tile_height)
+
+            total_tiles = num_tiles_x * num_tiles_y
+
+            return total_tiles * 258
+    def _adapt_messages(self, messages):
+        """Method to process messages and adapt text and images accordingly."""
+        for pair in messages:
+            if pair.get('content', ""):
+                if isinstance(pair['content'], str):
+                    pair['parts'] = [{"text": pair['content']}]
+                    pair.pop('content')
+                elif isinstance(pair['content'], list):
+                    pair['parts'] = pair['content']
+                    pair.pop('content')
+
+        for message in messages:
+            for part in message.get("parts", []):
+                if "text" in part:
+                    if part.get('type'):
+                        part.pop('type')
+                    part["text"] = self._adapt_text(part["text"])
+            for part in message.get("parts", []):
+                if "image" in part:
+                    self._adapt_image(part)
+
+    def _adapt_text(self, text):
+        """Method to adapt text content by encoding and counting tokens."""
+
+        if isinstance(text, dict) and text.get('n_tokens'):
+            return {"content": text['content'], "n_tokens": text['n_tokens']}
+        else:
+            n_tokens = len(self.encoding.encode(text))
+            return {"content": text, "n_tokens": n_tokens}
+
+    def _adapt_image(self, image_dict):
+        """ Method to get tokens from an image and adapt it to nova-v format
+
+        :param image_dict: Image to get tokens from
+        :return: int - Number of tokens
+        """
+        if image_dict.get('image').get('detail'):
+            raise PrintableGenaiError(400, "Detail parameter not allowed in Gemini vision model")
+
+        # Get the base64 image resized and the size
+        base64_img, _, resized_image_route, resized_image = self._get_base64_image(image_dict)
+
+        # TODO - Check the formula for tokens calculation (nothing found in first iteration). SAME as claude3 one
+        if not image_dict.get('n_tokens'):
+            total = self._get_image_tokens(resized_image.width, resized_image.height, None, None)
+        else:
+            total = image_dict['n_tokens']
+
+        image_dict.clear()
+        image_dict.update({
+            "inlineData": {
+                "data": base64_img,
+                "mimeType": f"image/{resized_image.format.lower()}",
+                "n_tokens": total
+            }
+        })
+
+        # Remove the resized image and close the opened image
+        resized_image.close()
+        os.remove(resized_image_route)
 
 class ManagerAdapters(object):
-    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter]
+    ADAPTERS_TYPES = [Claude3Adapter, GPT4VAdapter, DalleAdapter, BaseAdapter, NovaAdapter, GeminiAdapter]
 
     @staticmethod
     def get_adapter(conf: dict):

@@ -2,6 +2,12 @@
 
 
 import os
+import requests
+import json
+import time
+from common.genai_controllers import list_files, storage_containers, load_file
+
+from requests.auth import HTTPBasicAuth 
 
 from langfuse import Langfuse
 from basemanager import AbstractManager
@@ -19,9 +25,50 @@ class LangFuseManager(AbstractManager):
             langfuse_config (dict): The configuration for LangFuse integration.
         """
         self.langfuse = None
+        if os.getenv("LANGFUSE", False) == "true":
+            langfuse_config = {
+                "secret_key": os.getenv("LANGFUSE_SECRET_KEY", None),
+                "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
+                "host": os.getenv("LANGFUSE_HOST", None)
+            }
+            self.langfuse = Langfuse(**langfuse_config)
+            self.langfuse_config = langfuse_config
+            self.move_templates_to_langfuse("src/compose/templates/", "compose_template")
+            self.move_templates_to_langfuse("src/compose/filter_templates/", "compose_filter_template")
+            
         self.trace = None
     
-    def parse(self, compose_config, session_id):
+    
+    def move_templates_to_langfuse(self, path: str, label: str):
+        """ Move templates all templates from azure to Langfuse if they are not already in Langfuse
+
+        Args:
+            templates_names (List[str]): List of templates names
+            label (str): Label to upload the templates
+        """
+        templates_availables = self.get_list_templates(label)
+
+        templates_azure = list_files(storage_containers['workspace'], path)
+        templates_azure = [file.split("/")[-1].split(".")[0].replace(".json", "") for file in templates_azure]
+        required_templates = set(templates_azure) - set(templates_availables)
+        if len(required_templates) == 0:
+            return 
+        
+        for template_name in required_templates:
+            try:
+                template = load_file(storage_containers['workspace'], f"{path}{template_name}.json")
+                template = template.decode().replace("\r", "")
+            except Exception as _:
+                time.sleep(0.1)
+                continue
+                
+                
+            self.upload_template(template_name=template_name, template_content=template, label=label)
+        
+        #To make sure langfuse is updated
+        time.sleep(1)
+    
+    def parse(self, compose_config):
         """
         Parses the compose configuration and initializes the LangFuse integration.
 
@@ -32,12 +79,10 @@ class LangFuseManager(AbstractManager):
         Returns:
             LangFuseManager: The LangFuseManager instance.
         """
-        if compose_config.get("langfuse") or os.getenv("LANGFUSE", False) == "true":
-            langfuse_config = {
-                "secret_key": os.getenv("LANGFUSE_SECRET_KEY", None),
-                "public_key": os.getenv("LANGFUSE_PUBLIC_KEY", None),
-                "host": os.getenv("LANGFUSE_HOST", None)
-            }
+        if self.langfuse:
+            return self
+
+        if compose_config.get("langfuse"):
             langfuse_params = compose_config.get("langfuse")
             if isinstance(langfuse_params, dict):
                 langfuse_config = {
@@ -47,11 +92,17 @@ class LangFuseManager(AbstractManager):
                 }
                 
             self.langfuse = Langfuse(**langfuse_config)
-            self.trace = self.langfuse.trace(
-                session_id=session_id
-            )
 
         return self
+
+    def create_trace(self, session_id):
+        if self.langfuse is None:
+            return
+
+        self.trace = self.langfuse.trace(
+            session_id=session_id
+        )
+
 
 
     def update_metadata(self, metadata):
@@ -180,11 +231,39 @@ class LangFuseManager(AbstractManager):
         )
     
 
-    def flush(self):
-        """
-        Flushes the LangFuse integration.
-        """
-        if self.langfuse is None:
-            return
+    
+    def load_template(self, template_name, label="compose_template"):
+        prompt = self.langfuse.get_prompt(template_name, label=label)
+        return prompt
+    
+    def upload_template(self, template_name, template_content, label):
+        result = self.langfuse.create_prompt(name=template_name, prompt=template_content, type="text", labels=[label, "latest"])
+        return result
+    
+    def get_list_templates(self, label):
+        host = self.langfuse_config["host"]
+        sk = self.langfuse_config["secret_key"]
+        pk = self.langfuse_config["public_key"]
+        x = requests.get(
+            f"{host}/api/public/v2/prompts",
+            auth = HTTPBasicAuth(pk, sk),
+            params= {"limit": 100, "label": label}
+        )
+        if x.status_code == 200:
+            return [item['name'] for item in  x.json()["data"]] 
+        
+        raise Exception()
+    
+    def delete_template(self, template_name, label="compose_template"):
+        prompt = self.langfuse.get_prompt(template_name, label=label)
 
-        self.langfuse.flush()
+        host = self.langfuse_config["host"]
+        sk = self.langfuse_config["secret_key"]
+        pk = self.langfuse_config["public_key"]
+        x = requests.patch(
+            f"{host}/api/public/v2/prompts/{template_name}/versions/{prompt.version}",
+            auth=HTTPBasicAuth(pk, sk),
+            json={"newLabels": ["deleted"]}
+        )
+        
+        

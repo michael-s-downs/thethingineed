@@ -4,7 +4,7 @@ import pytest
 import os
 import pandas as pd
 from copy import deepcopy
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 from main import PreprocessStartDeployment
 
 # Sample JSON input for testing
@@ -352,3 +352,296 @@ def test_process_row_exception(mock_update_status, mock_list_files, mock_write_t
     with pytest.raises(Exception):
         with patch.object(deployment, 'generate_tracking_message'):
             deployment.process_row(row, dataset_status_key, redis_status, dataset_conf, mesasge)
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id/request123/txt/dept1/request123/doc1.txt',
+        'dept1/test_id/request123/text/ocr/doc2.txt'
+    ]
+    mock_list_files.return_value = mock_files
+    
+    with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+        with patch('main.json.dumps'):
+            with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                must_continue, message, next_service = deployment.process(input_with_reuse)
+
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+    mock_list_files.assert_called_with(('storage', 'workspace'), prefix='dept1/test_id')
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_txt_files(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True and txt files are found."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id/request123/txt/dept1/request123/doc1.txt'
+    ]
+    mock_list_files.return_value = mock_files
+    
+    def mock_adapt_input(json_input):
+        return {
+            'generic': {'project_conf': {'department': 'dept1', 'process_id': 'test_id'}},
+            'specific': {}
+        }
+    
+    with patch.object(deployment, 'adapt_input', side_effect=mock_adapt_input):
+        with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+            with patch('main.json.dumps'):
+                with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    assert 'specific' in message
+    assert 'path_txt' in message['specific']
+    assert 'document' in message['specific']
+    assert message['specific']['document']['filename'] == 'dept1/request123/doc1.pdf'
+    assert 'paths' in message['specific']
+    assert message['specific']['paths']['text'] == 'dept1/test_id/request123/txt/dept1/request123/doc1.txt'
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_ocr_files(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True and only OCR files are found."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id/request123/text/ocr/doc2.txt',
+        'dept1/test_id/request123/some/other/file.txt'  
+    ]
+    mock_list_files.return_value = mock_files
+    
+    def mock_adapt_input(json_input):
+        return {
+            'generic': {'project_conf': {'department': 'dept1', 'process_id': 'test_id'}},
+            'specific': {}
+        }
+    
+    with patch.object(deployment, 'adapt_input', side_effect=mock_adapt_input):
+        with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+            with patch('main.json.dumps'):
+                with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    assert 'specific' in message
+    assert 'path_txt' in message['specific']
+    assert 'document' in message['specific']
+    assert message['specific']['document']['filename'] == 'dept1/request123/doc2.pdf'
+    assert 'paths' in message['specific']
+    assert message['specific']['paths']['text'] == 'dept1/test_id/request123/text/ocr/doc2.txt'
+    assert message['specific']['paths']['cells'] == ""
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_no_matching_files(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True but no matching files are found."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id/request123/other/file.txt'
+    ]
+    mock_list_files.return_value = mock_files
+    
+    def mock_adapt_input(json_input):
+        return {
+            'generic': {'project_conf': {'department': 'dept1', 'process_id': 'test_id'}},
+            'specific': {}
+        }
+    
+    with patch.object(deployment, 'adapt_input', side_effect=mock_adapt_input):
+        with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+            with patch('main.json.dumps'):
+                with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+    mock_list_files.assert_called_with(('storage', 'workspace'), prefix='dept1/test_id')
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_no_request_id(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True but no request_id can be determined."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id/file.txt'
+    ]
+    mock_list_files.return_value = mock_files
+    
+    def mock_adapt_input(json_input):
+        return {
+            'generic': {'project_conf': {'department': 'dept1', 'process_id': 'test_id'}},
+            'specific': {}
+        }
+    
+    with patch.object(deployment, 'adapt_input', side_effect=mock_adapt_input):
+        with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+            with patch('main.json.dumps'):
+                with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+    mock_list_files.assert_called_with(('storage', 'workspace'), prefix='dept1/test_id')
+
+@patch('main.update_status')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_exception(mock_get_dataset_config, mock_get_project_config, mock_update_status, deployment):
+    """Test process method when preprocess_reuse is True but an exception occurs."""
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    with patch('main.list_files', side_effect=Exception("Error al listar archivos")):
+        def mock_adapt_input(json_input):
+            return {
+                'generic': {'project_conf': {'department': 'dept1', 'process_id': 'test_id'}},
+                'specific': {}
+            }
+        
+        with patch.object(deployment, 'adapt_input', side_effect=mock_adapt_input):
+            with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+                with patch('main.json.dumps'):
+                    with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                        must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+    with patch('main.json.dumps'):
+        with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+
+@patch('main.update_status')
+@patch('main.list_files')
+@patch('main.get_project_config')
+@patch('main.get_dataset_config')
+def test_process_with_preprocess_reuse_warn_no_request_id(mock_get_dataset_config, mock_get_project_config, mock_list_files, mock_update_status, deployment):
+    input_with_reuse = deepcopy(sample_input)
+    input_with_reuse['preprocess_conf'] = {'preprocess_reuse': True}
+    input_with_reuse['dataset_conf']['dataset_id'] = 'test_id'
+    
+    mock_get_project_config.return_value = {'department': 'dept1', 'process_id': 'test_id'}
+    mock_get_dataset_config.return_value = {
+        'dataset_id': 'test_id',
+        'dataset_path': 'dept1/test_id/request123'  
+    }
+    
+    mock_files = [
+        'dept1/test_id_incorrect_format.txt'  
+    ]
+    mock_list_files.return_value = mock_files
+    
+    with patch.object(deployment.logger, 'warning') as mock_logger_warning:
+        with patch('main.storage_containers', {'workspace': ('storage', 'workspace')}):
+            with patch('main.json.dumps'):
+                with patch('main.generate_dataset_status_key', return_value='dataset_key'):
+                    must_continue, message, next_service = deployment.process(input_with_reuse)
+    
+    mock_logger_warning.assert_called_with("Could not determine original request_id for process_id: test_id")
+    
+    assert must_continue is True
+    assert next_service == 'preprocess_end'
+    mock_update_status.assert_called()
+    mock_list_files.assert_called_with(('storage', 'workspace'), prefix='dept1/test_id')
+
+@patch('main.update_status')
+@patch('main.get_exc_info')
+def test_list_documents_apply_exception(mock_get_exc_info, mock_update_status, deployment):
+    mock_get_exc_info.return_value = None
+    
+    df_mock = MagicMock()
+    df_mock.__len__.return_value = 5  
+    df_mock.apply.side_effect = Exception("Error al procesar documentos")
+    
+    with patch.object(deployment.logger, 'debug') as mock_logger_debug:
+        with pytest.raises(Exception):
+            deployment.list_documents(
+                db_provider={'status': 'redis_status'}, 
+                df=df_mock, 
+                dataset_status_key='test_status_key',
+                dataset_conf={'dataset_id': 'test_id'},
+                message={'specific': {}},
+                csv_method=False
+            )
+    
+    mock_logger_debug.assert_called_with(
+        f"[Process test_status_key] Error processing documents", 
+        exc_info=None
+    )
+    
+    df_mock.apply.assert_called_once()

@@ -132,18 +132,55 @@ def _async_preprocess_request_generate(request_params: dict, request_files: list
     template['dataset_conf']['dataset_csv_path'] = dataset_path
     template['url_sender'] = provider_resources.queue_url
 
-    if 'force_ocr' in request_params:
-        template['force_ocr'] = request_params['force_ocr']
-    if 'ocr' in request_params:
-        template['origins']['ocr'] = request_params['ocr']
+    if 'preprocess_conf' in request_params:
+        merge(template.setdefault('preprocess_conf', {}), request_params['preprocess_conf'])
+    else:
+        if 'force_ocr' in request_params:
+            template['force_ocr'] = request_params['force_ocr']
+        if 'ocr' in request_params:
+            template['origins']['ocr'] = request_params['ocr']
+
     if request_params.get('integration', {}):
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
         template['tracking'] = request_params['tracking']
+    if 'process_id' in request_params:
+        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
 
     template['url_sender'] = provider_resources.queue_url
 
     return template
+
+def queue_preprocess_request(apigw_params: dict, request_params: dict, request_files: list) -> dict:
+    """ Send request for queue preprocess
+    
+    :param apigw_params: Params from apigateway
+    :param request_params: Params to fill JSON template
+    :param request_files: Files to process
+    :return: Status of process
+    """
+    result = {}
+    queue = os.getenv('CORE_QUEUE_PROCESS_URL')
+    
+    try:
+        logger.debug("Calling API queue preprocess service")
+        
+        request = _async_preprocess_request_generate(request_params, request_files)
+        request['headers'] = apigw_params
+        
+        provider_resources.qc.set_credentials((provider_resources.provider, queue), url=queue)
+        
+        logger.debug(f"Inserting preprocess request in queue '{queue}'")
+        if not provider_resources.queue_write_message(request, queue):
+            raise Exception(f"Unable to write preprocess request in queue '{queue}'")
+        
+        result['status'] = "waiting"
+        result['process_id'] = request['dataset_conf'].get('dataset_id', "")
+    except Exception as ex:
+        result['status'] = "error"
+        logger.error("Error calling API queue preprocess service", exc_info=True)
+    
+    return result
 
 def _async_classification_multiclass_request_generate(request_params: dict, request_files: list) -> dict:
     """ Fill JSON template to send async classification multiclass request
@@ -267,40 +304,38 @@ def _async_extraction_request_generate(request_params: dict, request_files: list
 
 def _async_indexing_request_generate(request_params: dict, request_files: list) -> dict:
     """ Fill JSON template to send async indexing request
-
+    
     :param request_params: Params to fill JSON template
     :param request_files: Files to process
     :return: JSON to send request
     """
     template = json.loads(open(templates_path + "async_indexing.json", 'r').read())
-
+        
     if not 'csv_method' in request_params:
         dataset_path = _generate_dataset(request_files, request_params['folder'], request_params['indexation_conf']['metadata'])
     else:
         dataset_path = f"{request_files[0]}"
         template['csv'] = True
-
+    
     template['dataset_conf']['dataset_csv_path'] = dataset_path
     template['dataset_conf']['dataset_path'] = request_params['folder']
-
+    
     # To merge recursively
     merge(template['indexation_conf'], request_params['indexation_conf'])
     merge(template['preprocess_conf'], request_params['preprocess_conf'])
-
-
+    
     if 'languages' in request_params:
         template['languages'] = request_params['languages']
     if 'timeout' in request_params:
         template['timeout_sender'] = request_params['timeout']
-    if request_params.get('process_id', ""):
-        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     if request_params.get('integration', {}):
         template['integration'] = request_params['integration']
     if request_params.get('tracking', {}):
         template['tracking'] = request_params['tracking']
-
+    if 'process_id' in request_params:
+        template['dataset_conf']['dataset_id'] = request_params['process_id'].split(":")[-1]
     template['url_sender'] = provider_resources.queue_url
-
+    
     return template
 
 def _sync_preprocess_request(apigw_params: dict, request_params: dict, request_file: str) -> dict:
@@ -312,7 +347,7 @@ def _sync_preprocess_request(apigw_params: dict, request_params: dict, request_f
     :return: Results of process
     """
     result = {}
-    url = os.getenv('API_SYNC_PREPROCESS_URL')
+    url = os.getenv('CORE_SYNC_PREPROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -340,7 +375,7 @@ def sync_classification_multiclass_request(apigw_params: dict, request_params: d
     :return: Results of process
     """
     result = {}
-    url = os.getenv('API_SYNC_CLASSIFY_URL')
+    url = os.getenv('CORE_SYNC_CLASSIFY_URL')
     url = f"http://{url}" if "http" not in url else url
     
     try:
@@ -376,7 +411,7 @@ def sync_extraction_request(apigw_params: dict, request_params: dict, request_fi
     :return: Results of process
     """
     result = {}
-    url = os.getenv('API_SYNC_EXTRACT_URL')
+    url = os.getenv('CORE_SYNC_EXTRACT_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -413,7 +448,7 @@ def async_preprocess_request(apigw_params: dict, request_params: dict, request_f
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_PROCESS_URL')
+    url = os.getenv('CORE_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -442,7 +477,7 @@ def async_classification_multiclass_request(apigw_params: dict, request_params: 
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_PROCESS_URL')
+    url = os.getenv('CORE_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -471,7 +506,7 @@ def async_classification_multilabel_request(apigw_params: dict, request_params: 
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_PROCESS_URL')
+    url = os.getenv('CORE_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -500,7 +535,7 @@ def async_extraction_request(apigw_params: dict, request_params: dict, request_f
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_PROCESS_URL')
+    url = os.getenv('CORE_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -529,7 +564,7 @@ def async_indexing_request(apigw_params: dict, request_params: dict, request_fil
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_PROCESS_URL')
+    url = os.getenv('CORE_ASYNC_PROCESS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -558,7 +593,7 @@ def queue_indexing_request(apigw_params: dict, request_params: dict, request_fil
     :return: Status of process
     """
     result = {}
-    queue = os.getenv('API_QUEUE_PROCESS_URL')
+    queue = os.getenv('CORE_QUEUE_PROCESS_URL')
 
     try:
         logger.debug("Calling API queue indexing service")
@@ -588,7 +623,7 @@ def async_status_request(apigw_params: dict, process_id: str) -> dict:
     :return: Status of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_STATUS_URL')
+    url = os.getenv('CORE_ASYNC_STATUS_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -621,7 +656,7 @@ def async_result_request(apigw_params: dict, process_id: str) -> dict:
     :return: Results of process
     """
     result = {}
-    url = os.getenv('API_ASYNC_RESULT_URL')
+    url = os.getenv('CORE_ASYNC_RESULT_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -654,7 +689,7 @@ def async_delete_request(apigw_params: dict, process_id: str, tracking_message: 
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    url = os.getenv('API_ASYNC_DELETE_URL')
+    url = os.getenv('CORE_ASYNC_DELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -681,7 +716,7 @@ def sync_delete_request(apigw_params: dict, process_id: str, tracking_message: d
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    url = os.getenv('API_SYNC_DELETE_URL')
+    url = os.getenv('CORE_SYNC_DELETE_URL')
     url = f"http://{url}" if "http" not in url else url
 
     try:
@@ -708,7 +743,7 @@ def queue_delete_request(apigw_params: dict, process_id: str, tracking_message: 
     :param tracking_message: Message of tracking
     :return: True or False if delete is successfully
     """
-    queue = os.getenv('API_QUEUE_DELETE_URL')
+    queue = os.getenv('CORE_QUEUE_DELETE_URL')
 
     try:
         logger.debug("Calling API queue delete service")

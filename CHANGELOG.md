@@ -3,6 +3,112 @@
 
 # Changelog
 
+## v4.0.0 (2025-05-29)
+- integration-receiver:
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/integration/search/models_map.json'
+    - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
+    - [New] Added support for reuse a previous preprocess in 'indexing' operation
+        - Added parameter 'preprocess_reuse' to avoid generate a new one and reuse a previous preprocess
+        - Added parameter 'process_id' to specify the previous preprocess to reuse or generate a new one with this name
+        - Added parameter 'persist_preprocess' to avoid remove preprocess at the end of the operation
+        - Modified 'input_validations.py' to allow new parameters and avoid to duplicate process_id with the same name
+        - Modified 'delete_data' function in 'integration_base.py' to respect persist_preprocess flag
+    - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
+        - Added 'preprocess' as valid operation in validate_operation function in input_validations.py
+        - Support parameter 'process_id' to generate the preprocess with a name known by user
+        - Updated 'validate_input_default' in 'input_validations.py' to include verification for 'preprocess' operation
+        - Updated 'adapt_input_default' in 'io_adaptations.py' to define pipeline for 'preprocess' operation
+    - [New] Added 'download' operation for downloading an already preprocessed document
+        - Added 'download_preprocess_data' function in 'custom_operations.py' to handle data download
+        - Added '_validate_download_operation' function in 'input_validations.py' for validation
+        - Added 'adapt_output_download' function in 'io_adaptations.py' for response formatting
+        - Added '/process-sync' endpoint for synchronous processing with POST and GET methods
+        - Enhanced '/process' endpoint to support GET methods with '/process-async' alias
+        - Updated validation functions in 'input_validations.py' to support 'download' operation
+        - Updated 'adapt_input_default' in 'io_adaptations.py' to define download pipeline
+        - Updated 'get_inputs' in 'integration_base.py' to handle GET request parameters
+    - [Improvement] Enhanced JSON response formatting across all endpoints with proper content type headers and encoding parameters
+- integration-sender:
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/integration/search/models_map.json'
+    - [New] Added support for reuse a previous preprocess in 'indexing' operation
+        - Added and forward the parameters 'process_id', 'preprocess_reuse' and 'persist_preprocess'
+        - Enhanced 'parse_file_name' function in 'docs_utils.py' to handle file path extraction
+    - [New] Added 'preprocess' operation for standalone document preprocessing without indexing
+        - Updated 'preprocess' function in 'core_calls.py' to support queue also as async mode (currently API)
+        - Updated template 'async_preprocess.json': Removed 'force_ocr', 'extract_tables', and 'origins parameters'
+        - Updated all profiles to add 'preprocess' function mapping
+    - [New] Added 'download' operation for downloading an already preprocessed document
+        - Updated all profiles to add 'download' function mapping
+    - [New] Added 'response_adaptive' function in 'response_calls.py' to handle both API and queue response methods adaptively
+        - Updated profile 'default.json' to use 'response_calls.response_adaptive' instead of 'response_calls.response_api_default'
+    - [Improvement] Refactor to update all references from 'api' to 'core'
+        - Renamed module from 'api_calls.py' to 'core_calls.py'
+        - Renamed environment variables from 'API_...' to 'CORE_...'
+    - [Fix] Updated internal call of operation 'delete' to new inforetrieval interface
+        - Method DELETE instead of POST and pass filters as parameters instead of JSON body
+    - [Fix] Fixed error propagation in requests_manager to correctly capture error messages from pipeline responses
+        -  Updated JSON key reference from 'error' to 'message' to properly handle response errors
+- genai-inforetrieval:
+    - [New] Added new Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/ir/conf/models_config.json'
+        - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
+    - [New] Added support to Azure AI Search as a new vector storage
+    - [New] Added param vector_storage in vector_storage_conf to set either to use Elasticsearch or Azure AI. If no param received uses the env variable
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance
+    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
+    - [Fix] Recovered support (lost in last version) to filter by custom metadata in endpoint '/delete_documents', now passed as parameters instead of JSON body
+- genai-infoindexing:
+    - [New] Added new Vertex platform
+    - [New] Added models text-embedding-004, gemini-embedding-exp-03-07 for Vertex platform
+        - Add models configuration in 'src/ir/conf/models_config.json'
+        - Add default model in 'src/ir/conf/default_embedding_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
+    - [New] Added support to Azure AI Search as a new vector storage
+    - [New] Added document override functionality for automatic document replacement during indexing
+        - Added 'override' parameter in vector_storage_conf to delete existing documents with matching metadata_primary_keys before indexing
+        - Modified 'parsers.py' for override validation and 'vector_storages.py' for deletion logic implementation
+    - [Fix] Added param trust_remote_code=True for HuggingFace models instance
+    - [Fix] For HuggingFace models, the first time a model gets called instantiates the embedding model, so the following calls will use the same model instead of call a new model every time
+- genai-llmapi:
+    - [New] Added model tsuzumi-7b-v1_2-8k-instruct
+        - Add model configuration in 'src/LLM/conf/models_config.json'
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'tsuzumi' platform
+        - Updated secret to include the new 'tsuzumi' chat completion URL
+    - [New] Added support for prompt management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
+        - When Langfuse activated, replace cloud storage folder: 'src/LLM/prompts/'
+        - At startup upload existing prompts in cloud storage to Langfuse if not already created
+        - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
+    - [New] Added new Vertex platform
+    - [New] Added models gemini-1.5-pro, gemini-2.0-flash and gemini-2.5-pro for Vertex platform
+        - Add models configuration in 'src/LLM/conf/models_config.json'
+        - Add default model in 'src/LLM/conf/default_llm_models.json' for 'vertex' platform
+        - Updated secret to include the new 'vertex' URL for using Gemini models
+    - [New] Added 'show_token_details' parameter to optionally include detailed token usage in model responses
+    - [Improvement] Enhanced 'get_result' to detect and handle content filter reasons in DALL·E and GPT models
+    - [Improvement] Improved token reporting with more granular metrics
+    - [Improvement] Load secrets as environment variables
+- genai-compose:
+    - [New] Added support for template management using Langfuse instead of cloud storage (Azure blob or AWS bucket) to improve execution time
+        - When Langfuse activated, replace cloud storage folders: 'src/compose/templates/' and 'src/compose/filter_templates/'
+        - At startup upload existing templates in cloud storage to Langfuse if not already created
+        - Activated with optional environment variables 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional secret that contains the keys 'LANGFUSE', 'LANGFUSE_HOST', 'LANGFUSE_SECRET_KEY' and 'LANGFUSE_PUBLIC_KEY'
+        - Activated with optional parameter in POST call 'langfuse' that contains a JSON with the keys 'host', 'public_key' and 'secret_key' (not supported for GET calls)
+- preprocess-start:
+    - [New] Added preprocess reuse functionality for optimized processing workflows
+        - Added file path reconstruction logic for reusing previous preprocess results
+        - Added support for 'preprocess' process_type in 'get_metadata_conf' function in 'genai_json_parser.py'
+        - Added support to generate new preprocess with the process_id name set by user as parameter
+- preprocess-extract:
+    - [New] Added preprocess operation support for standalone document preprocessing
+        - Added support for 'preprocess' process_type in 'extract_text' function for correct text detection and extraction
+
 ## v3.1.0 (2025-03-20)
 - genai-compose:
     - [New] New optional param 'prompt_template_name' added to expand query steps to let the user use other llm prompt template while llmapi to expand the query

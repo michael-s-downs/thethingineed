@@ -1,17 +1,11 @@
 ### This code is property of the GGAO ###
 
-
 # Native imports
 
 # Installed imports
 import tiktoken
 
 from flask import Flask, request
-from elasticsearch_adaption import \
-    ElasticsearchStoreAdaption  # Custom class that adapts the elasticsearch store to improve filters
-# In the version 0.3.3 it's impossible to use multiple filters in the same query
-from elasticsearch.helpers.vectorstore import AsyncDenseVectorStrategy, AsyncBM25Strategy
-from elasticsearch import AsyncElasticsearch
 from llama_index.core import MockEmbedding
 
 
@@ -22,13 +16,14 @@ from common.genai_json_parser import *
 from retrieval_strategies import ManagerRetrievalStrategies
 from common.services import GENAI_INFO_RETRIEVAL_SERVICE
 from common.ir.utils import get_connector, get_embed_model 
-from common.utils import load_secrets, ELASTICSEARCH_INDEX
+from common.utils import load_secrets, INDEX_NAME
 from common.storage_manager import ManagerStorage
 from common.ir.parsers import ManagerParser, ParserInforetrieval
 from common.ir.connectors import Connector
 from common.errors.genaierrors import PrintableGenaiError
 
 from endpoints import get_documents_filenames_handler, retrieve_documents_handler, get_models_handler, delete_documents_handler, delete_index_handler, list_indices_handler
+from search_client import ManagerSearchClient
 
 
 class InfoRetrievalDeployment(BaseDeployment):
@@ -62,7 +57,7 @@ class InfoRetrievalDeployment(BaseDeployment):
             self.all_models = file_loader.get_unique_embedding_models()
             self.default_embedding_equivalences = file_loader.get_embedding_equivalences()
             self.models_credentials, self.vector_storages, self.aws_credentials = load_secrets()
-            self.logger.info(f"---- Inforetrieval initialized")
+            self.logger.info("---- Inforetrieval initialized")
         except Exception as ex:
             self.logger.error(f"Error loading files: {str(ex)}", exc_info=get_exc_info())
 
@@ -87,10 +82,10 @@ class InfoRetrievalDeployment(BaseDeployment):
         """
         for model in models:
             embedding_model = model.get('embedding_model')
-            if not connector.exist_index(ELASTICSEARCH_INDEX(index, embedding_model)) and embedding_model != "bm25":
+            if not connector.exist_index(INDEX_NAME(index, embedding_model)) and embedding_model != "bm25":
                 raise PrintableGenaiError(400, f"Model '{model.get('alias')}' does not exist for the index '{index}'")
 
-    def get_bm25_vector_store(self, index: str, connector: Connector, es_client: AsyncElasticsearch):
+    def get_bm25_vector_store(self, index: str, connector: Connector, es_client):
         """ Get the retriever from the model
 
         param: model: model to get the retriever from
@@ -98,16 +93,16 @@ class InfoRetrievalDeployment(BaseDeployment):
 
         """
         for model in self.all_models:
-            index_name = ELASTICSEARCH_INDEX(index, model)
+            index_name = INDEX_NAME(index, model)
             if connector.exist_index(index_name):
                 # Add bm25 retriever (with one index that matches is enough, all indexes in elastic can do this retrieval)
-                vector_store = ElasticsearchStoreAdaption(index_name=index_name, es_client=es_client,
-                                                          retrieval_strategy=AsyncBM25Strategy())
+                vector_store = es_client.create_store(index_name)
+                
                 return vector_store, model
 
         raise PrintableGenaiError(400, "There is no index that matches the passed value")
 
-    def get_retrievers_arguments(self, models: list, index: str, es_client: AsyncElasticsearch,
+    def get_retrievers_arguments(self, models: list, index: str, es_client,
                                  connector: Connector, query:str) -> list:
         """ Gets the retrievers that exists
 
@@ -124,25 +119,24 @@ class InfoRetrievalDeployment(BaseDeployment):
                 embed_model = MockEmbedding(embed_dim=256)
                 embed_query = query #BM25 does not use embeddings
             else:
-                index_name = ELASTICSEARCH_INDEX(index, model.get('embedding_model'))
-                vector_store = ElasticsearchStoreAdaption(index_name=index_name, es_client=es_client,
-                                                          retrieval_strategy=AsyncDenseVectorStrategy())
+                index_name = INDEX_NAME(index, model.get('embedding_model'))
+                vector_store = es_client.create_store(index_name)
                 embed_model = get_embed_model(model, self.aws_credentials, is_retrieval=True)
                 embed_query = embed_model.get_query_embedding(query)
             
             retrievers.append((vector_store, embed_model, embed_query, f"{model.get('embedding_model')}--score"))
         return retrievers
 
-    def get_default_models(self, input_object: ParserInforetrieval, connector: Connector):
+    def get_default_models(self, input_object: ParserInforetrieval, connector: Connector, es_client):
         """ Get the default models for the index
 
         :param index: index to get the default models
 
         :return: List of default models
         """
-        indexed_models = ["bm25"]
+        indexed_models = es_client.indexed_models_init()
         for model in self.all_models:
-            if connector.exist_index(ELASTICSEARCH_INDEX(input_object.index, model)):
+            if connector.exist_index(INDEX_NAME(input_object.index, model)):
                 indexed_models.append(self.default_embedding_equivalences[model])
     
         # Get the model credentials
@@ -180,14 +174,11 @@ class InfoRetrievalDeployment(BaseDeployment):
                                                               "available_pools": self.available_pools,
                                                               "models_credentials": self.models_credentials})
             connector = get_connector(input_object.index, self.workspace, self.vector_storages)
-            es_client = AsyncElasticsearch(hosts=f"{connector.scheme}://{connector.host}:{connector.port}",
-                                           http_auth=(connector.username, connector.password),
-                                           verify_certs=False, timeout=30)
-
+            es_client = ManagerSearchClient().get_client(connector, input_object.index)
 
             # If no models are passed, we will retrieve with bm25 and the models used in the indexation process
             if len(input_object.models) == 0:
-                input_object.models = self.get_default_models(input_object, connector)
+                input_object.models = self.get_default_models(input_object, connector, es_client)
             else:
                 self.assert_correct_models(input_object.index, input_object.models, connector)
 
@@ -218,7 +209,8 @@ class InfoRetrievalDeployment(BaseDeployment):
                     tokens_report[retriever_type] = len(tiktoken.get_encoding(tokenizer).encode(input_object.query))
                 else:
                     tokens_report[retriever_type] = 0
-                vector_store.close()
+                
+                es_client.close_vector_store()
             connector.close()
 
             if not eval(os.getenv('TESTING', "False")):
@@ -226,7 +218,7 @@ class InfoRetrievalDeployment(BaseDeployment):
                     resource = f"retrieval/{model}/tokens"
                     self.report_api(tokens, "", input_object.x_reporting, resource, "", "TOKENS")
 
-                resource = f"retrieval/process/call"
+                resource = "retrieval/process/call"
                 self.report_api(1, "", input_object.x_reporting, resource, "")
 
             return self.must_continue, {

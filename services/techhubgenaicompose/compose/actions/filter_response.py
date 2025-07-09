@@ -40,7 +40,7 @@ class FilterLLM(FilterResponseMethod):
     TEMPLATE = FILTER_TEMPLATE
     URL = os.environ['URL_LLM']
 
-    def load_filtertemplate(self, templatename):
+    def load_filtertemplate(self, templatename, langfuse_m):
         """Loads query filter templates from compose_conf json input.
 
         Args:
@@ -50,7 +50,11 @@ class FilterLLM(FilterResponseMethod):
             Parsed JSON data of the loaded template.
         """
         try:
-            template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
+            if langfuse_m.langfuse:
+                template = langfuse_m.load_template(templatename, "compose_filter_template")
+                template = template.prompt
+            else:
+                template = load_file(storage_containers['workspace'], f"{S3_QUERYFILTERSPATH}/{templatename}.json").decode()
             if not template:
                 raise PrintableGenaiError(404, f"S3 config file doesn't exists for name {templatename} in {S3_QUERYFILTERSPATH} S3 path")
         except ValueError as exc:
@@ -70,7 +74,7 @@ class FilterLLM(FilterResponseMethod):
         templatename = params.get("template")
         query = params.pop("query")
         
-        self.filter_template = self.load_filtertemplate(templatename)
+        self.filter_template = self.load_filtertemplate(templatename, params.pop("langfuse"))
 
         substitutions_template = self.filter_template.get("substitutions_template")
         substitutions = self.filter_template.get("substitutions")
